@@ -49,7 +49,6 @@ class AssignmentSubmission extends Model
      */
     public function tajweedErrorLogs(): HasMany
     {
-        return $this->hasMany(TajweedErrorLog::class, 'session_id')
-            ->where('session_type', 'assignment');
+        return $this->hasMany(TajweedErrorLog::class, 'assignment_submission_id');
     }
 }

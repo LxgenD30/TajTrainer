@@ -39,7 +39,6 @@ class PracticeSession extends Model
      */
     public function tajweedErrorLogs(): HasMany
     {
-        return $this->hasMany(TajweedErrorLog::class, 'session_id')
-            ->where('session_type', 'practice');
+        return $this->hasMany(TajweedErrorLog::class, 'practice_session_id');
     }
 }

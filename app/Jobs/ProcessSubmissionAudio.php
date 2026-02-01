@@ -72,7 +72,7 @@ class ProcessSubmissionAudio implements ShouldQueue
                     Log::info('✓ Tajweed analysis completed');
                     
                     // Log errors to database
-                    $this->logTajweedErrors($submission->id, $tajweedAnalysis, 'assignment');
+                    $this->logTajweedErrors($submission, $tajweedAnalysis, 'assignment');
                     
                     // Step 3: Create score
                     $overallScore = $tajweedAnalysis['overall_score']['score'] ?? 0;
@@ -534,7 +534,7 @@ class ProcessSubmissionAudio implements ShouldQueue
         return trim($text);
     }
     
-    private function logTajweedErrors($submissionId, $analysis, $type)
+    private function logTajweedErrors($submission, $analysis, $type)
     {
         $maddErrors = 0;
         $noonErrors = 0;
@@ -542,9 +542,7 @@ class ProcessSubmissionAudio implements ShouldQueue
         if (isset($analysis['madd_analysis']['issues'])) {
             foreach ($analysis['madd_analysis']['issues'] as $issue) {
                 \App\Models\TajweedErrorLog::create([
-                    'user_id' => $submission->student->user_id,
-                    'session_type' => 'assignment',
-                    'session_id' => $submissionId,
+                    'assignment_submission_id' => $submission->id,
                     'error_type' => 'madd',
                     'rule_name' => 'Madd (Elongation)',
                     'timestamp_in_audio' => $issue['time'] ?? null,
@@ -560,9 +558,7 @@ class ProcessSubmissionAudio implements ShouldQueue
         if (isset($analysis['idgham_bila_ghunnah_analysis']['issues'])) {
             foreach ($analysis['idgham_bila_ghunnah_analysis']['issues'] as $issue) {
                 \App\Models\TajweedErrorLog::create([
-                    'user_id' => $submission->student->user_id,
-                    'session_type' => 'assignment',
-                    'session_id' => $submissionId,
+                    'assignment_submission_id' => $submission->id,
                     'error_type' => 'idgham_bila_ghunnah',
                     'rule_name' => 'Idgham Bila Ghunnah',
                     'timestamp_in_audio' => $issue['time'] ?? null,
@@ -578,9 +574,7 @@ class ProcessSubmissionAudio implements ShouldQueue
         if (isset($analysis['idgham_bi_ghunnah_analysis']['issues'])) {
             foreach ($analysis['idgham_bi_ghunnah_analysis']['issues'] as $issue) {
                 \App\Models\TajweedErrorLog::create([
-                    'user_id' => $submission->student->user_id,
-                    'session_type' => 'assignment',
-                    'session_id' => $submissionId,
+                    'assignment_submission_id' => $submission->id,
                     'error_type' => 'idgham_bi_ghunnah',
                     'rule_name' => 'Idgham Bi Ghunnah',
                     'timestamp_in_audio' => $issue['time'] ?? null,

@@ -10,9 +10,8 @@ class TajweedErrorLog extends Model
     protected $table = 'tajweed_error_logs';
     
     protected $fillable = [
-        'user_id',
-        'session_type',
-        'session_id',
+        'practice_session_id',
+        'assignment_submission_id',
         'error_type',
         'rule_name',
         'timestamp_in_audio',
@@ -30,7 +29,7 @@ class TajweedErrorLog extends Model
     ];
     
     /**
-     * Get the practice session
+     * Get the practice session if this error is from practice
      */
     public function practiceSession(): BelongsTo
     {
@@ -38,11 +37,24 @@ class TajweedErrorLog extends Model
     }
     
     /**
-     * Get the assignment submission
+     * Get the assignment submission if this error is from an assignment
      */
     public function assignmentSubmission(): BelongsTo
     {
         return $this->belongsTo(AssignmentSubmission::class, 'assignment_submission_id');
+    }
+    
+    /**
+     * Get the user (student) through the session
+     */
+    public function getStudentAttribute()
+    {
+        if ($this->assignment_submission_id) {
+            return $this->assignmentSubmission->student;
+        } elseif ($this->practice_session_id) {
+            return $this->practiceSession->student;
+        }
+        return null;
     }
     
     /**
