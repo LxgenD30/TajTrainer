@@ -200,9 +200,19 @@
 <script>
     // Auto-refresh page if any submission is still being processed
     @php
-        $hasProcessing = $submissions->contains(function($submission) {
-            return $submission && $submission->status === 'submitted' && !$submission->scores->where('user_id', Auth::id())->first();
-        });
+        $hasProcessing = false;
+        foreach($submissions as $submission) {
+            if ($submission && $submission->status === 'submitted') {
+                // Check if score exists for this submission
+                $score = \App\Models\Score::where('assignment_id', $submission->assignment_id)
+                                          ->where('user_id', Auth::id())
+                                          ->first();
+                if (!$score) {
+                    $hasProcessing = true;
+                    break;
+                }
+            }
+        }
     @endphp
     
     @if($hasProcessing)
