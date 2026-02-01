@@ -404,16 +404,25 @@ class StudentController extends Controller
             // Check if we need to transcribe (no transcription or empty transcription)
             if (empty($submission->transcription) || trim($submission->transcription) === '') {
                 try {
-                    \Log::info('Transcribing audio file: ' . $submission->audio_file_path);
-                    $transcription = $this->transcribeAudio($submission->audio_file_path);
+                    \Log::info('No transcription found, calling transcribeWithAssemblyAI for: ' . $submission->audio_file_path);
+                    $transcription = $this->transcribeWithAssemblyAI($submission->audio_file_path);
                     $submission->transcription = $transcription;
                     $submission->save();
-                    \Log::info('Transcription completed: ' . substr($transcription, 0, 100));
+                    \Log::info('✓ Transcription completed: ' . substr($transcription, 0, 100));
                 } catch (\Exception $e) {
                     \Log::error('Audio transcription failed: ' . $e->getMessage());
+                    \Log::error('Stack trace: ' . $e->getTraceAsString());
+                    // Continue without transcription - don't block submission
                 }
             } else {
                 \Log::info('Transcription already exists, skipping AssemblyAI call');
+            }
+        } else {
+            if (!$submission->audio_file_path) {
+                \Log::warning('No audio file path found, skipping transcription');
+            }
+            if (!config('services.assemblyai.api_key')) {
+                \Log::warning('AssemblyAI API key not configured, skipping transcription');
             }
         }
         

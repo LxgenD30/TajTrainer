@@ -898,6 +898,76 @@
                     </div>
                 `;
             }
+            
+            // Add OpenAI AI Feedback if available
+            if (pythonAnalysis && pythonAnalysis.ai_feedback) {
+                const aiFeedback = pythonAnalysis.ai_feedback;
+                let aiFeedbackHtml = `
+                    <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(31, 39, 27, 0.8) 100%); border: 2px solid rgba(102, 126, 234, 0.4); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 2px solid rgba(102, 126, 234, 0.3);">
+                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🤖</div>
+                            <div>
+                                <div style="color: var(--color-gold); font-weight: 700; font-size: 1.1rem;">AI Recitation Coach</div>
+                                <div style="font-size: 0.75rem; color: #b8a3ff; font-weight: 500;">✨ Powered by OpenAI GPT-4</div>
+                            </div>
+                        </div>
+                `;
+                
+                // Summary
+                if (aiFeedback.summary) {
+                    aiFeedbackHtml += `
+                        <div style="background: rgba(31, 39, 27, 0.6); padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 3px solid #667eea;">
+                            <div style="color: #b8a3ff; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem;">📊 Summary</div>
+                            <div style="color: var(--color-light-green); line-height: 1.7; font-size: 0.9rem;">${aiFeedback.summary}</div>
+                        </div>
+                    `;
+                }
+                
+                // Strengths and Improvements side by side
+                if (aiFeedback.strengths || aiFeedback.improvements) {
+                    aiFeedbackHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">`;
+                    
+                    if (aiFeedback.strengths && aiFeedback.strengths.length > 0) {
+                        aiFeedbackHtml += `
+                            <div style="background: rgba(76, 175, 80, 0.15); padding: 15px; border-radius: 10px; border-left: 3px solid #4caf50;">
+                                <div style="color: #4caf50; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">💪 Strengths</div>
+                                <ul style="margin: 0; padding-left: 18px; color: var(--color-light-green); line-height: 1.6; font-size: 0.85rem;">
+                                    ${aiFeedback.strengths.map(s => `<li style="margin-bottom: 6px;">${s}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    if (aiFeedback.improvements && aiFeedback.improvements.length > 0) {
+                        aiFeedbackHtml += `
+                            <div style="background: rgba(255, 152, 0, 0.15); padding: 15px; border-radius: 10px; border-left: 3px solid #ff9800;">
+                                <div style="color: #ff9800; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">🎯 Improve</div>
+                                <ul style="margin: 0; padding-left: 18px; color: var(--color-light-green); line-height: 1.6; font-size: 0.85rem;">
+                                    ${aiFeedback.improvements.map(i => {
+                                        const issue = typeof i === 'object' ? i.issue : i;
+                                        return `<li style="margin-bottom: 6px;">${issue}</li>`;
+                                    }).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    aiFeedbackHtml += `</div>`;
+                }
+                
+                // Next Steps
+                if (aiFeedback.next_steps) {
+                    aiFeedbackHtml += `
+                        <div style="background: rgba(102, 126, 234, 0.15); padding: 15px; border-radius: 10px; border-left: 3px solid #667eea;">
+                            <div style="color: #b8a3ff; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">🚀 Next Steps</div>
+                            <div style="color: var(--color-light-green); line-height: 1.7; font-size: 0.85rem;">${aiFeedback.next_steps}</div>
+                        </div>
+                    `;
+                }
+                
+                aiFeedbackHtml += `</div>`;
+                detailsContainer.innerHTML += aiFeedbackHtml;
+            }
         } else {
             detailsContainer.innerHTML = `
                 <div style="text-align: center; padding: 20px; color: var(--color-light-green); opacity: 0.7;">

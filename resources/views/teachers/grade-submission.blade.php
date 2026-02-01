@@ -70,11 +70,25 @@
             <!-- Audio Submission -->
             <div style="background: rgba(70, 63, 58, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
                 <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">🎤 Voice Recording</div>
-                <audio id="submissionAudio" controls preload="metadata" style="width: 100%; margin-bottom: 10px;">
+                @php
+                    $audioExt = pathinfo($submission->audio_file_path, PATHINFO_EXTENSION);
+                    $mimeTypes = [
+                        'mp3' => 'audio/mpeg',
+                        'wav' => 'audio/wav',
+                        'webm' => 'audio/webm',
+                        'm4a' => 'audio/mp4',
+                        'ogg' => 'audio/ogg',
+                        'oga' => 'audio/ogg',
+                    ];
+                    $detectedMime = $mimeTypes[strtolower($audioExt)] ?? 'audio/mpeg';
+                @endphp
+                <audio id="submissionAudio" controls preload="metadata" style="width: 100%; margin-bottom: 10px; outline: none;">
+                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="{{ $detectedMime }}">
                     <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/webm">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/wav">
                     <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mpeg">
+                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/wav">
                     <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/ogg">
+                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mp4">
                     Your browser does not support the audio element.
                 </audio>
                 <div style="font-size: 0.75rem; color: var(--color-light-green); opacity: 0.6; margin-top: 5px;">
@@ -278,6 +292,71 @@
                     </div>
                 </div>
             </div>
+            
+            {{-- OpenAI Intelligent Feedback for Teacher Reference --}}
+            @if(isset($analysis['ai_feedback']))
+            <div style="background: linear-gradient(135deg, rgba(227, 216, 136, 0.15) 0%, rgba(31, 39, 27, 0.8) 100%); border: 2px solid rgba(227, 216, 136, 0.4); padding: 25px; border-radius: 15px; margin-top: 20px; box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(227, 216, 136, 0.3);">
+                    <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">🤖</div>
+                    <div>
+                        <div style="color: var(--color-gold); font-weight: 700; font-size: 1.2rem;">AI Teaching Assistant</div>
+                        <div style="font-size: 0.8rem; padding: 4px 12px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3)); border-radius: 15px; font-weight: 600; color: #b8a3ff; display: inline-block; margin-top: 4px;">✨ Reference Only - Use Your Professional Judgment</div>
+                    </div>
+                </div>
+
+                @if(isset($analysis['ai_feedback']['summary']))
+                <div style="background: rgba(31, 39, 27, 0.6); padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #667eea;">
+                    <h4 style="color: #b8a3ff; font-size: 1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>📊</span> AI Performance Summary
+                    </h4>
+                    <p style="color: var(--color-light-green); line-height: 1.8; margin: 0;">{{ $analysis['ai_feedback']['summary'] }}</p>
+                </div>
+                @endif
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    @if(isset($analysis['ai_feedback']['strengths']) && count($analysis['ai_feedback']['strengths']) > 0)
+                    <div style="background: rgba(76, 175, 80, 0.15); padding: 18px; border-radius: 12px; border-left: 4px solid #4caf50;">
+                        <h4 style="color: #4caf50; font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span>💪</span> Identified Strengths
+                        </h4>
+                        <ul style="margin: 0; padding-left: 20px; color: var(--color-light-green); line-height: 1.8; font-size: 0.9rem;">
+                            @foreach($analysis['ai_feedback']['strengths'] as $strength)
+                            <li style="margin-bottom: 8px;">{{ $strength }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
+                    @if(isset($analysis['ai_feedback']['improvements']) && count($analysis['ai_feedback']['improvements']) > 0)
+                    <div style="background: rgba(255, 152, 0, 0.15); padding: 18px; border-radius: 12px; border-left: 4px solid #ff9800;">
+                        <h4 style="color: #ff9800; font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span>🎯</span> Suggested Improvements
+                        </h4>
+                        <ul style="margin: 0; padding-left: 20px; color: var(--color-light-green); line-height: 1.8; font-size: 0.9rem;">
+                            @foreach($analysis['ai_feedback']['improvements'] as $improvement)
+                            <li style="margin-bottom: 8px;">
+                                @if(is_array($improvement))
+                                    {{ $improvement['issue'] ?? '' }}
+                                @else
+                                    {{ $improvement }}
+                                @endif
+                            </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+                </div>
+
+                @if(isset($analysis['ai_feedback']['next_steps']))
+                <div style="background: rgba(102, 126, 234, 0.15); padding: 18px; border-radius: 12px; border-left: 4px solid #667eea;">
+                    <h4 style="color: #b8a3ff; font-size: 0.95rem; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <span>🚀</span> Recommended Next Steps
+                    </h4>
+                    <p style="color: var(--color-light-green); line-height: 1.8; margin: 0; font-size: 0.9rem;">{{ $analysis['ai_feedback']['next_steps'] }}</p>
+                </div>
+                @endif
+            </div>
+            @endif
             @endif
             @endif
         </div>

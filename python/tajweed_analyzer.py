@@ -499,25 +499,42 @@ Analysis Results:
 
 Overall Score: {analysis_results['overall_score']['score']}%
 
-Provide:
-1. Brief encouragement (1 sentence)
-2. Main strengths (1-2 bullet points)
-3. Key areas to improve (1-2 bullet points)
-4. Specific practice recommendation (1 sentence)
+Provide feedback in this EXACT JSON format:
+{{
+  "summary": "Brief 2-3 sentence overview of performance",
+  "strengths": ["strength 1", "strength 2"],
+  "improvements": [
+    {{"issue": "specific problem", "suggestion": "how to fix it"}},
+    {{"issue": "specific problem", "suggestion": "how to fix it"}}
+  ],
+  "next_steps": "Specific practice recommendation (1-2 sentences)"
+}}
 
-Keep it concise, positive, and actionable in 4-5 sentences total."""
+Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
 
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are an expert Quran Tajweed teacher providing feedback to students."},
+                    {"role": "system", "content": "You are an expert Quran Tajweed teacher. You MUST respond with valid JSON only, no other text."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=200,
+                max_tokens=400,
                 temperature=0.7
             )
             
-            return response.choices[0].message.content.strip()
+            feedback_text = response.choices[0].message.content.strip()
+            
+            # Try to parse as JSON
+            try:
+                return json.loads(feedback_text)
+            except:
+                # Fallback to simple format if JSON parsing fails
+                return {
+                    "summary": feedback_text,
+                    "strengths": [],
+                    "improvements": [],
+                    "next_steps": ""
+                }
             
         except Exception as e:
             print(json.dumps({
