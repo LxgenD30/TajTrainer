@@ -91,18 +91,28 @@
                     'oga' => 'audio/ogg',
                 ];
                 $detectedMime = $mimeTypes[strtolower($audioExt)] ?? 'audio/mpeg';
+                $audioUrl = asset('storage/' . $submission->audio_file_path);
             @endphp
-            <audio controls preload="metadata" style="width: 100%; margin-top: 10px; outline: none;">
-                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="{{ $detectedMime }}">
-                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/webm">
-                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mpeg">
-                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/wav">
-                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/ogg">
-                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mp4">
+            <audio controls preload="auto" style="width: 100%; margin-top: 10px; outline: none;">
+                <source src="{{ $audioUrl }}" type="{{ $detectedMime }}">
+                <source src="{{ $audioUrl }}" type="audio/webm">
+                <source src="{{ $audioUrl }}" type="audio/mpeg">
+                <source src="{{ $audioUrl }}" type="audio/wav">
+                <source src="{{ $audioUrl }}" type="audio/ogg">
+                <source src="{{ $audioUrl }}" type="audio/mp4">
+                <source src="{{ $audioUrl }}" type="audio/x-m4a">
                 Your browser does not support the audio element.
             </audio>
-            <div style="font-size: 0.75rem; color: var(--color-light-green); opacity: 0.6; margin-top: 8px;">
-                📁 {{ basename($submission->audio_file_path) }}
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 12px;">
+                <div style="font-size: 0.75rem; color: var(--color-light-green); opacity: 0.6; flex: 1;">
+                    📁 {{ basename($submission->audio_file_path) }}
+                </div>
+                <a href="{{ $audioUrl }}" download="{{ basename($submission->audio_file_path) }}" 
+                   style="padding: 8px 16px; background: rgba(227, 216, 136, 0.2); color: var(--color-gold); border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.3s ease; border: 1px solid rgba(227, 216, 136, 0.3);"
+                   onmouseover="this.style.background='var(--color-gold)'; this.style.color='var(--color-dark)'"
+                   onmouseout="this.style.background='rgba(227, 216, 136, 0.2)'; this.style.color='var(--color-gold)'">
+                    ⬇️ Download Audio
+                </a>
             </div>
             
             @if($submission->transcription)

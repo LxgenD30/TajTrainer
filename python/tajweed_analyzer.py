@@ -1,11 +1,12 @@
 """
 Advanced Tajweed Analyzer for Quran Recitation
 Uses Tarteel AI's Whisper model for accurate Arabic Quran transcription
-Analyzes 3 specific Tajweed rules:
-1. Madd (Elongation)
-2. Idgham Bila Ghunnah (Merging without nasalization - ر ل)
-3. Idgham Bi Ghunnah (Merging with nasalization - و م ن ي)
+Analyzes 3 specific Tajweed rules using ACTUAL AUDIO ANALYSIS:
+1. Madd (Elongation) - Pitch stability + duration measurement
+2. Idgham Bila Ghunnah (Merging without nasalization - ر ل) - Formant analysis
+3. Idgham Bi Ghunnah (Merging with nasalization - و م ن ي) - Nasal formant detection
 Uses OpenAI for intelligent feedback generation
+Uses Parselmouth (Praat) for professional phonetic analysis
 """
 
 import sys
@@ -18,6 +19,18 @@ from scipy.signal import find_peaks
 import warnings
 import re
 warnings.filterwarnings('ignore')
+
+# Import Parselmouth for advanced phonetic analysis
+try:
+    import parselmouth
+    from parselmouth.praat import call
+    PARSELMOUTH_AVAILABLE = True
+except ImportError:
+    PARSELMOUTH_AVAILABLE = False
+    print(json.dumps({
+        "warning": "Parselmouth not installed. Install with: pip install praat-parselmouth",
+        "fallback": "Using basic librosa analysis"
+    }), file=sys.stderr)
 
 # Setup FFmpeg path
 def setup_ffmpeg():
@@ -51,14 +64,29 @@ def setup_ffmpeg():
 setup_ffmpeg()
 
 class TajweedAnalyzer:
-    def __init__(self, audio_path, expected_text="", use_whisper=True, use_openai=True):
+    def __init__(self, audio_path, expected_text="", use_whisper=True, use_openai=True, reference_audio_path=None):
         """Initialize with audio file path and expected Quranic text"""
         self.audio_path = audio_path
         self.expected_text = expected_text
         self.use_whisper = use_whisper
         self.use_openai = use_openai
+        self.reference_audio_path = reference_audio_path
         self.y, self.sr = librosa.load(audio_path, sr=16000)  # 16kHz for Whisper
         self.duration = librosa.get_duration(y=self.y, sr=self.sr)
+        
+        # Load reference audio if provided
+        self.y_ref, self.sr_ref = None, None
+        self.duration_ref = 0
+        if reference_audio_path and os.path.exists(reference_audio_path):
+            try:
+                self.y_ref, self.sr_ref = librosa.load(reference_audio_path, sr=16000)
+                self.duration_ref = librosa.get_duration(y=self.y_ref, sr=self.sr_ref)
+                print(json.dumps({
+                    "status": "reference_loaded",
+                    "message": f"Reference audio loaded: {self.duration_ref:.2f}s"
+                }), file=sys.stderr)
+            except Exception as e:
+                print(json.dumps({"warning": f"Failed to load reference audio: {str(e)}"}), file=sys.stderr)
         
         # Load Whisper model if requested
         self.whisper_model = None
@@ -182,7 +210,11 @@ class TajweedAnalyzer:
         return any(re.search(pattern, self.expected_text) for pattern in patterns)
     
     def analyze_madd(self):
-        """Analyze Madd (Elongation) rules using advanced MFCC + Whisper timing"""
+        """
+        Analyze Madd (Elongation) rules using ADVANCED AUDIO ANALYSIS
+        Uses Parselmouth for formant analysis and pitch tracking
+        Madd should be held for 2 counts (approximately 0.4-0.6 seconds minimum)
+        """
         results = {
             'total_elongations': 0,
             'correct_elongations': 0,
@@ -198,54 +230,160 @@ class TajweedAnalyzer:
             return results
         
         try:
-            # Extract MFCC features (use 22050 Hz for MFCC analysis)
-            y_22k, sr_22k = librosa.load(self.audio_path, sr=22050)
-            mfccs = librosa.feature.mfcc(y=y_22k, sr=sr_22k, n_mfcc=13)
-            
-            # RMS energy for sustained sound detection
-            rms = librosa.feature.rms(y=y_22k)[0]
-            
-            # MFCC variance to detect sustained vowels
-            mfcc_var = np.var(mfccs, axis=0)
-            
-            # Find peaks in RMS that indicate sustained vowels
-            peaks, properties = find_peaks(rms, distance=sr_22k//2, prominence=0.015)
-            
-            for i, peak in enumerate(peaks):
-                time_pos = librosa.frames_to_time(peak, sr=sr_22k)
+            if PARSELMOUTH_AVAILABLE:
+                # ADVANCED PARSELMOUTH ANALYSIS
+                snd = parselmouth.Sound(self.audio_path)
                 
-                # Calculate sustained duration
-                hop_length = 512
-                start_idx = max(0, peak - 10)
-                end_idx = min(len(rms), peak + 30)
-                sustained_duration = (end_idx - start_idx) * hop_length / sr_22k
+                # Extract acoustic features
+                pitch = snd.to_pitch()
+                formant = snd.to_formant_burg()
+                intensity = snd.to_intensity()
                 
-                # Check MFCC variance at peak
-                if peak < len(mfcc_var):
-                    mfcc_variance_at_peak = mfcc_var[peak]
-                    is_vowel_sustained = mfcc_variance_at_peak < np.mean(mfcc_var) * 0.7
-                else:
-                    is_vowel_sustained = True
+                detected_elongations = []
                 
-                if is_vowel_sustained:
-                    results['total_elongations'] += 1
-                    
+                # Sample every 10ms to find vowel regions
+                for t in np.arange(0.05, snd.duration, 0.01):
+                    try:
+                        # Get pitch (should exist and be stable during vowel)
+                        f0 = call(pitch, "Get value at time", t, "Hertz", "Linear")
+                        
+                        # Get formants (F1, F2 identify vowels)
+                        f1 = call(formant, "Get value at time", 1, t, "Hertz", "Linear")
+                        f2 = call(formant, "Get value at time", 2, t, "Hertz", "Linear")
+                        
+                        # Get intensity (should be high during vowel)
+                        power = call(intensity, "Get value at time", t, "Cubic")
+                        
+                        # Check if this is a vowel (pitch exists, formants exist, decent intensity)
+                        if not np.isnan(f0) and not np.isnan(f1) and not np.isnan(f2) and power > 50:
+                            # Check if vowel is elongated by looking ahead
+                            duration = 0
+                            
+                            # Check next 600ms for stable formants (indicating elongation)
+                            for future_t in np.arange(t, min(t + 0.7, snd.duration), 0.01):
+                                try:
+                                    future_f1 = call(formant, "Get value at time", 1, future_t, "Hertz", "Linear")
+                                    future_f2 = call(formant, "Get value at time", 2, future_t, "Hertz", "Linear")
+                                    future_f0 = call(pitch, "Get value at time", future_t, "Hertz", "Linear")
+                                    future_power = call(intensity, "Get value at time", future_t, "Cubic")
+                                    
+                                    # Check if formants remain stable (within 15% variation)
+                                    if (not np.isnan(future_f1) and not np.isnan(future_f2) and 
+                                        not np.isnan(future_f0) and future_power > 45 and
+                                        abs(future_f1 - f1) < f1 * 0.15 and 
+                                        abs(future_f2 - f2) < f2 * 0.15 and
+                                        abs(future_f0 - f0) < f0 * 0.1):
+                                        duration += 0.01
+                                    else:
+                                        break
+                                except:
+                                    break
+                            
+                            # If vowel held for at least 350ms, it's a Madd
+                            if duration >= 0.35:
+                                # Check if we haven't already detected this elongation
+                                if not any(abs(t - prev_t) < 0.3 for prev_t, _, _ in detected_elongations):
+                                    detected_elongations.append((t, duration, f0))
+                    except:
+                        continue
+                
+                results['total_elongations'] = len(detected_elongations)
+                
+                # Check each detected elongation
+                for t, duration, f0 in detected_elongations:
                     # Madd should be >= 0.4 seconds (2 counts minimum)
-                    if sustained_duration >= 0.4:
+                    if duration >= 0.4:
                         results['correct_elongations'] += 1
                         results['details'].append({
-                            'time': round(time_pos, 2),
-                            'duration': round(sustained_duration, 2),
+                            'time': round(t, 2),
+                            'duration': round(duration, 2),
+                            'pitch': round(f0, 1),
                             'status': 'correct',
-                            'note': 'Proper Madd elongation detected'
+                            'note': 'Proper Madd elongation detected (Parselmouth analysis)'
                         })
                     else:
                         results['issues'].append({
-                            'time': round(time_pos, 2),
-                            'duration': round(sustained_duration, 2),
-                            'issue': 'Elongation too short - should be 2-6 counts',
-                            'recommendation': 'Hold the vowel for minimum 2 counts (0.5-0.75 seconds)'
+                            'time': round(t, 2),
+                            'duration': round(duration, 2),
+                            'pitch': round(f0, 1),
+                            'issue': f'Elongation too short ({duration:.2f}s) - should be >= 0.4s',
+                            'recommendation': 'Hold the vowel for minimum 2 counts (0.4-0.6 seconds)'
                         })
+                
+                # Calculate percentage
+                if results['total_elongations'] > 0:
+                    results['percentage'] = round((results['correct_elongations'] / results['total_elongations']) * 100, 2)
+                else:
+                    results['percentage'] = 100  # No elongations detected, assume OK
+                
+                return results
+            
+            else:
+                # FALLBACK: LIBROSA ANALYSIS (BASIC)
+                y_22k, sr_22k = librosa.load(self.audio_path, sr=22050)
+                mfccs = librosa.feature.mfcc(y=y_22k, sr=sr_22k, n_mfcc=13)
+                rms = librosa.feature.rms(y=y_22k)[0]
+                mfcc_var = np.var(mfccs, axis=0)
+                
+                # Find peaks in RMS that indicate sustained vowels
+                peaks, properties = find_peaks(rms, distance=sr_22k//2, prominence=0.015)
+                
+                for i, peak in enumerate(peaks):
+                    time_pos = librosa.frames_to_time(peak, sr=sr_22k)
+                    
+                    # Calculate sustained duration
+                    hop_length = 512
+                    start_idx = max(0, peak - 10)
+                    end_idx = min(len(rms), peak + 30)
+                    sustained_duration = (end_idx - start_idx) * hop_length / sr_22k
+                    
+                    # Check MFCC variance at peak
+                    if peak < len(mfcc_var):
+                        mfcc_variance_at_peak = mfcc_var[peak]
+                        is_vowel_sustained = mfcc_variance_at_peak < np.mean(mfcc_var) * 0.7
+                    else:
+                        is_vowel_sustained = True
+                    
+                    if is_vowel_sustained:
+                        results['total_elongations'] += 1
+                        
+                        # Madd should be >= 0.4 seconds (2 counts minimum)
+                        if sustained_duration >= 0.4:
+                            results['correct_elongations'] += 1
+                            results['details'].append({
+                                'time': round(time_pos, 2),
+                                'duration': round(sustained_duration, 2),
+                                'status': 'correct',
+                                'note': 'Proper Madd elongation detected (basic analysis - install parselmouth for better accuracy)'
+                            })
+                        else:
+                            results['issues'].append({
+                                'time': round(time_pos, 2),
+                                'duration': round(sustained_duration, 2),
+                                'issue': 'Elongation too short - should be 2-6 counts',
+                                'recommendation': 'Hold the vowel for minimum 2 counts (0.5-0.75 seconds)'
+                            })
+                
+                # Calculate percentage
+                if results['total_elongations'] > 0:
+                    results['percentage'] = round((results['correct_elongations'] / results['total_elongations']) * 100, 2)
+                else:
+                    results['percentage'] = 100
+                
+                results['details'].append({
+                    'warning': 'Using basic librosa analysis. Install parselmouth for advanced formant analysis: pip install praat-parselmouth'
+                })
+                
+                return results
+                
+        except Exception as e:
+            import traceback
+            results['issues'].append({
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            })
+            results['percentage'] = 0
+            return results
             
             # Calculate percentage
             if results['total_elongations'] > 0:
@@ -543,6 +681,150 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
             }), file=sys.stderr)
             return None
     
+    def compare_with_reference(self):
+        """
+        Compare student audio with reference recitation
+        Uses MFCC + DTW (Dynamic Time Warping) for similarity comparison
+        Analyzes pitch, rhythm, and pronunciation differences
+        """
+        if self.y_ref is None:
+            return None
+        
+        try:
+            from scipy.spatial.distance import euclidean
+            from fastdtw import fastdtw
+            
+            # Extract MFCC features from both audios
+            mfcc_student = librosa.feature.mfcc(y=self.y, sr=self.sr, n_mfcc=13)
+            mfcc_reference = librosa.feature.mfcc(y=self.y_ref, sr=self.sr_ref, n_mfcc=13)
+            
+            # Transpose for DTW (time steps x features)
+            mfcc_student = mfcc_student.T
+            mfcc_reference = mfcc_reference.T
+            
+            # Calculate DTW distance
+            distance, path = fastdtw(mfcc_student, mfcc_reference, dist=euclidean)
+            
+            # Normalize distance by length
+            normalized_distance = distance / max(len(mfcc_student), len(mfcc_reference))
+            
+            # Convert to similarity score (0-100)
+            # Lower distance = higher similarity
+            # Typical range: 20-100 for distance, we invert it
+            similarity_score = max(0, 100 - (normalized_distance * 5))
+            
+            # Extract pitch contours
+            pitch_student = librosa.yin(self.y, fmin=80, fmax=400, sr=self.sr)
+            pitch_reference = librosa.yin(self.y_ref, fmin=80, fmax=400, sr=self.sr_ref)
+            
+            # Compare pitch stability (lower std = more stable)
+            pitch_student_valid = pitch_student[~np.isnan(pitch_student)]
+            pitch_reference_valid = pitch_reference[~np.isnan(pitch_reference)]
+            
+            if len(pitch_student_valid) > 0 and len(pitch_reference_valid) > 0:
+                pitch_diff = abs(np.mean(pitch_student_valid) - np.mean(pitch_reference_valid))
+                pitch_similarity = max(0, 100 - pitch_diff)
+            else:
+                pitch_similarity = 50
+            
+            # Analyze rhythm (tempo comparison)
+            tempo_student, _ = librosa.beat.beat_track(y=self.y, sr=self.sr)
+            tempo_reference, _ = librosa.beat.beat_track(y=self.y_ref, sr=self.sr_ref)
+            tempo_diff = abs(tempo_student - tempo_reference)
+            tempo_similarity = max(0, 100 - tempo_diff)
+            
+            # Overall comparison score
+            overall_similarity = (similarity_score * 0.5 + pitch_similarity * 0.3 + tempo_similarity * 0.2)
+            
+            # Generate feedback based on similarity
+            if overall_similarity >= 85:
+                feedback = "Excellent! Your recitation closely matches the reference."
+                grade = "Excellent"
+            elif overall_similarity >= 70:
+                feedback = "Very good recitation with minor differences from the reference."
+                grade = "Very Good"
+            elif overall_similarity >= 55:
+                feedback = "Good attempt. Practice to match the reference more closely."
+                grade = "Good"
+            else:
+                feedback = "Keep practicing. Listen carefully to the reference recitation."
+                grade = "Needs Improvement"
+            
+            return {
+                'has_reference': True,
+                'reference_duration': round(self.duration_ref, 2),
+                'student_duration': round(self.duration, 2),
+                'overall_similarity': round(overall_similarity, 2),
+                'pronunciation_similarity': round(similarity_score, 2),
+                'pitch_similarity': round(pitch_similarity, 2),
+                'tempo_similarity': round(tempo_similarity, 2),
+                'grade': grade,
+                'feedback': feedback,
+                'details': {
+                    'dtw_distance': round(normalized_distance, 2),
+                    'student_avg_pitch': round(np.mean(pitch_student_valid), 1) if len(pitch_student_valid) > 0 else 0,
+                    'reference_avg_pitch': round(np.mean(pitch_reference_valid), 1) if len(pitch_reference_valid) > 0 else 0,
+                    'student_tempo': round(tempo_student, 1),
+                    'reference_tempo': round(tempo_reference, 1)
+                }
+            }
+            
+        except ImportError:
+            # fastdtw not installed, use simpler comparison
+            return self.simple_audio_comparison()
+        except Exception as e:
+            print(json.dumps({
+                "status": "comparison_error",
+                "error": str(e)
+            }), file=sys.stderr)
+            return {
+                'has_reference': True,
+                'error': str(e),
+                'feedback': 'Could not compare with reference due to technical error.'
+            }
+    
+    def simple_audio_comparison(self):
+        """Simple comparison without DTW library"""
+        try:
+            # Extract basic features
+            mfcc_student = librosa.feature.mfcc(y=self.y, sr=self.sr, n_mfcc=13)
+            mfcc_reference = librosa.feature.mfcc(y=self.y_ref, sr=self.sr_ref, n_mfcc=13)
+            
+            # Pad to same length
+            max_len = max(mfcc_student.shape[1], mfcc_reference.shape[1])
+            if mfcc_student.shape[1] < max_len:
+                mfcc_student = np.pad(mfcc_student, ((0, 0), (0, max_len - mfcc_student.shape[1])))
+            if mfcc_reference.shape[1] < max_len:
+                mfcc_reference = np.pad(mfcc_reference, ((0, 0), (0, max_len - mfcc_reference.shape[1])))
+            
+            # Calculate cosine similarity
+            from numpy.linalg import norm
+            similarity = np.dot(mfcc_student.flatten(), mfcc_reference.flatten()) / (norm(mfcc_student.flatten()) * norm(mfcc_reference.flatten()))
+            similarity_score = (similarity + 1) * 50  # Scale to 0-100
+            
+            if similarity_score >= 80:
+                grade = "Excellent"
+                feedback = "Very close to the reference recitation!"
+            elif similarity_score >= 65:
+                grade = "Good"
+                feedback = "Good recitation. Minor improvements needed."
+            else:
+                grade = "Needs Improvement"
+                feedback = "Keep practicing with the reference audio."
+            
+            return {
+                'has_reference': True,
+                'overall_similarity': round(similarity_score, 2),
+                'grade': grade,
+                'feedback': feedback,
+                'note': 'Basic comparison (install fastdtw for detailed analysis)'
+            }
+        except Exception as e:
+            return {
+                'has_reference': True,
+                'error': str(e)
+            }
+    
     def analyze(self):
         """Run complete Tajweed analysis"""
         madd = self.analyze_madd()
@@ -553,6 +835,11 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
         whisper_transcription = None
         if self.whisper_model:
             whisper_transcription = self.transcribe_with_whisper()
+        
+        # Compare with reference audio if provided
+        reference_comparison = None
+        if self.y_ref is not None:
+            reference_comparison = self.compare_with_reference()
         
         results = {
             'audio_file': self.audio_path,
@@ -567,7 +854,8 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
             'madd_analysis': madd,
             'idgham_bila_ghunnah_analysis': idgham_bila,
             'idgham_bi_ghunnah_analysis': idgham_bi,
-            'overall_score': self.calculate_overall_score(madd, idgham_bila, idgham_bi)
+            'overall_score': self.calculate_overall_score(madd, idgham_bila, idgham_bi),
+            'reference_comparison': reference_comparison
         }
         
         # Generate OpenAI feedback if enabled
@@ -636,19 +924,27 @@ def main():
     """Main function"""
     if len(sys.argv) < 2:
         print(json.dumps({
-            'error': 'Usage: python tajweed_analyzer.py <audio_file> [expected_text] [--no-whisper] [--no-openai]'
+            'error': 'Usage: python tajweed_analyzer.py <audio_file> [expected_text] [--reference=<path>] [--no-whisper] [--no-openai]'
         }))
         sys.exit(1)
     
     audio_path = sys.argv[1]
-    expected_text = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith('--') else ""
+    expected_text = ""
+    reference_audio = None
+    
+    # Parse arguments
+    for arg in sys.argv[2:]:
+        if arg.startswith('--reference='):
+            reference_audio = arg.split('=', 1)[1]
+        elif not arg.startswith('--'):
+            expected_text = arg
     
     # Check for flags
     use_whisper = '--no-whisper' not in sys.argv
     use_openai = '--no-openai' not in sys.argv
     
     try:
-        analyzer = TajweedAnalyzer(audio_path, expected_text, use_whisper, use_openai)
+        analyzer = TajweedAnalyzer(audio_path, expected_text, use_whisper, use_openai, reference_audio)
         results = analyzer.analyze()
         print(json.dumps(results, ensure_ascii=False, indent=2))
     except FileNotFoundError:

@@ -81,19 +81,47 @@
                         'oga' => 'audio/ogg',
                     ];
                     $detectedMime = $mimeTypes[strtolower($audioExt)] ?? 'audio/mpeg';
+                    $audioUrl = asset('storage/' . $submission->audio_file_path);
                 @endphp
-                <audio id="submissionAudio" controls preload="metadata" style="width: 100%; margin-bottom: 10px; outline: none;">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="{{ $detectedMime }}">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/webm">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mpeg">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/wav">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/ogg">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mp4">
+                <audio id="submissionAudio" controls preload="auto" style="width: 100%; margin-bottom: 10px; outline: none;" controlsList="nodownload">
+                    <source src="{{ $audioUrl }}" type="{{ $detectedMime }}">
+                    <source src="{{ $audioUrl }}" type="audio/webm">
+                    <source src="{{ $audioUrl }}" type="audio/mpeg">
+                    <source src="{{ $audioUrl }}" type="audio/wav">
+                    <source src="{{ $audioUrl }}" type="audio/ogg">
+                    <source src="{{ $audioUrl }}" type="audio/mp4">
+                    <source src="{{ $audioUrl }}" type="audio/x-m4a">
                     Your browser does not support the audio element.
                 </audio>
-                <div style="font-size: 0.75rem; color: var(--color-light-green); opacity: 0.6; margin-top: 5px;">
-                    📁 File: {{ basename($submission->audio_file_path) }}
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
+                    <div style="font-size: 0.75rem; color: var(--color-light-green); opacity: 0.6; flex: 1;">
+                        📁 File: {{ basename($submission->audio_file_path) }}
+                    </div>
+                    <a href="{{ $audioUrl }}" download="{{ basename($submission->audio_file_path) }}" 
+                       style="padding: 6px 12px; background: rgba(227, 216, 136, 0.2); color: var(--color-gold); border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease; border: 1px solid rgba(227, 216, 136, 0.3);"
+                       onmouseover="this.style.background='var(--color-gold)'; this.style.color='var(--color-dark)'"
+                       onmouseout="this.style.background='rgba(227, 216, 136, 0.2)'; this.style.color='var(--color-gold)'">
+                        ⬇️ Download
+                    </a>
                 </div>
+                <script>
+                    // Audio debugging
+                    const audio = document.getElementById('submissionAudio');
+                    if (audio) {
+                        audio.addEventListener('error', function(e) {
+                            console.error('Audio loading error:', e);
+                            console.log('Attempted URL:', '{{ $audioUrl }}');
+                            console.log('MIME type:', '{{ $detectedMime }}');
+                            const errorDiv = document.createElement('div');
+                            errorDiv.style.cssText = 'background: rgba(255,107,107,0.2); padding: 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #ff6b6b; color: #ff6b6b; font-size: 0.85rem;';
+                            errorDiv.innerHTML = '⚠️ Audio playback error. Please use the download button to listen offline.';
+                            audio.parentNode.insertBefore(errorDiv, audio.nextSibling);
+                        });
+                        audio.addEventListener('loadedmetadata', function() {
+                            console.log('✅ Audio loaded successfully');
+                        });
+                    }
+                </script>
             </div>
 
             @if($submission->transcription)

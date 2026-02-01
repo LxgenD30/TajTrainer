@@ -1058,11 +1058,17 @@ class StudentController extends Controller
         // Get reference audio URLs
         $referenceAudioUrls = $this->getQuranAudioUrls($surah, $startVerse, $endVerse);
         
+        // Get first reference audio URL for comparison
+        $firstReferenceUrl = !empty($referenceAudioUrls) && isset($referenceAudioUrls[0]['url']) 
+            ? $referenceAudioUrls[0]['url'] 
+            : null;
+        
         \Log::info('Expected Quranic text for analysis: ' . $correctText);
         \Log::info('Tajweed-colored text: ' . $tajweedText);
+        \Log::info('Reference audio URL: ' . ($firstReferenceUrl ?? 'none'));
         
-        // Run Python audio analysis with expected text
-        $audioAnalysis = $this->runPythonAudioAnalysis($fullPath, $correctText);
+        // Run Python audio analysis with expected text AND reference audio
+        $audioAnalysis = $this->runPythonAudioAnalysis($fullPath, $correctText, $firstReferenceUrl);
         
         \Log::info('Audio analysis result: ' . json_encode($audioAnalysis));
         
@@ -1247,6 +1253,38 @@ class StudentController extends Controller
     }
     
     /**
+     * Download reference audio from AlQuran.cloud
+     */
+    private function downloadReferenceAudio($audioUrl)
+    {
+        // Create temp directory if doesn't exist
+        $tempDir = storage_path('app/temp_reference_audio');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        
+        // Generate unique filename
+        $filename = 'ref_' . md5($audioUrl) . '.mp3';
+        $filepath = $tempDir . '/' . $filename;
+        
+        // Check if already downloaded
+        if (file_exists($filepath)) {
+            return $filepath;
+        }
+        
+        // Download the audio file
+        $audioContent = @file_get_contents($audioUrl);
+        if ($audioContent === false) {
+            throw new \Exception("Failed to download reference audio from: $audioUrl");
+        }
+        
+        // Save to file
+        file_put_contents($filepath, $audioContent);
+        
+        return $filepath;
+    }
+    
+    /**
      * Get surah number from name
      */
     private function getSurahNumber($surahName)
@@ -1316,13 +1354,24 @@ class StudentController extends Controller
     /**
      * Run Python audio analysis
      */
-    private function runPythonAudioAnalysis($fullPath, $expectedText = '')
+    private function runPythonAudioAnalysis($fullPath, $expectedText = '', $referenceAudioUrl = null)
     {
         $pythonScript = base_path('python/tajweed_analyzer.py');
         
         if (!file_exists($pythonScript)) {
             \Log::warning('Python script not found: ' . $pythonScript);
             return $this->getDefaultAnalysisResult('Python analyzer not found. Manual grading may be required.');
+        }
+
+        // Download reference audio if URL provided
+        $referenceAudioPath = null;
+        if ($referenceAudioUrl) {
+            try {
+                $referenceAudioPath = $this->downloadReferenceAudio($referenceAudioUrl);
+                \Log::info('Reference audio downloaded: ' . $referenceAudioPath);
+            } catch (\Exception $e) {
+                \Log::warning('Could not download reference audio: ' . $e->getMessage());
+            }
         }
 
         // Pass OpenAI API key via environment variable
@@ -1332,7 +1381,12 @@ class StudentController extends Controller
         }
 
         $pythonCommand = $this->getPythonCommand();
+        
+        // Build command with reference audio if available
         $command = "$pythonCommand \"$pythonScript\" \"$fullPath\" \"$expectedText\"";
+        if ($referenceAudioPath && file_exists($referenceAudioPath)) {
+            $command .= " --reference=\"$referenceAudioPath\"";
+        }
         
         \Log::info('Running Python Tajweed analysis...');
         \Log::info('Command: ' . $command);

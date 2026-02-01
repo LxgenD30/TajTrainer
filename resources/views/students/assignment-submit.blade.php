@@ -166,7 +166,13 @@
                     
                     <div id="audioPlayback" style="display: none; text-align: center; padding: 25px; background: rgba(31, 39, 27, 0.6); border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.4);">
                         <div style="color: var(--color-gold); font-weight: 700; margin-bottom: 15px; font-size: 1.1rem;">✅ Your Recording:</div>
-                        <audio id="audioPlayer" controls style="width: 100%; max-width: 500px; margin-bottom: 15px;"></audio>
+                        <audio id="audioPlayer" controls preload="auto" style="width: 100%; max-width: 500px; margin-bottom: 15px; outline: none;">
+                            <source id="audioSource" type="audio/webm">
+                            <source id="audioSourceMp3" type="audio/mpeg">
+                            <source id="audioSourceM4a" type="audio/x-m4a">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <div id="audioError" style="display: none; color: #e74c3c; margin-bottom: 10px; padding: 10px; background: rgba(231, 76, 60, 0.1); border-radius: 6px;">⚠️ Audio playback error. Try download button below.</div>
                         <button type="button" onclick="deleteRecording()" style="padding: 10px 25px; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 3px 15px rgba(231, 76, 60, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                             🗑️ Delete & Re-record
                         </button>
@@ -384,7 +390,20 @@
                 console.log('Audio blob created:', audioBlob.size, 'bytes');
                 
                 const audioUrl = URL.createObjectURL(audioBlob);
-                document.getElementById('audioPlayer').src = audioUrl;
+                const audioPlayer = document.getElementById('audioPlayer');
+                const audioSource = document.getElementById('audioSource');
+                
+                // Set source based on mime type
+                audioSource.src = audioUrl;
+                audioSource.type = mimeType;
+                audioPlayer.load();
+                
+                // Add error handling
+                audioPlayer.addEventListener('error', function(e) {
+                    console.error('Audio playback error:', e);
+                    document.getElementById('audioError').style.display = 'block';
+                });
+                
                 document.getElementById('audioPlayback').style.display = 'block';
                 
                 // Convert to base64
