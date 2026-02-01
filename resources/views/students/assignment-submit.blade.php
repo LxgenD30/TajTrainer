@@ -12,42 +12,51 @@
         </a>
     </div>
 
-    <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 25px;">
-        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
-            <div style="width: 60px; height: 60px; background: var(--color-dark-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
+    <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 35px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 25px;">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
+            <div style="width: 65px; height: 65px; background: linear-gradient(135deg, var(--color-dark-green), rgba(77, 139, 49, 0.8)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; box-shadow: 0 4px 20px rgba(77, 139, 49, 0.5);">
                 📝
             </div>
-            <div>
-                <h2 style="color: var(--color-gold); font-size: 1.5rem; margin-bottom: 5px;">
+            <div style="flex: 1;">
+                <h2 style="color: var(--color-gold); font-size: 1.6rem; margin-bottom: 8px; font-weight: 700;">
                     @if($assignment->surah)
-                        📖 {{ $assignment->surah }} ({{ $assignment->start_verse }}@if($assignment->end_verse)-{{ $assignment->end_verse }}@endif)
+                        📖 {{ $assignment->surah }}
+                        <span style="font-size: 1.2rem; opacity: 0.9;">(Ayah {{ $assignment->start_verse }}@if($assignment->end_verse && $assignment->end_verse != $assignment->start_verse)-{{ $assignment->end_verse }}@endif)</span>
                     @else
                         {{ $assignment->material ? $assignment->material->title : 'Assignment' }}
                     @endif
                 </h2>
-                <p style="color: var(--color-light-green); opacity: 0.8; font-size: 0.9rem; margin: 0;">{{ $assignment->classroom->class_name }}</p>
+                <p style="color: var(--color-light-green); opacity: 0.9; font-size: 1rem; margin: 0;">{{ $assignment->classroom->class_name }}</p>
             </div>
         </div>
 
-        <div style="background: rgba(70, 63, 58, 0.4); padding: 20px; border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.2); margin-bottom: 25px;">
-            <h3 style="color: var(--color-gold); font-size: 1.2rem; margin-bottom: 15px;">📋 Instructions</h3>
-            <p style="color: var(--color-light-green); line-height: 1.8; margin: 0; white-space: pre-wrap;">{{ $assignment->instructions }}</p>
+        <div style="background: rgba(70, 63, 58, 0.4); padding: 25px; border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.2); margin-bottom: 25px;">
+            <h3 style="color: var(--color-gold); font-size: 1.3rem; margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                <span>📋</span> Instructions
+            </h3>
+            <p style="color: var(--color-light-green); line-height: 1.9; margin: 0; white-space: pre-wrap; font-size: 1.05rem;">{{ $assignment->instructions }}</p>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 25px;">
-            <div style="background: rgba(77, 139, 49, 0.2); padding: 18px; border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.4);">
-                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+            <div style="background: rgba(77, 139, 49, 0.2); padding: 20px; border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.4);">
+                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
                     📅 Due Date
                 </div>
-                <div style="color: var(--color-light-green); font-size: 1.1rem; font-weight: 600;">{{ $assignment->due_date->format('M d, Y') }}</div>
-                <div style="color: var(--color-light-green); font-size: 0.95rem; opacity: 0.8; margin-top: 4px;">{{ $assignment->due_date->format('h:i A') }}</div>
+                <div style="color: var(--color-light-green); font-size: 1.2rem; font-weight: 700;">{{ $assignment->due_date->format('M d, Y') }}</div>
+                <div style="color: var(--color-light-green); font-size: 1rem; opacity: 0.9; margin-top: 4px;">{{ $assignment->due_date->format('h:i A') }}</div>
             </div>
-            <div style="background: rgba(227, 216, 136, 0.15); padding: 18px; border-radius: 12px; border: 2px solid var(--color-gold);">
-                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+            <div style="background: rgba(227, 216, 136, 0.15); padding: 20px; border-radius: 12px; border: 2px solid var(--color-gold);">
+                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
                     ✨ Tajweed Focus
                 </div>
-                <div style="color: var(--color-light-green); font-size: 1.05rem; font-weight: 600;">{{ $assignment->tajweed_rules ?? 'General Tajweed' }}</div>
-                <div style="color: var(--color-light-green); font-size: 0.85rem; opacity: 0.8; margin-top: 4px;">🎯 100 points • 🎤 Voice Only</div>
+                <div style="color: var(--color-light-green); font-size: 1.1rem; font-weight: 700;">
+                    @if(is_array($assignment->tajweed_rules) && count($assignment->tajweed_rules) > 0)
+                        {{ $assignment->tajweed_rules[0] }}
+                    @else
+                        General Tajweed
+                    @endif
+                </div>
+                <div style="color: var(--color-light-green); font-size: 0.9rem; opacity: 0.8; margin-top: 6px;">🎯 100 points • 🎤 Voice Only</div>
             </div>
         </div>
 
@@ -67,74 +76,74 @@
 
     <form method="POST" action="{{ route('student.assignment.store', $assignment->assignment_id) }}" enctype="multipart/form-data" id="submissionForm">
         @csrf
-        <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
-                <div style="width: 50px; height: 50px; background: var(--color-dark-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
+        <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 35px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding-bottom: 25px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
+                <div style="width: 55px; height: 55px; background: linear-gradient(135deg, var(--color-dark-green), rgba(77, 139, 49, 0.8)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 4px 20px rgba(77, 139, 49, 0.5);">
                     ✍️
                 </div>
                 <div>
-                    <h3 style="color: var(--color-gold); font-size: 1.3rem; margin-bottom: 5px;">Your Submission</h3>
-                    <p style="color: var(--color-light-green); opacity: 0.8; font-size: 0.9rem; margin: 0;">Complete the fields below</p>
+                    <h3 style="color: var(--color-gold); font-size: 1.5rem; margin-bottom: 8px; font-weight: 700;">Your Submission</h3>
+                    <p style="color: var(--color-light-green); opacity: 0.9; font-size: 1rem; margin: 0;">Complete the fields below to submit your work</p>
                 </div>
             </div>
 
             @if($assignment->is_voice_submission)
             <div style="margin-bottom: 25px;">
                 @if($assignment->surah && $verses)
-                <div style="background: rgba(227, 216, 136, 0.15); padding: 25px; border-radius: 12px; border: 3px solid var(--color-gold); margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;">
-                        <span style="font-size: 1.3rem;">📖</span>
-                        <h4 style="color: var(--color-gold); font-size: 1.1rem; margin: 0; font-weight: 700;">Verses to Recite</h4>
+                <div style="background: linear-gradient(135deg, rgba(227, 216, 136, 0.15), rgba(227, 216, 136, 0.08)); padding: 30px; border-radius: 12px; border: 3px solid var(--color-gold); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(227, 216, 136, 0.2);">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px;">
+                        <span style="font-size: 1.5rem;">📖</span>
+                        <h4 style="color: var(--color-gold); font-size: 1.3rem; margin: 0; font-weight: 700;">Verses to Recite</h4>
                     </div>
-                    <div style="background: rgba(31, 39, 27, 0.4); padding: 25px; border-radius: 10px; margin-bottom: 12px;">
-                        <div style="color: #fff; font-size: 1.8rem; line-height: 2.5; font-family: 'Amiri', 'Arabic Typesetting', serif; direction: rtl; text-align: center; letter-spacing: 1px;">
+                    <div style="background: rgba(31, 39, 27, 0.5); padding: 30px; border-radius: 10px; margin-bottom: 15px; box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);">
+                        <div style="color: #fff; font-size: 2rem; line-height: 2.8; font-family: 'Amiri', 'Arabic Typesetting', serif; direction: rtl; text-align: center; letter-spacing: 2px;">
                             {{ $verses }}
                         </div>
                     </div>
-                    <div style="color: var(--color-light-green); font-size: 0.9rem; opacity: 0.9; text-align: center; font-style: italic;">
+                    <div style="color: var(--color-light-green); font-size: 1rem; opacity: 0.95; text-align: center; font-style: italic;">
                         🎯 Recite these verses with proper Tajweed rules
                     </div>
                 </div>
                 @endif
                 
-                <label style="display: block; color: var(--color-gold); font-weight: 600; margin-bottom: 15px; font-size: 1rem;">
-                    🎤 Voice Submission <span style="color: #ff6b6b;">*</span>
+                <label style="display: block; color: var(--color-gold); font-weight: 700; margin-bottom: 20px; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.4rem;">🎤</span> Voice Submission <span style="color: #ff6b6b; font-size: 1.3rem;">*</span>
                 </label>
                 
-                <div id="submissionTypeSelection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <button type="button" onclick="selectSubmissionType('live')" class="submission-type-btn" id="liveBtn" style="padding: 30px 20px; background: rgba(70, 63, 58, 0.4); border: 2px solid rgba(77, 139, 49, 0.4); border-radius: 12px; cursor: pointer; transition: all 0.3s ease; text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 10px;">🎙️</div>
-                        <div style="color: var(--color-gold); font-weight: 600; font-size: 1.1rem; margin-bottom: 5px;">Live Recitation</div>
-                        <div style="color: var(--color-light-green); opacity: 0.8; font-size: 0.85rem;">Record directly in browser</div>
+                <div id="submissionTypeSelection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                    <button type="button" onclick="selectSubmissionType('live')" class="submission-type-btn" id="liveBtn" style="padding: 35px 25px; background: rgba(70, 63, 58, 0.4); border: 3px solid rgba(77, 139, 49, 0.4); border-radius: 12px; cursor: pointer; transition: all 0.3s ease; text-align: center;">
+                        <div style="font-size: 3.5rem; margin-bottom: 12px;">🎙️</div>
+                        <div style="color: var(--color-gold); font-weight: 700; font-size: 1.2rem; margin-bottom: 8px;">Live Recitation</div>
+                        <div style="color: var(--color-light-green); opacity: 0.85; font-size: 0.95rem;">Record directly in browser</div>
                     </button>
                     
-                    <button type="button" onclick="selectSubmissionType('upload')" class="submission-type-btn" id="uploadBtn" style="padding: 30px 20px; background: rgba(70, 63, 58, 0.4); border: 2px solid rgba(77, 139, 49, 0.4); border-radius: 12px; cursor: pointer; transition: all 0.3s ease; text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 10px;">📤</div>
-                        <div style="color: var(--color-gold); font-weight: 600; font-size: 1.1rem; margin-bottom: 5px;">Upload Recording</div>
-                        <div style="color: var(--color-light-green); opacity: 0.8; font-size: 0.85rem;">Upload an audio file</div>
+                    <button type="button" onclick="selectSubmissionType('upload')" class="submission-type-btn" id="uploadBtn" style="padding: 35px 25px; background: rgba(70, 63, 58, 0.4); border: 3px solid rgba(77, 139, 49, 0.4); border-radius: 12px; cursor: pointer; transition: all 0.3s ease; text-align: center;">
+                        <div style="font-size: 3.5rem; margin-bottom: 12px;">📤</div>
+                        <div style="color: var(--color-gold); font-weight: 700; font-size: 1.2rem; margin-bottom: 8px;">Upload Recording</div>
+                        <div style="color: var(--color-light-green); opacity: 0.85; font-size: 0.95rem;">Upload an audio file</div>
                     </button>
                 </div>
 
-                <div id="liveRecordingInterface" style="display: none; background: rgba(70, 63, 58, 0.4); padding: 25px; border-radius: 10px; border: 2px solid rgba(77, 139, 49, 0.4);">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="color: var(--color-gold); font-size: 1.1rem; font-weight: 600; margin-bottom: 10px;">🎙️ Live Recording</div>
-                        <div id="recordingStatus" style="color: var(--color-light-green); opacity: 0.8; font-size: 0.9rem; margin-bottom: 15px;">Ready to record</div>
-                        <div id="recordingTimer" style="color: var(--color-gold); font-size: 2rem; font-weight: 600; margin-bottom: 20px; font-family: monospace;">00:00</div>
+                <div id="liveRecordingInterface" style="display: none; background: rgba(70, 63, 58, 0.5); padding: 30px; border-radius: 12px; border: 3px solid rgba(77, 139, 49, 0.4);">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="color: var(--color-gold); font-size: 1.3rem; font-weight: 700; margin-bottom: 12px;">🎙️ Live Recording</div>
+                        <div id="recordingStatus" style="color: var(--color-light-green); opacity: 0.9; font-size: 1.05rem; margin-bottom: 18px;">Ready to record</div>
+                        <div id="recordingTimer" style="color: var(--color-gold); font-size: 2.5rem; font-weight: 700; margin-bottom: 25px; font-family: monospace; letter-spacing: 2px;">00:00</div>
                     </div>
                     
-                    <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 20px;">
-                        <button type="button" id="startRecordBtn" onclick="startRecording()" style="padding: 12px 30px; background: #4caf50; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 25px;">
+                        <button type="button" id="startRecordBtn" onclick="startRecording()" style="padding: 15px 35px; background: linear-gradient(135deg, #4caf50, #45a049); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 1.05rem; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 25px rgba(76, 175, 80, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(76, 175, 80, 0.4)'">
                             ▶️ Start Recording
                         </button>
-                        <button type="button" id="stopRecordBtn" onclick="stopRecording()" disabled style="padding: 12px 30px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s ease; opacity: 0.5;">
+                        <button type="button" id="stopRecordBtn" onclick="stopRecording()" disabled style="padding: 15px 35px; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: not-allowed; font-size: 1.05rem; transition: all 0.3s ease; opacity: 0.5;">
                             ⏹️ Stop Recording
                         </button>
                     </div>
                     
-                    <div id="audioPlayback" style="display: none; text-align: center; padding: 20px; background: rgba(31, 39, 27, 0.5); border-radius: 10px;">
-                        <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 10px;">Your Recording:</div>
-                        <audio id="audioPlayer" controls style="width: 100%; margin-bottom: 10px;"></audio>
-                        <button type="button" onclick="deleteRecording()" style="padding: 8px 20px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
+                    <div id="audioPlayback" style="display: none; text-align: center; padding: 25px; background: rgba(31, 39, 27, 0.6); border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.4);">
+                        <div style="color: var(--color-gold); font-weight: 700; margin-bottom: 15px; font-size: 1.1rem;">✅ Your Recording:</div>
+                        <audio id="audioPlayer" controls style="width: 100%; max-width: 500px; margin-bottom: 15px;"></audio>
+                        <button type="button" onclick="deleteRecording()" style="padding: 10px 25px; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 3px 15px rgba(231, 76, 60, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                             🗑️ Delete & Re-record
                         </button>
                     </div>
@@ -142,42 +151,43 @@
                     <input type="hidden" id="recordedAudio" name="recorded_audio">
                 </div>
 
-                <div id="uploadInterface" style="display: none; background: rgba(70, 63, 58, 0.4); padding: 25px; border-radius: 10px; border: 2px dashed rgba(77, 139, 49, 0.4); text-align: center;">
-                    <div style="font-size: 3rem; margin-bottom: 15px;">📤</div>
+                <div id="uploadInterface" style="display: none; background: rgba(70, 63, 58, 0.5); padding: 30px; border-radius: 12px; border: 3px dashed rgba(77, 139, 49, 0.5); text-align: center;">
+                    <div style="font-size: 3.5rem; margin-bottom: 20px;">📤</div>
                     <input 
                         type="file" 
                         name="audio_file" 
                         id="audioFileInput"
                         accept="audio/*"
-                        style="width: 100%; padding: 15px; color: var(--color-light-green); background: rgba(31, 39, 27, 0.5); border: 2px solid rgba(77, 139, 49, 0.4); border-radius: 8px; cursor: pointer;"
+                        style="width: 100%; padding: 18px; color: var(--color-light-green); background: rgba(31, 39, 27, 0.5); border: 3px solid rgba(77, 139, 49, 0.5); border-radius: 10px; cursor: pointer; font-size: 1.05rem; font-weight: 600;"
                         onchange="showFileName(this)"
                     >
-                    <p style="color: var(--color-light-green); opacity: 0.7; font-size: 0.85rem; margin: 15px 0 0 0;">
-                        💡 Supported formats: MP3, WAV, M4A, OGG (Max: 10MB)
+                    <p style="color: var(--color-light-green); opacity: 0.8; font-size: 0.95rem; margin: 18px 0 0 0; line-height: 1.6;">
+                        💡 <strong>Supported formats:</strong> MP3, WAV, M4A, OGG<br>
+                        <strong>Maximum size:</strong> 10MB
                     </p>
-                    <div id="selectedFileName" style="color: var(--color-gold); margin-top: 15px; font-weight: 600;"></div>
+                    <div id="selectedFileName" style="color: var(--color-gold); margin-top: 18px; font-weight: 700; font-size: 1.05rem;"></div>
                 </div>
 
-                <button type="button" onclick="changeSubmissionType()" id="changeTypeBtn" style="display: none; margin-top: 15px; padding: 8px 16px; background: transparent; color: var(--color-light-green); border: 2px solid rgba(77, 139, 49, 0.4); border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;">
+                <button type="button" onclick="changeSubmissionType()" id="changeTypeBtn" style="display: none; margin-top: 20px; padding: 10px 20px; background: transparent; color: var(--color-light-green); border: 2px solid rgba(77, 139, 49, 0.5); border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.borderColor='var(--color-gold)'; this.style.color='var(--color-gold)'" onmouseout="this.style.borderColor='rgba(77, 139, 49, 0.5)'; this.style.color='var(--color-light-green)'">
                     ← Change Submission Type
                 </button>
             </div>
             @endif
 
-            <div style="display: flex; gap: 15px; justify-content: flex-end; padding-top: 20px; border-top: 2px solid rgba(77, 139, 49, 0.3);">
-                <a href="{{ route('classroom.show', $assignment->class_id) }}" class="btn-secondary" style="text-decoration: none;">
-                    Cancel
+            <div style="display: flex; gap: 20px; justify-content: flex-end; padding-top: 25px; border-top: 2px solid rgba(77, 139, 49, 0.3);">
+                <a href="{{ route('classroom.show', $assignment->class_id) }}" class="btn-secondary" style="text-decoration: none; padding: 14px 30px; font-size: 1.05rem; font-weight: 600;">
+                    ← Cancel
                 </a>
-                <button type="submit" class="btn-primary" id="submitBtn">
+                <button type="submit" class="btn-primary" id="submitBtn" style="padding: 14px 35px; font-size: 1.05rem; font-weight: 700; box-shadow: 0 4px 20px rgba(227, 216, 136, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 25px rgba(227, 216, 136, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(227, 216, 136, 0.4)'">
                     📤 Submit Assignment
                 </button>
             </div>
             
             @if($assignment->is_voice_submission && config('services.assemblyai.api_key'))
-            <div style="margin-top: 15px; padding: 12px 20px; background: rgba(227, 216, 136, 0.1); border-radius: 10px; border: 2px solid rgba(227, 216, 136, 0.2); text-align: center;">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--color-gold); font-size: 0.9rem;">
-                    <span style="font-size: 1.1rem;">🤖</span>
-                    <span>Your audio will be automatically transcribed and analyzed for Tajweed after submission</span>
+            <div style="margin-top: 20px; padding: 15px 25px; background: linear-gradient(135deg, rgba(227, 216, 136, 0.12), rgba(227, 216, 136, 0.06)); border-radius: 10px; border: 2px solid rgba(227, 216, 136, 0.25); text-align: center;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--color-gold); font-size: 1rem;">
+                    <span style="font-size: 1.3rem;">🤖</span>
+                    <span><strong>AI-Powered Analysis:</strong> Your audio will be automatically transcribed and analyzed for Tajweed accuracy after submission</span>
                 </div>
             </div>
             @endif
@@ -187,18 +197,35 @@
 
 <style>
     .submission-type-btn:hover {
-        background: rgba(70, 63, 58, 0.6) !important;
+        background: rgba(70, 63, 58, 0.7) !important;
         border-color: var(--color-gold) !important;
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(227, 216, 136, 0.3);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(227, 216, 136, 0.4);
     }
     
     .submission-type-selected {
-        background: rgba(77, 139, 49, 0.3) !important;
+        background: rgba(77, 139, 49, 0.35) !important;
         border-color: var(--color-gold) !important;
-        box-shadow: 0 4px 15px rgba(227, 216, 136, 0.3);
+        box-shadow: 0 6px 20px rgba(227, 216, 136, 0.4);
+        transform: scale(1.02);
     }
     
+    #stopRecordBtn:not([disabled]) {
+        cursor: pointer;
+        opacity: 1;
+    }
+    
+    #stopRecordBtn:not([disabled]):hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 25px rgba(231, 76, 60, 0.5);
+    }
+    
+    @media (max-width: 768px) {
+        #submissionTypeSelection {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>    
     .submitting-overlay {
         position: fixed;
         top: 0;

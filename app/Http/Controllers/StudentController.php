@@ -130,28 +130,47 @@ class StudentController extends Controller
 
     public function submitAssignment($assignmentId)
     {
-        $assignment = \App\Models\Assignment::with('material', 'classroom')->findOrFail($assignmentId);
-        
-        $student = Student::find(Auth::id());
-        if (!$student->classrooms()->where('class_id', $assignment->class_id)->exists()) {
-            abort(403, 'You are not enrolled in this class.');
-        }
-        
-        // Fetch the actual verses if surah is assigned
-        $verses = null;
-        if ($assignment->surah && $assignment->start_verse) {
-            try {
-                $verses = $this->getQuranText(
-                    $assignment->surah, 
-                    $assignment->start_verse, 
-                    $assignment->end_verse ?? $assignment->start_verse
-                );
-            } catch (\Exception $e) {
-                \Log::error('Failed to fetch Quran verses: ' . $e->getMessage());
+        try {
+            \Log::info('=== Loading Assignment Submission Page ===');
+            \Log::info('Assignment ID: ' . $assignmentId);
+            \Log::info('Student ID: ' . Auth::id());
+            
+            $assignment = \App\Models\Assignment::with('material', 'classroom')->findOrFail($assignmentId);
+            \Log::info('Assignment loaded: ' . $assignment->surah . ' verses ' . $assignment->start_verse . '-' . ($assignment->end_verse ?? $assignment->start_verse));
+            \Log::info('Tajweed rules: ' . json_encode($assignment->tajweed_rules));
+            
+            $student = Student::find(Auth::id());
+            if (!$student || !$student->classrooms()->where('class_id', $assignment->class_id)->exists()) {
+                \Log::warning('Student not enrolled in class or student not found');
+                abort(403, 'You are not enrolled in this class.');
             }
+            
+            // Fetch the actual verses if surah is assigned
+            $verses = null;
+            if ($assignment->surah && $assignment->start_verse) {
+                try {
+                    \Log::info('Fetching Quran verses...');
+                    $verses = $this->getQuranText(
+                        $assignment->surah, 
+                        $assignment->start_verse, 
+                        $assignment->end_verse ?? $assignment->start_verse
+                    );
+                    \Log::info('Verses fetched successfully: ' . substr($verses, 0, 100));
+                } catch (\Exception $e) {
+                    \Log::error('Failed to fetch Quran verses: ' . $e->getMessage());
+                    \Log::error('Stack trace: ' . $e->getTraceAsString());
+                    // Continue without verses - don't block the page
+                }
+            }
+            
+            \Log::info('Returning view with assignment data');
+            return view('students.assignment-submit', compact('assignment', 'verses'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error loading assignment submission page: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return back()->withErrors(['error' => 'Failed to load assignment: ' . $e->getMessage()]);
         }
-        
-        return view('students.assignment-submit', compact('assignment', 'verses'));
     }
 
     public function storeSubmission(Request $request, $assignmentId)
