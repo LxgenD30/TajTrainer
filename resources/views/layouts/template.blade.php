@@ -29,9 +29,9 @@
             
             body {
                 font-family: 'Cairo', sans-serif;
-                background: linear-gradient(135deg, var(--color-dark) 0%, var(--color-brown) 100%);
+                background: linear-gradient(135deg, #f5f5dc 0%, #e8dcc4 50%, #d4c5a9 100%);
                 min-height: 100vh;
-                color: var(--color-light-green);
+                color: #2c3e1f;
                 overflow-x: hidden;
             }
             
@@ -189,7 +189,7 @@
             /* Sidebar */
             .sidebar {
                 width: var(--sidebar-width);
-                background: rgba(31, 39, 27, 0.8);
+                background: rgba(255, 255, 255, 0.95);
                 backdrop-filter: blur(10px);
                 border-right: 3px solid var(--color-dark-green);
                 padding: 30px 0;

@@ -6,6 +6,195 @@
 
 @push('styles')
 <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+        border: 3px solid rgba(77, 139, 49, 0.3);
+        border-top: 3px solid var(--color-dark-green);
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin 0.8s linear infinite;
+        flex-shrink: 0;
+    }
+    
+    .compact-card {
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .assignment-item {
+        background: #fafafa;
+        border-left: 4px solid var(--color-dark-green);
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .assignment-item:hover {
+        box-shadow: 0 4px 12px rgba(77, 139, 49, 0.2);
+        transform: translateX(3px);
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .info-row {
+        display: flex;
+        gap: 20px;
+        font-size: 0.95rem;
+        color: #666;
+        flex-wrap: wrap;
+    }
+</style>
+@endpush
+
+@section('content')
+<div style="padding: 0;">
+    <a href="{{ route('student.classes') }}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-dark-green); text-decoration: none; font-weight: 600; margin-bottom: 15px; transition: all 0.3s ease;" onmouseover="this.style.color='#3a6b25'" onmouseout="this.style.color='var(--color-dark-green)'">
+        ← Back to My Classes
+    </a>
+
+    <!-- Classroom Header - Compact -->
+    <div class="compact-card" style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; background: var(--color-dark-green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;">
+                🏫
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <h2 style="color: var(--color-dark-green); font-size: 1.5rem; margin: 0 0 5px 0;">{{ $classroom->class_name }}</h2>
+                <div class="info-row">
+                    <span>👨‍🏫 {{ $classroom->teacher->name ?? 'Unknown' }}</span>
+                    <span>👥 {{ $classroom->students->count() }} Students</span>
+                    <span>📝 {{ $assignments->count() }} Assignments</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignments Section - Compact -->
+    <div class="compact-card">
+        <h3 style="color: var(--color-dark-green); font-size: 1.3rem; margin: 0 0 15px 0;">📝 Assignments</h3>
+        
+        @if($assignments->count() > 0)
+            @foreach($assignments as $assignment)
+                @php
+                    $submission = $submissions->get($assignment->assignment_id);
+                    $isOverdue = $assignment->due_date < now() && (!$submission || $submission->status === 'pending');
+                    $isPending = !$submission || $submission->status === 'pending';
+                    $isSubmitted = $submission && $submission->status === 'submitted';
+                    $isGraded = $submission && $submission->status === 'graded';
+                @endphp
+                
+                <div class="assignment-item" style="border-left-color: {{ $isGraded ? '#4caf50' : ($isSubmitted ? '#ff9800' : ($isOverdue ? '#e74c3c' : 'var(--color-dark-green)')) }};">
+                    <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px; margin-bottom: 10px;">
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="color: var(--color-dark-green); margin: 0 0 5px 0; font-size: 1.1rem;">
+                                @if($assignment->surah)
+                                    📖 {{ $assignment->surah }} ({{ $assignment->start_verse }}@if($assignment->end_verse)-{{ $assignment->end_verse }}@endif)
+                                @else
+                                    {{ $assignment->material ? $assignment->material->title : 'Assignment' }}
+                                @endif
+                            </h4>
+                            <p style="color: #666; margin: 0 0 8px 0; font-size: 0.95rem; line-height: 1.4;">{{ Str::limit($assignment->instructions, 100) }}</p>
+                        </div>
+                        
+                        <div style="flex-shrink: 0;">
+                            @if($isGraded)
+                                @php
+                                    $score = \App\Models\Score::where('assignment_id', $assignment->assignment_id)
+                                                               ->where('user_id', Auth::id())
+                                                               ->first();
+                                @endphp
+                                <div class="status-badge" style="background: #4caf50; color: white;">
+                                    ✓ {{ $score ? $score->score : $submission->marks_obtained }}/{{ $assignment->total_marks }}
+                                </div>
+                            @elseif($isSubmitted)
+                                @php
+                                    $score = \App\Models\Score::where('assignment_id', $assignment->assignment_id)
+                                                               ->where('user_id', Auth::id())
+                                                               ->first();
+                                @endphp
+                                @if($score)
+                                    <div class="status-badge" style="background: #4caf50; color: white;">
+                                        ✓ {{ $score->score }}/{{ $assignment->total_marks }}
+                                    </div>
+                                @else
+                                    <div class="status-badge" style="background: #2196f3; color: white;">
+                                        <div class="spinner"></div>
+                                        Analyzing
+                                    </div>
+                                @endif
+                            @elseif($isOverdue)
+                                <div class="status-badge" style="background: #e74c3c; color: white;">
+                                    ⚠ Overdue
+                                </div>
+                            @else
+                                <div class="status-badge" style="background: #f5f5f5; color: var(--color-dark-green); border: 2px solid var(--color-dark-green);">
+                                    📌 Pending
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                        <div class="info-row">
+                            <span>📅 {{ $assignment->due_date->format('M d, Y') }}</span>
+                            <span>🎯 {{ $assignment->total_marks }} pts</span>
+                            @if($assignment->is_voice_submission)
+                                <span>🎤 Voice</span>
+                            @endif
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            @if($isPending)
+                                <a href="{{ route('student.assignment.submit', $assignment->assignment_id) }}" class="btn-primary" style="text-decoration: none; padding: 6px 14px; font-size: 0.9rem;">
+                                    📝 Submit
+                                </a>
+                            @else
+                                <a href="{{ route('student.assignment.view', $assignment->assignment_id) }}" class="btn-secondary" style="text-decoration: none; padding: 6px 14px; font-size: 0.9rem;">
+                                    👁️ View
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        @else
+            <div style="text-align: center; padding: 40px 20px; color: #999;">
+                <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;">📝</div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 8px; color: #666;">No Assignments Yet</h3>
+                <p style="font-size: 0.95rem;">Your teacher hasn't created any assignments</p>
+            </div>
+        @endif
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    // No auto-refresh needed - processing happens immediately during submission
+</script>
+@endpush
+@endsection
+
+@push('styles')
+<style>
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.7; }
