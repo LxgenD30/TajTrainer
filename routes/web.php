@@ -14,9 +14,13 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // ===========================
-// TEACHER ROUTES
+// AUTHENTICATED ROUTES
 // ===========================
 Route::middleware('auth')->group(function () {
+    
+    // ===========================
+    // TEACHER ROUTES
+    // ===========================
     // Teacher management
     Route::resource('teachers', App\Http\Controllers\TeacherController::class);
     
@@ -35,12 +39,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/teacher/classroom/{classroom}/progress', 
         [App\Http\Controllers\TeacherController::class, 'classProgress'])
         ->name('teacher.class.progress');
-});
-
-// ===========================
-// STUDENT ROUTES
-// ===========================
-Route::middleware('auth')->group(function () {
+    
+    // ===========================
+    // STUDENT ROUTES
+    // ===========================
     // Student management (admin)
     Route::resource('students', App\Http\Controllers\StudentController::class);
     
@@ -85,12 +87,10 @@ Route::middleware('auth')->group(function () {
     // Teacher's student list view
     Route::get('/students-list', [App\Http\Controllers\StudentListController::class, 'index'])
         ->name('students.list');
-});
-
-// ===========================
-// CLASSROOM ROUTES
-// ===========================
-Route::middleware('auth')->group(function () {
+    
+    // ===========================
+    // CLASSROOM ROUTES
+    // ===========================
     Route::get('/classes', [App\Http\Controllers\ClassroomController::class, 'index'])
         ->name('classroom.index');
     Route::get('/classes/create', [App\Http\Controllers\ClassroomController::class, 'create'])
@@ -108,12 +108,10 @@ Route::middleware('auth')->group(function () {
         ->name('classroom.regenerate');
     Route::delete('/classes/{classroom}', [App\Http\Controllers\ClassroomController::class, 'destroy'])
         ->name('classroom.destroy');
-});
-
-// ===========================
-// ASSIGNMENT ROUTES
-// ===========================
-Route::middleware('auth')->group(function () {
+    
+    // ===========================
+    // ASSIGNMENT ROUTES
+    // ===========================
     Route::get('/classes/{classroom}/assignments/create', 
         [App\Http\Controllers\AssignmentController::class, 'create'])
         ->name('assignment.create');
@@ -127,12 +125,10 @@ Route::middleware('auth')->group(function () {
         ->name('assignment.update');
     Route::delete('/assignments/{assignment}', [App\Http\Controllers\AssignmentController::class, 'destroy'])
         ->name('assignment.destroy');
-});
-
-// ===========================
-// MATERIALS ROUTES
-// ===========================
-Route::middleware('auth')->group(function () {
+    
+    // ===========================
+    // MATERIALS ROUTES
+    // ===========================
     Route::get('/Materials', [App\Http\Controllers\MaterialController::class, 'index'])
         ->name('materials.index');
     Route::get('/Materials/create', [App\Http\Controllers\MaterialController::class, 'create'])
@@ -150,8 +146,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ===========================
-// TELEGRAM BOT WEBHOOK
+// TELEGRAM BOT WEBHOOK (no auth)
 // ===========================
 Route::post('/telegram/webhook', [App\Http\Controllers\TelegramBotController::class, 'webhook'])
     ->name('telegram.webhook');
-

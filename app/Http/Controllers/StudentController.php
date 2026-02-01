@@ -31,17 +31,22 @@ class StudentController extends Controller
     public function classes()
     {
         try {
+            \Log::info('Student classes page accessed by user: ' . Auth::id());
+            
             $student = Student::with(['classrooms.teacher', 'classrooms.assignments'])
                 ->findOrFail(Auth::id());
+            
+            \Log::info('Student found: ' . $student->id . ', Classes count: ' . $student->classrooms->count());
             
             return view('students.classes', compact('student'));
         } catch (\Exception $e) {
             \Log::error('Error loading student classes page: ' . $e->getMessage());
             \Log::error('Student ID: ' . Auth::id());
+            \Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
             
-            return redirect()->route('student.dashboard')
-                ->withErrors(['error' => 'Unable to load classes. Please contact support.']);
+            return redirect()->route('home')
+                ->withErrors(['error' => 'Unable to load classes: ' . $e->getMessage()]);
         }
     }
 
@@ -77,7 +82,7 @@ class StudentController extends Controller
             return view('students.materials', compact('materials'));
         } catch (\Exception $e) {
             \Log::error('Error loading materials: ' . $e->getMessage());
-            return redirect()->route('student.dashboard')
+            return redirect()->route('home')
                 ->withErrors(['error' => 'Unable to load materials. Please try again.']);
         }
     }
@@ -485,8 +490,8 @@ class StudentController extends Controller
                     ->withErrors(['error' => 'Submission processing failed: ' . $e->getMessage() . '. Please try again or contact support.'])
                     ->withInput();
             } catch (\Exception $innerE) {
-                // If we can't even find the assignment, go to dashboard
-                return redirect()->route('student.dashboard')
+                // If we can't even find the assignment, go to home
+                return redirect()->route('home')
                     ->withErrors(['error' => 'Submission failed: ' . $e->getMessage()])
                     ->withInput();
             }
