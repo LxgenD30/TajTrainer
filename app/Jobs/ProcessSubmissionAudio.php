@@ -313,6 +313,10 @@ class ProcessSubmissionAudio implements ShouldQueue
         $result = json_decode($jsonOutput, true);
         
         if (!$result) {
+            Log::error('Failed to parse JSON. Raw Python output:');
+            Log::error($outputStr);
+            Log::error('Extracted JSON attempt:');
+            Log::error($jsonOutput);
             throw new \Exception('Failed to parse Python output as JSON');
         }
         
