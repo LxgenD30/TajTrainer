@@ -275,8 +275,14 @@ class ProcessSubmissionAudio implements ShouldQueue
             Log::info('Reference audio downloaded: ' . $referencePath);
         }
         
-        // Build command
-        $command = escapeshellarg($pythonExecutable) . ' ' . 
+        // Build command with OpenAI API key in environment
+        $openaiKey = config('services.openai.api_key');
+        $envVars = '';
+        if ($openaiKey) {
+            $envVars = 'OPENAI_API_KEY=' . escapeshellarg($openaiKey) . ' ';
+        }
+        
+        $command = $envVars . escapeshellarg($pythonExecutable) . ' ' . 
                    escapeshellarg($pythonScript) . ' ' . 
                    escapeshellarg($fullPath) . ' ' . 
                    escapeshellarg($expectedText);
@@ -286,6 +292,7 @@ class ProcessSubmissionAudio implements ShouldQueue
         }
         
         Log::info('Python command: ' . $command);
+        Log::info('OpenAI API key configured: ' . ($openaiKey ? 'Yes' : 'No'));
         
         // Execute
         $output = [];

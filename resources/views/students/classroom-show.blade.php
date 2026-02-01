@@ -10,6 +10,20 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.7; }
     }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        width: 14px;
+        height: 14px;
+        animation: spin 0.8s linear infinite;
+    }
 </style>
 @endpush
 
@@ -108,8 +122,9 @@
                                             ✓ Graded: {{ $score->score }}/{{ $assignment->total_marks }}
                                         </div>
                                     @else
-                                        <div style="background: #2196f3; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; animation: pulse 2s infinite;">
-                                            🔄 Analyzing...
+                                        <div style="background: #2196f3; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                                            <div class="spinner"></div>
+                                            <span>Analyzing...</span>
                                         </div>
                                     @endif
                                 @elseif($isOverdue)
@@ -216,13 +231,11 @@
     @endphp
     
     @if($hasProcessing)
-        // Refresh every 10 seconds if audio is being processed
+        // Refresh every 5 seconds if audio is being processed
+        console.log('Audio processing in progress... Page will auto-refresh in 5 seconds');
         setTimeout(function() {
             location.reload();
-        }, 10000);
-        
-        // Show processing indicator
-        console.log('Audio processing in progress... Page will auto-refresh');
+        }, 5000);
     @endif
 </script>
 @endpush

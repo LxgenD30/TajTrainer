@@ -4,6 +4,25 @@
 @section('page-title', $student->name . ' - Submissions')
 @section('page-subtitle', $classroom->class_name)
 
+@push('styles')
+<style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        width: 14px;
+        height: 14px;
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+    }
+</style>
+@endpush
+
 @section('content')
 <div style="padding: 0;">
     <div style="margin-bottom: 20px;">
@@ -83,6 +102,11 @@
                                         <div style="font-size: 0.75rem; color: #4caf50; margin-bottom: 3px;">Score</div>
                                         <div style="font-size: 1.3rem; font-weight: 700; color: #4caf50;">{{ $submission->score->score }}/{{ $submission->assignment->total_marks }}</div>
                                     </div>
+                                @elseif($submission->status === 'submitted' && !$submission->score)
+                                    <div style="padding: 8px 15px; background: rgba(33, 150, 243, 0.2); border: 2px solid #2196f3; border-radius: 10px; color: #2196f3; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                        <div class="spinner" style="border-color: rgba(33, 150, 243, 0.3); border-top-color: #2196f3;"></div>
+                                        Processing...
+                                    </div>
                                 @else
                                     <div style="padding: 8px 15px; background: rgba(227, 216, 136, 0.2); border: 2px solid var(--color-gold); border-radius: 10px; color: var(--color-gold); font-size: 0.85rem; font-weight: 600;">
                                         ⏳ Pending Review
@@ -116,4 +140,22 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+    // Auto-refresh if any submission is still being processed
+    @php
+        $hasProcessing = $submissions->contains(function($submission) {
+            return $submission->status === 'submitted' && !$submission->score;
+        });
+    @endphp
+    
+    @if($hasProcessing)
+        console.log('Audio processing in progress... Page will auto-refresh in 5 seconds');
+        setTimeout(function() {
+            location.reload();
+        }, 5000);
+    @endif
+</script>
+@endpush
 @endsection
