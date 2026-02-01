@@ -51,7 +51,7 @@ class AssignmentController extends Controller
             'instructions' => 'nullable|string',
             'total_marks' => 'required|integer|min:1',
             'is_voice_submission' => 'required|boolean',
-            'tajweed_rules' => 'required|string|in:Madd,Noon Saakin',
+            'tajweed_rules' => 'required|string|in:Madd,Idgham Bi Ghunnah,Idgham Bila Ghunnah',
         ]);
 
         // Verify classroom ownership
@@ -126,7 +126,7 @@ class AssignmentController extends Controller
             'instructions' => 'required|string',
             'total_marks' => 'required|integer|min:1',
             'is_voice_submission' => 'required|boolean',
-            'tajweed_rules' => 'required|string|in:Madd,Noon Saakin',
+            'tajweed_rules' => 'required|string|in:Madd,Idgham Bi Ghunnah,Idgham Bila Ghunnah',
         ]);
 
         $classroom = Classroom::findOrFail($assignment->class_id);

@@ -34,21 +34,21 @@
             <p style="color: var(--color-light-green); line-height: 1.8; margin: 0; white-space: pre-wrap;">{{ $assignment->instructions }}</p>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
-            <div style="background: rgba(77, 139, 49, 0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(77, 139, 49, 0.4);">
-                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">📅 Due Date</div>
-                <div style="color: var(--color-light-green); font-size: 1rem;">{{ $assignment->due_date->format('M d, Y h:i A') }}</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div style="background: rgba(77, 139, 49, 0.2); padding: 18px; border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.4);">
+                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                    📅 Due Date
+                </div>
+                <div style="color: var(--color-light-green); font-size: 1.1rem; font-weight: 600;">{{ $assignment->due_date->format('M d, Y') }}</div>
+                <div style="color: var(--color-light-green); font-size: 0.95rem; opacity: 0.8; margin-top: 4px;">{{ $assignment->due_date->format('h:i A') }}</div>
             </div>
-            <div style="background: rgba(77, 139, 49, 0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(77, 139, 49, 0.4);">
-                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">🎯 Total Marks</div>
-                <div style="color: var(--color-light-green); font-size: 1rem;">{{ $assignment->total_marks }} points</div>
+            <div style="background: rgba(227, 216, 136, 0.15); padding: 18px; border-radius: 12px; border: 2px solid var(--color-gold);">
+                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                    ✨ Tajweed Focus
+                </div>
+                <div style="color: var(--color-light-green); font-size: 1.05rem; font-weight: 600;">{{ $assignment->tajweed_rules ?? 'General Tajweed' }}</div>
+                <div style="color: var(--color-light-green); font-size: 0.85rem; opacity: 0.8; margin-top: 4px;">🎯 100 points • 🎤 Voice Only</div>
             </div>
-            @if($assignment->is_voice_submission)
-            <div style="background: rgba(77, 139, 49, 0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(77, 139, 49, 0.4);">
-                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">🎤 Submission Type</div>
-                <div style="color: var(--color-light-green); font-size: 1rem;">Voice Recording</div>
-            </div>
-            @endif
         </div>
 
         @if($assignment->material)

@@ -74,30 +74,54 @@
 
                 <!-- Tajweed Rules Selection -->
                 <div style="margin-bottom: 25px; background: rgba(227, 216, 136, 0.1); padding: 20px; border-radius: 12px; border: 2px solid var(--color-gold);">
-                    <h4 style="color: var(--color-gold); margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px;">
+                    <h4 style="color: var(--color-gold); margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;">
                         <span style="font-size: 1.5rem;">✨</span> Tajweed Rule to Focus On *
                     </h4>
                     <p style="color: var(--color-light); opacity: 0.8; font-size: 0.9rem; margin-bottom: 15px;">
                         Select one specific Tajweed rule that students must pay attention to in this recitation
                     </p>
                     
-                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                        <label style="display: flex; align-items: center; cursor: pointer; background: rgba(227, 216, 136, 0.1); padding: 12px 20px; border-radius: 8px; border: 2px solid var(--color-dark-green); transition: all 0.3s ease;"
-                            onmouseover="this.style.borderColor='var(--color-gold)'"
-                            onmouseout="this.style.borderColor='var(--color-dark-green)'">
-                            <input type="radio" name="tajweed_rules" value="Madd" 
-                                {{ (old('tajweed_rules') == 'Madd') || (is_array($assignment->tajweed_rules) && in_array('Madd', $assignment->tajweed_rules)) ? 'checked' : '' }} required
-                                style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
-                            <span style="color: var(--color-light); font-weight: 600;">Madd (Elongation)</span>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <label style="display: flex; flex-direction: column; cursor: pointer; background: rgba(227, 216, 136, 0.1); padding: 15px; border-radius: 10px; border: 2px solid var(--color-dark-green); transition: all 0.3s ease;"
+                            onmouseover="this.style.borderColor='var(--color-gold)'; this.style.background='rgba(227, 216, 136, 0.2)'"
+                            onmouseout="this.style.borderColor='var(--color-dark-green)'; this.style.background='rgba(227, 216, 136, 0.1)'">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <input type="radio" name="tajweed_rules" value="Madd" 
+                                    {{ (old('tajweed_rules') == 'Madd') || (is_array($assignment->tajweed_rules) && in_array('Madd', $assignment->tajweed_rules)) ? 'checked' : '' }} required
+                                    style="margin-right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                                <span style="color: var(--color-light); font-weight: 600; font-size: 1.05rem;">Madd (Elongation)</span>
+                            </div>
+                            <span style="color: var(--color-light); opacity: 0.7; font-size: 0.85rem; margin-left: 30px;">
+                                Proper elongation of vowels
+                            </span>
                         </label>
                         
-                        <label style="display: flex; align-items: center; cursor: pointer; background: rgba(227, 216, 136, 0.1); padding: 12px 20px; border-radius: 8px; border: 2px solid var(--color-dark-green); transition: all 0.3s ease;"
-                            onmouseover="this.style.borderColor='var(--color-gold)'"
-                            onmouseout="this.style.borderColor='var(--color-dark-green)'">
-                            <input type="radio" name="tajweed_rules" value="Noon Saakin" 
-                                {{ (old('tajweed_rules') == 'Noon Saakin') || (is_array($assignment->tajweed_rules) && in_array('Noon Saakin', $assignment->tajweed_rules)) ? 'checked' : '' }} required
-                                style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
-                            <span style="color: var(--color-light); font-weight: 600;">Noon Saakin (Rules of ن)</span>
+                        <label style="display: flex; flex-direction: column; cursor: pointer; background: rgba(227, 216, 136, 0.1); padding: 15px; border-radius: 10px; border: 2px solid var(--color-dark-green); transition: all 0.3s ease;"
+                            onmouseover="this.style.borderColor='var(--color-gold)'; this.style.background='rgba(227, 216, 136, 0.2)'"
+                            onmouseout="this.style.borderColor='var(--color-dark-green)'; this.style.background='rgba(227, 216, 136, 0.1)'">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <input type="radio" name="tajweed_rules" value="Idgham Bi Ghunnah" 
+                                    {{ (old('tajweed_rules') == 'Idgham Bi Ghunnah') || (is_array($assignment->tajweed_rules) && in_array('Idgham Bi Ghunnah', $assignment->tajweed_rules)) ? 'checked' : '' }} required
+                                    style="margin-right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                                <span style="color: var(--color-light); font-weight: 600; font-size: 1.05rem;">Idgham Bi Ghunnah</span>
+                            </div>
+                            <span style="color: var(--color-light); opacity: 0.7; font-size: 0.85rem; margin-left: 30px;">
+                                Merging WITH nasalization
+                            </span>
+                        </label>
+                        
+                        <label style="display: flex; flex-direction: column; cursor: pointer; background: rgba(227, 216, 136, 0.1); padding: 15px; border-radius: 10px; border: 2px solid var(--color-dark-green); transition: all 0.3s ease;"
+                            onmouseover="this.style.borderColor='var(--color-gold)'; this.style.background='rgba(227, 216, 136, 0.2)'"
+                            onmouseout="this.style.borderColor='var(--color-dark-green)'; this.style.background='rgba(227, 216, 136, 0.1)'">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <input type="radio" name="tajweed_rules" value="Idgham Bila Ghunnah" 
+                                    {{ (old('tajweed_rules') == 'Idgham Bila Ghunnah') || (is_array($assignment->tajweed_rules) && in_array('Idgham Bila Ghunnah', $assignment->tajweed_rules)) ? 'checked' : '' }} required
+                                    style="margin-right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                                <span style="color: var(--color-light); font-weight: 600; font-size: 1.05rem;">Idgham Bila Ghunnah</span>
+                            </div>
+                            <span style="color: var(--color-light); opacity: 0.7; font-size: 0.85rem; margin-left: 30px;">
+                                Merging WITHOUT nasalization
+                            </span>
                         </label>
                     </div>
                     @error('tajweed_rules')
@@ -169,50 +193,28 @@
                     @enderror
                 </div>
 
-                <!-- Due Date, Total Marks, Voice Submission - Side by Side -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                    <!-- Due Date -->
-                    <div>
-                        <label style="display: block; color: var(--color-gold); font-weight: 600; margin-bottom: 8px;">
-                            📅 Due Date *
-                        </label>
-                        <input type="datetime-local" name="due_date" value="{{ old('due_date', $assignment->due_date->format('Y-m-d\TH:i')) }}" required
-                            style="width: 100%; padding: 12px 15px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif; font-size: 1rem;">
-                        @error('due_date')
-                            <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                        @enderror
-                    </div>
+                <!-- Due Date - Now Full Width -->
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; color: var(--color-gold); font-weight: 600; margin-bottom: 8px; font-size: 1.05rem;">
+                        📅 Due Date *
+                    </label>
+                    <input type="datetime-local" name="due_date" value="{{ old('due_date', $assignment->due_date->format('Y-m-d\TH:i')) }}" required
+                        style="width: 100%; padding: 12px 15px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif; font-size: 1rem;">
+                    @error('due_date')
+                        <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
+                </div>
 
-                    <!-- Total Marks -->
-                    <div>
-                        <label style="display: block; color: var(--color-gold); font-weight: 600; margin-bottom: 8px;">
-                            🎯 Total Marks *
-                        </label>
-                        <input type="number" name="total_marks" value="{{ old('total_marks', $assignment->total_marks) }}" min="1" required
-                            style="width: 100%; padding: 12px 15px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif; font-size: 1rem;">
-                        @error('total_marks')
-                            <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <!-- Voice Submission -->
-                    <div>
-                        <label style="display: block; color: var(--color-gold); font-weight: 600; margin-bottom: 8px;">
-                            🎤 Submission Type *
-                        </label>
-                        <label style="display: flex; align-items: center; cursor: pointer; background: rgba(227, 216, 136, 0.15); padding: 12px 15px; border-radius: 8px; border: 2px solid var(--color-gold); height: 48px;">
-                            <input type="hidden" name="is_voice_submission" value="0">
-                            <input type="checkbox" name="is_voice_submission" value="1" 
-                                {{ old('is_voice_submission', $assignment->is_voice_submission) ? 'checked' : '' }}
-                                style="width: 18px; height: 18px; margin-right: 10px; cursor: pointer;">
-                            <span style="color: var(--color-gold); font-weight: 600; font-size: 0.95rem;">
-                                Voice Required
-                            </span>
-                        </label>
-                        @error('is_voice_submission')
-                            <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                        @enderror
-                    </div>
+                <!-- Hidden fields for fixed values -->
+                <input type="hidden" name="total_marks" value="100">
+                <input type="hidden" name="is_voice_submission" value="1">
+                
+                <!-- Info box showing fixed values -->
+                <div style="background: rgba(77, 139, 49, 0.15); padding: 15px; border-radius: 8px; border-left: 4px solid var(--color-light-green); margin-bottom: 25px;">
+                    <p style="margin: 0; color: var(--color-light); font-size: 0.95rem;">
+                        <span style="color: var(--color-light-green); font-weight: 600;">ℹ️ Note:</span> 
+                        All assignments are automatically set to <strong>100 points</strong> and require <strong>voice recordings</strong>.
+                    </p>
                 </div>
 
                 <!-- Buttons -->

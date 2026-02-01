@@ -245,19 +245,34 @@ class StudentController extends Controller
         // Handle uploaded audio file
         elseif ($request->hasFile('audio_file')) {
             $file = $request->file('audio_file');
-            if ($file->getError() === UPLOAD_ERR_OK && $file->isValid() && $file->getSize() > 0) {
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            \Log::info('Processing uploaded audio file');
+            \Log::info('File original name: ' . $file->getClientOriginalName());
+            \Log::info('File size: ' . $file->getSize() . ' bytes');
+            \Log::info('File mime type: ' . $file->getMimeType());
+            \Log::info('File extension: ' . $file->getClientOriginalExtension());
+            \Log::info('File is valid: ' . ($file->isValid() ? 'Yes' : 'No'));
+            
+            if ($file->isValid() && $file->getSize() > 0) {
+                $extension = $file->getClientOriginalExtension() ?: 'webm';
+                $filename = time() . '_' . uniqid() . '.' . $extension;
                 $destinationPath = storage_path('app/public/submissions');
                 
                 if (!file_exists($destinationPath)) {
                     mkdir($destinationPath, 0755, true);
+                    \Log::info('Created directory: ' . $destinationPath);
                 }
                 
-                $fullPath = $destinationPath . '/' . $filename;
-                
-                if (move_uploaded_file($file->getPathname(), $fullPath)) {
-                    $submission->audio_file_path = 'submissions/' . $filename;
+                // Use Laravel's storage method instead of move_uploaded_file
+                try {
+                    $path = $file->storeAs('submissions', $filename, 'public');
+                    $submission->audio_file_path = $path;
+                    \Log::info('✓ Audio file uploaded successfully: ' . $path);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to store uploaded file: ' . $e->getMessage());
                 }
+            } else {
+                \Log::error('File is invalid or empty');
             }
         }
         
