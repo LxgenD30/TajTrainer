@@ -42,11 +42,26 @@ class HomeController extends Controller
             
             return view('layouts.tlayout.dashboard', compact('stats'));
         } elseif (Auth::user()->role_id == 2) {
-            // Student dashboard
-            return redirect()->route('student.classes');
+            // Student dashboard - show stats
+            $student = Student::with(['classrooms.teacher', 'classrooms.assignments', 'scores'])
+                ->findOrFail(Auth::id());
+            
+            $enrolledClassesCount = $student->classrooms->count();
+            $completedAssignments = $student->scores->count();
+            $averageScore = $student->scores->avg('score') ?? 0;
+            $totalAssignments = $student->classrooms->flatMap->assignments->count();
+            $pendingAssignments = $totalAssignments - $completedAssignments;
+            
+            return view('layouts.slayout.dashboard', compact(
+                'student',
+                'enrolledClassesCount',
+                'completedAssignments',
+                'averageScore',
+                'pendingAssignments'
+            ));
         }
         
-        // Default fallback
-        return redirect('/home');
+        // Default fallback - show generic home
+        return view('home');
     }
 }

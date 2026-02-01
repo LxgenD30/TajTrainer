@@ -1,4 +1,4 @@
-@extends('layouts.slayout.dashboard')
+@extends('layouts.template')
 
 @section('page-title', 'My Profile')
 @section('page-subtitle', 'View and manage your profile information')

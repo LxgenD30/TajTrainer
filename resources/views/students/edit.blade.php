@@ -1,4 +1,4 @@
-@extends('layouts.slayout.dashboard')
+@extends('layouts.template')
 
 @section('page-title', 'Edit Profile')
 @section('page-subtitle', 'Update your personal information')
