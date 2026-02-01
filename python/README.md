@@ -1,53 +1,91 @@
-# Tajweed Audio Analysis Setup
+# Tajweed Audio Analysis System
 
 ## Overview
-This Tajweed analyzer uses **Mel-Frequency Cepstral Coefficients (MFCC)** for accurate phonetic analysis of Quranic recitation. MFCC is the industry-standard feature extraction technique for speech recognition, providing superior accuracy in detecting tajweed rules.
+TajTrainer's audio analysis system uses professional phonetic analysis powered by **Praat Parselmouth** for formant extraction and **FastDTW** for reference audio comparison. This approach provides accurate Tajweed rule detection by analyzing the acoustic properties of recitation.
+
+## Version 2.0 - Phonetic Analysis
+
+### Key Features
+- **Formant Analysis**: Uses Praat to analyze vowel quality and Madd elongations
+- **Reference Comparison**: Compares student audio with correct recitation using Dynamic Time Warping (DTW)
+- **AI Feedback**: OpenAI GPT-4 generates personalized improvement suggestions
+- **Comprehensive Logging**: Detailed debugging information for production troubleshooting
 
 ## Prerequisites
 - Python 3.8 or higher
 - pip (Python package manager)
+- OpenAI API key (for AI feedback generation)
 
-## Installation Steps
+## Quick Start
 
-### 1. Install Python (if not already installed)
-Download Python from https://www.python.org/downloads/
-Make sure to check "Add Python to PATH" during installation
+### Option 1: Automated Setup (Recommended)
 
-### 2. Install Required Python Libraries
-Open PowerShell/Command Prompt and navigate to the project directory:
-
+#### Windows
 ```bash
-cd C:\laragon\www\tajtrainer\python
+cd python
+setup.bat
 ```
 
-Install dependencies:
+#### Linux/Mac
 ```bash
+cd python
+chmod +x setup.sh
+./setup.sh
+```
+
+### Option 2: Manual Installation
+
+#### 1. Install Dependencies
+```bash
+cd python
 pip install -r requirements.txt
 ```
 
-Or install individually:
+#### 2. Verify Installation
 ```bash
-pip install librosa==0.10.1
-pip install pydub==0.25.1
-pip install numpy==1.26.3
-pip install scipy==1.11.4
-pip install python-speech-features==0.6
-pip install arabic-reshaper==3.0.0
+python check_dependencies.py
 ```
 
-### 3. Verify Installation
-Test the analyzer:
-```bash
-python tajweed_analyzer.py "path/to/audio/file.wav"
+Expected output:
+```
+============================================================
+TajTrainer Python Dependencies Check
+============================================================
+✓ numpy                v1.24.3         - numpy
+✓ scipy                v1.11.2         - scipy
+✓ librosa              v0.10.1         - librosa
+✓ parselmouth          v0.4.3          - parselmouth (Praat integration)
+✓ fastdtw              v0.3.4          - fastdtw (Dynamic Time Warping)
+✓ openai               v1.3.0          - openai (GPT-4 API)
+...
+✓ All dependencies are installed and functional!
+============================================================
 ```
 
 ## Technical Approach
 
-### MFCC-Based Feature Extraction
-The analyzer uses **Mel-Frequency Cepstral Coefficients (MFCC)** as the primary feature extraction method:
-- **13 MFCC coefficients** capture phonetic characteristics
-- **Delta and Delta-Delta** coefficients track temporal dynamics
-- Maps audio frequencies to the Mel scale (how humans perceive sound)
+### 1. Formant Analysis (Praat Parselmouth)
+The analyzer uses Praat's formant extraction to detect Madd (elongation) rules:
+
+- **Formant 1 (F1)**: Low frequency formant indicating vowel openness
+- **Formant 2 (F2)**: Higher frequency formant indicating tongue position
+- **Madd Detection**: Sustained formant patterns over time indicate proper elongation
+
+### 2. Reference Audio Comparison (FastDTW)
+Compares student recitation with correct recitation from AlQuran.cloud:
+
+- Downloads reference audio from Mishary Alafasy
+- Extracts MFCC features from both audios
+- Uses Dynamic Time Warping to align sequences
+- Calculates similarity score (0-100%)
+
+### 3. AI Feedback Generation (OpenAI GPT-4)
+Generates personalized feedback based on analysis results:
+
+- Summary of overall performance
+- List of strengths identified
+- Specific improvement suggestions
+- Next steps for mastery
 - Standard technique used in speech recognition systems
 
 ### Multi-Feature Analysis

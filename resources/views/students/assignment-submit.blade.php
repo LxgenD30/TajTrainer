@@ -167,9 +167,6 @@
                     <div id="audioPlayback" style="display: none; text-align: center; padding: 25px; background: rgba(31, 39, 27, 0.6); border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.4);">
                         <div style="color: var(--color-gold); font-weight: 700; margin-bottom: 15px; font-size: 1.1rem;">✅ Your Recording:</div>
                         <audio id="audioPlayer" controls preload="auto" style="width: 100%; max-width: 500px; margin-bottom: 15px; outline: none;">
-                            <source id="audioSource" type="audio/webm">
-                            <source id="audioSourceMp3" type="audio/mpeg">
-                            <source id="audioSourceM4a" type="audio/x-m4a">
                             Your browser does not support the audio element.
                         </audio>
                         <div id="audioError" style="display: none; color: #e74c3c; margin-bottom: 10px; padding: 10px; background: rgba(231, 76, 60, 0.1); border-radius: 6px;">⚠️ Audio playback error. Try download button below.</div>
@@ -389,14 +386,14 @@
                 audioBlob = new Blob(audioChunks, { type: mimeType });
                 console.log('Audio blob created:', audioBlob.size, 'bytes');
                 
+                // Create blob URL for playback
                 const audioUrl = URL.createObjectURL(audioBlob);
                 const audioPlayer = document.getElementById('audioPlayer');
-                const audioSource = document.getElementById('audioSource');
                 
-                // Set source based on mime type
-                audioSource.src = audioUrl;
-                audioSource.type = mimeType;
+                // Set src directly on audio element (like practice page)
+                audioPlayer.src = audioUrl;
                 audioPlayer.load();
+                console.log('✓ Audio ready for playback');
                 
                 // Add error handling
                 audioPlayer.addEventListener('error', function(e) {

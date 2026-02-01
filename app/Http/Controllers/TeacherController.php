@@ -135,15 +135,34 @@ class TeacherController extends Controller
      */
     public function gradeSubmission($submissionId)
     {
-        $submission = \App\Models\AssignmentSubmission::with(['assignment.classroom', 'student'])
-            ->findOrFail($submissionId);
+        try {
+            $submission = \App\Models\AssignmentSubmission::with(['assignment.classroom', 'student.user'])
+                ->findOrFail($submissionId);
 
-        // Verify teacher owns the classroom
-        if ($submission->assignment->classroom->teacher_id !== Auth::id()) {
-            abort(403, 'Unauthorized access to this submission.');
+            // Verify teacher owns the classroom
+            if (!$submission->assignment || !$submission->assignment->classroom) {
+                \Log::error('Missing assignment or classroom for submission: ' . $submissionId);
+                return back()->withErrors(['error' => 'Assignment or classroom not found for this submission.']);
+            }
+
+            if ($submission->assignment->classroom->teacher_id !== Auth::id()) {
+                abort(403, 'Unauthorized access to this submission.');
+            }
+
+            // Verify audio file exists if audio_file_path is set
+            if ($submission->audio_file_path) {
+                if (!\Storage::disk('public')->exists($submission->audio_file_path)) {
+                    \Log::warning('Audio file not found for submission ' . $submissionId . ': ' . $submission->audio_file_path);
+                    // Don't fail - just log it, the view will handle it
+                }
+            }
+
+            return view('teachers.grade-submission', compact('submission'));
+        } catch (\Exception $e) {
+            \Log::error('Error loading submission for grading: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return back()->withErrors(['error' => 'Failed to load submission: ' . $e->getMessage()]);
         }
-
-        return view('teachers.grade-submission', compact('submission'));
     }
 
     /**

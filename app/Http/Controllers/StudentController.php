@@ -249,7 +249,7 @@ class StudentController extends Controller
             
             // Validate the request
             try {
-                $request->validate([
+                $validated = $request->validate([
                     'text_submission' => 'nullable|string',
                     'transcription' => 'nullable|string',
                     'recorded_audio' => 'nullable|string',
@@ -1358,9 +1358,19 @@ class StudentController extends Controller
         $pythonScript = base_path('python/tajweed_analyzer.py');
         
         if (!file_exists($pythonScript)) {
-            \Log::warning('Python script not found: ' . $pythonScript);
-            return $this->getDefaultAnalysisResult('Python analyzer not found. Manual grading may be required.');
+            \Log::error('Python script not found: ' . $pythonScript);
+            return $this->getDefaultAnalysisResult('Python analyzer not found at: ' . $pythonScript);
         }
+
+        if (!file_exists($fullPath)) {
+            \Log::error('Audio file not found: ' . $fullPath);
+            return $this->getDefaultAnalysisResult('Audio file not found at: ' . $fullPath);
+        }
+
+        \Log::info('=== Python Tajweed Analysis Started ===');
+        \Log::info('Audio file: ' . $fullPath);
+        \Log::info('File size: ' . filesize($fullPath) . ' bytes');
+        \Log::info('Expected text: ' . substr($expectedText, 0, 100) . '...');
 
         // Download reference audio if URL provided
         $referenceAudioPath = null;
@@ -1368,6 +1378,7 @@ class StudentController extends Controller
             try {
                 $referenceAudioPath = $this->downloadReferenceAudio($referenceAudioUrl);
                 \Log::info('Reference audio downloaded: ' . $referenceAudioPath);
+                \Log::info('Reference file size: ' . filesize($referenceAudioPath) . ' bytes');
             } catch (\Exception $e) {
                 \Log::warning('Could not download reference audio: ' . $e->getMessage());
             }
@@ -1377,9 +1388,17 @@ class StudentController extends Controller
         $openaiKey = config('services.openai.api_key', '');
         if (!empty($openaiKey)) {
             putenv("OPENAI_API_KEY=$openaiKey");
+            \Log::info('OpenAI API key configured');
+        } else {
+            \Log::warning('No OpenAI API key found - AI feedback will not be generated');
         }
 
         $pythonCommand = $this->getPythonCommand();
+        \Log::info('Python command: ' . $pythonCommand);
+        
+        // Test Python availability
+        exec($pythonCommand . ' --version 2>&1', $versionOutput, $versionCode);
+        \Log::info('Python version check: ' . implode(' ', $versionOutput) . ' (exit code: ' . $versionCode . ')');
         
         // Build command with reference audio if available
         $command = "$pythonCommand \"$pythonScript\" \"$fullPath\" \"$expectedText\"";
@@ -1387,8 +1406,7 @@ class StudentController extends Controller
             $command .= " --reference=\"$referenceAudioPath\"";
         }
         
-        \Log::info('Running Python Tajweed analysis...');
-        \Log::info('Command: ' . $command);
+        \Log::info('Full command: ' . $command);
         
         try {
             // Use proc_open for better control and timeout handling
@@ -1448,14 +1466,33 @@ class StudentController extends Controller
             $exitCode = proc_close($process);
             
             \Log::info('Python exit code: ' . $exitCode);
+            \Log::info('Python stdout length: ' . strlen($output));
+            \Log::info('Python stderr length: ' . strlen($error));
             
             if (!empty($error)) {
-                \Log::warning('Python stderr: ' . $error);
+                \Log::error('=== Python STDERR Output ===');
+                \Log::error($error);
+                
+                // Check for common errors
+                if (stripos($error, 'ModuleNotFoundError') !== false || stripos($error, 'No module named') !== false) {
+                    \Log::error('Missing Python dependencies detected!');
+                    return $this->getDefaultAnalysisResult('Missing Python dependencies. Please install requirements.txt. Error: ' . substr($error, 0, 200));
+                }
+                
+                if (stripos($error, 'ImportError') !== false) {
+                    \Log::error('Python import error detected!');
+                    return $this->getDefaultAnalysisResult('Python import error. Check dependencies. Error: ' . substr($error, 0, 200));
+                }
+                
+                if (stripos($error, 'FileNotFoundError') !== false) {
+                    \Log::error('File not found in Python script!');
+                    return $this->getDefaultAnalysisResult('File error in analyzer. Error: ' . substr($error, 0, 200));
+                }
             }
             
             if (!empty($output)) {
-                \Log::info('Python output: ' . $output);
-                \Log::info('Python output length: ' . strlen($output));
+                \Log::info('=== Python STDOUT Output (first 500 chars) ===');
+                \Log::info(substr($output, 0, 500));
                 
                 $result = json_decode($output, true);
                 
@@ -1465,22 +1502,43 @@ class StudentController extends Controller
                         return $this->getDefaultAnalysisResult('Analysis error: ' . $result['error']);
                     }
                     
+                    \Log::info('=== Python Analysis Successful ===');
+                    \Log::info('Score: ' . ($result['overall_score']['score'] ?? 'N/A'));
+                    \Log::info('Has AI feedback: ' . (isset($result['ai_feedback']) ? 'Yes' : 'No'));
+                    
                     // Successful analysis
                     return $result;
                 } else {
                     \Log::error('Failed to parse JSON from Python: ' . json_last_error_msg());
-                    \Log::error('Output: ' . substr($output, 0, 500));
-                    return $this->getDefaultAnalysisResult('Failed to parse analysis results');
+                    \Log::error('Output (first 1000 chars): ' . substr($output, 0, 1000));
+                    \Log::error('Output (last 500 chars): ' . substr($output, -500));
+                    return $this->getDefaultAnalysisResult('Failed to parse analysis results. JSON error: ' . json_last_error_msg());
                 }
             } else {
-                \Log::error('No output from Python script');
-                return $this->getDefaultAnalysisResult('No output from analysis script');
+                \Log::error('=== No Output from Python Script ===');
+                \Log::error('Exit code: ' . $exitCode);
+                \Log::error('Stderr: ' . substr($error, 0, 500));
+                
+                // Provide more specific error message
+                $errorMsg = 'No output from analysis script.';
+                if ($exitCode !== 0) {
+                    $errorMsg .= ' Exit code: ' . $exitCode;
+                }
+                if (!empty($error)) {
+                    $errorMsg .= ' Error: ' . substr($error, 0, 100);
+                }
+                
+                return $this->getDefaultAnalysisResult($errorMsg);
             }
             
         } catch (\Exception $e) {
-            \Log::error('Python analysis exception: ' . $e->getMessage());
+            \Log::error('=== Python Analysis Exception ===');
+            \Log::error('Message: ' . $e->getMessage());
+            \Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
             return $this->getDefaultAnalysisResult('Analysis failed: ' . $e->getMessage());
+        } finally {
+            \Log::info('=== Python Tajweed Analysis Completed ===');
         }
     }
     
