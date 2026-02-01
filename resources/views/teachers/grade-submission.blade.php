@@ -224,7 +224,7 @@
                                     <span style="background: #ff9800; color: #1f271b; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; min-width: 50px; text-align: center;">Word {{ $issue['position'] ?? $index + 1 }}</span>
                                     <span style="color: var(--color-light-green); flex: 1; line-height: 1.5; font-weight: 600;">{{ $issue['word'] ?? '' }}</span>
                                 </div>
-                                <div style="color: #ffa726; font-size: 0.8rem; margin-bottom: 4px;">{{ $issue['issue'] }}</div>
+                                <div style="color: #ffa726; font-size: 0.8rem; margin-bottom: 4px;">{{ $issue['note'] ?? $issue['issue'] ?? 'Issue detected' }}</div>
                                 <div style="color: rgba(211, 255, 177, 0.7); font-size: 0.75rem;">💡 {{ $issue['recommendation'] ?? '' }}</div>
                             </div>
                             @endforeach
