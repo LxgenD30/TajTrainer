@@ -37,6 +37,16 @@
         direction: rtl;
     }
 
+    /* Tajweed color markers */
+    .tajweed-green { color: #22c55e; font-weight: 600; } /* Idgham Bi Ghunnah, Madd Necessary */
+    .tajweed-blue { color: #3b82f6; font-weight: 600; } /* Idgham Bila Ghunnah */
+    .tajweed-red { color: #ef4444; font-weight: 600; } /* Madd Normal */
+    .tajweed-yellow { color: #eab308; font-weight: 600; } /* Madd Permissible */
+    .tajweed-purple { color: #a855f7; font-weight: 600; } /* Madd Obligatory */
+    .tajweed-orange { color: #f97316; font-weight: 600; } /* Qalqalah */
+    .tajweed-grey { color: #9ca3af; } /* Hamza Wasl, Lam Qamari */
+    .tajweed-lime { color: #84cc16; font-weight: 600; } /* Lam Shamsi */
+
     .ayah-translation {
         font-size: 1.1rem;
         color: var(--color-light-green);
@@ -363,16 +373,33 @@
             <div class="ayah-translation" id="ayahTranslation">Loading translation...</div>
         </div>
 
+        <!-- Reference Audio with Tajweed Text -->
+        <div id="referenceSection" style="display: none; margin-top: 20px; padding: 20px; background: rgba(227, 216, 136, 0.05); border-radius: 12px; border: 2px solid var(--color-dark-green);">
+            <h4 style="color: var(--color-gold); font-family: 'Amiri', serif; margin-bottom: 15px; font-size: 1.2rem; text-align: center;">
+                🎧 Reference Recitation (Sheikh Mishary Alafasy)
+            </h4>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <div style="font-size: 0.9rem; color: var(--color-light-green); opacity: 0.8; margin-bottom: 8px;" id="referenceVerseInfo">---</div>
+                <audio id="referenceAudio" class="audio-player" controls style="width: 100%; max-width: 500px;"></audio>
+            </div>
+            <div style="background: rgba(31, 39, 27, 0.5); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                <div style="font-size: 0.85rem; color: var(--color-light-green); opacity: 0.8; margin-bottom: 8px; text-align: center;">
+                    📚 Tajweed Color Guide
+                </div>
+                <div style="direction: rtl; font-family: 'Amiri', serif; font-size: 1.8rem; line-height: 2; text-align: center;" id="tajweedText">
+                    Loading tajweed text...
+                </div>
+            </div>
+        </div>
+
         <div class="control-buttons">
             <button class="btn-practice btn-new-verse" onclick="loadRandomAyah()">
                 🔄 New Verse
             </button>
-            <button class="btn-practice btn-play-reference" onclick="playReferenceAudio()">
-                🔊 Play Reference
+            <button class="btn-practice btn-play-reference" id="showReferenceBtn" onclick="toggleReferenceSection()" style="display: none;">
+                🔊 Show Reference
             </button>
         </div>
-
-        <audio id="referenceAudio" class="audio-player" controls style="display: none;"></audio>
 
         <div class="recording-status" id="recordingStatus">
             <div>🎤 Recording in progress...</div>
@@ -435,6 +462,8 @@
     let currentSurah = null;
     let currentAyah = null;
     let currentAudioUrl = null;
+    let currentTajweedText = '';
+    let referenceSectionVisible = false;
 
     // Load random ayah on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -454,29 +483,39 @@
                 const totalAyahs = surahData.data.numberOfAyahs;
                 const ayahNumber = Math.floor(Math.random() * totalAyahs) + 1;
                 
-                // Fetch the specific ayah with Arabic text, translation, and audio
-                const [arabicResponse, translationResponse] = await Promise.all([
+                // Fetch the specific ayah with Arabic text, tajweed text, translation, and audio
+                const [arabicResponse, tajweedResponse, translationResponse] = await Promise.all([
                     fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/ar.alafasy`),
+                    fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/quran-tajweed`),
                     fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/en.asad`)
                 ]);
 
                 const arabicData = await arabicResponse.json();
+                const tajweedData = await tajweedResponse.json();
                 const translationData = await translationResponse.json();
 
                 if (arabicData.status === 'OK' && translationData.status === 'OK') {
                     currentSurah = surahNumber;
                     currentAyah = ayahNumber;
                     currentAudioUrl = arabicData.data.audio;
+                    currentTajweedText = tajweedData.status === 'OK' ? tajweedData.data.text : arabicData.data.text;
 
                     document.getElementById('ayahArabic').textContent = arabicData.data.text;
                     document.getElementById('surahInfo').textContent = `Surah ${arabicData.data.surah.englishName} (${arabicData.data.surah.name})`;
                     document.getElementById('ayahInfo').textContent = `Ayah ${ayahNumber}`;
                     document.getElementById('ayahTranslation').textContent = translationData.data.text;
                     
-                    // Set reference audio
-                    const audioElement = document.getElementById('referenceAudio');
-                    audioElement.src = currentAudioUrl;
-                    audioElement.style.display = 'block';
+                    // Set reference section data
+                    document.getElementById('referenceAudio').src = currentAudioUrl;
+                    document.getElementById('referenceVerseInfo').textContent = `Surah ${arabicData.data.surah.englishName} (${arabicData.data.surah.name}) - Ayah ${ayahNumber}`;
+                    document.getElementById('tajweedText').innerHTML = parseTajweedText(currentTajweedText);
+                    
+                    // Show reference button
+                    document.getElementById('showReferenceBtn').style.display = 'inline-flex';
+                    
+                    // Hide reference section when loading new verse
+                    referenceSectionVisible = false;
+                    document.getElementById('referenceSection').style.display = 'none';
                 }
             }
         } catch (error) {
@@ -485,9 +524,47 @@
         }
     }
 
-    function playReferenceAudio() {
-        const audioElement = document.getElementById('referenceAudio');
-        audioElement.play();
+    function toggleReferenceSection() {
+        referenceSectionVisible = !referenceSectionVisible;
+        const section = document.getElementById('referenceSection');
+        const btn = document.getElementById('showReferenceBtn');
+        
+        if (referenceSectionVisible) {
+            section.style.display = 'block';
+            btn.innerHTML = '🔽 Hide Reference';
+        } else {
+            section.style.display = 'none';
+            btn.innerHTML = '🔊 Show Reference';
+        }
+    }
+    
+    function parseTajweedText(text) {
+        // Parse AlQuran.cloud tajweed markers and apply colors
+        const colorMap = {
+            '[a': 'green',      // Idgham Bi Ghunnah
+            '[u': 'blue',       // Idgham Bila Ghunnah
+            '[n': 'red',        // Madd Normal
+            '[p': 'yellow',     // Madd Permissible
+            '[m': 'green',      // Madd Necessary
+            '[o': 'purple',     // Madd Obligatory
+            '[h': 'grey',       // Hamza Wasl
+            '[l': 'lime',       // Lam Shamsi
+            '[s': 'grey',       // Lam Qamari
+            '[q': 'orange'      // Qalqalah
+        };
+        
+        let html = text;
+        
+        // Replace markers with colored spans
+        // Pattern: [marker[text]
+        for (const [marker, color] of Object.entries(colorMap)) {
+            // Handle markers with colons (like [h:1)
+            const markerEscaped = marker.replace('[', '\\[');
+            const regex = new RegExp(markerEscaped + '(?::\\d+)?\\[([^\\[\\]]+)', 'g');
+            html = html.replace(regex, `<span class="tajweed-${color}">$1</span>`);
+        }
+        
+        return html;
     }
 
     function hideFeedback() {

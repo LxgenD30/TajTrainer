@@ -886,7 +886,14 @@ class StudentController extends Controller
         // Get correct Quranic text from Quran Cloud API
         $correctText = $this->getQuranText($surah, $startVerse, $endVerse);
         
+        // Get tajweed-colored text for display
+        $tajweedText = $this->getQuranTajweedText($surah, $startVerse, $endVerse);
+        
+        // Get reference audio URLs
+        $referenceAudioUrls = $this->getQuranAudioUrls($surah, $startVerse, $endVerse);
+        
         \Log::info('Expected Quranic text for analysis: ' . $correctText);
+        \Log::info('Tajweed-colored text: ' . $tajweedText);
         
         // Run Python audio analysis with expected text
         $audioAnalysis = $this->runPythonAudioAnalysis($fullPath, $correctText);
@@ -898,7 +905,10 @@ class StudentController extends Controller
             'audio_file' => $audioPath,
             'duration' => $audioAnalysis['duration'] ?? 0,
             'expected_text' => $correctText,
+            'tajweed_text' => $tajweedText, // Colored text with tajweed markers
+            'reference_audio' => $referenceAudioUrls, // Reference recitation URLs
             'transcribed_text' => $transcription,
+            'whisper_transcription' => $audioAnalysis['whisper_transcription'] ?? null, // Tarteel Whisper output
             'rules_detected' => $audioAnalysis['rules_detected'] ?? [
                 'madd' => true,
                 'idgham_bila_ghunnah' => true,
@@ -927,6 +937,7 @@ class StudentController extends Controller
                 'grade' => 'Needs Improvement',
                 'feedback' => 'Analysis could not be completed'
             ],
+            'ai_feedback' => $audioAnalysis['ai_feedback'] ?? null, // OpenAI generated feedback
         ];
         
         // Old noon_sakin_analysis for backward compatibility (map from new structure)
@@ -979,6 +990,80 @@ class StudentController extends Controller
         }
         
         return implode(' ۝ ', $verses);
+    }
+    
+    /**
+     * Get tajweed-colored Quran text from AlQuran.cloud
+     * Returns text with tajweed markers for color-coding:
+     * [a = idgham-with-ghunnah (green)
+     * [u = idgham-without-ghunnah (blue)
+     * [n/p/m/o = madd types (red/yellow/green/purple)
+     * [h:X = hamza-wasl, [l = lam-shamsi, [s = lam-qamari, etc.
+     */
+    private function getQuranTajweedText($surah, $startVerse, $endVerse)
+    {
+        $surahNumber = $this->getSurahNumber($surah);
+        $verses = [];
+        
+        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
+            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/quran-tajweed";
+            
+            try {
+                $response = @file_get_contents($url);
+                if ($response === false) {
+                    \Log::error("Failed to fetch tajweed verse {$surahNumber}:{$verse}");
+                    continue;
+                }
+                
+                $data = json_decode($response, true);
+                
+                if ($data['code'] == 200 && isset($data['data']['text'])) {
+                    $verses[] = $data['data']['text'];
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error fetching tajweed text: " . $e->getMessage());
+            }
+        }
+        
+        return implode(' ۝ ', $verses);
+    }
+    
+    /**
+     * Get reference audio URL from AlQuran.cloud
+     * Uses ar.alafasy (Mishary Rashid Alafasy) recitation
+     * Returns array of audio URLs for each verse
+     */
+    private function getQuranAudioUrls($surah, $startVerse, $endVerse)
+    {
+        $surahNumber = $this->getSurahNumber($surah);
+        $audioUrls = [];
+        
+        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
+            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/ar.alafasy";
+            
+            try {
+                $response = @file_get_contents($url);
+                if ($response === false) {
+                    \Log::error("Failed to fetch audio for {$surahNumber}:{$verse}");
+                    continue;
+                }
+                
+                $data = json_decode($response, true);
+                
+                if ($data['code'] == 200 && isset($data['data']['audio'])) {
+                    $audioUrls[] = [
+                        'verse' => "{$surahNumber}:{$verse}",
+                        'url' => $data['data']['audio'],
+                        'number' => $data['data']['number'] ?? $verse,
+                        'text' => $data['data']['text'] ?? ''
+                    ];
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error fetching Quran audio: " . $e->getMessage());
+            }
+        }
+        
+        return $audioUrls;
     }
     
     /**
@@ -1062,6 +1147,12 @@ class StudentController extends Controller
                 'idgham_bila_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 0, 'issues' => []],
                 'idgham_bi_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 0, 'issues' => []],
             ];
+        }
+
+        // Pass OpenAI API key via environment variable
+        $openaiKey = config('services.openai.api_key', '');
+        if (!empty($openaiKey)) {
+            putenv("OPENAI_API_KEY=$openaiKey");
         }
 
         $pythonCommand = $this->getPythonCommand();

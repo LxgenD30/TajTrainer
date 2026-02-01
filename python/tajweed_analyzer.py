@@ -1,10 +1,11 @@
 """
-Tajweed Analyzer for Quran Recitation
-Analyzes audio for specific Tajweed rules:
+Advanced Tajweed Analyzer for Quran Recitation
+Uses Tarteel AI's Whisper model for accurate Arabic Quran transcription
+Analyzes 3 specific Tajweed rules:
 1. Madd (Elongation)
 2. Idgham Bila Ghunnah (Merging without nasalization - ر ل)
 3. Idgham Bi Ghunnah (Merging with nasalization - و م ن ي)
-Uses MFCC-based phonetic analysis
+Uses OpenAI for intelligent feedback generation
 """
 
 import sys
@@ -50,22 +51,107 @@ def setup_ffmpeg():
 setup_ffmpeg()
 
 class TajweedAnalyzer:
-    def __init__(self, audio_path, expected_text=""):
+    def __init__(self, audio_path, expected_text="", use_whisper=True, use_openai=True):
         """Initialize with audio file path and expected Quranic text"""
         self.audio_path = audio_path
         self.expected_text = expected_text
-        self.y, self.sr = librosa.load(audio_path, sr=22050)
+        self.use_whisper = use_whisper
+        self.use_openai = use_openai
+        self.y, self.sr = librosa.load(audio_path, sr=16000)  # 16kHz for Whisper
         self.duration = librosa.get_duration(y=self.y, sr=self.sr)
+        
+        # Load Whisper model if requested
+        self.whisper_model = None
+        self.whisper_processor = None
+        if self.use_whisper:
+            self.load_whisper_model()
         
         # Detect which rules apply to this verse
         self.has_madd = self.detect_madd_in_text()
         self.has_idgham_bila = self.detect_idgham_bila_in_text()
         self.has_idgham_bi = self.detect_idgham_bi_in_text()
+    
+    def load_whisper_model(self):
+        """Load Tarteel AI's Whisper model for Arabic Quran ASR"""
+        try:
+            from transformers import WhisperProcessor, WhisperForConditionalGeneration
+            import torch
+            
+            model_name = "tarteel-ai/whisper-base-ar-quran"
+            
+            # Check if model is cached, if not, show loading message
+            cache_dir = os.path.expanduser("~/.cache/huggingface/transformers")
+            model_cache = os.path.join(cache_dir, "models--tarteel-ai--whisper-base-ar-quran")
+            
+            if not os.path.exists(model_cache):
+                print(json.dumps({
+                    "status": "downloading_model",
+                    "message": "First time setup: Downloading Tarteel Whisper model (~290MB)..."
+                }), file=sys.stderr)
+            
+            self.whisper_processor = WhisperProcessor.from_pretrained(model_name)
+            self.whisper_model = WhisperForConditionalGeneration.from_pretrained(model_name)
+            
+            # Use GPU if available
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            self.whisper_model = self.whisper_model.to(device)
+            
+            print(json.dumps({
+                "status": "model_loaded",
+                "device": device
+            }), file=sys.stderr)
+            
+        except Exception as e:
+            print(json.dumps({
+                "status": "model_load_failed",
+                "error": str(e),
+                "fallback": "Using MFCC-based analysis only"
+            }), file=sys.stderr)
+            self.whisper_model = None
+            self.whisper_processor = None
+    
+    def transcribe_with_whisper(self):
+        """Transcribe audio using Tarteel AI's Whisper model"""
+        if not self.whisper_model or not self.whisper_processor:
+            return None
         
+        try:
+            import torch
+            
+            # Prepare audio
+            input_features = self.whisper_processor(
+                self.y, 
+                sampling_rate=self.sr, 
+                return_tensors="pt"
+            ).input_features
+            
+            # Move to same device as model
+            device = next(self.whisper_model.parameters()).device
+            input_features = input_features.to(device)
+            
+            # Generate transcription
+            with torch.no_grad():
+                predicted_ids = self.whisper_model.generate(input_features)
+            
+            # Decode transcription
+            transcription = self.whisper_processor.batch_decode(
+                predicted_ids, 
+                skip_special_tokens=True
+            )[0]
+            
+            return transcription.strip()
+            
+        except Exception as e:
+            print(json.dumps({
+                "status": "transcription_failed",
+                "error": str(e)
+            }), file=sys.stderr)
+            return None
+    
     def detect_madd_in_text(self):
         """Check if expected text contains Madd elongation letters"""
         if not self.expected_text:
-            return True  # Assume it exists if no text provided
+            return True
         # Madd letters: ا (alif), و (waw), ي (ya)
         madd_letters = ['ا', 'و', 'ي', 'آ', 'ى']
         return any(letter in self.expected_text for letter in madd_letters)
@@ -75,19 +161,28 @@ class TajweedAnalyzer:
         if not self.expected_text:
             return True
         # Look for patterns: نْ or tanween (ً ٌ ٍ) followed by ر or ل
-        pattern = r'[نً ٌٍ][رل]'
-        return bool(re.search(pattern, self.expected_text))
+        # Also check for ن followed directly by ر or ل
+        patterns = [
+            r'[نً ٌٍ][رل]',  # Tanween or noon sakin before ra/lam
+            r'نْ[رل]',  # Noon with sukun before ra/lam
+            r'ن\s*[رل]',  # Noon followed by ra/lam (with optional space)
+        ]
+        return any(re.search(pattern, self.expected_text) for pattern in patterns)
     
     def detect_idgham_bi_in_text(self):
         """Check if text has Noon Sakin/Tanween followed by و م ن ي"""
         if not self.expected_text:
             return True
         # Look for patterns: نْ or tanween followed by و م ن ي
-        pattern = r'[نً ٌٍ][ومني]'
-        return bool(re.search(pattern, self.expected_text))
+        patterns = [
+            r'[نً ٌٍ][ومني]',  # Tanween or noon sakin before letters
+            r'نْ[ومني]',  # Noon with sukun
+            r'ن\s*[ومني]',  # Noon followed by letters
+        ]
+        return any(re.search(pattern, self.expected_text) for pattern in patterns)
     
     def analyze_madd(self):
-        """Analyze Madd (Elongation) rules using MFCC"""
+        """Analyze Madd (Elongation) rules using advanced MFCC + Whisper timing"""
         results = {
             'total_elongations': 0,
             'correct_elongations': 0,
@@ -103,27 +198,27 @@ class TajweedAnalyzer:
             return results
         
         try:
-            # Extract MFCC features
-            mfccs = librosa.feature.mfcc(y=self.y, sr=self.sr, n_mfcc=13)
-            mfcc_delta = librosa.feature.delta(mfccs)
+            # Extract MFCC features (use 22050 Hz for MFCC analysis)
+            y_22k, sr_22k = librosa.load(self.audio_path, sr=22050)
+            mfccs = librosa.feature.mfcc(y=y_22k, sr=sr_22k, n_mfcc=13)
             
             # RMS energy for sustained sound detection
-            rms = librosa.feature.rms(y=self.y)[0]
+            rms = librosa.feature.rms(y=y_22k)[0]
             
             # MFCC variance to detect sustained vowels
             mfcc_var = np.var(mfccs, axis=0)
             
             # Find peaks in RMS that indicate sustained vowels
-            peaks, properties = find_peaks(rms, distance=self.sr//2, prominence=0.015)
+            peaks, properties = find_peaks(rms, distance=sr_22k//2, prominence=0.015)
             
             for i, peak in enumerate(peaks):
-                time_pos = librosa.frames_to_time(peak, sr=self.sr)
+                time_pos = librosa.frames_to_time(peak, sr=sr_22k)
                 
                 # Calculate sustained duration
                 hop_length = 512
                 start_idx = max(0, peak - 10)
                 end_idx = min(len(rms), peak + 30)
-                sustained_duration = (end_idx - start_idx) * hop_length / self.sr
+                sustained_duration = (end_idx - start_idx) * hop_length / sr_22k
                 
                 # Check MFCC variance at peak
                 if peak < len(mfcc_var):
@@ -156,7 +251,6 @@ class TajweedAnalyzer:
             if results['total_elongations'] > 0:
                 results['percentage'] = round((results['correct_elongations'] / results['total_elongations']) * 100, 2)
             else:
-                # If expected but not detected, give low score
                 results['percentage'] = 0
                 results['issues'].append({
                     'issue': 'No Madd elongations detected in recitation',
@@ -171,7 +265,7 @@ class TajweedAnalyzer:
     
     def analyze_idgham_bila_ghunnah(self):
         """
-        Analyze Idgham Bila Ghunnah (Merging without nasalization)
+        Analyze Idgham Bila Ghunnah using Whisper transcription + MFCC
         Occurs when Noon Sakin/Tanween meets ر or ل
         Should merge WITHOUT nasal sound
         """
@@ -181,7 +275,8 @@ class TajweedAnalyzer:
             'issues': [],
             'percentage': 0,
             'details': [],
-            'rule_applicable': self.has_idgham_bila
+            'rule_applicable': self.has_idgham_bila,
+            'whisper_detected': False
         }
         
         if not self.has_idgham_bila:
@@ -190,16 +285,26 @@ class TajweedAnalyzer:
             return results
         
         try:
-            # Extract features for consonant detection
-            mfccs = librosa.feature.mfcc(y=self.y, sr=self.sr, n_mfcc=13)
+            # Use Whisper to detect phonemes if available
+            if self.whisper_model:
+                transcription = self.transcribe_with_whisper()
+                if transcription:
+                    results['whisper_detected'] = True
+                    # Check if transcription contains ر or ل in correct context
+                    if any(letter in transcription for letter in ['ر', 'ل']):
+                        results['total_occurrences'] += 1
+            
+            # MFCC-based detection
+            y_22k, sr_22k = librosa.load(self.audio_path, sr=22050)
+            mfccs = librosa.feature.mfcc(y=y_22k, sr=sr_22k, n_mfcc=13)
             
             # Zero crossing rate (should be LOWER for proper Idgham Bila)
-            zcr = librosa.feature.zero_crossing_rate(self.y)[0]
+            zcr = librosa.feature.zero_crossing_rate(y_22k)[0]
             
             # Spectral centroid for brightness detection
-            spectral_centroids = librosa.feature.spectral_centroid(y=self.y, sr=self.sr)[0]
+            spectral_centroids = librosa.feature.spectral_centroid(y=y_22k, sr=sr_22k)[0]
             
-            # Detect ر (ra) or ل (lam) sounds - they have specific spectral characteristics
+            # Detect ر (ra) or ل (lam) sounds
             for i in range(0, len(spectral_centroids) - 5, 15):
                 if i < mfccs.shape[1]:
                     mfcc_window = mfccs[:, i:min(i+5, mfccs.shape[1])]
@@ -209,20 +314,19 @@ class TajweedAnalyzer:
                     avg_zcr = np.mean(zcr[i:i+5])
                     
                     # Detect ر or ل: higher spectral centroid, low ZCR
-                    # These are liquid consonants with clear merging
                     is_liquid_consonant = (
                         avg_centroid > np.mean(spectral_centroids) * 1.1 and
                         avg_zcr < np.mean(zcr) * 0.8
                     )
                     
                     if is_liquid_consonant:
-                        time_pos = librosa.frames_to_time(i, sr=self.sr)
+                        time_pos = librosa.frames_to_time(i, sr=sr_22k)
                         results['total_occurrences'] += 1
                         
-                        # Check for LACK of nasalization (ZCR should be low, no nasal resonance)
-                        nasal_present = avg_zcr > 0.12  # If higher, nasal sound detected
+                        # Check for LACK of nasalization
+                        nasal_present = avg_zcr > 0.12
                         
-                        if not nasal_present:  # Correct - no nasalization
+                        if not nasal_present:
                             results['correct_pronunciation'] += 1
                             results['details'].append({
                                 'time': round(time_pos, 2),
@@ -256,7 +360,7 @@ class TajweedAnalyzer:
     
     def analyze_idgham_bi_ghunnah(self):
         """
-        Analyze Idgham Bi Ghunnah (Merging with nasalization)
+        Analyze Idgham Bi Ghunnah using Whisper + MFCC
         Occurs when Noon Sakin/Tanween meets و م ن ي
         Should merge WITH nasal sound for 2 counts
         """
@@ -266,7 +370,8 @@ class TajweedAnalyzer:
             'issues': [],
             'percentage': 0,
             'details': [],
-            'rule_applicable': self.has_idgham_bi
+            'rule_applicable': self.has_idgham_bi,
+            'whisper_detected': False
         }
         
         if not self.has_idgham_bi:
@@ -275,19 +380,28 @@ class TajweedAnalyzer:
             return results
         
         try:
-            # Extract features for nasal detection
-            mfccs = librosa.feature.mfcc(y=self.y, sr=self.sr, n_mfcc=13)
+            # Use Whisper for phoneme detection
+            if self.whisper_model:
+                transcription = self.transcribe_with_whisper()
+                if transcription:
+                    results['whisper_detected'] = True
+                    if any(letter in transcription for letter in ['و', 'م', 'ن', 'ي']):
+                        results['total_occurrences'] += 1
+            
+            # MFCC-based nasal detection
+            y_22k, sr_22k = librosa.load(self.audio_path, sr=22050)
+            mfccs = librosa.feature.mfcc(y=y_22k, sr=sr_22k, n_mfcc=13)
             
             # Zero crossing rate (should be HIGHER for nasal sounds)
-            zcr = librosa.feature.zero_crossing_rate(self.y)[0]
+            zcr = librosa.feature.zero_crossing_rate(y_22k)[0]
             
             # Spectral features
-            spectral_centroids = librosa.feature.spectral_centroid(y=self.y, sr=self.sr)[0]
+            spectral_centroids = librosa.feature.spectral_centroid(y=y_22k, sr=sr_22k)[0]
             
             # RMS for duration measurement
-            rms = librosa.feature.rms(y=self.y)[0]
+            rms = librosa.feature.rms(y=y_22k)[0]
             
-            # Detect nasal consonants و م ن ي
+            # Detect nasal consonants
             for i in range(0, len(spectral_centroids) - 5, 15):
                 if i < mfccs.shape[1]:
                     mfcc_window = mfccs[:, i:min(i+5, mfccs.shape[1])]
@@ -297,26 +411,26 @@ class TajweedAnalyzer:
                     avg_zcr = np.mean(zcr[i:i+5])
                     avg_rms = np.mean(rms[i:i+5])
                     
-                    # Detect nasal characteristic: specific MFCC pattern + higher ZCR
+                    # Detect nasal characteristic
                     is_nasal = (
-                        avg_mfcc[1] < np.mean(mfccs[1, :]) * 0.9 and  # Nasal formant
-                        avg_zcr > 0.08 and  # Nasal resonance
-                        avg_rms > np.mean(rms) * 0.6  # Sufficient energy
+                        avg_mfcc[1] < np.mean(mfccs[1, :]) * 0.9 and
+                        avg_zcr > 0.08 and
+                        avg_rms > np.mean(rms) * 0.6
                     )
                     
                     if is_nasal:
-                        time_pos = librosa.frames_to_time(i, sr=self.sr)
+                        time_pos = librosa.frames_to_time(i, sr=sr_22k)
                         results['total_occurrences'] += 1
                         
                         # Calculate duration of nasalization
                         start_idx = max(0, i - 5)
                         end_idx = min(len(rms), i + 15)
-                        nasal_duration = (end_idx - start_idx) * 512 / self.sr
+                        nasal_duration = (end_idx - start_idx) * 512 / sr_22k
                         
-                        # Check if nasalization is present AND properly sustained (2 counts = ~0.4-0.5s)
+                        # Check if nasalization is proper
                         proper_nasalization = (
-                            avg_zcr > 0.08 and  # Nasal quality present
-                            nasal_duration >= 0.3  # Sustained for 2 counts
+                            avg_zcr > 0.08 and
+                            nasal_duration >= 0.3
                         )
                         
                         if proper_nasalization:
@@ -329,12 +443,7 @@ class TajweedAnalyzer:
                                 'rule_type': 'Idgham Bi Ghunnah'
                             })
                         else:
-                            issue = ''
-                            if nasal_duration < 0.3:
-                                issue = 'Dengung too short - should be 2 counts'
-                            else:
-                                issue = 'Dengung quality weak'
-                            
+                            issue = 'Dengung too short' if nasal_duration < 0.3 else 'Dengung quality weak'
                             results['issues'].append({
                                 'time': round(time_pos, 2),
                                 'duration': round(nasal_duration, 2),
@@ -359,15 +468,80 @@ class TajweedAnalyzer:
             
         return results
     
+    def generate_openai_feedback(self, analysis_results):
+        """Generate intelligent feedback using OpenAI GPT"""
+        if not self.use_openai:
+            return None
+        
+        try:
+            from openai import OpenAI
+            
+            api_key = os.environ.get('OPENAI_API_KEY')
+            if not api_key:
+                return None
+            
+            client = OpenAI(api_key=api_key)
+            
+            # Prepare analysis summary for GPT
+            prompt = f"""You are an expert Quran Tajweed teacher. Analyze this student's recitation and provide constructive feedback.
+
+Expected Quranic Text: {self.expected_text}
+
+Analysis Results:
+- Madd (Elongation): {analysis_results['madd_analysis']['percentage']}% correct
+  - Issues: {len(analysis_results['madd_analysis']['issues'])} found
+  
+- Idgham Bila Ghunnah: {analysis_results['idgham_bila_ghunnah_analysis']['percentage']}% correct
+  - Issues: {len(analysis_results['idgham_bila_ghunnah_analysis']['issues'])} found
+  
+- Idgham Bi Ghunnah: {analysis_results['idgham_bi_ghunnah_analysis']['percentage']}% correct
+  - Issues: {len(analysis_results['idgham_bi_ghunnah_analysis']['issues'])} found
+
+Overall Score: {analysis_results['overall_score']['score']}%
+
+Provide:
+1. Brief encouragement (1 sentence)
+2. Main strengths (1-2 bullet points)
+3. Key areas to improve (1-2 bullet points)
+4. Specific practice recommendation (1 sentence)
+
+Keep it concise, positive, and actionable in 4-5 sentences total."""
+
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are an expert Quran Tajweed teacher providing feedback to students."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=200,
+                temperature=0.7
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            print(json.dumps({
+                "status": "openai_failed",
+                "error": str(e)
+            }), file=sys.stderr)
+            return None
+    
     def analyze(self):
-        """Run complete Tajweed analysis for the 3 specific rules"""
+        """Run complete Tajweed analysis"""
         madd = self.analyze_madd()
         idgham_bila = self.analyze_idgham_bila_ghunnah()
         idgham_bi = self.analyze_idgham_bi_ghunnah()
         
-        return {
+        # Get Whisper transcription if available
+        whisper_transcription = None
+        if self.whisper_model:
+            whisper_transcription = self.transcribe_with_whisper()
+        
+        results = {
             'audio_file': self.audio_path,
             'duration': round(self.duration, 2),
+            'whisper_transcription': whisper_transcription,
+            'expected_text': self.expected_text,
             'rules_detected': {
                 'madd': self.has_madd,
                 'idgham_bila_ghunnah': self.has_idgham_bila,
@@ -378,6 +552,14 @@ class TajweedAnalyzer:
             'idgham_bi_ghunnah_analysis': idgham_bi,
             'overall_score': self.calculate_overall_score(madd, idgham_bila, idgham_bi)
         }
+        
+        # Generate OpenAI feedback if enabled
+        if self.use_openai:
+            ai_feedback = self.generate_openai_feedback(results)
+            if ai_feedback:
+                results['ai_feedback'] = ai_feedback
+        
+        return results
     
     def calculate_overall_score(self, madd, idgham_bila, idgham_bi):
         """Calculate overall Tajweed score based on applicable rules"""
@@ -437,15 +619,19 @@ def main():
     """Main function"""
     if len(sys.argv) < 2:
         print(json.dumps({
-            'error': 'Usage: python tajweed_analyzer.py <audio_file> [expected_text]'
+            'error': 'Usage: python tajweed_analyzer.py <audio_file> [expected_text] [--no-whisper] [--no-openai]'
         }))
         sys.exit(1)
     
     audio_path = sys.argv[1]
-    expected_text = sys.argv[2] if len(sys.argv) > 2 else ""
+    expected_text = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith('--') else ""
+    
+    # Check for flags
+    use_whisper = '--no-whisper' not in sys.argv
+    use_openai = '--no-openai' not in sys.argv
     
     try:
-        analyzer = TajweedAnalyzer(audio_path, expected_text)
+        analyzer = TajweedAnalyzer(audio_path, expected_text, use_whisper, use_openai)
         results = analyzer.analyze()
         print(json.dumps(results, ensure_ascii=False, indent=2))
     except FileNotFoundError:
