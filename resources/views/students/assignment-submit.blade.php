@@ -225,14 +225,14 @@
             grid-template-columns: 1fr !important;
         }
     }
-</style>    
+    
     .submitting-overlay {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.85);
         display: none;
         align-items: center;
         justify-content: center;
@@ -241,21 +241,22 @@
     
     .submitting-content {
         background: rgba(31, 39, 27, 0.95);
-        border: 2px solid var(--color-gold);
+        border: 3px solid var(--color-gold);
         border-radius: 15px;
         padding: 40px;
         text-align: center;
-        max-width: 400px;
+        max-width: 450px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
     
     .spinner {
         border: 4px solid rgba(227, 216, 136, 0.3);
         border-top: 4px solid var(--color-gold);
         border-radius: 50%;
-        width: 50px;
-        height: 50px;
+        width: 60px;
+        height: 60px;
         animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
+        margin: 0 auto 25px;
     }
     
     @keyframes spin {
@@ -267,10 +268,11 @@
 <div class="submitting-overlay" id="submittingOverlay">
     <div class="submitting-content">
         <div class="spinner"></div>
-        <h3 style="color: var(--color-gold); margin-bottom: 10px;">Submitting Assignment...</h3>
-        <p style="color: var(--color-light-green); font-size: 0.9rem; opacity: 0.8;">
+        <h3 style="color: var(--color-gold); margin-bottom: 15px; font-size: 1.4rem; font-weight: 700;">Submitting Assignment...</h3>
+        <p style="color: var(--color-light-green); font-size: 1.05rem; opacity: 0.9; line-height: 1.6;">
             @if($assignment->is_voice_submission && config('services.assemblyai.api_key'))
-                Processing and transcribing your audio...
+                🎙️ Processing and transcribing your audio...<br>
+                <span style="font-size: 0.9rem; opacity: 0.7;">This may take a few moments</span>
             @else
                 Please wait while we process your submission...
             @endif
@@ -463,22 +465,31 @@
     document.getElementById('submissionForm')?.addEventListener('submit', function(e) {
         @if($assignment->is_voice_submission)
         const recordedAudio = document.getElementById('recordedAudio')?.value;
-        const uploadedFile = document.getElementById('audioFileInput')?.files.length > 0;
+        const uploadedFile = document.getElementById('audioFileInput')?.files?.length > 0;
         
         if (!recordedAudio && !uploadedFile) {
             e.preventDefault();
-            alert('Please either record your recitation or upload an audio file.');
+            alert('⚠️ Please either record your recitation or upload an audio file before submitting.');
             return false;
         }
         
-        console.log('Submitting assignment...');
-        console.log('Has recorded audio:', recordedAudio ? 'Yes' : 'No');
-        console.log('Has uploaded file:', uploadedFile ? 'Yes' : 'No');
-        console.log('Audio will be transcribed on server using AssemblyAI');
+        console.log('📤 Submitting assignment...');
+        console.log('Has recorded audio:', recordedAudio ? 'Yes (' + (recordedAudio.length / 1024).toFixed(2) + ' KB)' : 'No');
+        console.log('Has uploaded file:', uploadedFile ? 'Yes (' + document.getElementById('audioFileInput').files[0].name + ')' : 'No');
+        console.log('🤖 Audio will be transcribed on server using AssemblyAI');
+        console.log('🎯 Tajweed analysis will be performed using Python analyzer');
         @endif
         
         // Show loading overlay
         document.getElementById('submittingOverlay').style.display = 'flex';
+        
+        // Disable submit button to prevent double submission
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.6';
+            submitBtn.style.cursor = 'not-allowed';
+        }
     });
 
     console.log('✓ Recording interface ready');
