@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Classroom extends Model
 {
+    protected $primaryKey = 'id';
+    
     protected $fillable = [
         'teacher_id',
         'class_name',
@@ -15,12 +17,12 @@ class Classroom extends Model
 
     public function teacher()
     {
-        return $this->belongsTo(Teacher::class, 'teacher_id');
+        return $this->belongsTo(Teacher::class, 'teacher_id', 'id');
     }
 
     public function assignments()
     {
-        return $this->hasMany(Assignment::class, 'class_id');
+        return $this->hasMany(Assignment::class, 'class_id', 'id');
     }
 
     public function students()
