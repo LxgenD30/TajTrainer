@@ -70,12 +70,16 @@
             <!-- Audio Submission -->
             <div style="background: rgba(70, 63, 58, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
                 <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">🎤 Voice Recording</div>
-                <audio controls style="width: 100%; margin-bottom: 10px;">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mpeg">
-                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/wav">
+                <audio id="submissionAudio" controls preload="metadata" style="width: 100%; margin-bottom: 10px;">
                     <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/webm">
+                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/wav">
+                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mpeg">
+                    <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/ogg">
                     Your browser does not support the audio element.
                 </audio>
+                <div style="font-size: 0.75rem; color: var(--color-light-green); opacity: 0.6; margin-top: 5px;">
+                    📁 File: {{ basename($submission->audio_file_path) }}
+                </div>
             </div>
 
             @if($submission->transcription)

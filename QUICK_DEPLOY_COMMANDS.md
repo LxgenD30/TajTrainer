@@ -86,7 +86,7 @@ https://tajtrainer.tajweedflow.com/deployment.log
 ```
 
 ### Check GitHub webhook status
-1. Go to: https://github.com/yourusername/tajtrainer-v2/settings/hooks
+1. Go to: https://github.com/LxgenD30/TajTrainer/settings/hooks
 2. Click on your webhook
 3. View "Recent Deliveries"
 4. Green checkmark = successful deployment ✓

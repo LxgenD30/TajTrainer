@@ -205,7 +205,7 @@ https://tajtrainer.tajweedflow.com/deploy.php?token=KVgdeJcmqv49sSuhnLHxjQ8GpNrP
 ## 🔗 PART 5: Set Up GitHub Webhook (Auto-Deploy)
 
 ### Step 1: Go to Repository Settings
-1. Visit: `https://github.com/yourusername/tajtrainer-v2`
+1. Visit: `https://github.com/LxgenD30/TajTrainer`
 2. Click **"Settings"** tab (top right)
 3. Click **"Webhooks"** (left sidebar)
 4. Click **"Add webhook"** button
@@ -259,7 +259,7 @@ git push origin main
 ```
 
 ### Test 2: Check Webhook Delivery
-1. Go to: `https://github.com/yourusername/tajtrainer-v2/settings/hooks`
+1. Go to: `https://github.com/LxgenD30/TajTrainer/settings/hooks`
 2. Click on your webhook
 3. Scroll to **"Recent Deliveries"**
 4. Click on the top delivery
@@ -449,7 +449,7 @@ cd C:\laragon\www\tajtrainerV2
 - **Website:** https://tajtrainer.tajweedflow.com
 - **Deploy Script:** https://tajtrainer.tajweedflow.com/deploy.php?token=KVgdeJcmqv49sSuhnLHxjQ8GpNrP0ltR
 - **Deploy Log:** https://tajtrainer.tajweedflow.com/deployment.log
-- **GitHub Repo:** https://github.com/yourusername/tajtrainer-v2
+- **GitHub Repo:** https://github.com/LxgenD30/TajTrainer
 
 ### Your Paths:
 - **Public Folder:** `/home/tajweedf/tajtrainer.com`
