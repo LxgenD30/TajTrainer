@@ -30,45 +30,71 @@ class StudentController extends Controller
 
     public function classes()
     {
-        $student = Student::with(['classrooms.teacher', 'classrooms.assignments'])
-            ->findOrFail(Auth::id());
-        
-        return view('students.classes', compact('student'));
+        try {
+            $student = Student::with(['classrooms.teacher', 'classrooms.assignments'])
+                ->findOrFail(Auth::id());
+            
+            return view('students.classes', compact('student'));
+        } catch (\Exception $e) {
+            \Log::error('Error loading student classes page: ' . $e->getMessage());
+            \Log::error('Student ID: ' . Auth::id());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return redirect()->route('student.dashboard')
+                ->withErrors(['error' => 'Unable to load classes. Please contact support.']);
+        }
     }
 
     public function enrollClass(Request $request)
     {
-        $validated = $request->validate([
-            'access_code' => 'required|string|exists:classrooms,access_code',
-        ]);
+        try {
+            $validated = $request->validate([
+                'access_code' => 'required|string|exists:classrooms,access_code',
+            ]);
 
-        $classroom = Classroom::where('access_code', $validated['access_code'])->firstOrFail();
-        $student = Student::findOrFail(Auth::id());
+            $classroom = Classroom::where('access_code', $validated['access_code'])->firstOrFail();
+            $student = Student::findOrFail(Auth::id());
 
-        if ($student->classrooms()->where('class_id', $classroom->id)->exists()) {
-            return back()->with('error', 'You are already enrolled in this class!');
+            if ($student->classrooms()->where('class_id', $classroom->id)->exists()) {
+                return back()->with('error', 'You are already enrolled in this class!');
+            }
+
+            $student->classrooms()->attach($classroom->id, [
+                'date_joined' => now()->toDateString()
+            ]);
+
+            return back()->with('success', 'Successfully enrolled in ' . $classroom->class_name . '!');
+        } catch (\Exception $e) {
+            \Log::error('Error enrolling in class: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to enroll in class. Please try again.']);
         }
-
-        $student->classrooms()->attach($classroom->id, [
-            'date_joined' => now()->toDateString()
-        ]);
-
-        return back()->with('success', 'Successfully enrolled in ' . $classroom->class_name . '!');
     }
 
     public function materials()
     {
-        $materials = \App\Models\Material::orderBy('created_at', 'desc')->get();
-        return view('students.materials', compact('materials'));
+        try {
+            $materials = \App\Models\Material::orderBy('created_at', 'desc')->get();
+            return view('students.materials', compact('materials'));
+        } catch (\Exception $e) {
+            \Log::error('Error loading materials: ' . $e->getMessage());
+            return redirect()->route('student.dashboard')
+                ->withErrors(['error' => 'Unable to load materials. Please try again.']);
+        }
     }
 
     public function showMaterial($id)
     {
-        $material = \App\Models\Material::findOrFail($id);
-        $from = request()->query('from');
-        $classId = request()->query('class');
-        $assignmentId = request()->query('assignment');
-        return view('students.material-show', compact('material', 'from', 'classId', 'assignmentId'));
+        try {
+            $material = \App\Models\Material::findOrFail($id);
+            $from = request()->query('from');
+            $classId = request()->query('class');
+            $assignmentId = request()->query('assignment');
+            return view('students.material-show', compact('material', 'from', 'classId', 'assignmentId'));
+        } catch (\Exception $e) {
+            \Log::error('Error loading material: ' . $e->getMessage());
+            return redirect()->route('student.materials')
+                ->withErrors(['error' => 'Material not found.']);
+        }
     }
 
     /**
