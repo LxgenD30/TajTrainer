@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.template')
 
 @section('content')
 <div style="min-height: 100vh; background: linear-gradient(135deg, #1a2f1a 0%, #2d4a2d 100%); padding: 40px 20px;">

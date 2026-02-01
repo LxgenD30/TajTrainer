@@ -497,6 +497,8 @@ class StudentController extends Controller
             }
         }
     }
+    
+    private function transcribeWithAssemblyAI($audioPath)
     {
         $apiKey = config('services.assemblyai.api_key');
         $fullPath = storage_path('app/public/' . $audioPath);
