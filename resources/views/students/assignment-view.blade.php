@@ -1,0 +1,278 @@
+@extends('layouts.template')
+
+@section('title', 'View Submission')
+@section('page-title', 'Assignment Submission')
+@section('page-subtitle', 'View your submitted work')
+
+@section('content')
+<div style="padding: 0;">
+    <div style="margin-bottom: 20px;">
+        <a href="{{ route('classroom.show', $assignment->class_id) }}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-gold); text-decoration: none; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.color='var(--color-light-green)'" onmouseout="this.style.color='var(--color-gold)'">
+            ← Back to Classroom
+        </a>
+    </div>
+
+    <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                    <div style="width: 60px; height: 60px; background: var(--color-dark-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
+                        📝
+                    </div>
+                    <div>
+                        <h2 style="color: var(--color-gold); font-size: 1.5rem; margin-bottom: 5px;">
+                            @if($assignment->surah)
+                                📖 {{ $assignment->surah }} ({{ $assignment->start_verse }}@if($assignment->end_verse)-{{ $assignment->end_verse }}@endif)
+                            @else
+                                {{ $assignment->material ? $assignment->material->title : 'Assignment' }}
+                            @endif
+                        </h2>
+                        <p style="color: var(--color-light-green); opacity: 0.8; font-size: 0.9rem; margin: 0;">{{ $assignment->classroom->class_name }}</p>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                @php
+                    $score = \App\Models\Score::where('assignment_id', $assignment->assignment_id)
+                                             ->where('user_id', Auth::id())
+                                             ->first();
+                @endphp
+                @if($score)
+                    <div style="background: #4caf50; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 1.1rem; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);">
+                        ✓ Graded: {{ $score->score }}/{{ $assignment->total_marks }}
+                    </div>
+                @else
+                    <div style="background: #ff9800; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 1.1rem; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);">
+                        ⏳ Awaiting Grading
+                    </div>
+                @endif
+                <div style="color: var(--color-light-green); font-size: 0.85rem; opacity: 0.8;">
+                    Submitted: {{ $submission->submitted_at->format('M d, Y h:i A') }}
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div style="background: rgba(77, 139, 49, 0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(77, 139, 49, 0.4);">
+                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">📅 Due Date</div>
+                <div style="color: var(--color-light-green); font-size: 1rem;">{{ $assignment->due_date->format('M d, Y h:i A') }}</div>
+            </div>
+            <div style="background: rgba(77, 139, 49, 0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(77, 139, 49, 0.4);">
+                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">🎯 Total Marks</div>
+                <div style="color: var(--color-light-green); font-size: 1rem;">{{ $assignment->total_marks }} points</div>
+            </div>
+            @if(isset($score) && $score)
+            <div style="background: rgba(76, 175, 80, 0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(76, 175, 80, 0.4);">
+                <div style="color: var(--color-gold); font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">📊 Your Score</div>
+                <div style="color: #4caf50; font-size: 1rem; font-weight: 600;">{{ $score->score }}/{{ $assignment->total_marks }}</div>
+            </div>
+            @endif
+        </div>
+
+        @if($submission->text_submission)
+        <div style="background: rgba(70, 63, 58, 0.4); padding: 20px; border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.2); margin-bottom: 25px;">
+            <h3 style="color: var(--color-gold); font-size: 1.2rem; margin-bottom: 15px;">📄 Your Written Response</h3>
+            <p style="color: var(--color-light-green); line-height: 1.8; margin: 0; white-space: pre-wrap;">{{ $submission->text_submission }}</p>
+        </div>
+        @endif
+
+        @if($submission->audio_file_path)
+        <div style="background: rgba(70, 63, 58, 0.4); padding: 20px; border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.2); margin-bottom: 25px;">
+            <h3 style="color: var(--color-gold); font-size: 1.2rem; margin-bottom: 15px;">🎤 Audio Recording</h3>
+            <audio controls style="width: 100%; margin-top: 10px;">
+                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/mpeg">
+                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/wav">
+                <source src="{{ asset('storage/' . $submission->audio_file_path) }}" type="audio/webm">
+                Your browser does not support the audio element.
+            </audio>
+            
+            @if($submission->transcription)
+            <div style="margin-top: 20px; padding: 20px; background: rgba(31, 39, 27, 0.5); border-radius: 10px; border: 2px solid rgba(227, 216, 136, 0.3);">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <span style="font-size: 1.2rem;">📝</span>
+                    <h4 style="color: var(--color-gold); font-size: 1rem; font-weight: 600; margin: 0;">AI Transcription</h4>
+                    <span style="background: rgba(227, 216, 136, 0.2); color: var(--color-gold); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">Powered by AssemblyAI</span>
+                </div>
+                <p style="color: var(--color-light-green); line-height: 2.2; margin: 0; white-space: pre-wrap; direction: rtl; text-align: right; font-size: 1.8rem; font-family: 'Amiri', 'Traditional Arabic', serif; letter-spacing: 0.5px;">{{ $submission->transcription }}</p>
+            </div>
+            @endif
+
+            @if($submission->tajweed_analysis)
+                @php
+                    $analysis = json_decode($submission->tajweed_analysis, true);
+                    $score = \App\Models\Score::where('assignment_id', $assignment->assignment_id)
+                                             ->where('user_id', Auth::id())
+                                             ->first();
+                @endphp
+
+                <!-- Tajweed Analysis Results -->
+                <div style="margin-top: 25px; padding: 25px; background: linear-gradient(135deg, rgba(77, 139, 49, 0.15) 0%, rgba(31, 39, 27, 0.6) 100%); border-radius: 15px; border: 2px solid rgba(77, 139, 49, 0.4); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(227, 216, 136, 0.3);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 1.8rem;">🎯</span>
+                            <h4 style="color: var(--color-gold); font-size: 1.3rem; font-weight: 700; margin: 0;">Tajweed Analysis Results</h4>
+                        </div>
+                        @if($score)
+                        <div style="background: rgba(227, 216, 136, 0.2); padding: 10px 20px; border-radius: 10px; border: 2px solid var(--color-gold);">
+                            <div style="color: var(--color-light); font-size: 0.85rem; opacity: 0.8; margin-bottom: 2px;">Your Score</div>
+                            <div style="color: var(--color-gold); font-size: 1.5rem; font-weight: 700;">{{ $score->score }}/{{ $assignment->total_marks }}</div>
+                        </div>
+                        @endif
+                    </div>
+
+                    <!-- Overall Score Card -->
+                    <div style="background: rgba(227, 216, 136, 0.1); padding: 20px; border-radius: 12px; border: 2px solid rgba(227, 216, 136, 0.3); margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                            <div>
+                                <div style="color: var(--color-light); font-size: 0.9rem; opacity: 0.8; margin-bottom: 5px;">Overall Performance</div>
+                                <div style="color: var(--color-gold); font-size: 2rem; font-weight: 700;">{{ $analysis['overall_score']['score'] ?? 0 }}%</div>
+                                <div style="color: var(--color-light-green); font-size: 1.1rem; font-weight: 600; margin-top: 5px;">{{ $analysis['overall_score']['grade'] ?? 'N/A' }}</div>
+                            </div>
+                            <div style="flex: 1; min-width: 250px;">
+                                <div style="color: var(--color-light); font-size: 0.85rem; margin-bottom: 8px; opacity: 0.8;">Performance Breakdown</div>
+                                <div style="background: rgba(31, 39, 27, 0.5); border-radius: 8px; height: 12px; overflow: hidden;">
+                                    <div style="background: linear-gradient(90deg, #4caf50 0%, var(--color-gold) 50%, #ff9800 100%); height: 100%; width: {{ $analysis['overall_score']['score'] ?? 0 }}%; transition: width 0.5s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        @if(isset($analysis['overall_score']['feedback']))
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(31, 39, 27, 0.4); border-radius: 8px; border-left: 4px solid var(--color-gold);">
+                            <p style="color: var(--color-light-green); line-height: 1.6; margin: 0;">{{ $analysis['overall_score']['feedback'] }}</p>
+                        </div>
+                        @endif
+                    </div>
+
+                    <!-- Detailed Metrics -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <!-- Text Accuracy -->
+                        <div style="background: rgba(31, 39, 27, 0.6); padding: 20px; border-radius: 12px; border: 2px solid rgba(76, 175, 80, 0.3);">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <span style="font-size: 1.3rem;">📖</span>
+                                <h5 style="color: var(--color-light-green); font-size: 1rem; font-weight: 600; margin: 0;">Text Accuracy</h5>
+                            </div>
+                            <div style="color: #4caf50; font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ $analysis['text_accuracy'] ?? 0 }}%</div>
+                            <div style="color: var(--color-light); font-size: 0.85rem; opacity: 0.8;">Word-level precision</div>
+                        </div>
+
+                        <!-- Madd Analysis -->
+                        @if(isset($analysis['madd_analysis']))
+                        <div style="background: rgba(31, 39, 27, 0.6); padding: 20px; border-radius: 12px; border: 2px solid rgba(227, 216, 136, 0.3);">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <span style="font-size: 1.3rem;">📏</span>
+                                <h5 style="color: var(--color-gold); font-size: 1rem; font-weight: 600; margin: 0;">Madd (Elongation)</h5>
+                            </div>
+                            <div style="color: var(--color-gold); font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ $analysis['madd_analysis']['percentage'] ?? 0 }}%</div>
+                            <div style="color: var(--color-light); font-size: 0.85rem; opacity: 0.8;">{{ $analysis['madd_analysis']['correct_elongations'] ?? 0 }}/{{ $analysis['madd_analysis']['total_elongations'] ?? 0 }} correct</div>
+                        </div>
+                        @endif
+
+                        <!-- Noon Sakin Analysis -->
+                        @if(isset($analysis['noon_sakin_analysis']))
+                        <div style="background: rgba(31, 39, 27, 0.6); padding: 20px; border-radius: 12px; border: 2px solid rgba(255, 152, 0, 0.3);">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <span style="font-size: 1.3rem;">🔤</span>
+                                <h5 style="color: #ff9800; font-size: 1rem; font-weight: 600; margin: 0;">Noon Sakin/Tanween</h5>
+                            </div>
+                            <div style="color: #ff9800; font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ $analysis['noon_sakin_analysis']['percentage'] ?? 0 }}%</div>
+                            <div style="color: var(--color-light); font-size: 0.85rem; opacity: 0.8;">{{ $analysis['noon_sakin_analysis']['correct_pronunciation'] ?? 0 }}/{{ $analysis['noon_sakin_analysis']['total_occurrences'] ?? 0 }} correct</div>
+                        </div>
+                        @endif
+                    </div>
+
+                    <!-- Word Errors -->
+                    @if(isset($analysis['word_errors']) && count($analysis['word_errors']) > 0)
+                    <div style="background: rgba(244, 67, 54, 0.1); padding: 20px; border-radius: 12px; border: 2px solid rgba(244, 67, 54, 0.3); margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                            <span style="font-size: 1.3rem;">⚠️</span>
+                            <h5 style="color: #f44336; font-size: 1rem; font-weight: 600; margin: 0;">Areas for Improvement</h5>
+                        </div>
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            @foreach(array_slice($analysis['word_errors'], 0, 5) as $error)
+                            <div style="padding: 10px; background: rgba(31, 39, 27, 0.4); border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #f44336;">
+                                <div style="color: var(--color-light); font-size: 0.85rem; opacity: 0.8; margin-bottom: 3px;">Word {{ $error['position'] }}</div>
+                                <div style="display: flex; gap: 15px; align-items: center;">
+                                    <div>
+                                        <span style="color: var(--color-light); font-size: 0.8rem; opacity: 0.7;">Expected:</span>
+                                        <span style="color: var(--color-gold); font-size: 1rem; font-weight: 600; direction: rtl;">{{ $error['expected'] }}</span>
+                                    </div>
+                                    <span style="color: var(--color-light); opacity: 0.5;">→</span>
+                                    <div>
+                                        <span style="color: var(--color-light); font-size: 0.8rem; opacity: 0.7;">Actual:</span>
+                                        <span style="color: #f44336; font-size: 1rem; font-weight: 600; direction: rtl;">{{ $error['actual'] ?: '(missing)' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        @if(count($analysis['word_errors']) > 5)
+                        <div style="color: var(--color-light); font-size: 0.85rem; opacity: 0.7; margin-top: 10px; text-align: center;">
+                            And {{ count($analysis['word_errors']) - 5 }} more errors...
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
+                    <!-- Tajweed Rule Issues -->
+                    @if((isset($analysis['madd_analysis']['issues']) && count($analysis['madd_analysis']['issues']) > 0) || 
+                        (isset($analysis['noon_sakin_analysis']['issues']) && count($analysis['noon_sakin_analysis']['issues']) > 0))
+                    <div style="background: rgba(255, 152, 0, 0.1); padding: 20px; border-radius: 12px; border: 2px solid rgba(255, 152, 0, 0.3);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                            <span style="font-size: 1.3rem;">💡</span>
+                            <h5 style="color: #ff9800; font-size: 1rem; font-weight: 600; margin: 0;">Tajweed Recommendations</h5>
+                        </div>
+
+                        @if(isset($analysis['madd_analysis']['issues']) && count($analysis['madd_analysis']['issues']) > 0)
+                        <div style="margin-bottom: 15px;">
+                            <h6 style="color: var(--color-gold); font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">Madd (Elongation) Issues:</h6>
+                            @foreach(array_slice($analysis['madd_analysis']['issues'], 0, 3) as $issue)
+                            <div style="padding: 12px; background: rgba(31, 39, 27, 0.4); border-radius: 8px; margin-bottom: 8px; border-left: 3px solid var(--color-gold);">
+                                <div style="color: var(--color-light-green); font-size: 0.9rem; direction: rtl; margin-bottom: 5px;">{{ $issue['word'] ?? 'N/A' }}</div>
+                                <div style="color: var(--color-light); font-size: 0.85rem; opacity: 0.8;">{{ $issue['recommendation'] ?? $issue['issue'] ?? 'Review Madd rules' }}</div>
+                            </div>
+                            @endforeach
+                        </div>
+                        @endif
+
+                        @if(isset($analysis['noon_sakin_analysis']['issues']) && count($analysis['noon_sakin_analysis']['issues']) > 0)
+                        <div>
+                            <h6 style="color: #ff9800; font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">Noon Sakin/Tanween Issues:</h6>
+                            @foreach(array_slice($analysis['noon_sakin_analysis']['issues'], 0, 3) as $issue)
+                            <div style="padding: 12px; background: rgba(31, 39, 27, 0.4); border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #ff9800;">
+                                <div style="color: var(--color-light-green); font-size: 0.9rem; direction: rtl; margin-bottom: 5px;">{{ $issue['word'] ?? 'N/A' }}</div>
+                                <div style="color: var(--color-light); font-size: 0.85rem; opacity: 0.8;">{{ $issue['recommendation'] ?? $issue['issue'] ?? 'Review Noon Sakin rules' }}</div>
+                            </div>
+                            @endforeach
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+                </div>
+            @endif
+        </div>
+        @endif
+
+        @if($submission->teacher_feedback || (isset($score) && $score->feedback))
+        <div style="background: rgba(227, 216, 136, 0.1); padding: 20px; border-radius: 12px; border: 2px solid rgba(227, 216, 136, 0.3); margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="font-size: 1.5rem;">👨‍🏫</span>
+                <h3 style="color: var(--color-gold); font-size: 1.2rem; margin: 0;">Teacher Feedback</h3>
+            </div>
+            <p style="color: var(--color-light-green); line-height: 1.8; margin: 0; white-space: pre-wrap;">{{ $submission->teacher_feedback ?? $score->feedback ?? 'No feedback yet.' }}</p>
+        </div>
+        @endif
+
+        @if($assignment->material)
+        <div style="background: rgba(77, 139, 49, 0.1); padding: 20px; border-radius: 12px; border: 2px solid rgba(77, 139, 49, 0.3);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <span style="font-size: 1.3rem;">📚</span>
+                <h4 style="color: var(--color-gold); font-size: 1rem; font-weight: 600; margin: 0;">Assignment Material</h4>
+            </div>
+            <p style="color: var(--color-light-green); margin: 0 0 15px 0; opacity: 0.9;">{{ $assignment->material->title }}</p>
+            <a href="{{ route('student.material.show', $assignment->material->material_id) }}" class="btn-secondary" style="text-decoration: none; display: inline-block;">
+                View Material →
+            </a>
+        </div>
+        @endif
+    </div>
+</div>
+@endsection

@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Student extends Model
+{
+    public $incrementing = false;
+    
+    protected $fillable = [
+        'id',
+        'name',
+        'biodata',
+        'current_level',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id');
+    }
+
+    public function classrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'enrollment', 'user_id', 'class_id')
+                    ->withPivot('date_joined')
+                    ->withTimestamps();
+    }
+
+    public function scores()
+    {
+        return $this->hasMany(Score::class, 'user_id');
+    }
+}
