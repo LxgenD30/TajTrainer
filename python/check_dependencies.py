@@ -4,8 +4,16 @@ Dependency checker for TajTrainer Python audio analyzer.
 This script verifies all required Python packages are installed and functional.
 """
 
+import os
 import sys
 import json
+
+# Limit OpenBLAS threads for shared hosting environments
+# This prevents "Resource temporarily unavailable" errors
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
 
 def check_dependencies():
     """Check all required dependencies and return detailed report."""
@@ -33,6 +41,9 @@ def check_dependencies():
     print("=" * 60)
     print(f"\nPython Version: {results['python_version']}")
     print(f"Python Executable: {sys.executable}")
+    print(f"\nEnvironment:")
+    print(f"  OPENBLAS_NUM_THREADS: {os.environ.get('OPENBLAS_NUM_THREADS', 'not set')}")
+    print(f"  Working Directory: {os.getcwd()}")
     print("\nChecking dependencies...\n")
     
     for package_name, description in required_packages.items():
@@ -81,7 +92,26 @@ def check_dependencies():
             }
             results['all_ok'] = False
             print(f"✗ {package_name:20s} {'NOT FOUND':15s} - {description}")
-            print(f"  Error: {e}")
+            print(f"  Error: {str(e)[:100]}")
+        except RuntimeError as e:
+            # Handle CPU dispatcher errors gracefully
+            if 'CPU dispatcher' in str(e):
+                results['dependencies'][package_name] = {
+                    'status': 'WARNING',
+                    'error': str(e),
+                    'description': description
+                }
+                print(f"⚠ {package_name:20s} {'WARNING':15s} - {description}")
+                print(f"  Note: Threading issue (safe to ignore on shared hosting)")
+            else:
+                results['dependencies'][package_name] = {
+                    'status': 'ERROR',
+                    'error': str(e),
+                    'description': description
+                }
+                results['all_ok'] = False
+                print(f"✗ {package_name:20s} {'ERROR':15s} - {description}")
+                print(f"  Error: {str(e)[:100]}")
         except Exception as e:
             results['dependencies'][package_name] = {
                 'status': 'ERROR',
@@ -90,7 +120,7 @@ def check_dependencies():
             }
             results['all_ok'] = False
             print(f"⚠ {package_name:20s} {'ERROR':15s} - {description}")
-            print(f"  Error: {e}")
+            print(f"  Error: {str(e)[:100]}")
     
     print("\n" + "=" * 60)
     

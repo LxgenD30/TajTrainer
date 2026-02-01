@@ -9,9 +9,16 @@ Uses OpenAI for intelligent feedback generation
 Uses Parselmouth (Praat) for professional phonetic analysis
 """
 
+# CRITICAL: Limit OpenBLAS threads for shared hosting environments
+# Must be set BEFORE importing numpy/scipy to prevent threading errors
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+
 import sys
 import json
-import os
 import platform
 import librosa
 import numpy as np
