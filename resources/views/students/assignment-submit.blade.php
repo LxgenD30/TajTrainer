@@ -181,12 +181,12 @@
                         type="file" 
                         name="audio_file" 
                         id="audioFileInput"
-                        accept="audio/*"
+                        accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.webm,.mp4"
                         style="width: 100%; padding: 18px; color: var(--color-light-green); background: rgba(31, 39, 27, 0.5); border: 3px solid rgba(77, 139, 49, 0.5); border-radius: 10px; cursor: pointer; font-size: 1.05rem; font-weight: 600;"
                         onchange="showFileName(this)"
                     >
                     <p style="color: var(--color-light-green); opacity: 0.8; font-size: 0.95rem; margin: 18px 0 0 0; line-height: 1.6;">
-                        💡 <strong>Supported formats:</strong> MP3, WAV, M4A, OGG<br>
+                        💡 <strong>Supported formats:</strong> MP3, WAV, M4A, OGG, WEBM, MP4<br>
                         <strong>Maximum size:</strong> 10MB
                     </p>
                     <div id="selectedFileName" style="color: var(--color-gold); margin-top: 18px; font-weight: 700; font-size: 1.05rem;"></div>

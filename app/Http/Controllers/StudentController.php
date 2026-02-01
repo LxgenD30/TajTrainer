@@ -216,21 +216,45 @@ class StudentController extends Controller
             
             // Validate the request
             try {
-                $validated = $request->validate([
+                $request->validate([
                     'text_submission' => 'nullable|string',
-                    'audio_file' => [
-                        'nullable',
-                        'file',
-                        'max:10240',
-                        'mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/wave,audio/x-wav,audio/mp4,audio/x-m4a,audio/m4a,audio/ogg,audio/webm,audio/x-matroska'
-                    ],
                     'transcription' => 'nullable|string',
                     'recorded_audio' => 'nullable|string',
                 ]);
-                \Log::info('✓ Validation passed');
+                
+                // Custom validation for audio file - accept any audio/* or video/* MIME type
+                // (some audio recorders save as video/webm, video/mp4, etc.)
+                if ($request->hasFile('audio_file')) {
+                    $file = $request->file('audio_file');
+                    $mimeType = $file->getMimeType();
+                    $size = $file->getSize();
+                    
+                    \Log::info('Validating uploaded file:');
+                    \Log::info('  MIME type: ' . $mimeType);
+                    \Log::info('  Size: ' . $size . ' bytes (' . round($size / 1024 / 1024, 2) . ' MB)');
+                    
+                    // Check if it's an audio or video file
+                    if (!str_starts_with($mimeType, 'audio/') && !str_starts_with($mimeType, 'video/')) {
+                        \Log::error('Invalid file type: ' . $mimeType);
+                        return back()->withErrors([
+                            'audio_file' => 'The audio file must be an audio or video file (MP3, WAV, M4A, OGG, WEBM, MP4, etc.). Detected type: ' . $mimeType
+                        ])->withInput();
+                    }
+                    
+                    // Check size (10MB = 10485760 bytes)
+                    if ($size > 10485760) {
+                        \Log::error('File too large: ' . $size . ' bytes');
+                        return back()->withErrors([
+                            'audio_file' => 'The audio file must not be larger than 10MB. Your file is ' . round($size / 1024 / 1024, 2) . ' MB.'
+                        ])->withInput();
+                    }
+                    
+                    \Log::info('✓ File validation passed');
+                }
+                
+                \Log::info('✓ All validation passed');
             } catch (\Illuminate\Validation\ValidationException $e) {
                 \Log::error('Validation failed: ' . json_encode($e->errors()));
-                \Log::error('File MIME type: ' . ($request->hasFile('audio_file') ? $request->file('audio_file')->getMimeType() : 'N/A'));
                 return back()->withErrors($e->errors())->withInput();
             }
         } catch (\Exception $e) {
