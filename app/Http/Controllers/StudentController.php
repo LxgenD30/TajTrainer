@@ -886,57 +886,66 @@ class StudentController extends Controller
         // Get correct Quranic text from Quran Cloud API
         $correctText = $this->getQuranText($surah, $startVerse, $endVerse);
         
-        // Run Python audio analysis for timing and basic metrics
-        $audioAnalysis = $this->runPythonAudioAnalysis($fullPath);
+        \Log::info('Expected Quranic text for analysis: ' . $correctText);
         
-        // Compare transcription with correct text
-        $textComparison = $this->compareQuranText($transcription, $correctText);
+        // Run Python audio analysis with expected text
+        $audioAnalysis = $this->runPythonAudioAnalysis($fullPath, $correctText);
         
-        // Combine all analysis
+        \Log::info('Audio analysis result: ' . json_encode($audioAnalysis));
+        
+        // Use Python analysis directly (it now handles all 3 rules)
         $result = [
             'audio_file' => $audioPath,
             'duration' => $audioAnalysis['duration'] ?? 0,
             'expected_text' => $correctText,
             'transcribed_text' => $transcription,
-            'text_accuracy' => $textComparison['accuracy'],
-            'word_errors' => $textComparison['errors'],
-            'madd_analysis' => [
-                'total_elongations' => $audioAnalysis['madd_analysis']['total_elongations'] ?? 0,
-                'correct_elongations' => $textComparison['madd_correct'] ?? 0,
-                'issues' => array_merge(
-                    $audioAnalysis['madd_analysis']['issues'] ?? [],
-                    $textComparison['madd_issues'] ?? []
-                ),
-                'percentage' => $textComparison['madd_percentage'] ?? 0,
+            'rules_detected' => $audioAnalysis['rules_detected'] ?? [
+                'madd' => true,
+                'idgham_bila_ghunnah' => true,
+                'idgham_bi_ghunnah' => true,
             ],
-            'noon_sakin_analysis' => [
-                'total_occurrences' => count($textComparison['noon_sakin_positions'] ?? []),
-                'correct_pronunciation' => $textComparison['noon_sakin_correct'] ?? 0,
-                'issues' => $textComparison['noon_sakin_issues'] ?? [],
-                'percentage' => $textComparison['noon_sakin_percentage'] ?? 0,
+            'madd_analysis' => $audioAnalysis['madd_analysis'] ?? [
+                'total_elongations' => 0,
+                'correct_elongations' => 0,
+                'percentage' => 0,
+                'issues' => []
             ],
-            'overall_score' => [
-                'score' => round(($textComparison['accuracy'] * 0.6) + 
-                              ($textComparison['madd_percentage'] * 0.2) + 
-                              ($textComparison['noon_sakin_percentage'] * 0.2), 2),
-                'grade' => '',
-                'feedback' => $this->generateFeedback($textComparison),
+            'idgham_bila_ghunnah_analysis' => $audioAnalysis['idgham_bila_ghunnah_analysis'] ?? [
+                'total_occurrences' => 0,
+                'correct_pronunciation' => 0,
+                'percentage' => 0,
+                'issues' => []
+            ],
+            'idgham_bi_ghunnah_analysis' => $audioAnalysis['idgham_bi_ghunnah_analysis'] ?? [
+                'total_occurrences' => 0,
+                'correct_pronunciation' => 0,
+                'percentage' => 0,
+                'issues' => []
+            ],
+            'overall_score' => $audioAnalysis['overall_score'] ?? [
+                'score' => 0,
+                'grade' => 'Needs Improvement',
+                'feedback' => 'Analysis could not be completed'
             ],
         ];
         
-        // Assign grade based on overall score
-        $score = $result['overall_score']['score'];
-        if ($score >= 90) {
-            $result['overall_score']['grade'] = 'Excellent';
-        } elseif ($score >= 80) {
-            $result['overall_score']['grade'] = 'Very Good';
-        } elseif ($score >= 70) {
-            $result['overall_score']['grade'] = 'Good';
-        } elseif ($score >= 60) {
-            $result['overall_score']['grade'] = 'Fair';
-        } else {
-            $result['overall_score']['grade'] = 'Needs Improvement';
-        }
+        // Old noon_sakin_analysis for backward compatibility (map from new structure)
+        $result['noon_sakin_analysis'] = [
+            'total_occurrences' => 
+                ($audioAnalysis['idgham_bila_ghunnah_analysis']['total_occurrences'] ?? 0) +
+                ($audioAnalysis['idgham_bi_ghunnah_analysis']['total_occurrences'] ?? 0),
+            'correct_pronunciation' => 
+                ($audioAnalysis['idgham_bila_ghunnah_analysis']['correct_pronunciation'] ?? 0) +
+                ($audioAnalysis['idgham_bi_ghunnah_analysis']['correct_pronunciation'] ?? 0),
+            'issues' => array_merge(
+                $audioAnalysis['idgham_bila_ghunnah_analysis']['issues'] ?? [],
+                $audioAnalysis['idgham_bi_ghunnah_analysis']['issues'] ?? []
+            ),
+            'percentage' => round((
+                ($audioAnalysis['idgham_bila_ghunnah_analysis']['percentage'] ?? 0) +
+                ($audioAnalysis['idgham_bi_ghunnah_analysis']['percentage'] ?? 0)
+            ) / 2, 2),
+        ];
         
         return $result;
     }
@@ -1042,33 +1051,43 @@ class StudentController extends Controller
     /**
      * Run Python audio analysis
      */
-    private function runPythonAudioAnalysis($fullPath)
+    private function runPythonAudioAnalysis($fullPath, $expectedText = '')
     {
         $pythonScript = base_path('python/tajweed_analyzer.py');
         
         if (!file_exists($pythonScript)) {
-            // Return default structure if script not found
             return [
                 'duration' => 0,
-                'madd_analysis' => ['total_elongations' => 0, 'issues' => []],
+                'madd_analysis' => ['total_elongations' => 0, 'correct_elongations' => 0, 'percentage' => 0, 'issues' => []],
+                'idgham_bila_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 0, 'issues' => []],
+                'idgham_bi_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 0, 'issues' => []],
             ];
         }
 
         $pythonCommand = $this->getPythonCommand();
-        $command = "$pythonCommand \"$pythonScript\" \"$fullPath\"";
+        $command = "$pythonCommand \"$pythonScript\" \"$fullPath\" \"$expectedText\"";
+        
+        \Log::info('Running Python command: ' . $command);
+        
         $output = shell_exec($command . ' 2>&1');
+        
+        \Log::info('Python output: ' . $output);
         
         if (!empty($output)) {
             $result = json_decode($output, true);
             if (json_last_error() === JSON_ERROR_NONE && !isset($result['error'])) {
                 return $result;
+            } else {
+                \Log::error('Python analysis error: ' . ($result['error'] ?? json_last_error_msg()));
             }
         }
         
         // Return default structure on error
         return [
             'duration' => 0,
-            'madd_analysis' => ['total_elongations' => 0, 'issues' => []],
+            'madd_analysis' => ['total_elongations' => 0, 'correct_elongations' => 0, 'percentage' => 0, 'issues' => []],
+            'idgham_bila_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 0, 'issues' => []],
+            'idgham_bi_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 0, 'issues' => []],
         ];
     }
     
