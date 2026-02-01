@@ -19,10 +19,12 @@ Student submits → Save to database → Dispatch job → Return success immedia
 - **`graded`**: Processing complete, score created
 
 ### 3. **User Experience**
-- ✅ **Instant feedback**: "Assignment submitted! Audio is being analyzed..."
-- 🔄 **Auto-refresh**: Page refreshes every 10 seconds while processing
-- 📊 **Real-time status**: Shows "🔄 Analyzing..." badge with pulse animation
+- ✅ **Instant feedback**: "Assignment submitted! Your audio is being analyzed..."
+- 🔄 **Auto-refresh**: Page refreshes every **5 seconds** while processing
+- 🔄 **Animated spinner**: Shows rotating loader instead of static emoji
+- 📊 **Real-time status**: Updates automatically on both student and teacher pages
 - ✅ **Final result**: Badge changes to "✓ Graded: X/100" when complete
+- 👨‍🏫 **Teacher view**: Teachers see "Processing..." immediately after submission
 
 ## Production Deployment on cPanel
 
@@ -36,6 +38,9 @@ git pull origin main
 Edit `~/tajtrainer/.env`:
 ```env
 QUEUE_CONNECTION=database
+
+# Make sure OpenAI API key is set for AI feedback
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 ### Step 3: Run Queue Migration (if needed)
@@ -45,6 +50,9 @@ php artisan migrate
 ```
 
 ### Step 4: Start Queue Worker
+
+**IMPORTANT**: The queue worker MUST be running for async processing. Without it, the system will fall back to synchronous processing (which may timeout).
+
 **Option A: Using cron job (recommended for shared hosting)**
 Add to cPanel Cron Jobs (run every minute):
 ```bash
@@ -53,12 +61,21 @@ Add to cPanel Cron Jobs (run every minute):
 
 **Option B: Using background process** (if allowed by host):
 ```bash
-nohup php artisan queue:work --timeout=600 --tries=3 &
+nohup php artisan queue:work --timeout=600 --tries=3 > /dev/null 2>&1 &
 ```
 
-**Option C: Manual testing**:
+**Option C: For local development**:
 ```bash
-php artisan queue:work --once
+php artisan queue:work
+```
+
+**Verify worker is running**:
+```bash
+# Check if worker process exists
+ps aux | grep "queue:work"
+
+# Check pending jobs
+php artisan queue:monitor
 ```
 
 ### Step 5: Verify Queue is Working
@@ -70,6 +87,19 @@ DB::table('failed_jobs')->count();  // Should be 0
 ```
 
 ## Important Notes
+
+### OpenAI API Key
+**Critical**: Make sure your OpenAI API key is set in `.env`:
+```env
+OPENAI_API_KEY=sk-proj-...
+```
+
+The API key is passed to the Python script as an environment variable. Without it:
+- ✅ Tajweed analysis still works
+- ✅ Scoring still works
+- ❌ AI feedback will not be generated
+
+Check your usage at: https://platform.openai.com/usage
 
 ### Python Dependencies
 Make sure `soundfile` is installed for .m4a conversion:

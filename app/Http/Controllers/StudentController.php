@@ -400,16 +400,38 @@ class StudentController extends Controller
             throw new \Exception('Failed to save submission: ' . $e->getMessage());
         }
         
-        // Dispatch background job for audio processing
+        // Process audio based on queue configuration
         if ($submission->audio_file_path) {
-            \Log::info('Dispatching ProcessSubmissionAudio job for submission #' . $submission->id);
-            ProcessSubmissionAudio::dispatch($submission->id);
-            \Log::info('✓ Job dispatched successfully');
+            $queueConnection = config('queue.default');
+            
+            // Always try async first, but with proper error handling
+            try {
+                \Log::info('Dispatching ProcessSubmissionAudio job for submission #' . $submission->id . ' (Queue: ' . $queueConnection . ')');
+                
+                // Dispatch to queue
+                ProcessSubmissionAudio::dispatch($submission->id);
+                \Log::info('✓ Job dispatched successfully to ' . $queueConnection . ' queue');
+                
+                return redirect()->route('classroom.show', $assignment->class_id)
+                    ->with('success', 'Assignment submitted successfully! Your audio is being analyzed...');
+                    
+            } catch (\Exception $e) {
+                \Log::error('Failed to dispatch job: ' . $e->getMessage());
+                \Log::error('Falling back to synchronous processing');
+                
+                // Fallback: Process synchronously
+                try {
+                    ProcessSubmissionAudio::dispatchSync($submission->id);
+                    \Log::info('✓ Audio processed synchronously');
+                    return redirect()->route('classroom.show', $assignment->class_id)
+                        ->with('success', 'Assignment submitted and analyzed successfully!');
+                } catch (\Exception $syncError) {
+                    \Log::error('Sync processing also failed: ' . $syncError->getMessage());
+                    return redirect()->route('classroom.show', $assignment->class_id)
+                        ->with('warning', 'Assignment submitted but analysis failed. Teacher will grade manually.');
+                }
+            }
         }
-        
-        \Log::info('=== Assignment Submission Completed Successfully ===');
-        return redirect()->route('classroom.show', $assignment->class_id)
-            ->with('success', 'Assignment submitted successfully! Your audio is being analyzed in the background...');
             
         } catch (\Exception $e) {
             \Log::error('=== Assignment Submission FAILED ===');
