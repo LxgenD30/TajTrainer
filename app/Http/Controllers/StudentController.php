@@ -175,34 +175,62 @@ class StudentController extends Controller
 
     public function storeSubmission(Request $request, $assignmentId)
     {
+        \Log::info('=== Assignment Submission Started ===');
+        \Log::info('Assignment ID: ' . $assignmentId);
+        \Log::info('Student ID: ' . Auth::id());
+        \Log::info('Request method: ' . $request->method());
+        \Log::info('Content type: ' . $request->header('Content-Type'));
+        \Log::info('Has recorded_audio: ' . ($request->has('recorded_audio') ? 'Yes' : 'No'));
+        \Log::info('Has audio_file: ' . ($request->hasFile('audio_file') ? 'Yes' : 'No'));
+        \Log::info('Has transcription: ' . ($request->has('transcription') ? 'Yes' : 'No'));
+        \Log::info('All request keys: ' . implode(', ', array_keys($request->all())));
+        
+        if ($request->hasFile('audio_file')) {
+            $file = $request->file('audio_file');
+            \Log::info('Upload file details:');
+            \Log::info('  - Name: ' . $file->getClientOriginalName());
+            \Log::info('  - Size: ' . $file->getSize() . ' bytes');
+            \Log::info('  - MIME: ' . $file->getMimeType());
+            \Log::info('  - Extension: ' . $file->getClientOriginalExtension());
+            \Log::info('  - Is Valid: ' . ($file->isValid() ? 'Yes' : 'No'));
+            \Log::info('  - Error: ' . $file->getError());
+        }
+        
+        if ($request->has('transcription')) {
+            \Log::info('Transcription content: ' . substr($request->transcription, 0, 200));
+        }
+        
         try {
             $assignment = \App\Models\Assignment::findOrFail($assignmentId);
             
             $student = Student::find(Auth::id());
+            if (!$student) {
+                \Log::error('Student not found: ' . Auth::id());
+                return back()->withErrors(['error' => 'Student account not found. Please contact administrator.'])->withInput();
+            }
+            
             if (!$student->classrooms()->where('class_id', $assignment->class_id)->exists()) {
-                abort(403, 'You are not enrolled in this class.');
+                \Log::error('Student not enrolled in classroom: ' . $assignment->class_id);
+                return back()->withErrors(['error' => 'You are not enrolled in this class.'])->withInput();
             }
             
-            \Log::info('=== Assignment Submission Started ===');
-            \Log::info('Assignment ID: ' . $assignmentId);
-            \Log::info('Student ID: ' . Auth::id());
-            \Log::info('Has recorded_audio: ' . ($request->has('recorded_audio') ? 'Yes' : 'No'));
-            \Log::info('Has audio_file: ' . ($request->hasFile('audio_file') ? 'Yes' : 'No'));
-            \Log::info('Has transcription: ' . ($request->has('transcription') ? 'Yes' : 'No'));
-            if ($request->has('transcription')) {
-                \Log::info('Transcription content: ' . substr($request->transcription, 0, 200));
+            // Validate the request
+            try {
+                $validated = $request->validate([
+                    'text_submission' => 'nullable|string',
+                    'audio_file' => 'nullable|file|mimes:mp3,wav,m4a,ogg,webm|max:10240',
+                    'transcription' => 'nullable|string',
+                    'recorded_audio' => 'nullable|string',
+                ]);
+                \Log::info('✓ Validation passed');
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                \Log::error('Validation failed: ' . json_encode($e->errors()));
+                return back()->withErrors($e->errors())->withInput();
             }
-            
-            $validated = $request->validate([
-                'text_submission' => 'nullable|string',
-                'audio_file' => 'nullable|file|mimes:mp3,wav,m4a,ogg,webm|max:10240',
-                'transcription' => 'nullable|string',
-                'recorded_audio' => 'nullable|string',
-            ]);
         } catch (\Exception $e) {
             \Log::error('Assignment Submission Error at start: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            return back()->withErrors(['error' => 'Submission failed: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Submission failed: ' . $e->getMessage()])->withInput();
         }
         
         $submission = \App\Models\AssignmentSubmission::where('assignment_id', $assignmentId)

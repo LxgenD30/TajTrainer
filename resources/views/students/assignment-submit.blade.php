@@ -76,6 +76,30 @@
 
     <form method="POST" action="{{ route('student.assignment.store', $assignment->assignment_id) }}" enctype="multipart/form-data" id="submissionForm">
         @csrf
+        
+        @if($errors->any())
+        <div style="background: rgba(244, 67, 54, 0.15); border: 2px solid #f44336; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="font-size: 1.5rem;">⚠️</span>
+                <h4 style="color: #f44336; font-size: 1.1rem; font-weight: 700; margin: 0;">Submission Error</h4>
+            </div>
+            <ul style="color: var(--color-light); margin: 0; padding-left: 25px; line-height: 1.8;">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+        
+        @if(session('error'))
+        <div style="background: rgba(244, 67, 54, 0.15); border: 2px solid #f44336; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.5rem;">⚠️</span>
+                <p style="color: #f44336; font-size: 1.05rem; font-weight: 600; margin: 0;">{{ session('error') }}</p>
+            </div>
+        </div>
+        @endif
+        
         <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 35px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding-bottom: 25px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
                 <div style="width: 55px; height: 55px; background: linear-gradient(135deg, var(--color-dark-green), rgba(77, 139, 49, 0.8)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 4px 20px rgba(77, 139, 49, 0.5);">
@@ -467,10 +491,31 @@
         const recordedAudio = document.getElementById('recordedAudio')?.value;
         const uploadedFile = document.getElementById('audioFileInput')?.files?.length > 0;
         
+        console.log('=== Form Submission Check ===');
+        console.log('Has recorded audio:', !!recordedAudio);
+        console.log('Has uploaded file:', uploadedFile);
+        console.log('Recorded audio length:', recordedAudio ? recordedAudio.length : 0);
+        console.log('Upload file name:', uploadedFile ? document.getElementById('audioFileInput').files[0].name : 'None');
+        console.log('Upload file size:', uploadedFile ? document.getElementById('audioFileInput').files[0].size : 0);
+        
         if (!recordedAudio && !uploadedFile) {
             e.preventDefault();
             alert('⚠️ Please either record your recitation or upload an audio file before submitting.');
+            console.error('❌ Form validation failed: No audio provided');
             return false;
+        }
+        
+        // Log form data
+        const formData = new FormData(e.target);
+        console.log('=== Form Data Being Submitted ===');
+        for (let [key, value] of formData.entries()) {
+            if (key === 'audio_file') {
+                console.log('audio_file:', value.name, value.size + ' bytes', value.type);
+            } else if (key === 'recorded_audio') {
+                console.log('recorded_audio: [base64 data ' + (value.length / 1024).toFixed(2) + ' KB]');
+            } else {
+                console.log(key + ':', value);
+            }
         }
         
         console.log('📤 Submitting assignment...');
