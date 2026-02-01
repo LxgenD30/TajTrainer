@@ -347,30 +347,58 @@ class ProcessSubmissionAudio implements ShouldQueue
     
     private function extractJsonFromOutput($output)
     {
+        // Find the LAST complete JSON object (the final analysis result)
+        // Python outputs multiple JSON status messages, we want the final one
+        
         $lines = explode("\n", $output);
-        $jsonLines = [];
-        $inJson = false;
+        $allJsonObjects = [];
+        $currentJson = [];
         $braceCount = 0;
         
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) continue;
             
-            if (strpos($line, '{') !== false) {
-                $inJson = true;
-                $braceCount += substr_count($line, '{') - substr_count($line, '}');
-                $jsonLines[] = $line;
-            } elseif ($inJson) {
-                $braceCount += substr_count($line, '{') - substr_count($line, '}');
-                $jsonLines[] = $line;
+            // Start of a new JSON object
+            if (strpos($line, '{') !== false && $braceCount === 0) {
+                $currentJson = [$line];
+                $braceCount = substr_count($line, '{') - substr_count($line, '}');
                 
-                if ($braceCount <= 0) {
-                    break;
+                // Single line JSON
+                if ($braceCount === 0) {
+                    $allJsonObjects[] = $line;
+                }
+            } elseif ($braceCount > 0) {
+                // Continue multi-line JSON
+                $currentJson[] = $line;
+                $braceCount += substr_count($line, '{') - substr_count($line, '}');
+                
+                // Complete multi-line JSON
+                if ($braceCount === 0) {
+                    $allJsonObjects[] = implode("\n", $currentJson);
+                    $currentJson = [];
                 }
             }
         }
         
-        return implode("\n", $jsonLines);
+        // Return the LAST JSON object (the final analysis result)
+        // Earlier objects are status messages
+        if (empty($allJsonObjects)) {
+            return '{}';
+        }
+        
+        // Find the largest/most complete JSON (final result is usually longest)
+        $lastJson = end($allJsonObjects);
+        
+        // Verify it's the analysis result by checking for expected keys
+        foreach (array_reverse($allJsonObjects) as $jsonStr) {
+            if (strpos($jsonStr, '"audio_file"') !== false || 
+                strpos($jsonStr, '"overall_score"') !== false) {
+                return $jsonStr;
+            }
+        }
+        
+        return $lastJson;
     }
     
     private function getQuranText($surah, $startVerse, $endVerse)

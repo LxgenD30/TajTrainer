@@ -80,7 +80,16 @@ class TajweedAnalyzer:
         self.use_whisper = use_whisper
         self.use_openai = use_openai
         self.reference_audio_path = reference_audio_path
-        self.y, self.sr = librosa.load(audio_path, sr=16000)  # 16kHz for Whisper
+        
+        # Convert webm to wav if needed (for Parselmouth compatibility)
+        self.converted_audio_path = None
+        if audio_path.lower().endswith('.webm'):
+            self.converted_audio_path = self.convert_webm_to_wav(audio_path)
+            audio_for_analysis = self.converted_audio_path
+        else:
+            audio_for_analysis = audio_path
+        
+        self.y, self.sr = librosa.load(audio_for_analysis, sr=16000)  # 16kHz for Whisper
         self.duration = librosa.get_duration(y=self.y, sr=self.sr)
         
         # Load reference audio if provided
@@ -146,6 +155,26 @@ class TajweedAnalyzer:
             }), file=sys.stderr)
             self.whisper_model = None
             self.whisper_processor = None
+    
+    def convert_webm_to_wav(self, webm_path):
+        """Convert webm to wav for Parselmouth compatibility"""
+        try:
+            import subprocess
+            
+            # Create temp wav file
+            wav_path = webm_path.rsplit('.', 1)[0] + '_converted.wav'
+            
+            # Convert using ffmpeg
+            cmd = ['ffmpeg', '-i', webm_path, '-ar', '16000', '-ac', '1', '-y', wav_path]
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+            
+            return wav_path
+        except Exception as e:
+            print(json.dumps({
+                "warning": f"Failed to convert webm to wav: {str(e)}",
+                "fallback": "Will attempt analysis with original file"
+            }), file=sys.stderr)
+            return webm_path
     
     def transcribe_with_whisper(self):
         """Transcribe audio using Tarteel AI's Whisper model"""
@@ -241,22 +270,8 @@ class TajweedAnalyzer:
         try:
             if PARSELMOUTH_AVAILABLE:
                 # ADVANCED PARSELMOUTH ANALYSIS
-                # Convert .m4a to .wav if needed (Parselmouth only supports WAV)
-                audio_for_praat = self.audio_path
-                temp_wav_file = None
-                
-                if self.audio_path.lower().endswith('.m4a') or self.audio_path.lower().endswith('.mp4'):
-                    # Convert to temporary WAV file
-                    import tempfile
-                    temp_wav = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
-                    temp_wav_file = temp_wav.name
-                    temp_wav.close()
-                    
-                    # Load with librosa and save as WAV
-                    y, sr = librosa.load(self.audio_path, sr=16000)
-                    import soundfile as sf
-                    sf.write(temp_wav_file, y, sr)
-                    audio_for_praat = temp_wav_file
+                # Use converted wav file if available, otherwise original
+                audio_for_praat = self.converted_audio_path if self.converted_audio_path else self.audio_path
                 
                 snd = parselmouth.Sound(audio_for_praat)
                 
@@ -708,10 +723,20 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
                 }
             
         except Exception as e:
+            error_str = str(e)
             print(json.dumps({
                 "status": "openai_failed",
-                "error": str(e)
+                "error": error_str
             }), file=sys.stderr)
+            
+            # Return basic feedback if API quota exceeded or other error
+            if 'insufficient_quota' in error_str or '429' in error_str:
+                return {
+                    "summary": "Unable to generate AI feedback due to API quota. Your recitation has been analyzed using acoustic analysis.",
+                    "strengths": ["Submission completed successfully"],
+                    "improvements": [],
+                    "next_steps": "Review the detailed Tajweed analysis above for specific areas to improve."
+                }
             return None
     
     def compare_with_reference(self):
