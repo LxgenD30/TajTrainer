@@ -542,29 +542,57 @@ class ProcessSubmissionAudio implements ShouldQueue
         if (isset($analysis['madd_analysis']['issues'])) {
             foreach ($analysis['madd_analysis']['issues'] as $issue) {
                 \App\Models\TajweedErrorLog::create([
-                    'submission_id' => $submissionId,
-                    'submission_type' => $type,
-                    'rule_type' => 'madd',
-                    'error_details' => json_encode($issue),
-                    'timestamp' => now(),
+                    'user_id' => $submission->student->user_id,
+                    'session_type' => 'assignment',
+                    'session_id' => $submissionId,
+                    'error_type' => 'madd',
+                    'rule_name' => 'Madd (Elongation)',
+                    'timestamp_in_audio' => $issue['time'] ?? null,
+                    'severity' => 'moderate',
+                    'was_correct' => false,
+                    'issue_description' => is_array($issue) ? json_encode($issue) : $issue,
+                    'recommendation' => 'Practice elongating vowels for 2 counts',
                 ]);
                 $maddErrors++;
             }
         }
         
-        if (isset($analysis['noon_sakin_analysis']['issues'])) {
-            foreach ($analysis['noon_sakin_analysis']['issues'] as $issue) {
+        if (isset($analysis['idgham_bila_ghunnah_analysis']['issues'])) {
+            foreach ($analysis['idgham_bila_ghunnah_analysis']['issues'] as $issue) {
                 \App\Models\TajweedErrorLog::create([
-                    'submission_id' => $submissionId,
-                    'submission_type' => $type,
-                    'rule_type' => 'noon_sakin',
-                    'error_details' => json_encode($issue),
-                    'timestamp' => now(),
+                    'user_id' => $submission->student->user_id,
+                    'session_type' => 'assignment',
+                    'session_id' => $submissionId,
+                    'error_type' => 'idgham_bila_ghunnah',
+                    'rule_name' => 'Idgham Bila Ghunnah',
+                    'timestamp_in_audio' => $issue['time'] ?? null,
+                    'severity' => 'moderate',
+                    'was_correct' => false,
+                    'issue_description' => is_array($issue) ? json_encode($issue) : $issue,
+                    'recommendation' => 'Focus on merging letters ر and ل without nasalization',
                 ]);
                 $noonErrors++;
             }
         }
         
-        Log::info("Logged {$maddErrors} Madd errors and {$noonErrors} Noon Sakin errors");
+        if (isset($analysis['idgham_bi_ghunnah_analysis']['issues'])) {
+            foreach ($analysis['idgham_bi_ghunnah_analysis']['issues'] as $issue) {
+                \App\Models\TajweedErrorLog::create([
+                    'user_id' => $submission->student->user_id,
+                    'session_type' => 'assignment',
+                    'session_id' => $submissionId,
+                    'error_type' => 'idgham_bi_ghunnah',
+                    'rule_name' => 'Idgham Bi Ghunnah',
+                    'timestamp_in_audio' => $issue['time'] ?? null,
+                    'severity' => 'moderate',
+                    'was_correct' => false,
+                    'issue_description' => is_array($issue) ? json_encode($issue) : $issue,
+                    'recommendation' => 'Practice merging letters و م ن ي with nasalization',
+                ]);
+                $noonErrors++;
+            }
+        }
+        
+        Log::info("Logged {$maddErrors} Madd errors and {$noonErrors} Idgham errors");
     }
 }

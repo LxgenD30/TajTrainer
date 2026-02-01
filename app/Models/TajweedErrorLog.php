@@ -10,8 +10,9 @@ class TajweedErrorLog extends Model
     protected $table = 'tajweed_error_logs';
     
     protected $fillable = [
-        'practice_session_id',
-        'assignment_submission_id',
+        'user_id',
+        'session_type',
+        'session_id',
         'error_type',
         'rule_name',
         'timestamp_in_audio',
