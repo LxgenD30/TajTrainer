@@ -143,19 +143,7 @@
 
 @push('scripts')
 <script>
-    // Auto-refresh if any submission is still being processed
-    @php
-        $hasProcessing = $submissions->contains(function($submission) {
-            return $submission->status === 'submitted' && !$submission->score;
-        });
-    @endphp
-    
-    @if($hasProcessing)
-        console.log('Audio processing in progress... Page will auto-refresh in 5 seconds');
-        setTimeout(function() {
-            location.reload();
-        }, 5000);
-    @endif
+    // No auto-refresh needed - processing happens immediately during submission
 </script>
 @endpush
 @endsection

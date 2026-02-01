@@ -214,30 +214,7 @@
 
 @push('scripts')
 <script>
-    // Auto-refresh page if any submission is still being processed
-    @php
-        $hasProcessing = false;
-        foreach($submissions as $submission) {
-            if ($submission && $submission->status === 'submitted') {
-                // Check if score exists for this submission
-                $score = \App\Models\Score::where('assignment_id', $submission->assignment_id)
-                                          ->where('user_id', Auth::id())
-                                          ->first();
-                if (!$score) {
-                    $hasProcessing = true;
-                    break;
-                }
-            }
-        }
-    @endphp
-    
-    @if($hasProcessing)
-        // Refresh every 5 seconds if audio is being processed
-        console.log('Audio processing in progress... Page will auto-refresh in 5 seconds');
-        setTimeout(function() {
-            location.reload();
-        }, 5000);
-    @endif
+    // No auto-refresh needed - processing happens immediately during submission
 </script>
 @endpush
 @endsection
