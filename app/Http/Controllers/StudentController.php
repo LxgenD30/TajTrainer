@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\Classroom;
+use App\Jobs\ProcessSubmissionAudio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -399,92 +400,16 @@ class StudentController extends Controller
             throw new \Exception('Failed to save submission: ' . $e->getMessage());
         }
         
-        // Transcribe audio using AssemblyAI if we have audio but no transcription
-        if ($submission->audio_file_path && config('services.assemblyai.api_key')) {
-            // Check if we need to transcribe (no transcription or empty transcription)
-            if (empty($submission->transcription) || trim($submission->transcription) === '') {
-                try {
-                    \Log::info('No transcription found, calling transcribeWithAssemblyAI for: ' . $submission->audio_file_path);
-                    $transcription = $this->transcribeWithAssemblyAI($submission->audio_file_path);
-                    $submission->transcription = $transcription;
-                    $submission->save();
-                    \Log::info('✓ Transcription completed: ' . substr($transcription, 0, 100));
-                } catch (\Exception $e) {
-                    \Log::error('Audio transcription failed: ' . $e->getMessage());
-                    \Log::error('Stack trace: ' . $e->getTraceAsString());
-                    // Continue without transcription - don't block submission
-                }
-            } else {
-                \Log::info('Transcription already exists, skipping AssemblyAI call');
-            }
-        } else {
-            if (!$submission->audio_file_path) {
-                \Log::warning('No audio file path found, skipping transcription');
-            }
-            if (!config('services.assemblyai.api_key')) {
-                \Log::warning('AssemblyAI API key not configured, skipping transcription');
-            }
-        }
-        
-        // Analyze Tajweed rules if audio was submitted and we have transcription
-        if ($submission->audio_file_path && $submission->transcription) {
-            try {
-                \Log::info('Starting Tajweed analysis for submission ID: ' . $submission->id);
-                \Log::info('Audio file path: ' . $submission->audio_file_path);
-                \Log::info('Transcription: ' . substr($submission->transcription, 0, 200));
-                \Log::info('Assignment surah: ' . $assignment->surah . ', verses: ' . $assignment->start_verse . '-' . ($assignment->end_verse ?? $assignment->start_verse));
-                
-                $tajweedAnalysis = $this->analyzeTajweed(
-                    $submission->audio_file_path,
-                    $submission->transcription,
-                    $assignment->surah,
-                    $assignment->start_verse,
-                    $assignment->end_verse
-                );
-                
-                $submission->tajweed_analysis = json_encode($tajweedAnalysis);
-                $submission->save();
-                
-                \Log::info('Tajweed analysis completed successfully');
-                \Log::info('Analysis result: ' . json_encode($tajweedAnalysis));
-                
-                // Log errors to database for progress tracking
-                $this->logTajweedErrors($submission->id, $tajweedAnalysis, 'assignment');
-                
-                // Automatically create/update score based on tajweed analysis
-                $overallScore = $tajweedAnalysis['overall_score']['score'] ?? 0;
-                $feedback = $tajweedAnalysis['overall_score']['feedback'] ?? 'Analysis completed.';
-                
-                // Convert percentage to actual marks
-                $scoreValue = round(($overallScore / 100) * $assignment->total_marks);
-                
-                \Log::info('Creating score: ' . $scoreValue . '/' . $assignment->total_marks . ' (Percentage: ' . $overallScore . '%)');
-                
-                \App\Models\Score::updateOrCreate(
-                    [
-                        'assignment_id' => $assignmentId,
-                        'user_id' => Auth::id(),
-                    ],
-                    [
-                        'score' => $scoreValue,
-                        'feedback' => $feedback,
-                    ]
-                );
-                
-                \Log::info('Score created: ' . $scoreValue . ' / ' . $assignment->total_marks);
-                
-            } catch (\Exception $e) {
-                \Log::error('Tajweed analysis failed: ' . $e->getMessage());
-                \Log::error($e->getTraceAsString());
-                // Continue without Tajweed analysis - don't block submission
-            }
-        } else {
-            \Log::warning('Skipping Tajweed analysis - audio_file_path: ' . ($submission->audio_file_path ?? 'null') . ', transcription: ' . (empty($submission->transcription) ? 'empty' : 'exists'));
+        // Dispatch background job for audio processing
+        if ($submission->audio_file_path) {
+            \Log::info('Dispatching ProcessSubmissionAudio job for submission #' . $submission->id);
+            ProcessSubmissionAudio::dispatch($submission->id);
+            \Log::info('✓ Job dispatched successfully');
         }
         
         \Log::info('=== Assignment Submission Completed Successfully ===');
         return redirect()->route('classroom.show', $assignment->class_id)
-            ->with('success', 'Assignment submitted successfully!');
+            ->with('success', 'Assignment submitted successfully! Your audio is being analyzed in the background...');
             
         } catch (\Exception $e) {
             \Log::error('=== Assignment Submission FAILED ===');

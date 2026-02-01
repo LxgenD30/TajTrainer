@@ -4,6 +4,15 @@
 @section('page-title', $classroom->class_name)
 @section('page-subtitle', 'Classroom Details')
 
+@push('styles')
+<style>
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+</style>
+@endpush
+
 @section('content')
 <div style="padding: 0;">
     <div style="margin-bottom: 20px;">
@@ -88,9 +97,21 @@
                                         ✓ Graded: {{ $score ? $score->score : $submission->marks_obtained }}/{{ $assignment->total_marks }}
                                     </div>
                                 @elseif($isSubmitted)
-                                    <div style="background: #ff9800; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">
-                                        ⏳ Submitted
-                                    </div>
+                                    @php
+                                        // Check if score exists - if yes, it's graded, if no, still processing
+                                        $score = \App\Models\Score::where('assignment_id', $assignment->assignment_id)
+                                                                   ->where('user_id', Auth::id())
+                                                                   ->first();
+                                    @endphp
+                                    @if($score)
+                                        <div style="background: #4caf50; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">
+                                            ✓ Graded: {{ $score->score }}/{{ $assignment->total_marks }}
+                                        </div>
+                                    @else
+                                        <div style="background: #2196f3; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; animation: pulse 2s infinite;">
+                                            🔄 Analyzing...
+                                        </div>
+                                    @endif
                                 @elseif($isOverdue)
                                     <div style="background: #e74c3c; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">
                                         ⚠ Overdue
@@ -174,4 +195,25 @@
     </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+    // Auto-refresh page if any submission is still being processed
+    @php
+        $hasProcessing = $submissions->contains(function($submission) {
+            return $submission && $submission->status === 'submitted' && !$submission->scores->where('user_id', Auth::id())->first();
+        });
+    @endphp
+    
+    @if($hasProcessing)
+        // Refresh every 10 seconds if audio is being processed
+        setTimeout(function() {
+            location.reload();
+        }, 10000);
+        
+        // Show processing indicator
+        console.log('Audio processing in progress... Page will auto-refresh');
+    @endif
+</script>
+@endpush
 @endsection

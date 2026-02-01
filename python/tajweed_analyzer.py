@@ -21,10 +21,12 @@ import sys
 import json
 import platform
 import librosa
+import soundfile as sf
 import numpy as np
 from scipy.signal import find_peaks
 import warnings
 import re
+import tempfile
 warnings.filterwarnings('ignore')
 
 # Import Parselmouth for advanced phonetic analysis
@@ -239,7 +241,24 @@ class TajweedAnalyzer:
         try:
             if PARSELMOUTH_AVAILABLE:
                 # ADVANCED PARSELMOUTH ANALYSIS
-                snd = parselmouth.Sound(self.audio_path)
+                # Convert .m4a to .wav if needed (Parselmouth only supports WAV)
+                audio_for_praat = self.audio_path
+                temp_wav_file = None
+                
+                if self.audio_path.lower().endswith('.m4a') or self.audio_path.lower().endswith('.mp4'):
+                    # Convert to temporary WAV file
+                    import tempfile
+                    temp_wav = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
+                    temp_wav_file = temp_wav.name
+                    temp_wav.close()
+                    
+                    # Load with librosa and save as WAV
+                    y, sr = librosa.load(self.audio_path, sr=16000)
+                    import soundfile as sf
+                    sf.write(temp_wav_file, y, sr)
+                    audio_for_praat = temp_wav_file
+                
+                snd = parselmouth.Sound(audio_for_praat)
                 
                 # Extract acoustic features
                 pitch = snd.to_pitch()
@@ -322,6 +341,13 @@ class TajweedAnalyzer:
                     results['percentage'] = round((results['correct_elongations'] / results['total_elongations']) * 100, 2)
                 else:
                     results['percentage'] = 100  # No elongations detected, assume OK
+                
+                # Cleanup temp WAV file if created
+                if temp_wav_file and os.path.exists(temp_wav_file):
+                    try:
+                        os.remove(temp_wav_file)
+                    except:
+                        pass
                 
                 return results
             
