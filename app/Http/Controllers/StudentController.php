@@ -156,29 +156,35 @@ class StudentController extends Controller
 
     public function storeSubmission(Request $request, $assignmentId)
     {
-        $assignment = \App\Models\Assignment::findOrFail($assignmentId);
-        
-        $student = Student::find(Auth::id());
-        if (!$student->classrooms()->where('class_id', $assignment->class_id)->exists()) {
-            abort(403, 'You are not enrolled in this class.');
+        try {
+            $assignment = \App\Models\Assignment::findOrFail($assignmentId);
+            
+            $student = Student::find(Auth::id());
+            if (!$student->classrooms()->where('class_id', $assignment->class_id)->exists()) {
+                abort(403, 'You are not enrolled in this class.');
+            }
+            
+            \Log::info('=== Assignment Submission Started ===');
+            \Log::info('Assignment ID: ' . $assignmentId);
+            \Log::info('Student ID: ' . Auth::id());
+            \Log::info('Has recorded_audio: ' . ($request->has('recorded_audio') ? 'Yes' : 'No'));
+            \Log::info('Has audio_file: ' . ($request->hasFile('audio_file') ? 'Yes' : 'No'));
+            \Log::info('Has transcription: ' . ($request->has('transcription') ? 'Yes' : 'No'));
+            if ($request->has('transcription')) {
+                \Log::info('Transcription content: ' . substr($request->transcription, 0, 200));
+            }
+            
+            $validated = $request->validate([
+                'text_submission' => 'nullable|string',
+                'audio_file' => 'nullable|file|mimes:mp3,wav,m4a,ogg,webm|max:10240',
+                'transcription' => 'nullable|string',
+                'recorded_audio' => 'nullable|string',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Assignment Submission Error at start: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return back()->withErrors(['error' => 'Submission failed: ' . $e->getMessage()]);
         }
-        
-        \Log::info('=== Assignment Submission Started ===');
-        \Log::info('Assignment ID: ' . $assignmentId);
-        \Log::info('Student ID: ' . Auth::id());
-        \Log::info('Has recorded_audio: ' . ($request->has('recorded_audio') ? 'Yes' : 'No'));
-        \Log::info('Has audio_file: ' . ($request->hasFile('audio_file') ? 'Yes' : 'No'));
-        \Log::info('Has transcription: ' . ($request->has('transcription') ? 'Yes' : 'No'));
-        if ($request->has('transcription')) {
-            \Log::info('Transcription content: ' . substr($request->transcription, 0, 200));
-        }
-        
-        $validated = $request->validate([
-            'text_submission' => 'nullable|string',
-            'audio_file' => 'nullable|file|mimes:mp3,wav,m4a,ogg,webm|max:10240',
-            'transcription' => 'nullable|string',
-            'recorded_audio' => 'nullable|string',
-        ]);
         
         $submission = \App\Models\AssignmentSubmission::where('assignment_id', $assignmentId)
             ->where('student_id', Auth::id())
@@ -256,27 +262,30 @@ class StudentController extends Controller
             if ($file->isValid() && $file->getSize() > 0) {
                 $extension = $file->getClientOriginalExtension() ?: 'webm';
                 $filename = time() . '_' . uniqid() . '.' . $extension;
-                $destinationPath = storage_path('app/public/submissions');
                 
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                    \Log::info('Created directory: ' . $destinationPath);
-                }
-                
-                // Use Laravel's storage method instead of move_uploaded_file
+                // Use Laravel's storage method - it handles directory creation automatically
                 try {
                     $path = $file->storeAs('submissions', $filename, 'public');
                     $submission->audio_file_path = $path;
                     \Log::info('✓ Audio file uploaded successfully: ' . $path);
                 } catch (\Exception $e) {
                     \Log::error('Failed to store uploaded file: ' . $e->getMessage());
+                    throw new \Exception('Failed to upload audio file: ' . $e->getMessage());
                 }
             } else {
                 \Log::error('File is invalid or empty');
+                throw new \Exception('Uploaded file is invalid or empty');
             }
         }
         
-        $submission->save();
+        try {
+            $submission->save();
+            \Log::info('✓ Submission saved successfully with ID: ' . $submission->id);
+        } catch (\Exception $e) {
+            \Log::error('Failed to save submission: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw new \Exception('Failed to save submission: ' . $e->getMessage());
+        }
         
         // Transcribe audio using AssemblyAI if we have audio but no transcription
         if ($submission->audio_file_path && config('services.assemblyai.api_key')) {
@@ -352,6 +361,7 @@ class StudentController extends Controller
             \Log::warning('Skipping Tajweed analysis - audio_file_path: ' . ($submission->audio_file_path ?? 'null') . ', transcription: ' . (empty($submission->transcription) ? 'empty' : 'exists'));
         }
         
+        \Log::info('=== Assignment Submission Completed Successfully ===');
         return redirect()->route('classroom.show', $assignment->class_id)
             ->with('success', 'Assignment submitted successfully!');
     }
