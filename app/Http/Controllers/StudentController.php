@@ -218,13 +218,19 @@ class StudentController extends Controller
             try {
                 $validated = $request->validate([
                     'text_submission' => 'nullable|string',
-                    'audio_file' => 'nullable|file|mimes:mp3,wav,m4a,ogg,webm|max:10240',
+                    'audio_file' => [
+                        'nullable',
+                        'file',
+                        'max:10240',
+                        'mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/wave,audio/x-wav,audio/mp4,audio/x-m4a,audio/m4a,audio/ogg,audio/webm,audio/x-matroska'
+                    ],
                     'transcription' => 'nullable|string',
                     'recorded_audio' => 'nullable|string',
                 ]);
                 \Log::info('✓ Validation passed');
             } catch (\Illuminate\Validation\ValidationException $e) {
                 \Log::error('Validation failed: ' . json_encode($e->errors()));
+                \Log::error('File MIME type: ' . ($request->hasFile('audio_file') ? $request->file('audio_file')->getMimeType() : 'N/A'));
                 return back()->withErrors($e->errors())->withInput();
             }
         } catch (\Exception $e) {
