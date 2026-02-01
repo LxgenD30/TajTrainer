@@ -175,6 +175,8 @@ class StudentController extends Controller
 
     public function storeSubmission(Request $request, $assignmentId)
     {
+        set_time_limit(600); // Increase time limit to 10 minutes for audio processing
+        
         \Log::info('=== Assignment Submission Started ===');
         \Log::info('Assignment ID: ' . $assignmentId);
         \Log::info('Student ID: ' . Auth::id());
@@ -263,9 +265,11 @@ class StudentController extends Controller
             return back()->withErrors(['error' => 'Submission failed: ' . $e->getMessage()])->withInput();
         }
         
-        $submission = \App\Models\AssignmentSubmission::where('assignment_id', $assignmentId)
-            ->where('student_id', Auth::id())
-            ->first();
+        // Wrap all submission processing in try-catch to prevent 500 errors
+        try {
+            $submission = \App\Models\AssignmentSubmission::where('assignment_id', $assignmentId)
+                ->where('student_id', Auth::id())
+                ->first();
         
         if (!$submission) {
             $submission = new \App\Models\AssignmentSubmission();
@@ -441,9 +445,27 @@ class StudentController extends Controller
         \Log::info('=== Assignment Submission Completed Successfully ===');
         return redirect()->route('classroom.show', $assignment->class_id)
             ->with('success', 'Assignment submitted successfully!');
+            
+        } catch (\Exception $e) {
+            \Log::error('=== Assignment Submission FAILED ===');
+            \Log::error('Error: ' . $e->getMessage());
+            \Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            // Try to get assignment for redirect
+            try {
+                $assignment = \App\Models\Assignment::findOrFail($assignmentId);
+                return redirect()->route('student.assignment.submit', $assignmentId)
+                    ->withErrors(['error' => 'Submission processing failed: ' . $e->getMessage() . '. Please try again or contact support.'])
+                    ->withInput();
+            } catch (\Exception $innerE) {
+                // If we can't even find the assignment, go to dashboard
+                return redirect()->route('student.dashboard')
+                    ->withErrors(['error' => 'Submission failed: ' . $e->getMessage()])
+                    ->withInput();
+            }
+        }
     }
-
-    private function transcribeAudio($audioPath)
     {
         $apiKey = config('services.assemblyai.api_key');
         $fullPath = storage_path('app/public/' . $audioPath);
@@ -1257,17 +1279,8 @@ class StudentController extends Controller
         $pythonScript = base_path('python/tajweed_analyzer.py');
         
         if (!file_exists($pythonScript)) {
-            return [
-                'duration' => 0,
-                'madd_analysis' => ['total_elongations' => 0, 'correct_elongations' => 0, 'percentage' => 100, 'issues' => []],
-                'idgham_bila_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 100, 'issues' => []],
-                'idgham_bi_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 100, 'issues' => []],
-                'overall_score' => [
-                    'score' => 75.0,
-                    'grade' => 'Good',
-                    'feedback' => 'Python analyzer not found. Manual grading may be required.'
-                ]
-            ];
+            \Log::warning('Python script not found: ' . $pythonScript);
+            return $this->getDefaultAnalysisResult('Python analyzer not found. Manual grading may be required.');
         }
 
         // Pass OpenAI API key via environment variable
@@ -1279,31 +1292,135 @@ class StudentController extends Controller
         $pythonCommand = $this->getPythonCommand();
         $command = "$pythonCommand \"$pythonScript\" \"$fullPath\" \"$expectedText\"";
         
-        \Log::info('Running Python command: ' . $command);
+        \Log::info('Running Python Tajweed analysis...');
+        \Log::info('Command: ' . $command);
         
-        $output = shell_exec($command . ' 2>&1');
-        
-        \Log::info('Python output: ' . $output);
-        
-        if (!empty($output)) {
-            $result = json_decode($output, true);
-            if (json_last_error() === JSON_ERROR_NONE && !isset($result['error'])) {
-                return $result;
-            } else {
-                \Log::error('Python analysis error: ' . ($result['error'] ?? json_last_error_msg()));
+        try {
+            // Use proc_open for better control and timeout handling
+            $descriptorspec = [
+                0 => ['pipe', 'r'],  // stdin
+                1 => ['pipe', 'w'],  // stdout
+                2 => ['pipe', 'w']   // stderr
+            ];
+            
+            $process = proc_open($command, $descriptorspec, $pipes);
+            
+            if (!is_resource($process)) {
+                throw new \Exception('Failed to start Python process');
             }
+            
+            // Close stdin
+            fclose($pipes[0]);
+            
+            // Set non-blocking mode for output streams
+            stream_set_blocking($pipes[1], false);
+            stream_set_blocking($pipes[2], false);
+            
+            // Wait for process with timeout (5 minutes for large audio files)
+            $timeout = 300;
+            $start = time();
+            $output = '';
+            $error = '';
+            
+            while (true) {
+                $status = proc_get_status($process);
+                
+                if (!$status['running']) {
+                    // Process finished, get remaining output
+                    $output .= stream_get_contents($pipes[1]);
+                    $error .= stream_get_contents($pipes[2]);
+                    break;
+                }
+                
+                // Check timeout
+                if (time() - $start > $timeout) {
+                    proc_terminate($process);
+                    fclose($pipes[1]);
+                    fclose($pipes[2]);
+                    proc_close($process);
+                    throw new \Exception('Python analysis timed out after ' . $timeout . ' seconds');
+                }
+                
+                // Read available output
+                $output .= stream_get_contents($pipes[1]);
+                $error .= stream_get_contents($pipes[2]);
+                
+                usleep(100000); // Sleep 0.1 second
+            }
+            
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $exitCode = proc_close($process);
+            
+            \Log::info('Python exit code: ' . $exitCode);
+            
+            if (!empty($error)) {
+                \Log::warning('Python stderr: ' . $error);
+            }
+            
+            if (!empty($output)) {
+                \Log::info('Python output: ' . $output);
+                \Log::info('Python output length: ' . strlen($output));
+                
+                $result = json_decode($output, true);
+                
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    if (isset($result['error'])) {
+                        \Log::error('Python analysis reported error: ' . $result['error']);
+                        return $this->getDefaultAnalysisResult('Analysis error: ' . $result['error']);
+                    }
+                    
+                    // Successful analysis
+                    return $result;
+                } else {
+                    \Log::error('Failed to parse JSON from Python: ' . json_last_error_msg());
+                    \Log::error('Output: ' . substr($output, 0, 500));
+                    return $this->getDefaultAnalysisResult('Failed to parse analysis results');
+                }
+            } else {
+                \Log::error('No output from Python script');
+                return $this->getDefaultAnalysisResult('No output from analysis script');
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Python analysis exception: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return $this->getDefaultAnalysisResult('Analysis failed: ' . $e->getMessage());
         }
-        
-        // Return default structure on error
+    }
+    
+    /**
+     * Get default analysis result structure for error cases
+     */
+    private function getDefaultAnalysisResult($message = 'Audio analysis completed. Please ensure proper Tajweed rules are applied.')
+    {
         return [
             'duration' => 0,
-            'madd_analysis' => ['total_elongations' => 0, 'correct_elongations' => 0, 'percentage' => 100, 'issues' => [], 'details' => [['note' => 'No clear Madd elongations detected in this recitation']]],
-            'idgham_bila_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 100, 'issues' => [], 'details' => [['note' => 'No clear Idgham Bila Ghunnah occurrences detected']]],
-            'idgham_bi_ghunnah_analysis' => ['total_occurrences' => 0, 'correct_pronunciation' => 0, 'percentage' => 100, 'issues' => [], 'details' => [['note' => 'No clear Idgham Bi Ghunnah occurrences detected']]],
+            'madd_analysis' => [
+                'total_elongations' => 0,
+                'correct_elongations' => 0,
+                'percentage' => 100,
+                'issues' => [],
+                'details' => [['note' => 'No clear Madd elongations detected in this recitation']]
+            ],
+            'idgham_bila_ghunnah_analysis' => [
+                'total_occurrences' => 0,
+                'correct_pronunciation' => 0,
+                'percentage' => 100,
+                'issues' => [],
+                'details' => [['note' => 'No clear Idgham Bila Ghunnah occurrences detected']]
+            ],
+            'idgham_bi_ghunnah_analysis' => [
+                'total_occurrences' => 0,
+                'correct_pronunciation' => 0,
+                'percentage' => 100,
+                'issues' => [],
+                'details' => [['note' => 'No clear Idgham Bi Ghunnah occurrences detected']]
+            ],
             'overall_score' => [
                 'score' => 75.0,
                 'grade' => 'Good',
-                'feedback' => 'Audio analysis completed. Please ensure proper Tajweed rules are applied.'
+                'feedback' => $message
             ]
         ];
     }
