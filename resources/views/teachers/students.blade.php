@@ -1,7 +1,29 @@
-@extends('layouts.template')
+@extends('layouts.dashboard')
 
-@section('page-title', 'My Students')
-@section('page-subtitle', 'View and manage all your students')
+@section('title', 'My Students')
+@section('user-role', 'Teacher • Student Management')
+
+@section('navigation')
+    <a href="{{ route('home') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-home"></i></div>
+        <div class="nav-label">Dashboard</div>
+    </a>
+    <a href="{{ route('classroom.index') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="nav-label">My Classes</div>
+    </a>
+    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-user-circle"></i></div>
+        <div class="nav-label">Profile</div>
+    </a>
+    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
+        @csrf
+        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
+            <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
+            <div class="nav-label">Logout</div>
+        </button>
+    </form>
+@endsection
 
 @section('content')
     <div class="content-card">
@@ -10,7 +32,7 @@
         </div>
 
         @if(session('success'))
-            <div style="background: rgba(77, 139, 49, 0.2); border: 2px solid var(--color-light-green); color: var(--color-light-green); padding: 15px; border-radius: 10px; margin: 0 20px 20px 20px;">
+            <div style="background: rgba(77, 139, 49, 0.2); border: 2px solid var(--light-green); color: var(--light-green); padding: 15px; border-radius: 10px; margin: 0 20px 20px 20px;">
                 ✅ {{ session('success') }}
             </div>
         @endif
@@ -20,13 +42,13 @@
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr style="background: rgba(227, 216, 136, 0.1); border-bottom: 2px solid var(--color-gold);">
-                                <th style="padding: 15px; text-align: left; color: var(--color-gold); font-weight: 600;">Name</th>
-                                <th style="padding: 15px; text-align: left; color: var(--color-gold); font-weight: 600;">Email</th>
-                                <th style="padding: 15px; text-align: left; color: var(--color-gold); font-weight: 600;">Phone</th>
-                                <th style="padding: 15px; text-align: left; color: var(--color-gold); font-weight: 600;">Level</th>
-                                <th style="padding: 15px; text-align: left; color: var(--color-gold); font-weight: 600;">Classes</th>
-                                <th style="padding: 15px; text-align: center; color: var(--color-gold); font-weight: 600;">Actions</th>
+                            <tr style="background: rgba(227, 216, 136, 0.1); border-bottom: 2px solid var(--gold);">
+                                <th style="padding: 15px; text-align: left; color: var(--gold); font-weight: 600;">Name</th>
+                                <th style="padding: 15px; text-align: left; color: var(--gold); font-weight: 600;">Email</th>
+                                <th style="padding: 15px; text-align: left; color: var(--gold); font-weight: 600;">Phone</th>
+                                <th style="padding: 15px; text-align: left; color: var(--gold); font-weight: 600;">Level</th>
+                                <th style="padding: 15px; text-align: left; color: var(--gold); font-weight: 600;">Classes</th>
+                                <th style="padding: 15px; text-align: center; color: var(--gold); font-weight: 600;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -36,7 +58,7 @@
                                     onmouseout="this.style.background='transparent'">
                                     <td style="padding: 15px; color: var(--color-light);">
                                         <div style="display: flex; align-items: center; gap: 10px;">
-                                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--color-dark-green); display: flex; align-items: center; justify-content: center; color: var(--color-gold); font-weight: 600; font-size: 1.1rem;">
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-green); display: flex; align-items: center; justify-content: center; color: var(--gold); font-weight: 600; font-size: 1.1rem;">
                                                 {{ strtoupper(substr($student->user->name, 0, 1)) }}
                                             </div>
                                             <span style="font-weight: 600;">{{ $student->user->name }}</span>
@@ -45,7 +67,7 @@
                                     <td style="padding: 15px; color: var(--color-light);">{{ $student->user->email }}</td>
                                     <td style="padding: 15px; color: var(--color-light);">{{ $student->phone_number ?? 'N/A' }}</td>
                                     <td style="padding: 15px;">
-                                        <span style="display: inline-block; padding: 4px 12px; background: rgba(77, 139, 49, 0.2); color: var(--color-light-green); border-radius: 12px; font-size: 0.9rem; font-weight: 600;">
+                                        <span style="display: inline-block; padding: 4px 12px; background: rgba(77, 139, 49, 0.2); color: var(--light-green); border-radius: 12px; font-size: 0.9rem; font-weight: 600;">
                                             {{ ucfirst($student->level ?? 'Beginner') }}
                                         </span>
                                     </td>
@@ -53,7 +75,7 @@
                                         @if($student->classrooms->count() > 0)
                                             <div style="display: flex; flex-wrap: wrap; gap: 5px;">
                                                 @foreach($student->classrooms as $classroom)
-                                                    <span style="display: inline-block; padding: 3px 10px; background: rgba(227, 216, 136, 0.15); color: var(--color-gold); border-radius: 10px; font-size: 0.85rem;">
+                                                    <span style="display: inline-block; padding: 3px 10px; background: rgba(227, 216, 136, 0.15); color: var(--gold); border-radius: 10px; font-size: 0.85rem;">
                                                         {{ $classroom->class_name }}
                                                     </span>
                                                 @endforeach
@@ -64,7 +86,7 @@
                                     </td>
                                     <td style="padding: 15px; text-align: center;">
                                         <a href="{{ route('students.show', $student->id) }}" 
-                                            style="padding: 6px 15px; background: var(--color-dark-green); color: var(--color-gold); border-radius: 15px; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-block; transition: all 0.3s ease;"
+                                            style="padding: 6px 15px; background: var(--primary-green); color: var(--gold); border-radius: 15px; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-block; transition: all 0.3s ease;"
                                             onmouseover="this.style.opacity='0.8'"
                                             onmouseout="this.style.opacity='1'">
                                             View Profile
@@ -78,7 +100,7 @@
 
                 <div style="margin-top: 20px; padding: 15px; background: rgba(227, 216, 136, 0.05); border-radius: 8px; text-align: center;">
                     <p style="margin: 0; color: var(--color-light); font-size: 0.95rem;">
-                        <strong style="color: var(--color-gold);">Total Students:</strong> {{ $students->count() }}
+                        <strong style="color: var(--gold);">Total Students:</strong> {{ $students->count() }}
                     </p>
                 </div>
             @else
@@ -89,9 +111,9 @@
                         You don't have any students enrolled in your classes yet.
                     </p>
                     <a href="{{ route('classroom.index') }}" 
-                        style="display: inline-block; padding: 12px 30px; background: var(--color-dark-green); color: var(--color-gold); border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;"
-                        onmouseover="this.style.background='var(--color-gold)'; this.style.color='var(--color-dark)'"
-                        onmouseout="this.style.background='var(--color-dark-green)'; this.style.color='var(--color-gold)'">
+                        style="display: inline-block; padding: 12px 30px; background: var(--primary-green); color: var(--gold); border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;"
+                        onmouseover="this.style.background='var(--gold)'; this.style.color='var(--dark-green)'"
+                        onmouseout="this.style.background='var(--primary-green)'; this.style.color='var(--gold)'">
                         View My Classes
                     </a>
                 </div>

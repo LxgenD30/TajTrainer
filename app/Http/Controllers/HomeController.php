@@ -40,7 +40,7 @@ class HomeController extends Controller
             
             $stats['total_materials'] = Material::count();
             
-            return view('layouts.tlayout.dashboard', compact('stats'));
+            return view('teachers.index', compact('stats'));
         } elseif (Auth::user()->role_id == 2) {
             // Student dashboard - show stats
             $student = Student::with(['classrooms.teacher', 'classrooms.assignments', 'scores'])
@@ -52,7 +52,7 @@ class HomeController extends Controller
             $totalAssignments = $student->classrooms->flatMap->assignments->count();
             $pendingAssignments = $totalAssignments - $completedAssignments;
             
-            return view('layouts.slayout.dashboard', compact(
+            return view('students.index', compact(
                 'student',
                 'enrolledClassesCount',
                 'completedAssignments',

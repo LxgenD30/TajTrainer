@@ -13,5 +13,14 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 require __DIR__.'/../vendor/autoload.php';
 
 // Bootstrap Laravel and handle the request...
-(require_once __DIR__.'/../bootstrap/app.php')
-    ->handleRequest(Request::capture());
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+// Capture the request
+$request = Request::capture();
+
+// Set base path for subdirectory installations (local development)
+if (strpos($request->getRequestUri(), '/tajtrainerv2/public') === 0) {
+    $request->server->set('SCRIPT_NAME', '/tajtrainerv2/public/index.php');
+}
+
+$app->handleRequest($request);

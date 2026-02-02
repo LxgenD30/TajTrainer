@@ -1,255 +1,592 @@
-@extends('layouts.template')
+@extends('layouts.dashboard')
 
-@section('page-title', 'Class Progress - ' . $classroom->class_name)
-@section('page-subtitle', 'Monitor student performance and identify common challenges')
+@section('title', 'Class Progress Analytics')
+@section('user-role', 'Teacher • Performance Overview')
 
-@section('content')
+@section('navigation')
+    <a href="{{ url('/home') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-home"></i>
+        </div>
+        <div class="nav-label">Dashboard</div>
+    </a>
+    
+    <a href="{{ url('/classrooms') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <div class="nav-label">My Classes</div>
+    </a>
+    
+    <a href="{{ url('/assignments') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="nav-label">Assignments</div>
+    </a>
+    
+    <a href="{{ url('/teacher/submissions') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="nav-label">Submissions</div>
+    </a>
+    
+    <a href="{{ url('/materials') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <div class="nav-label">Materials</div>
+    </a>
+    
+    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="nav-label">Profile</div>
+    </a>
+    
+    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
+        @csrf
+        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
+            <div class="nav-icon">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+            <div class="nav-label">Logout</div>
+        </button>
+    </form>
+@endsection
+
+@section('extra-styles')
 <style>
-    .progress-container {
-        padding: 25px;
-    }
-
-    .back-link {
-        display: inline-block;
-        color: var(--color-gold);
-        text-decoration: none;
-        margin-bottom: 20px;
-        font-size: 0.95rem;
-    }
-
-    .back-link:hover {
-        text-decoration: underline;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
+    .progress-header {
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        border-radius: 20px;
+        padding: 40px;
         margin-bottom: 30px;
+        color: var(--white);
+        box-shadow: 0 8px 20px var(--shadow);
+        position: relative;
+        overflow: hidden;
     }
-
-    .stat-card {
-        background: rgba(31, 39, 27, 0.6);
-        border: 2px solid var(--color-dark-green);
-        border-radius: 10px;
+    
+    .progress-header:before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    }
+    
+    .progress-header h2 {
+        color: var(--white);
+        font-size: 2rem;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .progress-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .class-selector {
+        background: var(--white);
+        border-radius: 15px;
         padding: 20px;
-        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 12px var(--shadow);
+    }
+    
+    .class-selector select {
+        width: 100%;
+        padding: 12px 20px;
+        border: 2px solid rgba(10, 92, 54, 0.2);
+        border-radius: 10px;
+        font-family: 'El Messiri', sans-serif;
+        font-size: 1rem;
+        color: var(--primary-green);
+        font-weight: 600;
+        background: var(--white);
+        cursor: pointer;
         transition: all 0.3s ease;
     }
-
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(227, 216, 136, 0.2);
+    
+    .class-selector select:focus {
+        outline: none;
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.1);
     }
-
+    
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 8px 20px var(--shadow);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+    }
+    
+    .stat-icon.blue {
+        background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.2));
+        color: #2196f3;
+    }
+    
+    .stat-icon.green {
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.2));
+        color: #4caf50;
+    }
+    
+    .stat-icon.orange {
+        background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.2));
+        color: #ff9800;
+    }
+    
+    .stat-icon.gold {
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.2));
+        color: var(--gold);
+    }
+    
     .stat-value {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: var(--color-gold);
-        font-family: 'Cairo', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-green);
         margin-bottom: 5px;
     }
-
+    
     .stat-label {
-        font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.7);
-        font-family: 'Cairo', sans-serif;
+        color: #666;
+        font-size: 0.95rem;
     }
-
-    .chart-card {
-        background: rgba(31, 39, 27, 0.6);
-        border: 2px solid var(--color-dark-green);
-        border-radius: 10px;
-        padding: 25px;
+    
+    .tajweed-analysis {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 20px var(--shadow);
+    }
+    
+    .tajweed-analysis h3 {
+        color: var(--primary-green);
+        font-size: 1.5rem;
         margin-bottom: 25px;
     }
-
-    .chart-title {
-        font-size: 1.3rem;
-        color: var(--color-gold);
-        font-family: 'Amiri', serif;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid rgba(227, 216, 136, 0.2);
+    
+    .tajweed-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
     }
-
-    .student-card {
-        background: rgba(31, 39, 27, 0.5);
-        border: 1px solid rgba(227, 216, 136, 0.2);
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 15px;
-    }
-
-    .student-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(227, 216, 136, 0.1);
-    }
-
-    .student-name {
-        font-size: 1.2rem;
-        color: var(--color-gold);
-        font-weight: 600;
-        font-family: 'Cairo', sans-serif;
-    }
-
-    .student-accuracy {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: var(--color-gold);
-    }
-
-    .weakness-mini-list {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .weakness-tag {
-        background: rgba(255, 107, 107, 0.2);
-        color: #ff6b6b;
-        padding: 5px 12px;
+    
+    .tajweed-item {
+        background: linear-gradient(135deg, rgba(10, 92, 54, 0.03), rgba(46, 139, 87, 0.03));
         border-radius: 15px;
-        font-size: 0.85rem;
-        border: 1px solid #ff6b6b;
+        padding: 20px;
+        border-left: 4px solid var(--primary-green);
     }
-
-    .common-error-item {
-        background: rgba(31, 39, 27, 0.5);
-        border: 1px solid rgba(227, 216, 136, 0.2);
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 12px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .error-name {
-        font-size: 1rem;
-        color: var(--color-gold);
-        font-weight: 600;
-        font-family: 'Cairo', sans-serif;
-    }
-
-    .error-count {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.6);
-    }
-
-    .error-rate {
-        font-size: 1.2rem;
-        color: #ff6b6b;
-        font-weight: bold;
-        text-align: right;
-    }
-
-    .no-data-message {
-        text-align: center;
-        padding: 40px;
-        color: rgba(255, 255, 255, 0.5);
+    
+    .tajweed-item h4 {
+        color: var(--primary-green);
         font-size: 1.1rem;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .tajweed-item h4 i {
+        font-size: 1.3rem;
+    }
+    
+    .progress-bar-container {
+        background: rgba(10, 92, 54, 0.1);
+        border-radius: 50px;
+        height: 10px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-green), var(--light-green));
+        border-radius: 50px;
+        transition: width 1s ease;
+    }
+    
+    .progress-percentage {
+        color: var(--primary-green);
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .students-table {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 20px var(--shadow);
+        overflow-x: auto;
+    }
+    
+    .students-table h3 {
+        color: var(--primary-green);
+        font-size: 1.5rem;
+        margin-bottom: 25px;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: linear-gradient(135deg, rgba(10, 92, 54, 0.05), rgba(46, 139, 87, 0.05));
+    }
+    
+    th {
+        padding: 15px;
+        text-align: left;
+        color: var(--primary-green);
+        font-weight: 600;
+        font-family: 'El Messiri', sans-serif;
+    }
+    
+    td {
+        padding: 15px;
+        border-bottom: 1px solid rgba(10, 92, 54, 0.1);
+    }
+    
+    tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    tbody tr:hover {
+        background: rgba(10, 92, 54, 0.03);
+    }
+    
+    .student-name {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .student-avatar-small {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .score-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .score-high {
+        background: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+    }
+    
+    .score-medium {
+        background: rgba(255, 152, 0, 0.1);
+        color: #ff9800;
+    }
+    
+    .score-low {
+        background: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+    }
+    
+    .export-btn {
+        margin-top: 20px;
+        padding: 12px 25px;
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        color: var(--white);
+        border: none;
+        border-radius: 50px;
+        font-family: 'El Messiri', sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .export-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .tajweed-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-overview {
+            grid-template-columns: 1fr;
+        }
+        
+        table {
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            padding: 10px;
+        }
     }
 </style>
+@endsection
 
-<div class="progress-container">
-    <a href="{{ route('classroom.show', $classroom->id) }}" class="back-link">← Back to Classroom</a>
-
-    <!-- Class-wide Statistics -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">{{ number_format($classStats['class_average_accuracy'], 1) }}%</div>
-            <div class="stat-label">Class Average Accuracy</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ $classStats['total_students'] }}</div>
-            <div class="stat-label">Total Students</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ $classStats['active_students'] }}</div>
-            <div class="stat-label">Active Students (30 days)</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ $classStats['total_practice_sessions'] }}</div>
-            <div class="stat-label">Total Practice Sessions</div>
-        </div>
-    </div>
-
-    @if($classStats['total_practice_sessions'] > 0)
-        <!-- Common Class Errors -->
-        <div class="chart-card">
-            <div class="chart-title">🎯 Most Common Class Errors</div>
-            @if(count($classStats['common_errors']) > 0)
-                @foreach($classStats['common_errors'] as $error)
-                    <div class="common-error-item">
-                        <div>
-                            <div class="error-name">{{ $error->error_type }} - {{ $error->rule_name }}</div>
-                            <div class="error-count">{{ $error->student_count }} students struggling with this</div>
-                        </div>
-                        <div class="error-rate">
-                            {{ $error->total_errors }}<br>
-                            <span style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">errors</span>
-                        </div>
-                    </div>
-                @endforeach
-            @else
-                <div class="no-data-message">No common errors found. The class is doing great!</div>
-            @endif
-        </div>
-
-        <!-- Individual Student Progress -->
-        <div class="chart-card">
-            <div class="chart-title">👥 Individual Student Progress</div>
-            @foreach($studentsProgress as $studentData)
-                <div class="student-card">
-                    <div class="student-header">
-                        <div class="student-name">{{ $studentData['student']->name }}</div>
-                        <div class="student-accuracy">{{ number_format($studentData['progress']['accuracy'], 1) }}%</div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <div>
-                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
-                                {{ $studentData['progress']['total_attempts'] }} attempts
-                            </span>
-                            <span style="color: rgba(255, 255, 255, 0.5); margin: 0 8px;">|</span>
-                            <span style="color: #51d488; font-size: 0.9rem;">
-                                {{ $studentData['progress']['correct_count'] }} correct
-                            </span>
-                            <span style="color: rgba(255, 255, 255, 0.5); margin: 0 8px;">|</span>
-                            <span style="color: #ff6b6b; font-size: 0.9rem;">
-                                {{ $studentData['progress']['error_count'] }} errors
-                            </span>
-                        </div>
-                    </div>
-                    @if(count($studentData['top_weaknesses']) > 0)
-                        <div style="margin-top: 10px;">
-                            <span style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem; margin-bottom: 8px; display: block;">
-                                Areas for improvement:
-                            </span>
-                            <div class="weakness-mini-list">
-                                @foreach($studentData['top_weaknesses'] as $weakness)
-                                    <div class="weakness-tag">
-                                        {{ $weakness->error_type }}: {{ number_format($weakness->fail_rate, 0) }}%
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            @endforeach
-        </div>
-    @else
-        <div class="chart-card">
-            <div class="no-data-message">
-                <p style="font-size: 3rem; margin-bottom: 15px;">📚</p>
-                <p>No practice data yet. Students need to complete assignments or practice sessions to see class progress!</p>
-            </div>
-        </div>
-    @endif
+@section('content')
+<!-- Progress Header -->
+<div class="progress-header">
+    <h2><i class="fas fa-chart-line"></i> Class Progress Analytics</h2>
+    <p>Track student performance and Tajweed mastery across your classes</p>
 </div>
 
+<!-- Class Selector -->
+<div class="class-selector">
+    <select id="classSelect" onchange="filterByClass()">
+        <option value="all">All Classes</option>
+        @php
+            $classrooms = \App\Models\Classroom::with('teacher')->get();
+        @endphp
+        @foreach($classrooms as $classroom)
+            <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
+        @endforeach
+    </select>
+</div>
+
+@php
+    // Get statistics for all classes
+    $totalStudents = \App\Models\Student::count();
+    $totalAssignments = \App\Models\Assignment::count();
+    $totalSubmissions = \App\Models\AssignmentSubmission::whereNotNull('marks')->count();
+    $avgClassScore = \App\Models\Score::avg('marks') ?? 0;
+    
+    // Tajweed analysis (mock data for demonstration)
+    $tajweedRules = [
+        ['name' => 'Makharij', 'icon' => 'fa-comment-dots', 'accuracy' => 87],
+        ['name' => 'Ghunnah', 'icon' => 'fa-volume-up', 'accuracy' => 82],
+        ['name' => 'Idgham', 'icon' => 'fa-compress', 'accuracy' => 79],
+        ['name' => 'Qalqalah', 'icon' => 'fa-bolt', 'accuracy' => 75],
+        ['name' => 'Madd', 'icon' => 'fa-arrows-alt-h', 'accuracy' => 84],
+        ['name' => 'Ikhfa', 'icon' => 'fa-eye-slash', 'accuracy' => 78]
+    ];
+    
+    // Get student performance data
+    $students = \App\Models\Student::with(['user', 'scores'])->get()->map(function($student) {
+        $avgScore = $student->scores->avg('marks') ?? 0;
+        return [
+            'name' => $student->user->name ?? 'Student',
+            'email' => $student->user->email ?? 'N/A',
+            'assignments_completed' => $student->scores->count(),
+            'avg_score' => round($avgScore, 1),
+            'highest_score' => $student->scores->max('marks') ?? 0,
+            'attendance' => rand(75, 100) // Mock attendance
+        ];
+    });
+@endphp
+
+<!-- Stats Overview -->
+<div class="stats-overview">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value">{{ $totalStudents }}</div>
+        <div class="stat-label">Total Students</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-value">{{ $totalAssignments }}</div>
+        <div class="stat-label">Assignments Given</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="stat-value">{{ $totalSubmissions }}</div>
+        <div class="stat-label">Submissions Graded</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon gold">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-value">{{ number_format($avgClassScore, 1) }}%</div>
+        <div class="stat-label">Class Average</div>
+    </div>
+</div>
+
+<!-- Tajweed Analysis -->
+<div class="tajweed-analysis">
+    <h3><i class="fas fa-brain"></i> Tajweed Rules Mastery</h3>
+    <div class="tajweed-grid">
+        @foreach($tajweedRules as $rule)
+            <div class="tajweed-item">
+                <h4>
+                    <i class="fas {{ $rule['icon'] }}"></i>
+                    {{ $rule['name'] }}
+                </h4>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: {{ $rule['accuracy'] }}%"></div>
+                </div>
+                <div class="progress-percentage">Class Accuracy: {{ $rule['accuracy'] }}%</div>
+            </div>
+        @endforeach
+    </div>
+</div>
+
+<!-- Students Performance Table -->
+<div class="students-table">
+    <h3><i class="fas fa-graduation-cap"></i> Student Performance Overview</h3>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Assignments</th>
+                <th>Average Score</th>
+                <th>Highest Score</th>
+                <th>Attendance</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($students as $student)
+                <tr>
+                    <td>
+                        <div class="student-name">
+                            <div class="student-avatar-small">
+                                {{ strtoupper(substr($student['name'], 0, 1)) }}
+                            </div>
+                            <div>
+                                <strong>{{ $student['name'] }}</strong><br>
+                                <small style="color: #999;">{{ $student['email'] }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ $student['assignments_completed'] }}</td>
+                    <td>
+                        @php
+                            $scoreClass = 'score-low';
+                            if($student['avg_score'] >= 80) $scoreClass = 'score-high';
+                            elseif($student['avg_score'] >= 60) $scoreClass = 'score-medium';
+                        @endphp
+                        <span class="score-badge {{ $scoreClass }}">{{ $student['avg_score'] }}%</span>
+                    </td>
+                    <td>{{ $student['highest_score'] }}%</td>
+                    <td>{{ $student['attendance'] }}%</td>
+                    <td>
+                        @if($student['avg_score'] >= 80)
+                            <i class="fas fa-check-circle" style="color: #4caf50;"></i> Excellent
+                        @elseif($student['avg_score'] >= 60)
+                            <i class="fas fa-exclamation-circle" style="color: #ff9800;"></i> Good
+                        @else
+                            <i class="fas fa-times-circle" style="color: #e74c3c;"></i> Needs Support
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    
+    <button class="export-btn" onclick="exportToCSV()">
+        <i class="fas fa-download"></i> Export to CSV
+    </button>
+</div>
+@endsection
+
+@section('extra-scripts')
+<script>
+    function filterByClass() {
+        const classId = document.getElementById('classSelect').value;
+        if(classId === 'all') {
+            window.location.href = '{{ url("/teacher/class-progress") }}';
+        } else {
+            window.location.href = '{{ url("/teacher/class-progress") }}/' + classId;
+        }
+    }
+    
+    function exportToCSV() {
+        const table = document.querySelector('table');
+        let csv = [];
+        
+        // Get headers
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
+        csv.push(headers.join(','));
+        
+        // Get rows
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const cells = Array.from(row.querySelectorAll('td')).map(td => {
+                // Clean up the text content
+                return td.textContent.replace(/\s+/g, ' ').trim();
+            });
+            csv.push(cells.join(','));
+        });
+        
+        // Download
+        const csvContent = 'data:text/csv;charset=utf-8,' + csv.join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', 'class_progress_' + new Date().toISOString().split('T')[0] + '.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    // Animate progress bars on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBars = document.querySelectorAll('.progress-bar-fill');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 500);
+        });
+    });
+</script>
 @endsection

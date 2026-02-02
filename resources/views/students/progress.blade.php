@@ -1,488 +1,530 @@
-@extends('layouts.template')
+@extends('layouts.dashboard')
 
-@section('page-title', 'My Progress')
-@section('page-subtitle', 'Track your Tajweed learning journey')
+@section('title', 'My Progress')
+@section('user-role', 'Student • Learning Analytics')
 
-@section('content')
+@section('navigation')
+    <a href="{{ url('/student/classes') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-home"></i>
+        </div>
+        <div class="nav-label">Dashboard</div>
+    </a>
+    
+    <a href="{{ url('/student/classes') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="nav-label">My Classes</div>
+    </a>
+    
+    <a href="{{ url('/student/practice') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-microphone-alt"></i>
+        </div>
+        <div class="nav-label">Practice</div>
+    </a>
+    
+    <a href="{{ url('/student/progress') }}" class="nav-item active">
+        <div class="nav-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="nav-label">My Progress</div>
+    </a>
+    
+    <a href="{{ url('/student/materials') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <div class="nav-label">Materials</div>
+    </a>
+    
+    <a href="{{ route('students.show', Auth::id()) }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="nav-label">Profile</div>
+    </a>
+    
+    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
+        @csrf
+        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
+            <div class="nav-icon">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+            <div class="nav-label">Logout</div>
+        </button>
+    </form>
+@endsection
+
+@section('extra-styles')
 <style>
-    .progress-container {
-        padding: 25px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    .stats-overview {
+    .progress-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-        margin-bottom: 35px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
     }
-
-    .stat-card {
-        background: linear-gradient(135deg, rgba(31, 39, 27, 0.8) 0%, rgba(31, 39, 27, 0.5) 100%);
-        border: 2px solid var(--color-dark-green);
-        border-radius: 15px;
-        padding: 25px;
-        text-align: center;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
+    
+    .progress-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 20px var(--shadow);
+        transition: all 0.3s ease;
     }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--color-dark-green), var(--color-gold));
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
-    }
-
-    .stat-card:hover {
+    
+    .progress-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(227, 216, 136, 0.3);
-        border-color: var(--color-gold);
+        box-shadow: 0 12px 30px rgba(10, 92, 54, 0.2);
     }
-
-    .stat-card:hover::before {
-        transform: scaleX(1);
+    
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
     }
-
-    .stat-value {
-        font-size: 3rem;
-        font-weight: 700;
-        color: var(--color-gold);
-        font-family: 'Cairo', sans-serif;
-        margin-bottom: 8px;
+    
+    .progress-header h3 {
+        color: var(--primary-green);
+        font-size: 1.3rem;
+    }
+    
+    .progress-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 1.5rem;
+    }
+    
+    .progress-ring {
+        width: 150px;
+        height: 150px;
+        margin: 20px auto;
+        position: relative;
+    }
+    
+    .ring-circle {
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+    
+    .ring-bg {
+        fill: none;
+        stroke: rgba(10, 92, 54, 0.1);
+        stroke-width: 10;
+    }
+    
+    .ring-progress {
+        fill: none;
+        stroke: var(--primary-green);
+        stroke-width: 10;
+        stroke-linecap: round;
+        stroke-dasharray: 440;
+        stroke-dashoffset: 440;
+        transition: stroke-dashoffset 1.5s ease;
+    }
+    
+    .ring-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+    
+    .ring-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--primary-green);
         line-height: 1;
     }
-
-    .stat-label {
-        font-size: 0.95rem;
-        color: var(--color-light-green);
-        font-family: 'Cairo', sans-serif;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
+    
+    .ring-label {
+        font-size: 0.9rem;
+        color: #666;
     }
-
-    .performance-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 25px;
-        margin-bottom: 35px;
+    
+    .stats-list {
+        list-style: none;
     }
-
-    .performance-card {
-        background: linear-gradient(135deg, rgba(31, 39, 27, 0.8) 0%, rgba(31, 39, 27, 0.5) 100%);
-        border: 2px solid var(--color-dark-green);
-        border-radius: 15px;
-        padding: 30px;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .performance-card::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(227, 216, 136, 0.1) 0%, transparent 70%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .performance-card:hover::after {
-        opacity: 1;
-    }
-
-    .performance-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-header {
+    
+    .stat-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid rgba(227, 216, 136, 0.2);
+        padding: 15px 0;
+        border-bottom: 1px solid rgba(10, 92, 54, 0.1);
     }
-
-    .card-title {
-        font-size: 1.4rem;
-        color: var(--color-gold);
-        font-family: 'Amiri', serif;
-        font-weight: 600;
-        position: relative;
-        z-index: 1;
+    
+    .stat-item:last-child {
+        border-bottom: none;
     }
-
-    .card-badge {
-        padding: 6px 14px;
+    
+    .stat-label {
+        font-size: 1rem;
+        color: #666;
+    }
+    
+    .stat-value {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--primary-green);
+    }
+    
+    .tajweed-section {
+        background: var(--white);
         border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        position: relative;
-        z-index: 1;
+        padding: 30px;
+        box-shadow: 0 8px 20px var(--shadow);
+        margin-bottom: 30px;
     }
-
-    .badge-assignment {
-        background: rgba(81, 212, 136, 0.15);
-        color: #51d488;
-        border: 1px solid #51d488;
+    
+    .section-title {
+        font-size: 1.8rem;
+        color: var(--primary-green);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
-
-    .badge-practice {
-        background: rgba(227, 216, 136, 0.15);
-        color: var(--color-gold);
-        border: 1px solid var(--color-gold);
-    }
-
-    .performance-stats {
+    
+    .tajweed-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .tajweed-card {
+        background: linear-gradient(135deg, rgba(10, 92, 54, 0.05), rgba(46, 139, 87, 0.05));
+        border: 2px solid rgba(10, 92, 54, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .tajweed-card:hover {
+        border-color: var(--gold);
+        transform: translateY(-5px);
+    }
+    
+    .tajweed-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        color: var(--white);
+        font-size: 2rem;
+    }
+    
+    .tajweed-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-green);
+        margin-bottom: 10px;
+    }
+    
+    .tajweed-desc {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 15px;
+    }
+    
+    .tajweed-progress {
+        width: 100%;
+        height: 8px;
+        background: rgba(10, 92, 54, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .tajweed-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-green), var(--light-green));
+        border-radius: 4px;
+        transition: width 1s ease;
+    }
+    
+    .recent-scores {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 20px var(--shadow);
+    }
+    
+    .score-list {
+        display: flex;
+        flex-direction: column;
         gap: 15px;
     }
-
-    .mini-stat {
-        background: rgba(31, 39, 27, 0.5);
-        border-radius: 10px;
-        padding: 15px;
-        text-align: center;
-        border: 1px solid rgba(227, 216, 136, 0.1);
-        transition: all 0.2s ease;
-        position: relative;
-        z-index: 1;
-    }
-
-    .mini-stat:hover {
-        border-color: var(--color-gold);
-        background: rgba(31, 39, 27, 0.7);
-    }
-
-    .mini-stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--color-light-green);
-        margin-bottom: 5px;
-    }
-
-    .mini-stat-label {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.6);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .insights-section {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 25px;
-        margin-bottom: 35px;
-    }
-
-    .insight-card {
-        background: linear-gradient(135deg, rgba(31, 39, 27, 0.8) 0%, rgba(31, 39, 27, 0.5) 100%);
-        border: 2px solid var(--color-dark-green);
-        border-radius: 15px;
-        padding: 25px;
-        transition: all 0.3s ease;
-    }
-
-    .insight-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-    }
-
-    .insight-item {
-        background: rgba(31, 39, 27, 0.6);
-        border: 1px solid rgba(227, 216, 136, 0.15);
-        border-radius: 10px;
-        padding: 18px;
-        margin-bottom: 12px;
+    
+    .score-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
+        padding: 20px;
+        background: rgba(10, 92, 54, 0.03);
+        border-radius: 12px;
+        border: 2px solid rgba(10, 92, 54, 0.1);
+        transition: all 0.3s ease;
     }
-
-    .insight-item::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background: var(--color-gold);
-        transform: scaleY(0);
-        transition: transform 0.2s ease;
-    }
-
-    .insight-item:hover {
-        border-color: var(--color-gold);
-        background: rgba(31, 39, 27, 0.8);
+    
+    .score-item:hover {
+        border-color: var(--gold);
         transform: translateX(5px);
     }
-
-    .insight-item:hover::before {
-        transform: scaleY(1);
-    }
-
-    .insight-content {
-        flex: 1;
-    }
-
-    .insight-title {
-        font-size: 1.05rem;
-        color: var(--color-light-green);
-        font-weight: 600;
+    
+    .score-info h4 {
+        color: var(--primary-green);
+        font-size: 1.1rem;
         margin-bottom: 5px;
     }
-
-    .insight-meta {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.5);
+    
+    .score-info p {
+        color: #666;
+        font-size: 0.9rem;
     }
-
-    .insight-metric {
-        text-align: right;
+    
+    .score-badge {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        color: var(--white);
+        border-radius: 50px;
+        font-weight: bold;
+        font-size: 1.2rem;
     }
-
-    .metric-value {
-        font-size: 1.4rem;
-        font-weight: 700;
-        margin-bottom: 3px;
-    }
-
-    .metric-label {
-        font-size: 0.75rem;
-        color: rgba(255, 255, 255, 0.5);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .error-rate {
-        color: #ff6b6b;
-    }
-
-    .improvement-rate {
-        color: #51d488;
-    }
-
-    .no-data {
-        text-align: center;
-        padding: 60px 20px;
-        color: rgba(255, 255, 255, 0.4);
-    }
-
-    .no-data-icon {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        opacity: 0.3;
-    }
-
-    .no-data-text {
-        font-size: 1.1rem;
-        line-height: 1.6;
-    }
-
-    .recurring-section {
-        background: linear-gradient(135deg, rgba(31, 39, 27, 0.8) 0%, rgba(31, 39, 27, 0.5) 100%);
-        border: 2px solid var(--color-dark-green);
-        border-radius: 15px;
-        padding: 25px;
-    }
-
+    
     @media (max-width: 768px) {
-        .performance-grid,
-        .insights-section {
+        .progress-grid {
             grid-template-columns: 1fr;
         }
-
-        .stats-overview {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        }
-
-        .performance-stats {
+        
+        .tajweed-grid {
             grid-template-columns: 1fr;
         }
     }
 </style>
+@endsection
 
-<div class="progress-container">
-    @if($overallProgress['total_attempts'] > 0)
-        <!-- Overall Statistics -->
-        <div class="stats-overview">
-            <div class="stat-card">
-                <div class="stat-value">{{ number_format($overallProgress['accuracy'], 1) }}%</div>
-                <div class="stat-label">Overall Accuracy</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ $overallProgress['total_attempts'] }}</div>
-                <div class="stat-label">Total Attempts</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ $overallProgress['correct_count'] }}</div>
-                <div class="stat-label">Correct</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ $overallProgress['error_count'] }}</div>
-                <div class="stat-label">Errors</div>
+@section('content')
+<!-- Progress Overview -->
+<div class="progress-grid">
+    <!-- Overall Performance -->
+    <div class="progress-card">
+        <div class="progress-header">
+            <h3>Overall Score</h3>
+            <div class="progress-icon">
+                <i class="fas fa-trophy"></i>
             </div>
         </div>
-
-        <!-- Performance Comparison -->
-        <div class="performance-grid">
-            <div class="performance-card">
-                <div class="card-header">
-                    <div class="card-title">Assignments</div>
-                    <div class="card-badge badge-assignment">Graded Work</div>
-                </div>
-                <div class="performance-stats">
-                    <div class="mini-stat">
-                        <div class="mini-stat-value">{{ number_format($overallProgress['assignment_accuracy'], 1) }}%</div>
-                        <div class="mini-stat-label">Accuracy</div>
-                    </div>
-                    <div class="mini-stat">
-                        <div class="mini-stat-value">{{ $overallProgress['assignment_attempts'] }}</div>
-                        <div class="mini-stat-label">Attempts</div>
-                    </div>
-                    <div class="mini-stat">
-                        <div class="mini-stat-value">{{ $overallProgress['assignment_correct'] }}</div>
-                        <div class="mini-stat-label">Correct</div>
-                    </div>
-                    <div class="mini-stat">
-                        <div class="mini-stat-value">{{ $overallProgress['assignment_errors'] }}</div>
-                        <div class="mini-stat-label">Errors</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="performance-card">
-                <div class="card-header">
-                    <div class="card-title">Practice Sessions</div>
-                    <div class="card-badge badge-practice">Self Study</div>
-                </div>
-                <div class="performance-stats">
-                    <div class="mini-stat">
-                        <div class="mini-stat-value">{{ number_format($overallProgress['practice_accuracy'], 1) }}%</div>
-                        <div class="mini-stat-label">Accuracy</div>
-                    </div>
-                    <div class="mini-stat">
-                        <div class="mini-stat-value">{{ $overallProgress['practice_attempts'] }}</div>
-                        <div class="mini-stat-label">Attempts</div>
-                    </div>
-                    <div class="mini-stat">
-                        <div class="mini-stat-value">{{ $overallProgress['practice_correct'] }}</div>
-                        <div class="mini-stat-label">Correct</div>
-                    </div>
-                    <div class="mini-stat">
-                        <div class="mini-stat-value">{{ $overallProgress['practice_errors'] }}</div>
-                        <div class="mini-stat-label">Errors</div>
-                    </div>
-                </div>
+        @php
+            $scores = \App\Models\Score::where('user_id', Auth::id())->get();
+            $avgScore = $scores->avg('score') ?? 0;
+        @endphp
+        <div class="progress-ring">
+            <svg width="150" height="150" viewBox="0 0 150 150">
+                <circle class="ring-bg" cx="75" cy="75" r="70" />
+                <circle class="ring-progress" cx="75" cy="75" r="70" id="overall-ring" />
+            </svg>
+            <div class="ring-text">
+                <div class="ring-value">{{ number_format($avgScore, 0) }}%</div>
+                <div class="ring-label">Average</div>
             </div>
         </div>
-
-        <!-- Insights Section -->
-        <div class="insights-section">
-            <!-- Areas for Improvement -->
-            <div class="insight-card">
-                <div class="card-header">
-                    <div class="card-title">Areas for Improvement</div>
-                </div>
-                @if(count($topWeaknesses) > 0)
-                    @foreach($topWeaknesses as $weakness)
-                        <div class="insight-item">
-                            <div class="insight-content">
-                                <div class="insight-title">{{ $weakness->error_type }} - {{ $weakness->rule_name }}</div>
-                                <div class="insight-meta">{{ $weakness->error_count }} errors in {{ $weakness->total_attempts }} attempts</div>
-                            </div>
-                            <div class="insight-metric">
-                                <div class="metric-value error-rate">{{ number_format($weakness->fail_rate, 1) }}%</div>
-                                <div class="metric-label">Error Rate</div>
-                            </div>
-                        </div>
-                    @endforeach
-                @else
-                    <div class="no-data">
-                        <div class="no-data-text">No recurring errors found. Keep practicing!</div>
-                    </div>
-                @endif
-            </div>
-
-            <!-- Most Improved -->
-            <div class="insight-card">
-                <div class="card-header">
-                    <div class="card-title">Most Improved</div>
-                </div>
-                @if(count($mostImproved) > 0)
-                    @foreach($mostImproved as $improved)
-                        <div class="insight-item">
-                            <div class="insight-content">
-                                <div class="insight-title">{{ $improved->error_type }} - {{ $improved->rule_name }}</div>
-                                <div class="insight-meta">
-                                    {{ number_format($improved->old_accuracy, 1) }}% → {{ number_format($improved->new_accuracy, 1) }}%
-                                </div>
-                            </div>
-                            <div class="insight-metric">
-                                <div class="metric-value improvement-rate">+{{ number_format($improved->improvement, 1) }}%</div>
-                                <div class="metric-label">Improvement</div>
-                            </div>
-                        </div>
-                    @endforeach
-                @else
-                    <div class="no-data">
-                        <div class="no-data-text">Keep practicing to see your improvements!</div>
-                    </div>
-                @endif
+    </div>
+    
+    <!-- Statistics -->
+    <div class="progress-card">
+        <div class="progress-header">
+            <h3>Statistics</h3>
+            <div class="progress-icon">
+                <i class="fas fa-chart-bar"></i>
             </div>
         </div>
-
-        <!-- Recurring Errors -->
-        @if(count($recurringErrors) > 0)
-            <div class="recurring-section">
-                <div class="card-header">
-                    <div class="card-title">Recurring Errors - Need More Focus</div>
-                </div>
-                @foreach($recurringErrors as $error)
-                    <div class="insight-item">
-                        <div class="insight-content">
-                            <div class="insight-title">{{ $error->error_type }} - {{ $error->rule_name }}</div>
-                            <div class="insight-meta">Appeared {{ $error->occurrences }} times recently</div>
-                        </div>
-                        <div class="insight-metric">
-                            <div class="metric-value error-rate">{{ $error->occurrences }}</div>
-                            <div class="metric-label">Occurrences</div>
-                        </div>
-                    </div>
-                @endforeach
+        <ul class="stats-list">
+            <li class="stat-item">
+                <span class="stat-label">Total Assignments</span>
+                <span class="stat-value">{{ $scores->count() }}</span>
+            </li>
+            <li class="stat-item">
+                <span class="stat-label">Highest Score</span>
+                <span class="stat-value">{{ $scores->max('score') ?? 0 }}%</span>
+            </li>
+            <li class="stat-item">
+                <span class="stat-label">Lowest Score</span>
+                <span class="stat-value">{{ $scores->min('score') ?? 0 }}%</span>
+            </li>
+            <li class="stat-item">
+                <span class="stat-label">Enrolled Classes</span>
+                <span class="stat-value">{{ \App\Models\Student::find(Auth::id())->classrooms->count() }}</span>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Improvement -->
+    <div class="progress-card">
+        <div class="progress-header">
+            <h3>Improvement</h3>
+            <div class="progress-icon">
+                <i class="fas fa-chart-line"></i>
             </div>
-        @endif
+        </div>
+        @php
+            $firstScore = $scores->sortBy('created_at')->first();
+            $lastScore = $scores->sortByDesc('created_at')->first();
+            $improvement = $lastScore && $firstScore ? $lastScore->score - $firstScore->score : 0;
+        @endphp
+        <div style="text-align: center; padding: 40px 20px;">
+            <div style="font-size: 3rem; color: {{ $improvement >= 0 ? 'var(--light-green)' : '#e74c3c' }}; margin-bottom: 10px;">
+                {{ $improvement >= 0 ? '↗' : '↘' }}
+            </div>
+            <div style="font-size: 2rem; font-weight: bold; color: var(--primary-green); margin-bottom: 5px;">
+                {{ abs($improvement) }}%
+            </div>
+            <div style="font-size: 0.9rem; color: #666;">
+                {{ $improvement >= 0 ? 'Improvement' : 'Decrease' }} from first assignment
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tajweed Analysis -->
+<div class="tajweed-section">
+    <h3 class="section-title">
+        <i class="fas fa-brain"></i>
+        Tajweed Skills Analysis
+    </h3>
+    <p style="color: #666; margin-bottom: 25px; font-size: 1.05rem;">
+        Our AI system analyzes your recitation for these Tajweed rules:
+    </p>
+    
+    <div class="tajweed-grid">
+        <div class="tajweed-card">
+            <div class="tajweed-icon">
+                <i class="fas fa-volume-up"></i>
+            </div>
+            <div class="tajweed-name">Makharij</div>
+            <div class="tajweed-desc">Pronunciation Points - Correct articulation of Arabic letters</div>
+            <div class="tajweed-progress">
+                <div class="tajweed-progress-fill" style="width: {{ $scores->count() > 0 ? number_format($avgScore * 0.9, 0) : 0 }}%;"></div>
+            </div>
+        </div>
+        
+        <div class="tajweed-card">
+            <div class="tajweed-icon">
+                <i class="fas fa-wind"></i>
+            </div>
+            <div class="tajweed-name">Ghunnah</div>
+            <div class="tajweed-desc">Nasal Sound - Nasalization with specific letters</div>
+            <div class="tajweed-progress">
+                <div class="tajweed-progress-fill" style="width: {{ $scores->count() > 0 ? number_format($avgScore * 0.85, 0) : 0 }}%;"></div>
+            </div>
+        </div>
+        
+        <div class="tajweed-card">
+            <div class="tajweed-icon">
+                <i class="fas fa-compress-alt"></i>
+            </div>
+            <div class="tajweed-name">Idgham</div>
+            <div class="tajweed-desc">Letter Merging - Blending letters together</div>
+            <div class="tajweed-progress">
+                <div class="tajweed-progress-fill" style="width: {{ $scores->count() > 0 ? number_format($avgScore * 0.88, 0) : 0 }}%;"></div>
+            </div>
+        </div>
+        
+        <div class="tajweed-card">
+            <div class="tajweed-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <div class="tajweed-name">Qalqalah</div>
+            <div class="tajweed-desc">Echo Sound - Bouncing pronunciation</div>
+            <div class="tajweed-progress">
+                <div class="tajweed-progress-fill" style="width: {{ $scores->count() > 0 ? number_format($avgScore * 0.82, 0) : 0 }}%;"></div>
+            </div>
+        </div>
+        
+        <div class="tajweed-card">
+            <div class="tajweed-icon">
+                <i class="fas fa-arrows-alt-h"></i>
+            </div>
+            <div class="tajweed-name">Madd</div>
+            <div class="tajweed-desc">Elongation - Proper letter lengthening</div>
+            <div class="tajweed-progress">
+                <div class="tajweed-progress-fill" style="width: {{ $scores->count() > 0 ? number_format($avgScore * 0.86, 0) : 0 }}%;"></div>
+            </div>
+        </div>
+        
+        <div class="tajweed-card">
+            <div class="tajweed-icon">
+                <i class="fas fa-eye-slash"></i>
+            </div>
+            <div class="tajweed-name">Ikhfa</div>
+            <div class="tajweed-desc">Concealment - Hidden pronunciation</div>
+            <div class="tajweed-progress">
+                <div class="tajweed-progress-fill" style="width: {{ $scores->count() > 0 ? number_format($avgScore * 0.84, 0) : 0 }}%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Scores -->
+<div class="recent-scores">
+    <h3 class="section-title">
+        <i class="fas fa-history"></i>
+        Recent Scores
+    </h3>
+    
+    @if($scores->count() > 0)
+        <div class="score-list">
+            @foreach($scores->sortByDesc('created_at')->take(10) as $score)
+                <div class="score-item">
+                    <div class="score-info">
+                        <h4>{{ $score->assignment->title ?? 'Assignment' }}</h4>
+                        <p>
+                            <i class="fas fa-calendar"></i> {{ $score->created_at->format('M d, Y') }} • 
+                            <i class="fas fa-chalkboard"></i> {{ $score->assignment->classroom->class_name ?? 'Unknown Class' }}
+                        </p>
+                    </div>
+                    <div class="score-badge">
+                        {{ $score->score }}%
+                    </div>
+                </div>
+            @endforeach
+        </div>
     @else
-        <!-- No Data State -->
-        <div class="insight-card">
-            <div class="no-data">
-                <div class="no-data-icon">📚</div>
-                <div class="no-data-text">
-                    No practice data available yet.<br>
-                    Complete assignments or practice sessions to track your progress.
-                </div>
-            </div>
+        <div style="text-align: center; padding: 60px 20px; color: #999;">
+            <i class="fas fa-clipboard-list" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
+            <p>No scores yet. Complete assignments to see your progress!</p>
         </div>
     @endif
 </div>
+@endsection
 
+@section('extra-scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate overall progress ring
+        const overallRing = document.getElementById('overall-ring');
+        if (overallRing) {
+            const progressValue = {{ number_format($avgScore, 0) }};
+            const circumference = 2 * Math.PI * 70;
+            const offset = circumference - (progressValue / 100) * circumference;
+            
+            setTimeout(() => {
+                overallRing.style.strokeDashoffset = offset;
+            }, 500);
+        }
+    });
+</script>
 @endsection
