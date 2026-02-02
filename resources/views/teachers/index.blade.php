@@ -11,7 +11,7 @@
         <div class="nav-label">Dashboard</div>
     </a>
     
-    <a href="{{ route('classrooms.index') }}" class="nav-item">
+    <a href="{{ route('classroom.index') }}" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-chalkboard-teacher"></i>
         </div>

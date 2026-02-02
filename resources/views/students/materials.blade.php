@@ -348,7 +348,7 @@
 @if($materials->isEmpty())
     <div class="materials-grid" id="materialsGrid">
         @foreach($sampleMaterials as $index => $material)
-            <div class="material-card" data-type="{{ $material['type'] }}">
+            <div class="material-card" data-type="{{ $material['type'] }}" onclick="alert('This is a sample material. Real materials will be available when added by your teacher.')" style="cursor: pointer;">
                 <div class="material-icon-container">
                     <i class="fas {{ $material['icon'] }} material-icon"></i>
                 </div>
@@ -391,7 +391,7 @@
                 }
             @endphp
             
-            <a href="{{ route('student.material.show', $material->id) }}" class="material-card" data-type="{{ $type }}">
+            <div class="material-card" data-type="{{ $type }}" onclick="window.location.href='{{ route('student.material.show', $material->id) }}'" style="cursor: pointer;">
                 <div class="material-icon-container">
                     <i class="fas {{ $icon }} material-icon"></i>
                 </div>

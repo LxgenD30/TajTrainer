@@ -27,7 +27,7 @@ class ClassroomController extends Controller
             ->latest()
             ->get();
         
-        return view('layouts.tlayout.classrooms', compact('classrooms'));
+        return view('teachers.classrooms', compact('classrooms'));
     }
 
     /**
