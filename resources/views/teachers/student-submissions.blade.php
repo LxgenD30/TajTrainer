@@ -1,149 +1,570 @@
-@extends('layouts.template')
+@extends('layouts.dashboard')
 
 @section('title', 'Student Submissions')
-@section('page-title', $student->name . ' - Submissions')
-@section('page-subtitle', $classroom->class_name)
+@section('user-role', 'Teacher • Grading Queue')
 
-@push('styles')
+@section('navigation')
+    <a href="{{ url('/home') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-home"></i>
+        </div>
+        <div class="nav-label">Dashboard</div>
+    </a>
+    
+    <a href="{{ url('/classrooms') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <div class="nav-label">My Classes</div>
+    </a>
+    
+    <a href="{{ url('/assignments') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="nav-label">Assignments</div>
+    </a>
+    
+    <a href="{{ url('/teacher/submissions') }}" class="nav-item active">
+        <div class="nav-icon">
+            <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="nav-label">Submissions</div>
+    </a>
+    
+    <a href="{{ url('/materials') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <div class="nav-label">Materials</div>
+    </a>
+    
+    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="nav-label">Profile</div>
+    </a>
+    
+    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
+        @csrf
+        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
+            <div class="nav-icon">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+            <div class="nav-label">Logout</div>
+        </button>
+    </form>
+@endsection
+
+@section('extra-styles')
 <style>
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    .submissions-header {
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 30px;
+        color: var(--white);
+        box-shadow: 0 8px 20px var(--shadow);
+        position: relative;
+        overflow: hidden;
     }
     
-    .spinner {
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top: 2px solid white;
+    .submissions-header:before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    }
+    
+    .submissions-header h2 {
+        color: var(--white);
+        font-size: 2rem;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .submissions-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .submission-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 20px var(--shadow);
+        transition: all 0.3s ease;
+    }
+    
+    .submission-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(10, 92, 54, 0.2);
+    }
+    
+    .submission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(10, 92, 54, 0.1);
+    }
+    
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .student-avatar {
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
-        width: 14px;
-        height: 14px;
-        animation: spin 0.8s linear infinite;
-        display: inline-block;
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+    
+    .student-details h3 {
+        color: var(--primary-green);
+        font-size: 1.3rem;
+        margin-bottom: 5px;
+    }
+    
+    .student-details p {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .submission-status {
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        font-family: 'El Messiri', sans-serif;
+    }
+    
+    .status-pending {
+        background: rgba(255, 152, 0, 0.1);
+        color: #ff9800;
+    }
+    
+    .status-graded {
+        background: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+    }
+    
+    .assignment-info {
+        background: rgba(10, 92, 54, 0.05);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .assignment-info h4 {
+        color: var(--primary-green);
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #666;
+        font-size: 0.95rem;
+    }
+    
+    .info-item i {
+        color: var(--primary-green);
+        font-size: 1.1rem;
+    }
+    
+    .audio-player {
+        background: linear-gradient(135deg, rgba(10, 92, 54, 0.05), rgba(46, 139, 87, 0.05));
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .audio-player h5 {
+        color: var(--primary-green);
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+    }
+    
+    .audio-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .play-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        color: var(--white);
+        border: none;
+        font-size: 1.3rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .play-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.3);
+    }
+    
+    .audio-timeline {
+        flex: 1;
+        height: 8px;
+        background: rgba(10, 92, 54, 0.1);
+        border-radius: 10px;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .audio-progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-green), var(--light-green));
+        border-radius: 10px;
+        width: 0%;
+        transition: width 0.1s linear;
+    }
+    
+    .tajweed-errors {
+        margin-bottom: 20px;
+    }
+    
+    .tajweed-errors h5 {
+        color: var(--primary-green);
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+    }
+    
+    .error-list {
+        display: grid;
+        gap: 12px;
+    }
+    
+    .error-item {
+        background: rgba(231, 76, 60, 0.05);
+        border-left: 4px solid #e74c3c;
+        border-radius: 10px;
+        padding: 15px;
+    }
+    
+    .error-item h6 {
+        color: #e74c3c;
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+    
+    .error-item p {
+        color: #666;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    .grading-form {
+        background: rgba(212, 175, 55, 0.05);
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 20px;
+    }
+    
+    .grading-form h5 {
+        color: var(--primary-green);
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        color: var(--primary-green);
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-family: 'El Messiri', sans-serif;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid rgba(10, 92, 54, 0.2);
+        border-radius: 10px;
+        font-family: 'Amiri', serif;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.1);
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .btn-submit-grade {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        color: var(--white);
+        border: none;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        font-family: 'El Messiri', sans-serif;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-submit-grade:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.3);
+    }
+    
+    .empty-submissions {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 80px 40px;
+        text-align: center;
+        box-shadow: 0 8px 20px var(--shadow);
+    }
+    
+    .empty-submissions i {
+        font-size: 6rem;
+        color: rgba(10, 92, 54, 0.2);
+        margin-bottom: 20px;
+    }
+    
+    .empty-submissions h3 {
+        color: var(--primary-green);
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+    
+    .empty-submissions p {
+        color: #666;
+        font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .submission-header {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
-@endpush
+@endsection
 
 @section('content')
-<div style="padding: 0;">
-    <div style="margin-bottom: 20px;">
-        <a href="{{ route('classroom.show', $classroom->id) }}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--gold); text-decoration: none; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.color='var(--light-green)'" onmouseout="this.style.color='var(--gold)'">
-            ← Back to Classroom
-        </a>
-    </div>
-
-    <!-- Student Info Card -->
-    <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 25px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 25px;">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="width: 60px; height: 60px; background: var(--primary-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
-                👤
-            </div>
-            <div style="flex: 1;">
-                <h2 style="color: var(--gold); font-size: 1.5rem; margin-bottom: 5px;">{{ $student->name }}</h2>
-                <p style="color: var(--light-green); opacity: 0.8; font-size: 0.9rem; margin: 0;">📧 {{ $student->email }}</p>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 0.85rem; color: var(--light-green); margin-bottom: 5px;">Total Submissions</div>
-                <div style="font-size: 1.8rem; font-weight: 700; color: var(--gold);">{{ $submissions->count() }}</div>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 0.85rem; color: var(--light-green); margin-bottom: 5px;">Graded</div>
-                <div style="font-size: 1.8rem; font-weight: 700; color: #4caf50;">{{ $submissions->where('status', 'graded')->count() }}</div>
-            </div>
-        </div>
-    </div>
-
-    @if(session('success'))
-    <div style="background: rgba(76, 175, 80, 0.2); border: 2px solid #4caf50; border-radius: 10px; padding: 15px; margin-bottom: 20px; color: #4caf50; font-weight: 600;">
-        ✓ {{ session('success') }}
-    </div>
-    @endif
-
-    <!-- Submissions List -->
-    <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
-        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
-            <div style="width: 50px; height: 50px; background: var(--primary-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
-                📝
-            </div>
-            <div>
-                <h3 style="color: var(--gold); font-size: 1.3rem; margin-bottom: 5px;">Assignment Submissions</h3>
-                <p style="color: var(--light-green); opacity: 0.8; font-size: 0.9rem; margin: 0;">Review and grade student work</p>
-            </div>
-        </div>
-
-        @if($submissions->count() > 0)
-            <div style="display: flex; flex-direction: column; gap: 15px;">
-                @foreach($submissions as $submission)
-                    <div style="background: rgba(70, 63, 58, 0.4); border-left: 4px solid {{ $submission->status === 'graded' ? '#4caf50' : 'var(--gold)' }}; padding: 20px; border-radius: 10px; transition: all 0.3s ease;"
-                        onmouseover="this.style.background='rgba(70, 63, 58, 0.6)'"
-                        onmouseout="this.style.background='rgba(70, 63, 58, 0.4)'">
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
-                            <div style="flex: 1;">
-                                <h4 style="color: var(--gold); font-size: 1.1rem; margin: 0 0 10px 0;">
-                                    @if($submission->assignment->surah)
-                                        📖 {{ $submission->assignment->surah }} 
-                                        ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
-                                    @else
-                                        {{ $submission->assignment->material ? $submission->assignment->material->title : 'Assignment' }}
-                                    @endif
-                                </h4>
-                                <div style="display: flex; gap: 20px; font-size: 0.9rem; color: var(--light-green); opacity: 0.9;">
-                                    <span>📅 Submitted: {{ $submission->created_at->format('M d, Y h:i A') }}</span>
-                                    <span>🎯 Total Marks: {{ $submission->assignment->total_marks }}</span>
-                                    @if($submission->assignment->is_voice_submission)
-                                        <span style="color: var(--gold);">🎤 Voice Recording</span>
-                                    @endif
-                                </div>
-                            </div>
-                            
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                @if($submission->status === 'graded' && $submission->score)
-                                    <div style="text-align: center; padding: 10px 15px; background: rgba(76, 175, 80, 0.2); border: 2px solid #4caf50; border-radius: 10px;">
-                                        <div style="font-size: 0.75rem; color: #4caf50; margin-bottom: 3px;">Score</div>
-                                        <div style="font-size: 1.3rem; font-weight: 700; color: #4caf50;">{{ $submission->score->score }}/{{ $submission->assignment->total_marks }}</div>
-                                    </div>
-                                @elseif($submission->status === 'submitted' && !$submission->score)
-                                    <div style="padding: 8px 15px; background: rgba(33, 150, 243, 0.2); border: 2px solid #2196f3; border-radius: 10px; color: #2196f3; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                        <div class="spinner" style="border-color: rgba(33, 150, 243, 0.3); border-top-color: #2196f3;"></div>
-                                        Processing...
-                                    </div>
-                                @else
-                                    <div style="padding: 8px 15px; background: rgba(227, 216, 136, 0.2); border: 2px solid var(--gold); border-radius: 10px; color: var(--gold); font-size: 0.85rem; font-weight: 600;">
-                                        ⏳ Pending Review
-                                    </div>
-                                @endif
-                                
-                                <a href="{{ route('teacher.submission.grade', $submission->id) }}" 
-                                    style="padding: 10px 20px; background: var(--gold); color: var(--dark-green); border-radius: 10px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; font-size: 0.9rem;"
-                                    onmouseover="this.style.opacity='0.8'"
-                                    onmouseout="this.style.opacity='1'">
-                                    {{ $submission->status === 'graded' ? '👁️ View' : '✏️ Grade' }}
-                                </a>
-                            </div>
-                        </div>
-
-                        @if($submission->status === 'graded' && $submission->score && $submission->score->feedback)
-                            <div style="background: rgba(31, 39, 27, 0.5); padding: 15px; border-radius: 8px; margin-top: 10px;">
-                                <div style="color: var(--gold); font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">💬 Teacher Feedback:</div>
-                                <p style="color: var(--light-green); margin: 0; line-height: 1.6; font-size: 0.9rem;">{{ Str::limit($submission->score->feedback, 150) }}</p>
-                            </div>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div style="text-align: center; padding: 60px 20px;">
-                <div style="font-size: 4rem; margin-bottom: 15px; opacity: 0.5;">📭</div>
-                <h3 style="color: var(--gold); margin-bottom: 10px;">No Submissions Yet</h3>
-                <p style="color: var(--light-green); opacity: 0.7;">This student hasn't submitted any assignments in this classroom.</p>
-            </div>
-        @endif
-    </div>
+<!-- Submissions Header -->
+<div class="submissions-header">
+    <h2><i class="fas fa-clipboard-check"></i> Student Submissions</h2>
+    <p>Review and grade student recitations with AI-powered Tajweed analysis</p>
 </div>
 
-@push('scripts')
+@php
+    $submissions = \App\Models\AssignmentSubmission::with(['student', 'assignment'])
+        ->whereNull('marks')
+        ->latest()
+        ->get();
+@endphp
+
+@if($submissions->isEmpty())
+    <div class="empty-submissions">
+        <i class="fas fa-check-double"></i>
+        <h3>All Caught Up!</h3>
+        <p>No pending submissions to grade at the moment.</p>
+    </div>
+@else
+    @foreach($submissions as $submission)
+        <div class="submission-card">
+            <!-- Submission Header -->
+            <div class="submission-header">
+                <div class="student-info">
+                    <div class="student-avatar">
+                        {{ strtoupper(substr($submission->student->user->name ?? 'S', 0, 1)) }}
+                    </div>
+                    <div class="student-details">
+                        <h3>{{ $submission->student->user->name ?? 'Student Name' }}</h3>
+                        <p>Submitted {{ $submission->created_at->diffForHumans() }}</p>
+                    </div>
+                </div>
+                <span class="submission-status {{ $submission->marks ? 'status-graded' : 'status-pending' }}">
+                    {{ $submission->marks ? 'Graded' : 'Pending Review' }}
+                </span>
+            </div>
+            
+            <!-- Assignment Info -->
+            <div class="assignment-info">
+                <h4>{{ $submission->assignment->title ?? 'Assignment Title' }}</h4>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <i class="fas fa-book-open"></i>
+                        <span>{{ $submission->assignment->classroom->name ?? 'Class Name' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Due: {{ $submission->assignment->due_date ? \Carbon\Carbon::parse($submission->assignment->due_date)->format('M d, Y') : 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-star"></i>
+                        <span>Total Marks: {{ $submission->assignment->total_marks ?? 100 }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Audio Player -->
+            @if($submission->audio_file_path)
+                <div class="audio-player">
+                    <h5><i class="fas fa-headphones"></i> Student Recitation</h5>
+                    <div class="audio-controls">
+                        <button class="play-btn" onclick="togglePlay('audio-{{ $submission->id }}')">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <div class="audio-timeline">
+                            <div class="audio-progress"></div>
+                        </div>
+                        <span class="audio-time">0:00 / 0:00</span>
+                    </div>
+                    <audio id="audio-{{ $submission->id }}" src="{{ asset('storage/' . $submission->audio_file_path) }}" style="display: none;"></audio>
+                </div>
+            @endif
+            
+            <!-- Tajweed Errors -->
+            @php
+                $errors = \App\Models\TajweedErrorLog::where('submission_id', $submission->id)->get();
+            @endphp
+            
+            @if($errors->isNotEmpty())
+                <div class="tajweed-errors">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Detected Tajweed Issues ({{ $errors->count() }})</h5>
+                    <div class="error-list">
+                        @foreach($errors as $error)
+                            <div class="error-item">
+                                <h6>{{ ucfirst($error->error_type) }}</h6>
+                                <p>{{ $error->error_message }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+            
+            <!-- Grading Form -->
+            @if(!$submission->marks)
+                <div class="grading-form">
+                    <h5><i class="fas fa-pen"></i> Grade Submission</h5>
+                    <form action="{{ route('submissions.grade', $submission->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        
+                        <div class="form-group">
+                            <label for="marks-{{ $submission->id }}">
+                                <i class="fas fa-award"></i> Marks Obtained
+                            </label>
+                            <input 
+                                type="number" 
+                                id="marks-{{ $submission->id }}" 
+                                name="marks" 
+                                min="0" 
+                                max="{{ $submission->assignment->total_marks ?? 100 }}" 
+                                required
+                                placeholder="Enter marks (out of {{ $submission->assignment->total_marks ?? 100 }})"
+                            >
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="feedback-{{ $submission->id }}">
+                                <i class="fas fa-comment-dots"></i> Teacher Feedback
+                            </label>
+                            <textarea 
+                                id="feedback-{{ $submission->id }}" 
+                                name="feedback" 
+                                rows="4"
+                                placeholder="Provide constructive feedback on the student's recitation..."
+                            ></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit-grade">
+                            <i class="fas fa-check-circle"></i> Submit Grade
+                        </button>
+                    </form>
+                </div>
+            @endif
+        </div>
+    @endforeach
+@endif
+@endsection
+
+@section('extra-scripts')
 <script>
-    // No auto-refresh needed - processing happens immediately during submission
+    function togglePlay(audioId) {
+        const audio = document.getElementById(audioId);
+        const btn = event.currentTarget;
+        const icon = btn.querySelector('i');
+        
+        if (audio.paused) {
+            audio.play();
+            icon.classList.remove('fa-play');
+            icon.classList.add('fa-pause');
+        } else {
+            audio.pause();
+            icon.classList.remove('fa-pause');
+            icon.classList.add('fa-play');
+        }
+        
+        audio.addEventListener('timeupdate', function() {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            btn.closest('.audio-player').querySelector('.audio-progress').style.width = progress + '%';
+            
+            const currentMin = Math.floor(audio.currentTime / 60);
+            const currentSec = Math.floor(audio.currentTime % 60);
+            const durationMin = Math.floor(audio.duration / 60);
+            const durationSec = Math.floor(audio.duration % 60);
+            
+            btn.closest('.audio-player').querySelector('.audio-time').textContent = 
+                `${currentMin}:${currentSec.toString().padStart(2, '0')} / ${durationMin}:${durationSec.toString().padStart(2, '0')}`;
+        });
+        
+        audio.addEventListener('ended', function() {
+            icon.classList.remove('fa-pause');
+            icon.classList.add('fa-play');
+        });
+    }
 </script>
-@endpush
 @endsection
