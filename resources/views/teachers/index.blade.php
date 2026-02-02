@@ -549,4 +549,6 @@
                 </div>
             @endforelse
         </div>
-    </div
+    </div>
+</div>
+@endsection

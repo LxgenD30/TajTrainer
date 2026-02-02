@@ -1,5 +1,205 @@
 <?php $__env->startSection('title', $classroom->class_name); ?>
-<?php $__env->startSection('user-role', 'Student • ' . $classroom->class_name); ?>
+<?php $__env->startSection('user-role', 'Teacher • ' . $classroom->class_name); ?>
+
+<?php $__env->startSection('navigation'); ?>
+    <a href="<?php echo e(route('home')); ?>" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-home"></i></div>
+        <div class="nav-label">Dashboard</div>
+    </a>
+    <a href="<?php echo e(route('classroom.index')); ?>" class="nav-item active">
+        <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="nav-label">My Classes</div>
+    </a>
+    <a href="<?php echo e(route('teachers.show', Auth::id())); ?>" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-user-circle"></i></div>
+        <div class="nav-label">Profile</div>
+    </a>
+    <form action="<?php echo e(route('logout')); ?>" method="POST" style="display: inline;" class="nav-item">
+        <?php echo csrf_field(); ?>
+        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
+            <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
+            <div class="nav-label">Logout</div>
+        </button>
+    </form>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startSection('content'); ?>
+    <!-- Success Message -->
+    <?php if(session('success')): ?>
+        <div style="background: rgba(46, 125, 50, 0.2); border: 3px solid #4caf50; color: #2e7d32; padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">✓</span>
+            <span style="font-weight: 600;"><?php echo e(session('success')); ?></span>
+        </div>
+    <?php endif; ?>
+
+    <!-- Back Button -->
+    <div style="margin-bottom: 20px;">
+        <a href="<?php echo e(route('classroom.index')); ?>" 
+            style="display: inline-flex; align-items: center; gap: 10px; color: #1a1a1a; text-decoration: none; font-family: 'El Messiri', sans-serif; font-weight: 600; font-size: 1rem; padding: 8px 16px; border-radius: 50px; background: rgba(255, 255, 255, 0.9); border: 3px solid #2a2a2a; transition: all 0.3s ease;"
+            onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.transform='translateX(-5px)'; this.style.borderColor='#0a5c36'"
+            onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.transform='translateX(0)'; this.style.borderColor='#2a2a2a'">
+            <i class="fas fa-arrow-left"></i> Back to Classes
+        </a>
+    </div>
+
+    <!-- Classroom Header -->
+    <div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 25px; padding: 40px; margin-bottom: 30px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25); border: 3px solid #2a2a2a;">
+        <div style="position: relative; z-index: 1;">
+            <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; font-weight: 700;">
+                <i class="fas fa-chalkboard-teacher"></i> <?php echo e($classroom->class_name); ?>
+
+            </h1>
+            <p style="margin: 0 0 25px 0; font-size: 1.1rem; opacity: 0.95; font-weight: 500; font-family: 'Cairo', sans-serif;">
+                <?php echo e($classroom->description ?? 'Manage your classroom students and assignments'); ?>
+
+            </p>
+            
+            <!-- Stats Grid -->
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px 30px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3);">
+                    <div style="font-size: 2.2rem; font-weight: 700; line-height: 1;"><?php echo e($classroom->students->count()); ?></div>
+                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 5px;">Students</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px 30px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3);">
+                    <div style="font-size: 2.2rem; font-weight: 700; line-height: 1; color: #d4af37;"><?php echo e($classroom->assignments->count()); ?></div>
+                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 5px;">Assignments</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px 30px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); font-family: 'JetBrains Mono', monospace;">
+                    <div style="font-size: 1.8rem; font-weight: 700; line-height: 1; letter-spacing: 3px;"><?php echo e($classroom->access_code); ?></div>
+                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 5px;">Access Code</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+        <!-- Students Section -->
+        <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
+                    <i class="fas fa-users"></i> Students (<?php echo e($classroom->students->count()); ?>)
+                </h3>
+            </div>
+            
+            <?php if($classroom->students->count() > 0): ?>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <?php $__currentLoopData = $classroom->students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div style="background: rgba(10, 92, 54, 0.05); border-radius: 12px; padding: 15px 20px; border: 2px solid rgba(10, 92, 54, 0.1); transition: all 0.3s ease;"
+                            onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.borderColor='#0a5c36'"
+                            onmouseout="this.style.background='rgba(10, 92, 54, 0.05)'; this.style.borderColor='rgba(10, 92, 54, 0.1)'">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
+                                        <?php echo e(strtoupper(substr($student->name, 0, 1))); ?>
+
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif;"><?php echo e($student->name); ?></div>
+                                        <div style="font-size: 0.85rem; color: #666;"><?php echo e($student->email); ?></div>
+                                    </div>
+                                </div>
+                                <span style="padding: 6px 15px; background: rgba(76, 175, 80, 0.1); color: #4caf50; border-radius: 50px; font-size: 0.85rem; font-weight: 600;">
+                                    Active
+                                </span>
+                            </div>
+                        </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            <?php else: ?>
+                <div style="text-align: center; padding: 50px 20px; color: #999;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">👥</div>
+                    <p style="margin: 0; font-size: 1.1rem; color: #666;">No students enrolled yet</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #999;">Share the access code to invite students</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Assignments Section -->
+        <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
+                    <i class="fas fa-tasks"></i> Assignments (<?php echo e($classroom->assignments->count()); ?>)
+                </h3>
+                <a href="#" style="padding: 8px 20px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    <i class="fas fa-plus"></i> New
+                </a>
+            </div>
+            
+            <?php if($classroom->assignments->count() > 0): ?>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <?php $__currentLoopData = $classroom->assignments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $assignment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div style="background: rgba(10, 92, 54, 0.05); border-left: 4px solid #0a5c36; border-radius: 12px; padding: 20px; transition: all 0.3s ease;"
+                            onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.transform='translateX(5px)'"
+                            onmouseout="this.style.background='rgba(10, 92, 54, 0.05)'; this.style.transform='translateX(0)'">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                <h4 style="margin: 0; font-family: 'Cairo', sans-serif; font-size: 1.1rem; color: #1a1a1a;">
+                                    <?php echo e($assignment->title ?? 'Assignment'); ?>
+
+                                </h4>
+                                <span style="padding: 5px 12px; background: rgba(212, 175, 55, 0.1); color: #d4af37; border-radius: 50px; font-size: 0.8rem; font-weight: 600;">
+                                    <?php echo e($assignment->total_marks); ?> pts
+                                </span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px; font-size: 0.85rem; color: #666; margin-bottom: 15px;">
+                                <span><i class="far fa-calendar"></i> Due: <?php echo e(\Carbon\Carbon::parse($assignment->due_date)->format('M d, Y')); ?></span>
+                                <?php
+                                    $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->id)->count();
+                                ?>
+                                <span><i class="fas fa-file-alt"></i> <?php echo e($submissionCount); ?> submissions</span>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <a href="#" style="flex: 1; padding: 8px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                    onmouseover="this.style.background='#0a5c36'; this.style.color='white'"
+                                    onmouseout="this.style.background='white'; this.style.color='#0a5c36'">
+                                    View
+                                </a>
+                                <a href="#" style="flex: 1; padding: 8px; background: white; color: #ff9800; border: 2px solid #ff9800; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                    onmouseover="this.style.background='#ff9800'; this.style.color='white'"
+                                    onmouseout="this.style.background='white'; this.style.color='#ff9800'">
+                                    Edit
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            <?php else: ?>
+                <div style="text-align: center; padding: 50px 20px; color: #999;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">📋</div>
+                    <p style="margin: 0; font-size: 1.1rem; color: #666;">No assignments yet</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #999;">Create your first assignment to get started</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Classroom Actions -->
+    <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a; margin-bottom: 30px;">
+        <h3 style="margin: 0 0 20px 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
+            <i class="fas fa-cog"></i> Classroom Actions
+        </h3>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <a href="<?php echo e(route('classroom.edit', $classroom->id)); ?>" 
+                style="padding: 12px 25px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 10px;"
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                <i class="fas fa-edit"></i> Edit Classroom
+            </a>
+            <form action="<?php echo e(route('classroom.destroy', $classroom->id)); ?>" method="POST" style="display: inline;">
+                <?php echo csrf_field(); ?>
+                <?php echo method_field('DELETE'); ?>
+                <button type="submit" onclick="return confirm('Are you sure you want to delete this classroom? This action cannot be undone.')"
+                    style="padding: 12px 25px; background: transparent; color: #e74c3c; border: 2px solid #e74c3c; border-radius: 50px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 10px;"
+                    onmouseover="this.style.background='rgba(231, 76, 60, 0.1)'"
+                    onmouseout="this.style.background='transparent'">
+                    <i class="fas fa-trash-alt"></i> Delete Classroom
+                </button>
+            </form>
+        </div>
+    </div>
+<?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('navigation'); ?>
     <a href="<?php echo e(route('student.dashboard')); ?>" class="nav-item">
