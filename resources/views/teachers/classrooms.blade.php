@@ -5,53 +5,38 @@
 
 @section('navigation')
     <a href="{{ route('home') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-home"></i>
-        </div>
-        <div class="nav-label">Dashboard</div>
+        <i class="fas fa-home nav-icon"></i>
+        <span class="nav-label">Dashboard</span>
     </a>
     
     <a href="{{ route('classroom.index') }}" class="nav-item active">
-        <div class="nav-icon">
-            <i class="fas fa-chalkboard-teacher"></i>
-        </div>
-        <div class="nav-label">My Classes</div>
+        <i class="fas fa-chalkboard-teacher nav-icon"></i>
+        <span class="nav-label">My Classes</span>
     </a>
     
     <a href="{{ route('materials.index') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-book-open"></i>
-        </div>
-        <div class="nav-label">Materials</div>
+        <i class="fas fa-book-open nav-icon"></i>
+        <span class="nav-label">Materials</span>
     </a>
     
     <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-user-circle"></i>
-        </div>
-        <div class="nav-label">Profile</div>
+        <i class="fas fa-user-circle nav-icon"></i>
+        <span class="nav-label">Profile</span>
     </a>
-    
-    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
-        @csrf
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon">
-                <i class="fas fa-sign-out-alt"></i>
-            </div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
 @endsection
 
-@section('extra-styles')
+@section('content')
 <style>
-    .classrooms-header {
-        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-        border-radius: 20px;
+    .welcome-banner {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 25px;
         padding: 40px;
         margin-bottom: 30px;
-        color: var(--white);
-        box-shadow: 0 8px 20px var(--shadow);
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -59,36 +44,58 @@
         gap: 20px;
     }
     
-    .header-content h2 {
-        color: var(--white);
-        font-size: 2rem;
-        margin: 0 0 10px 0;
+    .welcome-banner:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
     }
     
-    .header-content p {
-        font-size: 1.1rem;
-        opacity: 0.9;
+    .welcome-content {
+        position: relative;
+        z-index: 2;
+        flex: 1;
+    }
+    
+    .welcome-content h1 {
+        font-size: 2.2rem;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .welcome-content p {
+        font-size: 1.05rem;
+        opacity: 0.95;
+        line-height: 1.6;
         margin: 0;
     }
     
-    .btn-create-classroom {
-        padding: 15px 30px;
-        background: var(--white);
-        color: var(--primary-green);
-        border-radius: 50px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 1rem;
-        font-family: 'El Messiri', sans-serif;
-        transition: all 0.3s ease;
+    .btn-create {
+        position: relative;
+        z-index: 2;
         display: inline-flex;
         align-items: center;
         gap: 10px;
+        background: white;
+        color: #0a5c36;
+        padding: 15px 30px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
     }
     
-    .btn-create-classroom:hover {
+    .btn-create:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
     }
     
     .classrooms-grid {
@@ -98,83 +105,113 @@
     }
     
     .classroom-card {
-        background: var(--white);
-        border-radius: 20px;
+        background: white;
+        border-radius: 15px;
         padding: 30px;
-        box-shadow: 0 8px 20px var(--shadow);
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
         transition: all 0.3s ease;
     }
     
     .classroom-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.15);
+    }
+    
+    .classroom-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .classroom-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .classroom-info {
+        flex: 1;
+        min-width: 0;
     }
     
     .classroom-title {
-        color: var(--primary-green);
-        font-size: 1.5rem;
-        margin: 0 0 10px 0;
-        font-weight: 600;
+        color: #0a5c36;
+        font-size: 1.4rem;
+        margin: 0 0 8px 0;
+        font-weight: 700;
     }
     
     .classroom-description {
         color: #666;
-        font-size: 0.95rem;
-        line-height: 1.6;
-        margin-bottom: 20px;
-        min-height: 48px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
     }
     
     .access-code-section {
-        background: linear-gradient(135deg, rgba(10, 92, 54, 0.05), rgba(46, 139, 87, 0.05));
-        border-left: 4px solid var(--gold);
+        background: rgba(212, 175, 55, 0.1);
+        border-left: 4px solid #d4af37;
         padding: 15px;
         border-radius: 10px;
-        margin-bottom: 20px;
+        margin: 15px 0;
     }
     
     .access-code-label {
-        font-size: 0.85rem;
-        color: var(--primary-green);
+        font-size: 0.75rem;
+        color: #666;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
         margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
     
     .access-code-display {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
     
     .code-value {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.5rem;
+        font-family: 'Courier New', monospace;
+        font-size: 1.6rem;
         font-weight: 700;
-        color: var(--gold);
-        letter-spacing: 3px;
+        color: #d4af37;
+        letter-spacing: 4px;
     }
     
     .toggle-code-btn {
-        padding: 6px 12px;
-        background: var(--primary-green);
-        color: var(--white);
+        padding: 8px 12px;
+        background: #0a5c36;
+        color: white;
         border: none;
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         font-size: 0.85rem;
     }
     
     .toggle-code-btn:hover {
-        background: var(--dark-green);
+        background: #1abc9c;
         transform: scale(1.05);
     }
     
     .classroom-stats {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        margin-bottom: 20px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin: 15px 0;
         padding: 15px 0;
         border-top: 1px solid rgba(10, 92, 54, 0.1);
         border-bottom: 1px solid rgba(10, 92, 54, 0.1);
@@ -184,23 +221,25 @@
         text-align: center;
     }
     
-    .stat-label {
-        font-size: 0.85rem;
+    .stat-box-label {
+        font-size: 0.7rem;
         color: #666;
+        text-transform: uppercase;
         margin-bottom: 5px;
+        font-weight: 600;
     }
     
-    .stat-value {
-        font-size: 1.5rem;
+    .stat-box-value {
+        font-size: 1.6rem;
         font-weight: 700;
-        color: var(--primary-green);
+        color: #0a5c36;
     }
     
-    .stat-value.pending {
+    .stat-box-value.pending {
         color: #ff9800;
     }
     
-    .stat-value.completed {
+    .stat-box-value.completed {
         color: #4caf50;
     }
     
@@ -211,59 +250,76 @@
     
     .btn-action {
         flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         padding: 12px;
-        border-radius: 50px;
+        border-radius: 25px;
         text-decoration: none;
-        text-align: center;
         font-weight: 600;
-        font-family: 'El Messiri', sans-serif;
+        font-size: 0.9rem;
         transition: all 0.3s ease;
     }
     
     .btn-view {
-        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-        color: var(--white);
+        background: #0a5c36;
+        color: white;
     }
     
     .btn-view:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.3);
+        background: #1abc9c;
+        transform: scale(1.02);
     }
     
     .btn-edit {
         background: transparent;
-        color: var(--primary-green);
-        border: 2px solid var(--primary-green);
+        color: #0a5c36;
+        border: 2px solid #0a5c36;
     }
     
     .btn-edit:hover {
-        background: var(--primary-green);
-        color: var(--white);
+        background: #0a5c36;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: transparent;
+        color: #e74c3c;
+        border: 2px solid #e74c3c;
+        flex: 0.3;
+    }
+    
+    .btn-delete:hover {
+        background: #e74c3c;
+        color: white;
     }
     
     .empty-state {
-        background: var(--white);
-        border-radius: 20px;
+        background: white;
+        border-radius: 15px;
         padding: 80px 40px;
         text-align: center;
-        box-shadow: 0 8px 20px var(--shadow);
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
     }
     
     .empty-state i {
-        font-size: 6rem;
+        font-size: 5rem;
         color: rgba(10, 92, 54, 0.2);
         margin-bottom: 20px;
     }
     
     .empty-state h3 {
-        color: var(--primary-green);
+        color: #0a5c36;
         font-size: 1.8rem;
         margin-bottom: 10px;
+        font-weight: 700;
     }
     
     .empty-state p {
         color: #666;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         margin-bottom: 30px;
     }
     
@@ -272,28 +328,30 @@
             grid-template-columns: 1fr;
         }
         
-        .classrooms-header {
+        .welcome-banner {
             flex-direction: column;
             align-items: flex-start;
         }
         
-        .btn-create-classroom {
+        .btn-create {
             width: 100%;
             justify-content: center;
         }
+        
+        .classroom-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 </style>
-@endsection
 
-@section('content')
-<!-- Classrooms Header -->
-<div class="classrooms-header">
-    <div class="header-content">
-        <h2><i class="fas fa-chalkboard-teacher"></i> My Classrooms</h2>
-        <p>Create and manage virtual classrooms for your students</p>
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="welcome-content">
+        <h1><i class="fas fa-chalkboard-teacher"></i> My Classrooms</h1>
+        <p>Create and manage virtual classrooms for your Tajweed students</p>
     </div>
-    <a href="{{ route('classroom.create') }}" class="btn-create-classroom">
-        <i class="fas fa-plus-circle"></i> Create Classroom
+    <a href="{{ route('classroom.create') }}" class="btn-create">
+        <i class="fas fa-plus-circle"></i> Create New Class
     </a>
 </div>
 
@@ -302,12 +360,21 @@
     <div class="classrooms-grid">
         @foreach($classrooms as $classroom)
             <div class="classroom-card">
-                <h3 class="classroom-title">{{ $classroom->class_name }}</h3>
-                <p class="classroom-description">{{ Str::limit($classroom->description ?? 'No description provided', 100) }}</p>
+                <div class="classroom-header">
+                    <div class="classroom-icon">
+                        <i class="fas fa-book-quran"></i>
+                    </div>
+                    <div class="classroom-info">
+                        <h3 class="classroom-title">{{ $classroom->class_name }}</h3>
+                        <p class="classroom-description">{{ Str::limit($classroom->description ?? 'No description provided', 80) }}</p>
+                    </div>
+                </div>
                 
                 <!-- Access Code -->
                 <div class="access-code-section">
-                    <div class="access-code-label"><i class="fas fa-key"></i> Access Code</div>
+                    <div class="access-code-label">
+                        <i class="fas fa-key"></i> Access Code
+                    </div>
                     <div class="access-code-display">
                         <span class="code-value" id="code-{{ $classroom->id }}">••••••</span>
                         <span style="display: none;" id="real-code-{{ $classroom->id }}">{{ $classroom->access_code }}</span>
@@ -320,31 +387,38 @@
                 <!-- Stats -->
                 <div class="classroom-stats">
                     <div class="stat-box">
-                        <div class="stat-label">Students</div>
-                        <div class="stat-value">{{ $classroom->students_count ?? 0 }}</div>
+                        <div class="stat-box-label">Students</div>
+                        <div class="stat-box-value">{{ $classroom->students_count ?? 0 }}</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">Assignments</div>
-                        <div class="stat-value">{{ $classroom->assignments_count ?? 0 }}</div>
+                        <div class="stat-box-label">Assignments</div>
+                        <div class="stat-box-value">{{ $classroom->assignments_count ?? 0 }}</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">Pending</div>
-                        <div class="stat-value pending">{{ $classroom->pending_assignments ?? 0 }}</div>
+                        <div class="stat-box-label">Pending</div>
+                        <div class="stat-box-value pending">{{ $classroom->pending_assignments_count ?? 0 }}</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">Completed</div>
-                        <div class="stat-value completed">{{ $classroom->completed_assignments ?? 0 }}</div>
+                        <div class="stat-box-label">Completed</div>
+                        <div class="stat-box-value completed">{{ $classroom->completed_assignments_count ?? 0 }}</div>
                     </div>
                 </div>
                 
                 <!-- Actions -->
                 <div class="classroom-actions">
                     <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-action btn-view">
-                        <i class="fas fa-eye"></i> View Details
+                        <i class="fas fa-eye"></i> View
                     </a>
                     <a href="{{ route('classroom.edit', $classroom->id) }}" class="btn-action btn-edit">
                         <i class="fas fa-edit"></i> Edit
                     </a>
+                    <form action="{{ route('classroom.destroy', $classroom->id) }}" method="POST" style="flex: 0.3; display: contents;" onsubmit="return confirm('Are you sure you want to delete this classroom? This action cannot be undone.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-action btn-delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
         @endforeach
@@ -354,14 +428,12 @@
         <i class="fas fa-chalkboard"></i>
         <h3>No Classrooms Yet</h3>
         <p>Create your first classroom to start teaching and managing students</p>
-        <a href="{{ route('classroom.create') }}" class="btn-create-classroom">
+        <a href="{{ route('classroom.create') }}" class="btn-create">
             <i class="fas fa-plus-circle"></i> Create Your First Classroom
         </a>
     </div>
 @endif
-@endsection
 
-@section('extra-scripts')
 <script>
     function toggleCode(classroomId) {
         const codeElement = document.getElementById('code-' + classroomId);

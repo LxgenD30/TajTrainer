@@ -69,11 +69,23 @@
         line-height: 1.6;
     }
     
-    .stats-grid {
+    .dashboard-layout {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: 1fr 350px;
         gap: 25px;
         margin-bottom: 30px;
+    }
+    
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
     }
     
     .stat-card {
@@ -89,6 +101,50 @@
     .stat-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 15px 35px rgba(10, 92, 54, 0.15);
+    }
+    
+    .sidebar {
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    .grading-queue-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+    }
+    
+    .grading-queue-card::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .grading-queue-card::-webkit-scrollbar-track {
+        background: rgba(10, 92, 54, 0.05);
+        border-radius: 10px;
+    }
+    
+    .grading-queue-card::-webkit-scrollbar-thumb {
+        background: #0a5c36;
+        border-radius: 10px;
+    }
+    
+    @media (max-width: 1200px) {
+        .dashboard-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .sidebar {
+            position: static;
+        }
+        
+        .grading-queue-card {
+            max-height: 500px;
+        }
     }
     
     .stat-icon {
@@ -131,8 +187,8 @@
     
     .submission-item {
         display: flex;
-        align-items: center;
-        gap: 15px;
+        flex-direction: column;
+        gap: 10px;
         padding: 15px;
         background: rgba(10, 92, 54, 0.05);
         border-radius: 12px;
@@ -143,36 +199,82 @@
     
     .submission-item:hover {
         background: rgba(10, 92, 54, 0.1);
-        transform: translateX(5px);
+        transform: translateX(3px);
+    }
+    
+    .submission-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
     
     .submission-icon {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        border-radius: 12px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         color: white;
+        flex-shrink: 0;
     }
     
     .submission-details {
         flex: 1;
+        min-width: 0;
     }
     
     .submission-details h4 {
         color: #0a5c36;
         font-weight: 700;
-        margin-bottom: 5px;
-        font-size: 1.05rem;
+        margin-bottom: 3px;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .submission-details p {
         color: #666;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .submission-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 8px;
+        border-top: 1px solid rgba(10, 92, 54, 0.1);
+    }
+    
+    .submission-time {
+        font-size: 0.7rem;
+        color: #999;
+    }
+    
+    .grade-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #0a5c36;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .grade-btn:hover {
+        background: #1abc9c;
+        transform: scale(1.05);
     }
     
     .quick-actions-grid {
@@ -215,73 +317,36 @@
     }
     
     .action-btn p {
-        color: #666;
-        font-size: 0.85rem;
-        margin: 0;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 40px;
-        color: #999;
-    }
-    
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        opacity: 0.3;
-    }
-    
-    .info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
-    }
-    
-    .info-box {
-        background-color: rgba(10, 92, 54, 0.05);
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-    }
-    
-    .info-box strong {
-        color: #0a5c36;
-        display: block;
-        margin-bottom: 5px;
-    }
-</style>
-
-<!-- Welcome Banner -->
-<section class="welcome-banner">
-    <div class="welcome-content">
-        <h1>Welcome, {{ explode(' ', Auth::user()->name)[0] }}! 👨‍🏫</h1>
-        <p>Manage your Tajweed classes, track student progress, and help shape the next generation of Quran reciters.</p>
-    </div>
-</section>
-
-<!-- Statistics Cards -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon">🏫</div>
-        <div class="stat-value">{{ $stats['total_classes'] }}</div>
-        <div class="stat-label">Total Classes</div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">👨‍🎓</div>
-        <div class="stat-value">{{ $stats['total_students'] }}</div>
-        <div class="stat-label">Total Students</div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">📝</div>
-        <div class="stat-value">{{ $stats['total_assignments'] }}</div>
-        <div class="stat-label">Assignments</div>
-    </div>
-    
-    <div class="stat-card">
+     Dashboard Layout -->
+<div class="dashboard-layout">
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🏫</div>
+                <div class="stat-value">{{ $stats['total_classes'] }}</div>
+                <div class="stat-label">Total Classes</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">👨‍🎓</div>
+                <div class="stat-value">{{ $stats['total_students'] }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-value">{{ $stats['total_assignments'] }}</div>
+                <div class="stat-label">Assignments</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-value">{{ $stats['total_materials'] }}</div>
+                <div class="stat-label">Materials</div>
+            </div>
+            <div class="stat-card">
         <div class="stat-icon">📚</div>
         <div class="stat-value">{{ $stats['total_materials'] }}</div>
         <div class="stat-label">Materials</div>
@@ -366,38 +431,122 @@
 <div class="section-card">
     <h2 class="section-title">
         <i class="fas fa-brain"></i> AI-Powered Tajweed Analysis System
-    </h2>
-    <p style="font-size: 1.05rem; line-height: 1.8; color: #555;">
-        TajTrainer uses advanced AI technology to analyze student recitations for Tajweed accuracy. Our system detects:
-    </p>
-    <div class="info-grid">
-        <div class="info-box">
-            <strong>Makharij</strong>
-            Pronunciation points
+        <!-- Quick Actions Section -->
+        <div class="section-card">
+            <h2 class="section-title">
+                <i class="fas fa-bolt"></i> Quick Actions
+            </h2>
+            
+            <div class="quick-actions-grid">
+                <a href="{{ route('classroom.create') }}" class="action-btn">
+                    <i class="fas fa-plus-circle"></i>
+                    <h4>New Class</h4>
+                    <p>Create a new classroom</p>
+                </a>
+                
+                <a href="{{ route('classroom.index') }}" class="action-btn">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <h4>View Classes</h4>
+                    <p>Manage your classrooms</p>
+                </a>
+                
+                <a href="{{ route('materials.create') }}" class="action-btn">
+                    <i class="fas fa-file-upload"></i>
+                    <h4>Upload Material</h4>
+                    <p>Add learning resources</p>
+                </a>
+                
+                <a href="{{ route('materials.index') }}" class="action-btn">
+                    <i class="fas fa-book-reader"></i>
+                    <h4>View Materials</h4>
+                    <p>Browse all materials</p>
+                </a>
+            </div>
         </div>
-        <div class="info-box">
-            <strong>Ghunnah</strong>
-            Nasal sounds
-        </div>
-        <div class="info-box">
-            <strong>Idgham</strong>
-            Letter merging
-        </div>
-        <div class="info-box">
-            <strong>Qalqalah</strong>
-            Echo sound
-        </div>
-        <div class="info-box">
-            <strong>Madd</strong>
-            Elongation rules
-        </div>
-        <div class="info-box">
-            <strong>Ikhfa</strong>
-            Concealment
+
+        <!-- Tajweed System Info -->
+        <div class="section-card">
+            <h2 class="section-title">
+                <i class="fas fa-brain"></i> AI-Powered Tajweed Analysis System
+            </h2>
+            <p style="font-size: 1.05rem; line-height: 1.8; color: #555;">
+                TajTrainer uses advanced AI technology to analyze student recitations for Tajweed accuracy. Our system detects:
+            </p>
+            <div class="info-grid">
+                <div class="info-box">
+                    <strong>Makharij</strong>
+                    Pronunciation points
+                </div>
+                <div class="info-box">
+                    <strong>Ghunnah</strong>
+                    Nasal sounds
+                </div>
+                <div class="info-box">
+                    <strong>Idgham</strong>
+                    Letter merging
+                </div>
+                <div class="info-box">
+                    <strong>Qalqalah</strong>
+                    Echo sound
+                </div>
+                <div class="info-box">
+                    <strong>Madd</strong>
+                    Elongation rules
+                </div>
+                <div class="info-box">
+                    <strong>Ikhfa</strong>
+                    Concealment
+                </div>
+            </div>
+            <p style="margin-top: 20px; font-size: 0.95rem; color: #777; font-style: italic;">
+                All submissions are automatically analyzed, providing detailed feedback to help students perfect their recitation.
+            </p>
         </div>
     </div>
-    <p style="margin-top: 20px; font-size: 0.95rem; color: #777; font-style: italic;">
-        All submissions are automatically analyzed, providing detailed feedback to help students perfect their recitation.
-    </p>
-</div>
-@endsection
+    
+    <!-- Sidebar - Grading Queue -->
+    <div class="sidebar">
+        <div class="grading-queue-card">
+            <h2 class="section-title" style="font-size: 1.3rem; margin-bottom: 15px;">
+                <i class="fas fa-clipboard-list"></i> Grading Queue
+            </h2>
+            
+            @php
+                $recentSubmissions = \App\Models\AssignmentSubmission::whereHas('assignment.classroom', function($q) {
+                    $q->where('teacher_id', Auth::id());
+                })
+                ->where('status', 'submitted')
+                ->with('student', 'assignment')
+                ->latest()
+                ->take(10)
+                ->get();
+            @endphp
+            
+            @forelse($recentSubmissions as $submission)
+                <div class="submission-item">
+                    <div class="submission-header">
+                        <div class="submission-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="submission-details">
+                            <h4>{{ $submission->student->name }}</h4>
+                            <p><i class="fas fa-file-alt"></i> {{ Str::limit($submission->assignment->title, 25) }}</p>
+                        </div>
+                    </div>
+                    <div class="submission-footer">
+                        <span class="submission-time">
+                            <i class="fas fa-clock"></i> {{ $submission->created_at->diffForHumans() }}
+                        </span>
+                        <a href="{{ route('teacher.submission.grade', $submission->id) }}" class="grade-btn">
+                            <i class="fas fa-check"></i> Grade
+                        </a>
+                    </div>
+                </div>
+            @empty
+                <div class="empty-state" style="padding: 30px 20px;">
+                    <i class="fas fa-check-circle"></i>
+                    <p style="font-size: 0.9rem;">All caught up! ✨</p>
+                </div>
+            @endforelse
+        </div>
+    </div
