@@ -1,6 +1,61 @@
-@extends('layouts.template')
+@extends('layouts.dashboard')
 
 @section('title', 'Student Dashboard')
+@section('user-role', 'Student • ' . number_format($averageScore, 0) . '% Avg Score')
+
+@section('navigation')
+    <a href="{{ url('/student/classes') }}" class="nav-item active">
+        <div class="nav-icon">
+            <i class="fas fa-home"></i>
+        </div>
+        <div class="nav-label">Dashboard</div>
+    </a>
+    
+    <a href="{{ url('/student/classes') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="nav-label">My Classes</div>
+    </a>
+    
+    <a href="{{ url('/student/practice') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-microphone-alt"></i>
+        </div>
+        <div class="nav-label">Practice</div>
+    </a>
+    
+    <a href="{{ url('/student/progress') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="nav-label">My Progress</div>
+    </a>
+    
+    <a href="{{ url('/student/materials') }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <div class="nav-label">Materials</div>
+    </a>
+    
+    <a href="{{ route('students.show', Auth::id()) }}" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="nav-label">Profile</div>
+    </a>
+    
+    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
+        @csrf
+        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
+            <div class="nav-icon">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+            <div class="nav-label">Logout</div>
+        </button>
+    </form>
+@endsection
 
 @section('extra-styles')
 <style>
