@@ -81,14 +81,16 @@
     }
     
     .welcome-content h1 {
-        color: var(--white) !important;
+        color: #ffffff !important;
         font-size: 2.5rem;
         margin-bottom: 15px;
-        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        font-weight: 700;
     }
     
     .welcome-content p {
         font-size: 1.2rem;
+        color: #ffffff;
         opacity: 0.95;
         margin-bottom: 20px;
     }
@@ -118,6 +120,7 @@
     
     .stat-label-banner {
         font-size: 0.9rem;
+        color: #ffffff;
         opacity: 0.9;
         margin-top: 5px;
     }
@@ -125,9 +128,15 @@
     /* Dashboard Grid */
     .dashboard-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         gap: 30px;
         margin-top: 40px;
+    }
+    
+    @media (min-width: 1400px) {
+        .dashboard-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
     }
     
     .dashboard-card {

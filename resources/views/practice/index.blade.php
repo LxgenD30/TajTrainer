@@ -763,7 +763,7 @@
 @endsection
 
 @section('content')
-<div class="practice-container">
+<main class="practice-container">
     <div class="page-header">
         <div class="page-title">
             <h1>🎯 Quran Practice</h1>
@@ -898,7 +898,7 @@
             </div>
         </div>
     </div>
-</div>
+</main>
 
 <!-- Analyzing Overlay -->
 <div class="analyzing-overlay" id="analyzingOverlay">

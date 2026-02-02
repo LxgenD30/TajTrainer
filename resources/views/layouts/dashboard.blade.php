@@ -30,9 +30,10 @@
         body {
             font-family: 'Amiri', serif;
             color: #333;
-            background-color: var(--light-cream);
+            background: linear-gradient(135deg, #1f271b 0%, #2d3e2e 100%);
             line-height: 1.6;
             overflow-x: hidden;
+            min-height: 100vh;
         }
         
         h1, h2, h3, h4 {
@@ -48,7 +49,7 @@
         
         .container {
             width: 90%;
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 0 20px;
         }
