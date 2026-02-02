@@ -483,11 +483,11 @@
                         
                         <div class="assignment-actions">
                             @if($isGraded || $isSubmitted)
-                                <a href="{{ route('assignment.view', $assignment->assignment_id) }}" class="btn-primary">
+                                <a href="{{ route('student.assignment.view', $assignment->assignment_id) }}" class="btn-primary">
                                     <i class="fas fa-eye"></i> View
                                 </a>
                             @else
-                                <a href="{{ route('assignment.submit', $assignment->assignment_id) }}" class="btn-primary">
+                                <a href="{{ route('student.assignment.submit', $assignment->assignment_id) }}" class="btn-primary">
                                     <i class="fas fa-paper-plane"></i> Submit
                                 </a>
                             @endif

@@ -1,74 +1,20 @@
-@extends('layouts.dashboard')
+@extends('layouts.template')
 
 @section('title', 'Student Dashboard')
-@section('user-role', 'Student • ' . number_format($averageScore, 0) . '% Avg Score')
-
-@section('navigation')
-    <a href="{{ url('/student/classes') }}" class="nav-item active">
-        <div class="nav-icon">
-            <i class="fas fa-home"></i>
-        </div>
-        <div class="nav-label">Dashboard</div>
-    </a>
-    
-    <a href="{{ url('/student/classes') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-users"></i>
-        </div>
-        <div class="nav-label">My Classes</div>
-    </a>
-    
-    <a href="{{ url('/student/practice') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-microphone-alt"></i>
-        </div>
-        <div class="nav-label">Practice</div>
-    </a>
-    
-    <a href="{{ url('/student/progress') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="nav-label">My Progress</div>
-    </a>
-    
-    <a href="{{ url('/student/materials') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-book-open"></i>
-        </div>
-        <div class="nav-label">Materials</div>
-    </a>
-    
-    <a href="{{ route('students.show', Auth::id()) }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-user-circle"></i>
-        </div>
-        <div class="nav-label">Profile</div>
-    </a>
-    
-    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
-        @csrf
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon">
-                <i class="fas fa-sign-out-alt"></i>
-            </div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
-@endsection
 
 @section('extra-styles')
 <style>
     /* Welcome Section */
     .welcome-section {
-        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+        background: linear-gradient(135deg, var(--primary-green), #1abc9c);
         border-radius: 25px;
         padding: 40px;
         margin-bottom: 40px;
         color: var(--white);
         position: relative;
         overflow: hidden;
-        box-shadow: 0 10px 30px var(--shadow);
+        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
     }
     
     .welcome-section:before {
@@ -146,11 +92,12 @@
     .dashboard-item {
         border-radius: 20px;
         padding: 25px;
-        background-color: var(--white);
-        box-shadow: 0 8px 20px var(--shadow);
+        background-color: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.1);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        border: 3px solid #2a2a2a;
     }
     
     .dashboard-item:hover {
@@ -213,7 +160,7 @@
     
     .item-header h3 {
         font-size: 1.4rem;
-        color: var(--primary-green);
+        color: #1a1a1a;
     }
     
     .item-icon {
@@ -264,7 +211,7 @@
         text-align: center;
         font-family: 'El Messiri', sans-serif;
         font-weight: bold;
-        color: var(--dark-green);
+        color: #1a1a1a;
     }
     
     .ring-value {
@@ -356,7 +303,7 @@
     .class-details h4 {
         font-size: 1.2rem;
         margin-bottom: 5px;
-        color: var(--dark-green);
+        color: #1a1a1a;
     }
     
     .class-details p {
@@ -397,7 +344,7 @@
     .start-btn {
         display: inline-block;
         background-color: var(--gold);
-        color: var(--dark-green);
+        color: #1a1a1a;
         padding: 12px 30px;
         border-radius: 50px;
         text-decoration: none;
