@@ -47,6 +47,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('students', App\Http\Controllers\StudentController::class);
     
     // Student dashboard/portal routes
+    Route::get('/student/dashboard', [App\Http\Controllers\StudentController::class, 'index'])
+        ->name('student.dashboard');
     Route::get('/student/classes', [App\Http\Controllers\StudentController::class, 'classes'])
         ->name('student.classes');
     Route::post('/student/enroll', [App\Http\Controllers\StudentController::class, 'enrollClass'])

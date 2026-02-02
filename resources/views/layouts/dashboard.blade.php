@@ -96,6 +96,15 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            position: relative;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 50px;
+            transition: background 0.3s ease;
+        }
+        
+        .user-profile:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
         
         .user-avatar {
@@ -120,6 +129,63 @@
         .user-info p {
             font-size: 0.9rem;
             opacity: 0.9;
+        }
+        
+        /* Profile Dropdown */
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 220px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .user-profile.active .profile-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            color: var(--dark-green);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: 'El Messiri', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(10, 92, 54, 0.05);
+        }
+        
+        .dropdown-item i {
+            font-size: 1.2rem;
+            color: var(--primary-green);
+            width: 25px;
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(10, 92, 54, 0.1);
+            margin: 5px 0;
         }
         
         /* Innovative Navigation */
@@ -319,11 +385,28 @@
                 </div>
             </a>
             
-            <div class="user-profile">
+            <div class="user-profile" id="userProfile">
                 <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}</div>
                 <div class="user-info">
                     <h3>{{ Auth::user()->name ?? 'User' }}</h3>
                     <p>@yield('user-role', 'Student')</p>
+                </div>
+                <i class="fas fa-chevron-down" style="color: var(--gold); font-size: 0.8rem; margin-left: 5px;"></i>
+                
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown">
+                    <a href="{{ route('students.show', Auth::id()) }}" class="dropdown-item">
+                        <i class="fas fa-user-circle"></i>
+                        <span>My Profile</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                        @csrf
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -369,6 +452,30 @@
     </main>
 
     <script>
+        // Profile dropdown toggle
+        const userProfile = document.getElementById('userProfile');
+        if (userProfile) {
+            userProfile.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.classList.toggle('active');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userProfile.contains(e.target)) {
+                    userProfile.classList.remove('active');
+                }
+            });
+            
+            // Prevent dropdown from closing when clicking inside
+            const dropdown = userProfile.querySelector('.profile-dropdown');
+            if (dropdown) {
+                dropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        }
+        
         // Navigation functionality
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function(e) {
