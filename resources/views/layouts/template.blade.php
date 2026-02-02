@@ -10,6 +10,7 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=amiri:400,700|cairo:400,600,700&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
         <style>
             * {
@@ -25,13 +26,24 @@
                 --color-dark: #1F271B;
                 --color-brown: #463F3A;
                 --sidebar-width: 280px;
+                --primary-green: #0a5c36;
+                --light-green: #2e8b57;
+                --gold: #d4af37;
+                --cream: #f5f5dc;
+                --white: #ffffff;
+                --sky-blue: #3498db;
+                --coral: #e74c3c;
+                --purple: #9b59b6;
+                --turquoise: #1abc9c;
+                --sunflower: #f39c12;
+                --orange: #e67e22;
             }
             
             body {
                 font-family: 'Cairo', sans-serif;
-                background: linear-gradient(135deg, #f5f5dc 0%, #e8dcc4 50%, #d4c5a9 100%);
+                background: linear-gradient(135deg, #0f1e13 0%, #0a1409 50%, #050a05 100%);
                 min-height: 100vh;
-                color: #2c3e1f;
+                color: #e8e8e8;
                 overflow-x: hidden;
             }
             
@@ -129,6 +141,268 @@
                 }
             }
             
+            /* Floating Navigation */
+            .floating-nav {
+                position: fixed;
+                left: 50%;
+                transform: translateX(-50%);
+                top: 0;
+                z-index: 1000;
+                width: 95%;
+                max-width: 1200px;
+                background: rgba(255, 255, 255, 0.98);
+                border-radius: 0 0 25px 25px;
+                padding: 20px 30px;
+                box-shadow: 0 15px 40px rgba(10, 92, 54, 0.35);
+                backdrop-filter: blur(15px);
+                border: 3px solid #2a2a2a;
+                border-top: none;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.4s ease, visibility 0.4s ease;
+            }
+            
+            .nav-trigger:hover ~ .floating-nav,
+            .floating-nav:hover {
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            /* Navigation trigger area */
+            .nav-trigger {
+                position: fixed;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 200px;
+                height: 30px;
+                z-index: 999;
+                cursor: pointer;
+                background: rgba(10, 92, 54, 0.3);
+                border-radius: 0 0 15px 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            }
+            
+            .nav-trigger::after {
+                content: '☰';
+                color: rgba(212, 175, 55, 0.8);
+                font-size: 1.2rem;
+                animation: pulse 2s ease-in-out infinite;
+            }
+            
+            .nav-trigger:hover {
+                background: rgba(10, 92, 54, 0.5);
+                height: 35px;
+            }
+            
+            @keyframes pulse {
+                0%, 100% { opacity: 0.8; }
+                50% { opacity: 1; }
+            }
+            
+            .nav-container {
+                display: flex;
+                justify-content: space-around;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .nav-item {
+                flex: 1;
+                min-width: 90px;
+                max-width: 120px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 15px 8px;
+                border-radius: 18px;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                position: relative;
+                cursor: pointer;
+                background: transparent;
+            }
+            
+            .nav-item.active {
+                background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+                transform: translateY(-10px);
+                box-shadow: 0 8px 20px rgba(10, 92, 54, 0.3);
+            }
+            
+            .nav-item.active:before {
+                content: '';
+                position: absolute;
+                top: -8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 20px;
+                height: 4px;
+                background-color: var(--gold);
+                border-radius: 2px;
+            }
+            
+            .nav-icon i {
+                display: block;
+                line-height: 1;
+                font-style: normal;
+            }
+            
+            .nav-item.active .nav-icon {
+                background-color: var(--white);
+                color: var(--primary-green);
+                transform: scale(1.15) rotate(5deg);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            }
+            
+            .nav-item:hover:not(.active) {
+                background-color: rgba(10, 92, 54, 0.05);
+            }
+            
+            .nav-item:hover:not(.active) .nav-icon {
+                transform: translateY(-5px);
+            }
+            
+            .nav-label {
+                font-family: 'El Messiri', sans-serif;
+                font-weight: 600;
+                font-size: 0.85rem;
+                color: #1a1a1a;
+                transition: color 0.3s ease;
+                line-height: 1.2;
+                margin-top: 4px;
+            }
+            
+            .nav-item.active .nav-label {
+                color: var(--white);
+                font-weight: 700;
+            }
+            
+            /* Color-coded navigation icons */
+            .nav-item[data-target="dashboard"] .nav-icon { color: var(--primary-green); }
+            .nav-item[data-target="classes"] .nav-icon { color: var(--sky-blue); }
+            .nav-item[data-target="practice"] .nav-icon { color: var(--coral); }
+            .nav-item[data-target="progress"] .nav-icon { color: var(--purple); }
+            .nav-item[data-target="materials"] .nav-icon { color: var(--turquoise); }
+            .nav-item[data-target="profile"] .nav-icon { color: var(--sunflower); }
+            .nav-item[data-target="logout"] .nav-icon { color: var(--orange); }
+            
+            @media (max-width: 1200px) {
+                .floating-nav {
+                    max-width: 700px;
+                }
+            }
+            
+            @media (max-width: 992px) {
+                .layout-container {
+                    padding-top: 30px;
+                }
+                
+                .main-content {
+                    padding: 30px 40px;
+                }
+                
+                .floating-nav {
+                    width: 96%;
+                    padding: 15px 20px;
+                }
+                
+                .nav-item {
+                    min-width: 75px;
+                    max-width: 100px;
+                    padding: 12px 6px;
+                }
+                
+                .nav-icon {
+                    width: 48px;
+                    height: 48px;
+                    font-size: 1.4rem;
+                    margin-bottom: 8px;
+                }
+                
+                .nav-label {
+                    font-size: 0.75rem;
+                }
+            }
+            
+            @media (max-width: 768px) {
+                .layout-container {
+                    padding-top: 25px;
+                }
+                
+                .main-content {
+                    padding: 20px 25px;
+                }
+                
+                .floating-nav {
+                    padding: 12px 15px;
+                }
+                
+                .nav-container {
+                    justify-content: space-around;
+                    gap: 5px;
+                }
+                
+                .nav-item {
+                    min-width: 65px;
+                    max-width: 85px;
+                    padding: 10px 4px;
+                }
+                
+                .nav-icon {
+                    width: 42px;
+                    height: 42px;
+                    font-size: 1.3rem;
+                    margin-bottom: 6px;
+                }
+                
+                .nav-label {
+                    font-size: 0.7rem;
+                }
+            }
+            
+            @media (max-width: 576px) {
+                .layout-container {
+                    padding-top: 20px;
+                }
+                
+                .main-content {
+                    padding: 15px 20px;
+                }
+                
+                .floating-nav {
+                    border-radius: 0 0 18px 18px;
+                    padding: 10px 12px;
+                }
+                
+                .nav-container {
+                    overflow-x: auto;
+                    justify-content: flex-start;
+                    padding-bottom: 5px;
+                    gap: 6px;
+                }
+                
+                .nav-item {
+                    min-width: 60px;
+                    max-width: 75px;
+                    flex: 0 0 auto;
+                    padding: 8px 4px;
+                }
+                
+                .nav-icon {
+                    width: 38px;
+                    height: 38px;
+                    font-size: 1.2rem;
+                }
+                
+                .nav-label {
+                    font-size: 0.65rem;
+                }
+            }
+            
             /* Smooth transitions for all interactive elements */
             a, button, .nav-link, .btn, input, select, textarea {
                 transition: all 0.3s ease;
@@ -181,9 +455,11 @@
             /* Layout Container */
             .layout-container {
                 display: flex;
+                justify-content: center;
                 min-height: 100vh;
                 position: relative;
                 z-index: 1;
+                padding-top: 40px;
             }
             
             /* Sidebar */
@@ -357,20 +633,22 @@
             /* Main Content */
             .main-content {
                 flex: 1;
-                margin-left: var(--sidebar-width);
-                padding: 40px;
+                margin: 0 auto;
+                max-width: 1600px;
+                width: 100%;
+                padding: 40px 60px;
                 min-height: 100vh;
             }
             
             /* Top Bar */
             .top-bar {
-                background: rgba(70, 63, 58, 0.5);
+                background: rgba(255, 255, 255, 0.95);
                 backdrop-filter: blur(10px);
                 border-radius: 20px;
                 border: 2px solid var(--color-dark-green);
                 padding: 20px 30px;
                 margin-bottom: 40px;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -386,7 +664,7 @@
                 align-items: center;
                 gap: 15px;
                 padding: 10px 20px;
-                background: rgba(31, 39, 27, 0.5);
+                background: rgba(255, 255, 255, 0.8);
                 border-radius: 15px;
                 border: 2px solid var(--color-dark-green);
             }
@@ -411,29 +689,29 @@
             }
             
             .profile-name {
-                color: var(--color-gold);
+                color: #1a3a1a;
                 font-weight: 700;
                 font-size: 1rem;
                 white-space: nowrap;
             }
             
             .profile-role {
-                color: var(--color-light-green);
+                color: #2d5a2d;
                 font-size: 0.85rem;
-                opacity: 0.8;
+                opacity: 0.9;
             }
             
             .page-title {
                 font-family: 'Amiri', serif;
                 font-size: 2.2rem;
-                color: var(--color-gold);
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                color: #1a3a1a;
+                text-shadow: none;
                 margin: 0;
                 line-height: 1.2;
             }
             
             .page-subtitle {
-                color: var(--color-light-green);
+                color: #1a1a1a;
                 font-size: 1rem;
                 opacity: 0.9;
                 margin-top: 5px;
@@ -442,11 +720,11 @@
             
             /* Content Card */
             .content-card {
-                background: rgba(70, 63, 58, 0.6);
+                background: rgba(255, 255, 255, 0.98);
                 backdrop-filter: blur(15px);
                 border-radius: 25px;
                 border: 3px solid var(--color-dark-green);
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
                 padding: 40px;
                 margin-bottom: 30px;
             }
@@ -619,23 +897,7 @@
         
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Mobile menu toggle
-                const toggleBtn = document.querySelector('.mobile-menu-toggle');
-                const sidebar = document.querySelector('.sidebar');
-                const mainContent = document.querySelector('.main-content');
-                
-                if (toggleBtn) {
-                    toggleBtn.addEventListener('click', function() {
-                        sidebar.classList.toggle('show');
-                    });
-                    
-                    // Close sidebar when clicking outside
-                    mainContent.addEventListener('click', function() {
-                        if (sidebar.classList.contains('show')) {
-                            sidebar.classList.remove('show');
-                        }
-                    });
-                }
+                // Navigation is now handled by floating nav for students
             });
         </script>
     </head>
@@ -657,113 +919,12 @@
             </div>
         </div>
         
-        <!-- Mobile Menu Toggle -->
-        <button class="mobile-menu-toggle" aria-label="Toggle Menu">☰</button>
+        <!-- Navigation Trigger Area (Student Only) -->
+        @if(Auth::check() && Auth::user()->role_id == 2)
+        <div class="nav-trigger" title="Hover to show navigation"></div>
+        @endif
         
         <div class="layout-container">
-            <!-- Sidebar -->
-            <aside class="sidebar">
-                <div class="sidebar-logo">
-                    <div class="logo">
-                        <div class="logo-icon">☪</div>
-                        <span>TajTrainer</span>
-                    </div>
-                </div>
-                
-                <nav>
-                    <ul class="nav-menu">
-                        @if(Auth::check() && Auth::user()->role_id == 3)
-                            {{-- Teacher Menu --}}
-                            <li class="nav-item">
-                                <a href="{{ route('teachers.index') }}" class="nav-link {{ request()->is('teachers*') ? 'active' : '' }}">
-                                    <span class="nav-icon">🏠</span>
-                                    <span>Dashboard</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('classroom.index') }}" class="nav-link {{ request()->is('classroom*') ? 'active' : '' }}">
-                                    <span class="nav-icon">🏫</span>
-                                    <span>My Classrooms</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('materials.index') }}" class="nav-link {{ request()->is('Materials*') ? 'active' : '' }}">
-                                    <span class="nav-icon">📚</span>
-                                    <span>Learning Materials</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('students.list') }}" class="nav-link {{ request()->is('students-list*') ? 'active' : '' }}">
-                                    <span class="nav-icon">👥</span>
-                                    <span>My Students</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-link {{ request()->is('teachers/'.Auth::id()) ? 'active' : '' }}">
-                                    <span class="nav-icon">👁️</span>
-                                    <span>View My Profile</span>
-                                </a>
-                            </li>
-
-                        @elseif(Auth::check() && Auth::user()->role_id == 2)
-                            {{-- Student Menu --}}
-                            <li class="nav-item">
-                                <a href="{{ route('students.index') }}" class="nav-link {{ request()->is('students') ? 'active' : '' }}">
-                                    <span class="nav-icon">🏠</span>
-                                    <span>Dashboard</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('student.classes') }}" class="nav-link {{ request()->is('student/classes*') ? 'active' : '' }}">
-                                    <span class="nav-icon">🏫</span>
-                                    <span>My Classes</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('student.practice') }}" class="nav-link {{ request()->is('student/practice*') ? 'active' : '' }}">
-                                    <span class="nav-icon">🎯</span>
-                                    <span>Practice</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('student.progress') }}" class="nav-link {{ request()->is('student/progress*') ? 'active' : '' }}">
-                                    <span class="nav-icon">📊</span>
-                                    <span>My Progress</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('student.materials') }}" class="nav-link {{ request()->is('student/materials*') ? 'active' : '' }}">
-                                    <span class="nav-icon">📚</span>
-                                    <span>Learning Materials</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('students.show', Auth::id()) }}" class="nav-link {{ request()->is('students/'.Auth::id()) ? 'active' : '' }}">
-                                    <span class="nav-icon">👁️</span>
-                                    <span>View My Profile</span>
-                                </a>
-                            </li>
-
-                        @else
-                            {{-- Default Menu --}}
-                            <li class="nav-item">
-                                <a href="{{ route('home') }}" class="nav-link {{ request()->is('home') ? 'active' : '' }}">
-                                    <span class="nav-icon">🏠</span>
-                                    <span>Dashboard</span>
-                                </a>
-                            </li>
-                        @endif
-                    </ul>
-                </nav>
-                
-                <div class="sidebar-user">
-                    <form method="POST" action="{{ route('logout') }}" class="logout-form">
-                        @csrf
-                        <button type="submit" class="btn-logout">Logout</button>
-                    </form>
-                </div>
-            </aside>
-            
             <!-- Main Content -->
             <main class="main-content">
                 <!-- Top Bar -->
@@ -797,11 +958,94 @@
                 @yield('content')
             </main>
         </div>
+                <!-- Floating Navigation (Student Only) -->
+        @if(Auth::check() && Auth::user()->role_id == 2)
+        <nav class="floating-nav">
+            <div class="nav-container">
+                <div class="nav-item {{ request()->is('students') ? 'active' : '' }}" data-target="dashboard" data-url="{{ route('students.index') }}">
+                    <div class="nav-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="nav-label">Dashboard</div>
+                </div>
+                
+                <div class="nav-item {{ request()->is('student/classes*') ? 'active' : '' }}" data-target="classes" data-url="{{ route('student.classes') }}">
+                    <div class="nav-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="nav-label">My Classes</div>
+                </div>
+                
+                <div class="nav-item {{ request()->is('student/practice*') ? 'active' : '' }}" data-target="practice" data-url="{{ route('student.practice') }}">
+                    <div class="nav-icon">
+                        <i class="fas fa-microphone-alt"></i>
+                    </div>
+                    <div class="nav-label">Practice</div>
+                </div>
+                
+                <div class="nav-item {{ request()->is('student/progress*') ? 'active' : '' }}" data-target="progress" data-url="{{ route('student.progress') }}">
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="nav-label">My Progress</div>
+                </div>
+                
+                <div class="nav-item {{ request()->is('student/materials*') ? 'active' : '' }}" data-target="materials" data-url="{{ route('student.materials') }}">
+                    <div class="nav-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <div class="nav-label">Materials</div>
+                </div>
+                
+                <div class="nav-item {{ request()->is('students/'.Auth::id()) ? 'active' : '' }}" data-target="profile" data-url="{{ route('students.show', Auth::id()) }}">
+                    <div class="nav-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="nav-label">Profile</div>
+                </div>
+                
+                <div class="nav-item" data-target="logout">
+                    <div class="nav-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <div class="nav-label">Logout</div>
+                </div>
+            </div>
+        </nav>
         
-        <!-- Page Transition Script -->
+        <!-- Hidden Logout Form -->
+        <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
+            @csrf
+        </form>
+        @endif
+                <!-- Page Transition Script -->
         <script>
             // Smooth page transitions
             document.addEventListener('DOMContentLoaded', function() {
+                // Floating Navigation functionality
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const target = this.getAttribute('data-target');
+                        const url = this.getAttribute('data-url');
+                        
+                        // Handle logout separately
+                        if (target === 'logout') {
+                            if (confirm('Are you sure you want to logout?')) {
+                                document.getElementById('logout-form').submit();
+                            }
+                            return;
+                        }
+                        
+                        // Navigate to URL with transition
+                        if (url) {
+                            document.body.classList.add('page-transitioning');
+                            setTimeout(() => {
+                                window.location.href = url;
+                            }, 200);
+                        }
+                    });
+                });
+                
                 // Add smooth transition to all internal links
                 const internalLinks = document.querySelectorAll('a[href^="/"], a[href^="{{ url("/") }}"]');
                 
