@@ -39,7 +39,7 @@ class StudentController extends Controller
             
             \Log::info('Student found: ' . $student->id . ', Classes count: ' . $student->classrooms->count());
             
-            return view('students.classes', compact('student'));
+            return view('classroom.index', compact('student'));
         } catch (\Exception $e) {
             \Log::error('Error loading student classes page: ' . $e->getMessage());
             \Log::error('Student ID: ' . Auth::id());
@@ -79,8 +79,8 @@ class StudentController extends Controller
     public function materials()
     {
         try {
-            $materials = \App\Models\Material::orderBy('created_at', 'desc')->get();
-            return view('students.materials', compact('materials'));
+            $materials = \App\Models\Material::orderBy('created_at', 'desc')->paginate(12);
+            return view('materials.index', compact('materials'));
         } catch (\Exception $e) {
             \Log::error('Error loading materials: ' . $e->getMessage());
             return redirect()->route('home')
@@ -95,7 +95,7 @@ class StudentController extends Controller
             $from = request()->query('from');
             $classId = request()->query('class');
             $assignmentId = request()->query('assignment');
-            return view('students.material-show', compact('material', 'from', 'classId', 'assignmentId'));
+            return view('materials.show', compact('material', 'from', 'classId', 'assignmentId'));
         } catch (\Exception $e) {
             \Log::error('Error loading material: ' . $e->getMessage());
             return redirect()->route('student.materials')
@@ -196,7 +196,7 @@ class StudentController extends Controller
             }
             
             \Log::info('Returning view with assignment data');
-            return view('students.assignment-submit', compact('assignment', 'verses'));
+            return view('assignment.submit', compact('assignment', 'verses'));
             
         } catch (\Exception $e) {
             \Log::error('Error loading assignment submission page: ' . $e->getMessage());
@@ -565,7 +565,7 @@ class StudentController extends Controller
             ->where('student_id', Auth::id())
             ->firstOrFail();
         
-        return view('students.assignment-view', compact('assignment', 'submission'));
+        return view('assignment.view', compact('assignment', 'submission'));
     }
 
     public function practice()

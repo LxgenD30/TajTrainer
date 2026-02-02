@@ -102,10 +102,11 @@
             padding: 8px 15px;
             border-radius: 50px;
             transition: background 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
         }
         
         .user-profile:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
         }
         
         .user-avatar {
@@ -138,7 +139,7 @@
             top: 100%;
             right: 0;
             margin-top: 10px;
-            background: var(--white);
+            background: #f5f5f5;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             min-width: 220px;
@@ -189,89 +190,56 @@
             margin: 5px 0;
         }
         
-        /* Innovative Navigation */
+        /* Innovative Navigation - Inside Header */
         .main-nav {
-            background-color: var(--white);
-            border-radius: 20px;
-            padding: 15px;
-            margin: 30px auto;
-            max-width: 1200px;
-            box-shadow: 0 8px 25px var(--shadow);
-            position: relative;
-            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 15px;
+            backdrop-filter: blur(10px);
         }
         
         .nav-container {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            gap: 5px;
             flex-wrap: wrap;
         }
         
         .nav-item {
-            flex: 1;
-            min-width: 120px;
-            text-align: center;
-            padding: 15px 10px;
-            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 25px;
             transition: all 0.3s ease;
             position: relative;
             cursor: pointer;
-            margin: 5px;
             text-decoration: none;
-            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: 'El Messiri', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--white);
         }
         
         .nav-item.active {
-            background-color: rgba(10, 92, 54, 0.1);
-            transform: translateY(-5px);
-        }
-        
-        .nav-item.active:before {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 30px;
-            height: 4px;
-            background-color: var(--gold);
-            border-radius: 2px;
+            background: rgba(212, 175, 55, 0.9);
+            color: var(--dark-green);
         }
         
         .nav-icon {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 10px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: var(--primary-green);
-            background-color: rgba(10, 92, 54, 0.08);
-            transition: all 0.3s ease;
-        }
-        
-        .nav-item.active .nav-icon {
-            background-color: var(--primary-green);
-            color: var(--white);
-            transform: scale(1.1);
-        }
-        
-        .nav-item:hover:not(.active) {
-            background-color: rgba(10, 92, 54, 0.05);
-        }
-        
-        .nav-item:hover:not(.active) .nav-icon {
-            transform: translateY(-5px);
+            font-size: 1.2rem;
         }
         
         .nav-label {
             font-family: 'El Messiri', sans-serif;
             font-weight: 600;
-            font-size: 1rem;
-            color: var(--dark-green);
         }
         
         /* Dashboard Content */
@@ -378,47 +346,49 @@
 <body>
     <!-- Dashboard Header -->
     <header class="dashboard-header">
-        <div class="container header-container">
-            <a href="{{ route('home') }}" class="logo">
-                <i class="fas fa-book-quran logo-icon"></i>
-                <div class="logo-text">
-                    <span class="logo-font">Taj</span>Trainer
-                </div>
-            </a>
-            
-            <div class="user-profile" id="userProfile">
-                <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}</div>
-                <div class="user-info">
-                    <h3>{{ Auth::user()->name ?? 'User' }}</h3>
-                    <p>@yield('user-role', 'Student')</p>
-                </div>
-                <i class="fas fa-chevron-down" style="color: var(--gold); font-size: 0.8rem; margin-left: 5px;"></i>
+        <div class="container">
+            <div class="header-container">
+                <a href="{{ route('home') }}" class="logo">
+                    <i class="fas fa-book-quran logo-icon"></i>
+                    <div class="logo-text">
+                        <span class="logo-font">Taj</span>Trainer
+                    </div>
+                </a>
                 
-                <!-- Profile Dropdown -->
-                <div class="profile-dropdown">
-                    <a href="{{ route('students.show', Auth::id()) }}" class="dropdown-item">
-                        <i class="fas fa-user-circle"></i>
-                        <span>My Profile</span>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                        @csrf
-                        <button type="submit" class="dropdown-item">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </button>
-                    </form>
+                <div class="user-profile" id="userProfile">
+                    <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}</div>
+                    <div class="user-info">
+                        <h3>{{ Auth::user()->name ?? 'User' }}</h3>
+                        <p>@yield('user-role', 'Student')</p>
+                    </div>
+                    <i class="fas fa-chevron-down" style="color: var(--gold); font-size: 0.8rem; margin-left: 5px;"></i>
+                    
+                    <!-- Profile Dropdown -->
+                    <div class="profile-dropdown">
+                        <a href="{{ route('students.show', Auth::id()) }}" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>My Profile</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                            @csrf
+                            <button type="submit" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Innovative Navigation Inside Header -->
+            <nav class="main-nav">
+                <div class="nav-container">
+                    @yield('navigation')
+                </div>
+            </nav>
         </div>
     </header>
-
-    <!-- Innovative Navigation -->
-    <nav class="main-nav">
-        <div class="container nav-container">
-            @yield('navigation')
-        </div>
-    </nav>
 
     <!-- Dashboard Content -->
     <main class="dashboard-content">
@@ -456,47 +426,27 @@
         // Profile dropdown toggle
         const userProfile = document.getElementById('userProfile');
         if (userProfile) {
+            userProfile.style.cursor = 'pointer'; 
+            
             userProfile.addEventListener('click', function(e) {
                 e.stopPropagation();
                 this.classList.toggle('active');
+                console.log('Profile clicked, active class is now:', this.classList.contains('active'));
             });
-            
-            // Close dropdown when clicking outside
+
             document.addEventListener('click', function(e) {
                 if (!userProfile.contains(e.target)) {
                     userProfile.classList.remove('active');
                 }
             });
-            
-            // Prevent dropdown from closing when clicking inside
-            const dropdown = userProfile.querySelector('.profile-dropdown');
-            if (dropdown) {
-                dropdown.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-            }
         }
         
-        // Navigation functionality
-        document.querySelectorAll('.nav-item').forEach(item => {
+        // Navigation functionality - only apply to main nav items, not dropdown items
+        document.querySelectorAll('.main-nav .nav-item').forEach(item => {
             item.addEventListener('click', function(e) {
-                // If it's a form (logout), don't prevent default
-                if (this.tagName === 'FORM' || this.querySelector('form')) {
-                    return;
-                }
-                
-                // For anchor tags with href, let them navigate normally
-                if (this.tagName === 'A' && this.getAttribute('href')) {
-                    return;
-                }
-                
-                // Remove active class from all nav items
-                document.querySelectorAll('.nav-item').forEach(nav => {
-                    nav.classList.remove('active');
-                });
-                
-                // Add active class to clicked item
-                this.classList.add('active');
+                // For anchor tags with href, let them navigate normally (don't prevent default)
+                // The browser will handle the navigation
+                console.log('Nav item clicked:', this.querySelector('.nav-label')?.textContent);
             });
         });
         

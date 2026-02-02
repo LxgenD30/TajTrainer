@@ -1,512 +1,543 @@
 @extends('layouts.dashboard')
 
 @section('title', $classroom->class_name)
-@section('user-role', 'Teacher • Classroom Management')
+@section('user-role', 'Student • ' . $classroom->class_name)
 
 @section('navigation')
-    <a href="{{ url('/home') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-home"></i>
-        </div>
-        <div class="nav-label">Dashboard</div>
+    <a href="{{ route('student.dashboard') }}" class="nav-item">
+        <i class="fas fa-home nav-icon"></i>
+        <span class="nav-label">Dashboard</span>
     </a>
     
-    <a href="{{ url('/classrooms') }}" class="nav-item active">
-        <div class="nav-icon">
-            <i class="fas fa-chalkboard-teacher"></i>
-        </div>
-        <div class="nav-label">My Classes</div>
+    <a href="{{ route('student.classes') }}" class="nav-item">
+        <i class="fas fa-users nav-icon"></i>
+        <span class="nav-label">My Classes</span>
     </a>
     
-    <a href="{{ url('/assignments') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-tasks"></i>
-        </div>
-        <div class="nav-label">Assignments</div>
+    <a href="{{ route('student.practice') }}" class="nav-item">
+        <i class="fas fa-microphone-alt nav-icon"></i>
+        <span class="nav-label">Practice</span>
     </a>
     
-    <a href="{{ url('/teacher/submissions') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-clipboard-check"></i>
-        </div>
-        <div class="nav-label">Submissions</div>
+    <a href="{{ route('student.progress') }}" class="nav-item">
+        <i class="fas fa-chart-line nav-icon"></i>
+        <span class="nav-label">My Progress</span>
     </a>
     
-    <a href="{{ url('/materials') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-book-open"></i>
-        </div>
-        <div class="nav-label">Materials</div>
+    <a href="{{ route('student.materials') }}" class="nav-item">
+        <i class="fas fa-book-open nav-icon"></i>
+        <span class="nav-label">Materials</span>
     </a>
-    
-    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-user-circle"></i>
-        </div>
-        <div class="nav-label">Profile</div>
-    </a>
-    
-    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
-        @csrf
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon">
-                <i class="fas fa-sign-out-alt"></i>
-            </div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
 @endsection
 
 @section('extra-styles')
 <style>
-    .classroom-info-bar {
-        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-        border-radius: 20px;
-        padding: 25px 30px;
-        margin-bottom: 30px;
-        color: var(--white);
-        box-shadow: 0 8px 20px var(--shadow);
+    /* Spinner Animation */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
     
-    .info-bar-content {
-        display: flex;
-        justify-content: space-between;
+    .spinner {
+        border: 3px solid rgba(10, 92, 54, 0.1);
+        border-top: 3px solid var(--primary-green);
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin 0.8s linear infinite;
+        flex-shrink: 0;
+    }
+    
+    /* Back Navigation */
+    .back-nav {
+        padding: 25px 0 15px;
+    }
+    
+    .back-link {
+        display: inline-flex;
         align-items: center;
-        gap: 20px;
+        gap: 10px;
+        color: #1a1a1a;
+        text-decoration: none;
+        font-family: 'El Messiri', sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 8px 16px;
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid #2a2a2a;
+        transition: all 0.3s ease;
+    }
+    
+    .back-link:hover {
+        background: rgba(10, 92, 54, 0.1);
+        transform: translateX(-5px);
+        border-color: var(--primary-green);
+    }
+    
+    /* Classroom Header */
+    .classroom-header {
+        background: linear-gradient(135deg, var(--primary-green), #1abc9c);
+        border-radius: 25px;
+        padding: 40px;
+        margin-bottom: 30px;
+        color: var(--white);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
+    }
+    
+    .classroom-header:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
+    }
+    
+    .classroom-title {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .classroom-title h1 {
+        color: var(--white);
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .classroom-title p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        max-width: 800px;
+        margin-bottom: 25px;
+    }
+    
+    .classroom-stats {
+        display: flex;
+        gap: 25px;
         flex-wrap: wrap;
     }
     
-    .class-info h2 {
-        color: var(--white);
-        font-size: 1.8rem;
-        margin: 0 0 8px 0;
+    .stat-item {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 15px 25px;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        min-width: 150px;
     }
     
-    .class-info p {
-        margin: 0;
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--gold);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
         opacity: 0.9;
-        font-size: 1rem;
+        margin-top: 5px;
     }
     
-    .access-code-box {
+    /* Section Card */
+    .section-card {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+        transition: all 0.3s ease;
+    }
+    
+    .section-card:hover {
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.15);
+    }
+    
+    .section-header {
         display: flex;
         align-items: center;
         gap: 15px;
-        background: rgba(255, 255, 255, 0.15);
-        padding: 15px 20px;
-        border-radius: 15px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-    }
-    
-    .access-code-label {
-        font-size: 0.85rem;
-        opacity: 0.9;
-        margin-bottom: 5px;
-    }
-    
-    .access-code-value {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.5rem;
-        font-weight: 700;
-        letter-spacing: 4px;
-        color: var(--white);
-    }
-    
-    .toggle-btn {
-        padding: 8px 15px;
-        background: rgba(255, 255, 255, 0.2);
-        color: var(--white);
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 0.85rem;
-        transition: all 0.3s ease;
-        font-weight: 600;
-    }
-    
-    .toggle-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(1.05);
-    }
-    
-    .action-buttons {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    
-    .btn-action {
-        padding: 10px 20px;
-        border-radius: 50px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        font-family: 'El Messiri', sans-serif;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .btn-progress {
-        background: rgba(255, 255, 255, 0.2);
-        color: var(--white);
-        border: 2px solid rgba(255, 255, 255, 0.4);
-    }
-    
-    .btn-progress:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-2px);
-    }
-    
-    .btn-edit {
-        background: var(--gold);
-        color: var(--dark-green);
-        border: none;
-    }
-    
-    .btn-edit:hover {
-        background: #c49b2f;
-        transform: translateY(-2px);
-    }
-    
-    .btn-back {
-        background: transparent;
-        color: var(--white);
-        border: 2px solid rgba(255, 255, 255, 0.4);
-    }
-    
-    .btn-back:hover {
-        background: rgba(255, 255, 255, 0.1);
-        transform: translateY(-2px);
-    }
-    
-    .content-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-        gap: 25px;
-    }
-    
-    .content-card {
-        background: var(--white);
-        border-radius: 20px;
-        padding: 30px;
-        box-shadow: 0 8px 20px var(--shadow);
-        transition: all 0.3s ease;
-    }
-    
-    .content-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(10, 92, 54, 0.2);
-    }
-    
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         margin-bottom: 25px;
         padding-bottom: 15px;
         border-bottom: 2px solid rgba(10, 92, 54, 0.1);
     }
     
-    .card-title {
-        color: var(--primary-green);
-        font-size: 1.4rem;
+    .section-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: var(--white);
+        background: linear-gradient(135deg, #e74c3c, #e67e22);
+    }
+    
+    .section-header h3 {
+        font-size: 1.5rem;
+        color: #1a1a1a;
         margin: 0;
     }
     
-    .btn-create {
-        padding: 10px 20px;
-        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-        color: var(--white);
-        border: none;
-        border-radius: 50px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: 'El Messiri', sans-serif;
-        font-size: 0.95rem;
-    }
-    
-    .btn-create:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.3);
-    }
-    
-    .item-list {
+    /* Assignments List */
+    .assignments-list {
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 20px;
     }
     
-    .item-card {
-        background: linear-gradient(135deg, rgba(10, 92, 54, 0.05), rgba(46, 139, 87, 0.05));
+    .assignment-card {
+        background: rgba(10, 92, 54, 0.03);
         border-left: 4px solid var(--primary-green);
-        padding: 18px 20px;
         border-radius: 12px;
+        padding: 25px;
         transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border: 2px solid rgba(10, 92, 54, 0.1);
     }
     
-    .item-card:hover {
-        background: linear-gradient(135deg, rgba(10, 92, 54, 0.1), rgba(46, 139, 87, 0.1));
+    .assignment-card:hover {
         transform: translateX(5px);
+        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.1);
     }
     
-    .item-header {
+    .assignment-card.graded { border-left-color: #4caf50; }
+    .assignment-card.submitted { border-left-color: #ff9800; }
+    .assignment-card.overdue { border-left-color: #e74c3c; }
+    .assignment-card.pending { border-left-color: var(--primary-green); }
+    
+    .assignment-header {
         display: flex;
         justify-content: space-between;
-        align-items: start;
-        margin-bottom: 12px;
+        align-items: flex-start;
+        margin-bottom: 15px;
     }
     
-    .item-title {
-        color: var(--primary-green);
-        font-size: 1.1rem;
-        margin: 0 0 8px 0;
-        font-weight: 600;
+    .assignment-title h4 {
+        font-size: 1.2rem;
+        color: #1a1a1a;
+        margin-bottom: 8px;
     }
     
-    .item-text {
+    .assignment-title p {
         color: #666;
-        font-size: 0.9rem;
-        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.5;
     }
     
-    .item-meta {
+    .assignment-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    
+    .status-graded { background: rgba(76, 175, 80, 0.1); color: #4caf50; }
+    .status-submitted { background: rgba(255, 152, 0, 0.1); color: #ff9800; }
+    .status-overdue { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+    .status-pending { background: rgba(10, 92, 54, 0.1); color: var(--primary-green); }
+    
+    .assignment-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid rgba(10, 92, 54, 0.1);
+    }
+    
+    .assignment-meta {
         display: flex;
         gap: 20px;
         font-size: 0.9rem;
         color: #666;
-        margin-top: 10px;
     }
     
-    .meta-item {
+    .assignment-meta span {
         display: flex;
         align-items: center;
         gap: 5px;
     }
     
-    .btn-view {
-        padding: 8px 16px;
-        background: var(--gold);
-        color: var(--dark-green);
+    .assignment-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        padding: 8px 20px;
         border-radius: 50px;
-        text-decoration: none;
-        font-size: 0.9rem;
+        border: none;
+        font-family: 'El Messiri', sans-serif;
         font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
         transition: all 0.3s ease;
-        white-space: nowrap;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
     
-    .btn-view:hover {
-        background: #c49b2f;
-        transform: scale(1.05);
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-green), #2e8b57);
+        color: var(--white);
     }
     
-    .empty-state {
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(10, 92, 54, 0.3);
+    }
+    
+    .btn-secondary {
+        background: rgba(10, 92, 54, 0.08);
+        color: #1a1a1a;
+    }
+    
+    .btn-secondary:hover {
+        background: rgba(10, 92, 54, 0.15);
+    }
+    
+    /* Feedback Section */
+    .feedback-section {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(10, 92, 54, 0.05);
+        border-radius: 10px;
+        border-left: 4px solid var(--gold);
+    }
+    
+    .feedback-section h5 {
+        color: #1a1a1a;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .feedback-content {
+        color: #666;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+    
+    /* No Content State */
+    .no-content {
         text-align: center;
         padding: 60px 20px;
         color: #999;
     }
     
-    .empty-state i {
+    .no-content-icon {
         font-size: 4rem;
-        color: rgba(10, 92, 54, 0.2);
-        margin-bottom: 15px;
+        margin-bottom: 20px;
+        opacity: 0.3;
     }
     
-    .empty-state p {
-        font-size: 1rem;
-        margin: 0;
+    .no-content h3 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: #666;
+    }
+    
+    .no-content p {
+        font-size: 0.95rem;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .classroom-header {
+            padding: 30px;
+        }
+        
+        .classroom-title h1 {
+            font-size: 2.2rem;
+        }
     }
     
     @media (max-width: 768px) {
-        .content-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .info-bar-content {
+        .assignment-header {
             flex-direction: column;
+            gap: 15px;
             align-items: flex-start;
         }
         
-        .action-buttons {
+        .assignment-details {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .assignment-actions {
             width: 100%;
         }
         
-        .btn-action {
+        .btn-primary, .btn-secondary {
             flex: 1;
             justify-content: center;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .section-card {
+            padding: 20px;
         }
     }
 </style>
 @endsection
 
 @section('content')
-    <!-- Classroom Info Bar -->
-    <div class="classroom-info-bar">
-        <div class="info-bar-content">
-            <!-- Class Info -->
-            <div class="class-info">
-                <h2>{{ $classroom->class_name }}</h2>
-                <p>{{ $classroom->description ?? 'No description provided' }}</p>
+<!-- Classroom Header -->
+<div class="classroom-header">
+    <div class="classroom-title">
+        <h1>{{ $classroom->class_name }}</h1>
+        <p>{{ $classroom->description ?? 'Master the rules of Quranic recitation through detailed analysis and practice.' }}</p>
+        
+        <div class="classroom-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ $assignments->count() }}</div>
+                <div class="stat-label">Assignments</div>
             </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ $classroom->students->count() }}</div>
+                <div class="stat-label">Students</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ $classroom->teacher->name ?? 'Unknown' }}</div>
+                <div class="stat-label">Teacher</div>
+            </div>
+        </div>
+        <div style="position: absolute; top: 30px; right: 40px; z-index: 10;">
+            <a href="{{ route('student.classes') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to My Classes
+            </a>
+        </div>
+    </div>
+</div>
 
-            <!-- Access Code -->
-            <div class="access-code-box">
-                <div style="font-size: 1.5rem;">🔑</div>
-                <div>
-                    <div class="access-code-label">Access Code</div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span id="accessCode" class="access-code-value">••••••</span>
-                        <span id="accessCodeHidden" style="display: none;">{{ $classroom->access_code }}</span>
-                        <button onclick="toggleAccessCode(this)" class="toggle-btn">
-                            <span id="toggleIcon">👁️</span> <span id="toggleText">Show</span>
-                        </button>
+<!-- Assignments Section -->
+<div class="section-card">
+    <div class="section-header">
+        <div class="section-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <h3>Class Assignments</h3>
+    </div>
+    
+    @if($assignments->count() > 0)
+        <div class="assignments-list">
+            @foreach($assignments as $assignment)
+                @php
+                    $submission = $submissions->get($assignment->assignment_id);
+                    $score = \App\Models\Score::where('assignment_id', $assignment->assignment_id)
+                                               ->where('user_id', Auth::id())
+                                               ->first();
+                    
+                    $isGraded = $score !== null;
+                    $isSubmitted = $submission && $submission->status === 'submitted' && !$isGraded;
+                    $isOverdue = $assignment->due_date < now() && !$isSubmitted && !$isGraded;
+                    $isPending = !$submission || ($submission->status === 'pending' && !$isGraded);
+                @endphp
+                
+                <div class="assignment-card {{ $isGraded ? 'graded' : ($isSubmitted ? 'submitted' : ($isOverdue ? 'overdue' : 'pending')) }}">
+                    <div class="assignment-header">
+                        <div class="assignment-title">
+                            <h4>
+                                @if($assignment->surah)
+                                    <i class="fas fa-book-quran"></i> {{ $assignment->surah }} 
+                                    ({{ $assignment->start_verse }}@if($assignment->end_verse)-{{ $assignment->end_verse }}@endif)
+                                @else
+                                    <i class="fas fa-file-alt"></i> {{ $assignment->title ?? ($assignment->material ? $assignment->material->title : 'Assignment') }}
+                                @endif
+                            </h4>
+                            <p>{{ Str::limit($assignment->instructions, 150) }}</p>
+                        </div>
+                        
+                        <div class="assignment-status 
+                            {{ $isGraded ? 'status-graded' : ($isSubmitted ? 'status-submitted' : ($isOverdue ? 'status-overdue' : 'status-pending')) }}">
+                            @if($isGraded)
+                                <i class="fas fa-check-circle"></i>
+                                Graded: {{ $score->score }}/{{ $assignment->total_marks }}
+                            @elseif($isSubmitted)
+                                <div class="spinner"></div>
+                                Analyzing...
+                            @elseif($isOverdue)
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Overdue
+                            @else
+                                <i class="fas fa-clock"></i>
+                                Pending
+                            @endif
+                        </div>
                     </div>
+                    
+                    <div class="assignment-details">
+                        <div class="assignment-meta">
+                            @if($assignment->due_date)
+                            <span>
+                                <i class="far fa-calendar"></i>
+                                Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y g:i A') }}
+                            </span>
+                            @endif
+                            <span>
+                                <i class="fas fa-star"></i>
+                                {{ $assignment->total_marks }} points
+                            </span>
+                            @if($assignment->tajweed_rules)
+                            <span style="color: var(--primary-green);">
+                                <i class="fas fa-microphone"></i>
+                                Voice Submission
+                            </span>
+                            @endif
+                        </div>
+                        
+                        <div class="assignment-actions">
+                            @if($isGraded || $isSubmitted)
+                                <a href="{{ route('student.assignment.view', $assignment->assignment_id) }}" class="btn-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            @else
+                                <a href="{{ route('student.assignment.submit', $assignment->assignment_id) }}" class="btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Submit
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                    
+                    @if($isGraded && $score->feedback)
+                        <div class="feedback-section">
+                            <h5><i class="fas fa-comment-dots"></i> Teacher Feedback</h5>
+                            <div class="feedback-content">{{ $score->feedback }}</div>
+                        </div>
+                    @endif
                 </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <a href="{{ route('teacher.class.progress', $classroom->id) }}" class="btn-action btn-progress">
-                    <i class="fas fa-chart-line"></i> Progress
-                </a>
-                <a href="{{ route('classroom.edit', $classroom->id) }}" class="btn-action btn-edit">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-                <a href="{{ route('classroom.index') }}" class="btn-action btn-back">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
+            @endforeach
         </div>
-    </div>
-
-    <script>
-        function toggleAccessCode(btn) {
-            const codeElement = document.getElementById('accessCode');
-            const hiddenCode = document.getElementById('accessCodeHidden').textContent.trim();
-            const toggleIcon = document.getElementById('toggleIcon');
-            const toggleText = document.getElementById('toggleText');
-            
-            if (codeElement.textContent.includes('•')) {
-                codeElement.textContent = hiddenCode;
-                toggleIcon.textContent = '🙈';
-                toggleText.textContent = 'Hide';
-            } else {
-                codeElement.textContent = '••••••';
-                toggleIcon.textContent = '👁️';
-                toggleText.textContent = 'Show';
-            }
-        }
-    </script>
-
-    <!-- Students and Assignments Grid -->
-    <div class="content-grid">
-        <!-- Students Section -->
-        <div class="content-card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-users"></i> Enrolled Students</h3>
+    @else
+        <div class="no-content">
+            <div class="no-content-icon">
+                <i class="fas fa-clipboard-list"></i>
             </div>
-            <div class="card-body">
-                @if($students->count() > 0)
-                    <div class="item-list">
-                        @foreach($students as $student)
-                            <div class="item-card">
-                                <div class="item-header">
-                                    <div>
-                                        <h4 class="item-title">{{ $student->name }}</h4>
-                                        <p class="item-text"><i class="fas fa-envelope"></i> {{ $student->email }}</p>
-                                    </div>
-                                    <a href="{{ route('teacher.student.submissions', ['classroom' => $classroom->id, 'student' => $student->id]) }}" 
-                                        class="btn-view">
-                                        <i class="fas fa-eye"></i> View Work
-                                    </a>
-                                </div>
-                                <div class="item-meta">
-                                    <div class="meta-item">
-                                        <i class="fas fa-clipboard-list" style="color: var(--primary-green);"></i>
-                                        <span>{{ $student->total_submissions ?? 0 }} submissions</span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-check-circle" style="color: var(--gold);"></i>
-                                        <span>{{ $student->graded_submissions ?? 0 }} graded</span>
-                                    </div>
-                                    @if($student->student && $student->student->classrooms->first())
-                                        <div class="meta-item">
-                                            <i class="fas fa-calendar" style="color: #999;"></i>
-                                            <span>{{ $student->student->classrooms->first()->pivot->date_joined ? \Carbon\Carbon::parse($student->student->classrooms->first()->pivot->date_joined)->format('M d, Y') : 'N/A' }}</span>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="empty-state">
-                        <i class="fas fa-user-slash"></i>
-                        <p>No students enrolled yet. Students can join using the access code above.</p>
-                    </div>
-                @endif
-            </div>
+            <h3>No Assignments Yet</h3>
+            <p>Your teacher hasn't posted any assignments for this class.</p>
         </div>
-
-        <!-- Assignments Section -->
-        <div class="content-card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-tasks"></i> Assignments</h3>
-                <button onclick="window.location.href='{{ route('assignment.create', $classroom->id) }}'" class="btn-create">
-                    <i class="fas fa-plus"></i> Create
-                </button>
-            </div>
-            <div class="card-body">
-                @if($assignments->count() > 0)
-                    <div class="item-list">
-                        @foreach($assignments as $assignment)
-                            <div class="item-card" style="border-left-color: var(--gold);">
-                                <div class="item-header">
-                                    <div>
-                                        <h4 class="item-title">
-                                            @if($assignment->surah)
-                                                <i class="fas fa-book-quran"></i> {{ $assignment->surah }} 
-                                                ({{ $assignment->start_verse }}@if($assignment->end_verse)-{{ $assignment->end_verse }}@endif)
-                                            @else
-                                                {{ $assignment->material ? $assignment->material->title : 'Assignment' }}
-                                            @endif
-                                        </h4>
-                                        <p class="item-text">{{ Str::limit($assignment->instructions, 100) }}</p>
-                                    </div>
-                                    <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0;">
-                                        <span style="font-size: 0.9rem; color: var(--primary-green); font-weight: 600; white-space: nowrap;">
-                                            <i class="fas fa-star"></i> {{ $assignment->total_marks }} pts
-                                        </span>
-                                        <a href="{{ route('assignment.show', $assignment->assignment_id) }}" class="btn-view">
-                                            <i class="fas fa-eye"></i> View
-                                        </a>
-                                    </div>
-                                </div>
-                                <div class="item-meta">
-                                    <div class="meta-item">
-                                        <i class="fas fa-calendar-alt" style="color: var(--primary-green);"></i>
-                                        <span>Due: {{ $assignment->due_date->format('M d, Y h:i A') }}</span>
-                                    </div>
-                                    @if($assignment->is_voice_submission)
-                                        <div class="meta-item">
-                                            <i class="fas fa-microphone" style="color: var(--gold);"></i>
-                                            <span>Voice Submission</span>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="empty-state">
-                        <i class="fas fa-clipboard"></i>
-                        <p>No assignments yet. Create assignments to give tasks to your students.</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
+    @endif
+</div>
 @endsection

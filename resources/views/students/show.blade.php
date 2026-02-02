@@ -4,159 +4,445 @@
 @section('user-role', 'Student • Profile')
 
 @section('navigation')
-    <a href="{{ url('/student/classes') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-home"></i>
-        </div>
-        <div class="nav-label">Dashboard</div>
+    <a href="{{ route('student.dashboard') }}" class="nav-item">
+        <i class="fas fa-home nav-icon"></i>
+        <span class="nav-label">Dashboard</span>
     </a>
     
-    <a href="{{ url('/student/classes') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-users"></i>
-        </div>
-        <div class="nav-label">My Classes</div>
+    <a href="{{ route('student.classes') }}" class="nav-item">
+        <i class="fas fa-users nav-icon"></i>
+        <span class="nav-label">My Classes</span>
     </a>
     
-    <a href="{{ url('/student/practice') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-microphone-alt"></i>
-        </div>
-        <div class="nav-label">Practice</div>
+    <a href="{{ route('student.practice') }}" class="nav-item">
+        <i class="fas fa-microphone-alt nav-icon"></i>
+        <span class="nav-label">Practice</span>
     </a>
     
-    <a href="{{ url('/student/progress') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="nav-label">My Progress</div>
+    <a href="{{ route('student.progress') }}" class="nav-item">
+        <i class="fas fa-chart-line nav-icon"></i>
+        <span class="nav-label">My Progress</span>
     </a>
     
-    <a href="{{ url('/student/materials') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-book-open"></i>
-        </div>
-        <div class="nav-label">Materials</div>
+    <a href="{{ route('student.materials') }}" class="nav-item">
+        <i class="fas fa-book-open nav-icon"></i>
+        <span class="nav-label">Materials</span>
     </a>
-    
-    <a href="{{ route('students.show', Auth::id()) }}" class="nav-item active">
-        <div class="nav-icon">
-            <i class="fas fa-user-circle"></i>
-        </div>
-        <div class="nav-label">Profile</div>
-    </a>
-    
-    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
-        @csrf
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon">
-                <i class="fas fa-sign-out-alt"></i>
-            </div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
-@endsection
-
-@section('extra-styles')
-<style>
-    .profile-container {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-</style>
 @endsection
 
 @section('content')
-<div style="background: rgba(31, 39, 27, 0.7); border: 2px solid var(--color-dark-green); border-radius: 25px; padding: 25px; font-family: 'Cairo', sans-serif; box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+<style>
+    .profile-banner {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 25px;
+        padding: 40px;
+        margin-bottom: 30px;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
+    }
+    
+    .profile-banner:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
+    }
+    
+    .profile-header {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 30px;
+    }
+    
+    .profile-avatar {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .profile-info h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .profile-info p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        line-height: 1.6;
+        margin: 5px 0;
+    }
+    
+    .edit-profile-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        margin-top: 15px;
+        transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .edit-profile-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+    }
+    
+    .info-card h3 {
+        color: #0a5c36;
+        font-weight: 700;
+        margin-bottom: 20px;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: rgba(10, 92, 54, 0.05);
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+    
+    .info-content {
+        flex: 1;
+    }
+    
+    .info-label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 3px;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: #0a5c36;
+        font-size: 1rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.15);
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0a5c36;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        color: #0a5c36;
+        font-weight: 700;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .class-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: rgba(10, 92, 54, 0.05);
+        border-radius: 12px;
+        border-left: 4px solid #0a5c36;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .class-item:hover {
+        background: rgba(10, 92, 54, 0.1);
+        transform: translateX(5px);
+    }
+    
+    .class-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .class-details {
+        flex: 1;
+    }
+    
+    .class-details h4 {
+        color: #0a5c36;
+        font-weight: 700;
+        margin-bottom: 5px;
+        font-size: 1.05rem;
+    }
+    
+    .class-details p {
+        color: #666;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.3;
+    }
+</style>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(227, 216, 136, 0.2);">
-        <h3 style="color: var(--color-gold); font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 12px;">
-            <span style="color: #8e44ad; filter: drop-shadow(0 0 5px rgba(142, 68, 173, 0.5));">👤</span> Student Profile
-        </h3>
-        <a href="{{ route('students.edit', $student->id) }}" style="background: linear-gradient(135deg, #e3d888, #c5a059); color: #1f271b; padding: 10px 22px; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 0.85rem; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(227, 216, 136, 0.2);">
-            ✏️ Edit Profile
-        </a>
-    </div>
-
-    <div class="profile-container" style="display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start;">
+<!-- Profile Banner -->
+<section class="profile-banner">
+    <div class="profile-header">
+        @if($student->profile_picture)
+            <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="Profile Picture" class="profile-avatar">
+        @else
+            <img src="{{ asset('images/default-avatar.png') }}" alt="Default Avatar" class="profile-avatar">
+        @endif
         
-        <div style="background: rgba(227, 216, 136, 0.03); border: 1px solid var(--color-dark-green); border-radius: 20px; padding: 30px 15px; text-align: center;">
-            <div style="width: 150px; height: 150px; background: linear-gradient(135deg, #e3d888, #c5a059); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-weight: bold; color: #1f271b; border: 4px solid rgba(31, 39, 27, 0.8); box-shadow: 0 8px 25px rgba(0,0,0,0.3);">
-                {{ substr($student->name, 0, 1) }}
-            </div>
-
-            <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 1.4rem; letter-spacing: 0.5px;">{{ $student->name }}</h2>
+        <div class="profile-info">
+            <h1>{{ $student->name }}</h1>
+            <p><i class="fas fa-envelope"></i> {{ $student->user->email }}</p>
+            <p><i class="fas fa-id-card"></i> Student ID: {{ $student->id }}</p>
             
-            <div style="display: inline-block; background: rgba(227, 216, 136, 0.1); border: 1px solid var(--color-gold); color: var(--color-gold); padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; margin-bottom: 25px;">
-                📚 Student
+            <a href="{{ route('students.edit', $student->id) }}" class="edit-profile-btn">
+                <i class="fas fa-edit"></i> Edit Profile
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Personal Information -->
+<div class="info-grid">
+    <div class="info-card">
+        <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-user"></i>
             </div>
-
-            <div style="text-align: left; border-top: 1px solid rgba(227, 216, 136, 0.1); padding-top: 20px; display: flex; flex-direction: column; gap: 15px;">
-                <div>
-                    <label style="display: block; color: var(--color-gold); font-size: 0.65rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px;">Email</label>
-                    <div style="color: var(--color-light); font-size: 0.85rem; word-break: break-all;">{{ $student->user->email }}</div>
-                </div>
-
-                <div>
-                    <label style="display: block; color: var(--color-gold); font-size: 0.65rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px;">Level</label>
-                    <div style="color: var(--color-light); font-size: 0.85rem; text-transform: capitalize;">{{ $student->current_level ?? 'Advanced' }}</div>
-                </div>
-
-                <div>
-                    <label style="display: block; color: var(--color-gold); font-size: 0.65rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px;">Member Since</label>
-                    <div style="color: var(--color-light); font-size: 0.85rem;">{{ $student->created_at->format('M d, Y') }}</div>
-                </div>
+            <div class="info-content">
+                <div class="info-label">Full Name</div>
+                <div class="info-value">{{ $student->name }}</div>
             </div>
         </div>
-
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            
-            <div style="background: rgba(31, 39, 27, 0.4); border: 1px solid var(--color-dark-green); border-radius: 15px; padding: 20px;">
-                <h4 style="color: var(--color-gold); margin: 0 0 10px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">📝 About Me</h4>
-                <p style="color: var(--color-light); opacity: 0.85; line-height: 1.5; margin: 0; font-size: 0.9rem;">
-                    {{ $student->biodata ?? 'This is a test student account for development.' }}
-                </p>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-envelope"></i>
             </div>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-                <div style="background: rgba(31, 39, 27, 0.4); border: 1px solid var(--color-dark-green); border-radius: 15px; padding: 15px; text-align: center;">
-                    <div style="font-size: 1.8rem; margin-bottom: 5px;">📚</div>
-                    <div style="font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1;">{{ $student->classrooms->count() }}</div>
-                    <div style="color: var(--color-gold); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-top: 5px;">Classes</div>
-                </div>
-
-                <div style="background: rgba(31, 39, 27, 0.4); border: 1px solid var(--color-dark-green); border-radius: 15px; padding: 15px; text-align: center;">
-                    <div style="font-size: 1.8rem; margin-bottom: 5px;">✅</div>
-                    <div style="font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1;">{{ $student->scores->count() }}</div>
-                    <div style="color: var(--color-gold); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-top: 5px;">Graded</div>
-                </div>
-
-                <div style="background: rgba(31, 39, 27, 0.4); border: 1px solid var(--color-dark-green); border-radius: 15px; padding: 15px; text-align: center;">
-                    <div style="font-size: 1.8rem; margin-bottom: 5px;">⭐</div>
-                    <div style="font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1;">{{ $student->scores->count() > 0 ? number_format($student->scores->avg('score'), 1) : 'N/A' }}</div>
-                    <div style="color: var(--color-gold); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-top: 5px;">Avg Score</div>
-                </div>
+            <div class="info-content">
+                <div class="info-label">Email Address</div>
+                <div class="info-value">{{ $student->user->email }}</div>
             </div>
-
-            <div style="background: rgba(31, 39, 27, 0.4); border: 1px solid var(--color-dark-green); border-radius: 15px; padding: 20px;">
-                <h4 style="color: var(--color-gold); margin: 0 0 15px 0; font-size: 1rem;">🎓 Enrolled Classes</h4>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    @forelse($student->classrooms as $classroom)
-                    <div style="background: rgba(227, 216, 136, 0.05); border: 1px solid rgba(227, 216, 136, 0.1); border-radius: 10px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <span style="font-size: 1.1rem;">🏛️</span>
-                            <span style="color: #fff; font-weight: 600; font-size: 0.9rem;">{{ $classroom->class_name }}</span>
-                        </div>
-                        <a href="{{ route('classroom.show', $classroom->id) }}" style="color: var(--color-gold); text-decoration: none; font-size: 0.8rem; font-weight: 700; padding: 5px 12px; background: rgba(227, 216, 136, 0.1); border-radius: 6px; border: 1px solid var(--color-gold);">
-                            View →
-                        </a>
-                    </div>
-                    @empty
-                    <p style="color: var(--color-light); opacity: 0.5; text-align: center; margin: 0; font-size: 0.85rem;">No classes enrolled yet.</p>
-                    @endforelse
-                </div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-id-badge"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-label">Student ID</div>
+                <div class="info-value">#{{ $student->id }}</div>
             </div>
         </div>
     </div>
+    
+    <div class="info-card">
+        <h3><i class="fas fa-book-quran"></i> Learning Information</h3>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-label">Current Level</div>
+                <div class="info-value">{{ $student->current_level ?? 'Not Set' }}</div>
+            </div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-calendar"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-label">Member Since</div>
+                <div class="info-value">{{ $student->created_at->format('M d, Y') }}</div>
+            </div>
+        </div>
+        
+        @if($student->biodata)
+        <div class="info-item">
+            <div class="info-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-label">About</div>
+                <div class="info-value" style="font-weight: 400;">{{ Str::limit($student->biodata, 80) }}</div>
+            </div>
+        </div>
+        @endif
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📚</div>
+        <div class="stat-value">{{ $student->classrooms->count() }}</div>
+        <div class="stat-label">Enrolled Classes</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-value">{{ $student->scores->count() }}</div>
+        <div class="stat-label">Submissions</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-value">{{ $student->scores->count() > 0 ? number_format($student->scores->avg('score'), 1) : '0' }}%</div>
+        <div class="stat-label">Average Score</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-value">{{ $student->scores->where('score', '>=', 80)->count() }}</div>
+        <div class="stat-label">High Scores (80%+)</div>
+    </div>
+</div>
+
+<!-- Enrolled Classes -->
+<div class="section-card">
+    <h2 class="section-title">
+        <i class="fas fa-users"></i> Enrolled Classes
+    </h2>
+    
+    @if($student->classrooms->count() > 0)
+        @foreach($student->classrooms as $classroom)
+            <a href="{{ route('classroom.show', $classroom->id) }}" class="class-item">
+                <div class="class-icon">
+                    <i class="fas fa-book-quran"></i>
+                </div>
+                <div class="class-details">
+                    <h4>{{ $classroom->class_name }}</h4>
+                    <p>
+                        <i class="fas fa-user"></i> {{ $classroom->teacher->name }} • 
+                        <i class="fas fa-calendar"></i> Joined {{ \Carbon\Carbon::parse($classroom->pivot->date_joined)->format('M d, Y') }}
+                    </p>
+                </div>
+                <i class="fas fa-arrow-right" style="color: #0a5c36; font-size: 1.2rem;"></i>
+            </a>
+        @endforeach
+    @else
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>You haven't enrolled in any classes yet.</p>
+            <a href="{{ route('student.classes') }}" style="display: inline-flex; align-items: center; gap: 8px; background: #0a5c36; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: 600; margin-top: 10px;">
+                <i class="fas fa-plus-circle"></i> Browse Classes
+            </a>
+        </div>
+    @endif
 </div>
 @endsection

@@ -1,238 +1,370 @@
-@extends('layouts.template')
+@php
+    $currentUser = Auth::user();
+    $isStudent = $currentUser->role_id == 2; // Role 2 = Student, Role 3 = Teacher
+    $layout = $isStudent ? 'layouts.dashboard' : 'layouts.template';
+@endphp
 
-@section('page-title', 'Learning Materials')
-@section('page-subtitle', 'Browse and manage educational resources')
+@extends($layout)
+
+@section('title', 'Learning Materials')
+@if($isStudent)
+    @section('user-role', 'Student • Learning Resources')
+@else
+    @section('page-title', 'Materials')
+    @section('page-subtitle', 'Manage Learning Resources')
+@endif
+
+@if($isStudent)
+@section('navigation')
+    <a href="{{ route('student.dashboard') }}" class="nav-item">
+        <i class="fas fa-home nav-icon"></i>
+        <span class="nav-label">Dashboard</span>
+    </a>
+    
+    <a href="{{ route('student.classes') }}" class="nav-item">
+        <i class="fas fa-users nav-icon"></i>
+        <span class="nav-label">My Classes</span>
+    </a>
+    
+    <a href="{{ route('student.practice') }}" class="nav-item">
+        <i class="fas fa-microphone-alt nav-icon"></i>
+        <span class="nav-label">Practice</span>
+    </a>
+    
+    <a href="{{ route('student.progress') }}" class="nav-item">
+        <i class="fas fa-chart-line nav-icon"></i>
+        <span class="nav-label">My Progress</span>
+    </a>
+    
+    <a href="{{ route('student.materials') }}" class="nav-item active">
+        <i class="fas fa-book-open nav-icon"></i>
+        <span class="nav-label">Materials</span>
+    </a>
+@endsection
+@endif
 
 @section('content')
-    <div class="content-card">
-        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h3 class="card-title">📚 All Materials</h3>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <!-- View Toggle -->
-                <div style="display: flex; gap: 5px; background: rgba(31, 39, 27, 0.5); border-radius: 20px; padding: 5px;">
-                    <button onclick="setView('grid')" id="gridBtn"
-                        style="padding: 8px 15px; background: var(--color-gold); color: var(--color-dark); border: none; border-radius: 15px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">
-                        ⊞ Grid
-                    </button>
-                    <button onclick="setView('list')" id="listBtn"
-                        style="padding: 8px 15px; background: transparent; color: var(--color-light); border: none; border-radius: 15px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">
-                        ☰ List
-                    </button>
-                </div>
-                <a href="{{ route('materials.create') }}" 
-                    style="padding: 10px 25px; background: var(--color-gold); color: var(--color-dark); border: none; border-radius: 25px; text-decoration: none; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-family: 'Cairo', sans-serif; display: inline-flex; align-items: center; gap: 8px;"
-                    onmouseover="this.style.opacity='0.8'"
-                    onmouseout="this.style.opacity='1'">
-                    <span style="font-size: 1.2rem;">➕</span> Add New Material
-                </a>
+<!-- MATERIALS INDEX VIEW v2.0 - Updated Feb 2026 -->
+<style>
+    .modern-card {
+        background: #ffffff;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
+        transition: all 0.3s ease;
+        border: 3px solid #2a2a2a;
+    }
+    
+    .modern-card:hover {
+        box-shadow: 0 15px 40px rgba(10, 92, 54, 0.15);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #f5f5dc;
+    }
+    
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .icon-badge {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #0a5c36, #2e8b57);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+        color: #0a5c36;
+        font-weight: 700;
+    }
+    
+    .btn-create {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #0a5c36, #2e8b57);
+        color: white;
+        padding: 12px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-create:hover {
+        background: linear-gradient(135deg, #064e32, #0a5c36);
+        transform: scale(1.05);
+    }
+    
+    .materials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+    }
+    
+    .material-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(10, 92, 54, 0.1);
+        transition: all 0.3s ease;
+        border: 2px solid rgba(10, 92, 54, 0.1);
+    }
+    
+    .material-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.2);
+        border-color: #0a5c36;
+    }
+    
+    .material-thumbnail {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #0a5c36, #2e8b57);
+    }
+    
+    .material-icon {
+        padding: 30px;
+        text-align: center;
+        font-size: 3rem;
+        color: white;
+    }
+    
+    .material-icon.pdf {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+    }
+    
+    .material-icon.video {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+    }
+    
+    .material-icon.audio {
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    }
+    
+    .material-icon.document {
+        background: linear-gradient(135deg, #16a085, #1abc9c);
+    }
+    
+    .material-body {
+        padding: 20px;
+    }
+    
+    .material-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0a5c36;
+        margin-bottom: 10px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .material-desc {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .material-meta {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 0.85rem;
+        color: #999;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .material-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .badge-public {
+        background: rgba(46, 204, 113, 0.2);
+        color: #27ae60;
+    }
+    
+    .badge-private {
+        background: rgba(149, 165, 166, 0.2);
+        color: #7f8c8d;
+    }
+    
+    .btn-view {
+        display: inline-block;
+        background: linear-gradient(135deg, #0a5c36, #2e8b57);
+        color: white;
+        padding: 10px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .btn-view:hover {
+        background: linear-gradient(135deg, #064e32, #0a5c36);
+        transform: scale(1.05);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+    
+    .empty-state i {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: #666;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+        font-size: 1.1rem;
+    }
+</style>
+
+<!-- Materials Header -->
+<div class="modern-card" style="margin-bottom: 30px;">
+    <div class="section-header">
+        <div class="header-left">
+            <div class="icon-badge">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <div>
+                <h1 class="section-title">Learning Materials</h1>
+                <p style="color: #666; font-size: 1.1rem; margin: 0;">
+                    {{ $isStudent ? 'Access Tajweed learning resources' : 'Manage teaching materials' }}
+                </p>
             </div>
         </div>
-
-        @if(session('success'))
-            <div style="background: rgba(77, 139, 49, 0.2); border: 2px solid var(--color-light-green); color: var(--color-light-green); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                ✅ {{ session('success') }}
-            </div>
+        @if(!$isStudent)
+            <a href="{{ route('materials.create') }}" class="btn-create">
+                <i class="fas fa-plus-circle"></i> Add Material
+            </a>
         @endif
+    </div>
+</div>
 
-        <div class="card-body">
-            @if($materials->count() > 0)
-                <div id="materialsContainer" class="materials-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;">
-                    @foreach($materials as $material)
-                        <div class="material-card" style="background: rgba(31, 39, 27, 0.6); border: 2px solid var(--color-dark-green); border-radius: 15px; overflow: hidden; transition: all 0.3s ease; cursor: pointer;"
-                            onmouseover="this.style.borderColor='var(--color-gold)'; this.style.transform='translateY(-5px)'"
-                            onmouseout="this.style.borderColor='var(--color-dark-green)'; this.style.transform='translateY(0)'">
-                            
-                            <!-- Thumbnail -->
-                            <div class="material-thumbnail" style="width: 100%; height: 180px; overflow: hidden; background: rgba(227, 216, 136, 0.1); position: relative;">
-                                @php
-                                    $thumbnailUrl = null;
-                                    if ($material->thumbnail) {
-                                        $thumbnailUrl = filter_var($material->thumbnail, FILTER_VALIDATE_URL) 
-                                            ? $material->thumbnail 
-                                            : Storage::url($material->thumbnail);
-                                    } elseif ($material->video_link) {
-                                        // Extract YouTube thumbnail from video link
-                                        if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $material->video_link, $matches)) {
-                                            $thumbnailUrl = 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
-                                        }
-                                    }
-                                @endphp
-                                
-                                @if($thumbnailUrl)
-                                    <img src="{{ $thumbnailUrl }}" alt="{{ $material->title }}" 
-                                        style="width: 100%; height: 100%; object-fit: cover;"
-                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 3rem; color: var(--color-gold); opacity: 0.5;">
-                                        @if($material->file_path)
-                                            📄
-                                        @elseif($material->video_link)
-                                            🎥
-                                        @else
-                                            📚
-                                        @endif
-                                    </div>
-                                @else
-                                    <div style="display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 3rem; color: var(--color-gold); opacity: 0.5;">
-                                        @if($material->file_path)
-                                            📄
-                                        @elseif($material->video_link)
-                                            🎥
-                                        @else
-                                            📚
-                                        @endif
-                                    </div>
-                                @endif
-                                
-                                <!-- Public badge -->
-                                @if($material->is_public)
-                                    <div style="position: absolute; top: 10px; right: 10px; background: rgba(77, 139, 49, 0.9); color: white; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">
-                                        🌍 Public
-                                    </div>
-                                @endif
-                            </div>
+<!-- Success Message -->
+@if(session('success'))
+    <div style="background: linear-gradient(135deg, #d4f4dd, #a8e6cf); border-left: 5px solid #0a5c36; color: #064e32; padding: 15px 20px; border-radius: 10px; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; font-weight: 500;">
+        <i class="fas fa-check-circle" style="font-size: 1.5rem;"></i>
+        <span>{{ session('success') }}</span>
+    </div>
+@endif
 
-                            <!-- Content -->
-                            <div class="material-content" style="padding: 15px;">
-                                <h4 style="color: var(--color-gold); margin: 0 0 10px 0; font-size: 1.1rem; line-height: 1.3;">
-                                    {{ $material->title }}
-                                </h4>
-
-                                @if($material->description)
-                                    <p style="color: var(--color-light); font-size: 0.9rem; margin: 10px 0; line-height: 1.5; opacity: 0.8;">
-                                        {{ Str::limit($material->description, 80) }}
-                                    </p>
-                                @endif
-
-                                <!-- Resource indicators -->
-                                <div style="display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap;">
-                                    @if($material->file_path)
-                                        @php
-                                            $fileName = basename($material->file_path);
-                                            // Remove timestamp prefix if exists
-                                            $fileName = preg_replace('/^\d+_[a-f0-9]+\./', '', $fileName);
-                                            $fileName = Str::limit($fileName, 25);
-                                        @endphp
-                                        <span style="color: var(--color-light-green); font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
-                                            📄 {{ $fileName }}
-                                        </span>
-                                    @endif
-                                    @if($material->video_link)
-                                        <span style="color: var(--color-light-green); font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
-                                            🎥 {{ Str::limit($material->title, 30) }}
-                                        </span>
-                                    @endif
-                                </div>
-
-                                <!-- Action buttons -->
-                                <div style="display: flex; gap: 8px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(227, 216, 136, 0.2);">
-                                    <a href="{{ route('materials.show', $material->material_id) }}" 
-                                        style="flex: 1; padding: 8px 15px; background: var(--color-dark-green); color: var(--color-gold); border: none; border-radius: 20px; text-decoration: none; font-weight: 600; text-align: center; font-size: 0.9rem; transition: all 0.3s ease;"
-                                        onmouseover="this.style.background='var(--color-light-green)'; this.style.color='var(--color-dark)'"
-                                        onmouseout="this.style.background='var(--color-dark-green)'; this.style.color='var(--color-gold)'">
-                                        👁️ View
-                                    </a>
-                                    <a href="{{ route('materials.edit', $material->material_id) }}" 
-                                        style="flex: 1; padding: 8px 15px; background: transparent; color: var(--color-gold); border: 2px solid var(--color-gold); border-radius: 20px; text-decoration: none; font-weight: 600; text-align: center; font-size: 0.9rem; transition: all 0.3s ease;"
-                                        onmouseover="this.style.background='rgba(227, 216, 136, 0.1)'"
-                                        onmouseout="this.style.background='transparent'">
-                                        ✏️ Edit
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-
-                <!-- Pagination -->
-                <div style="margin-top: 30px; display: flex; justify-content: center;">
-                    {{ $materials->links() }}
-                </div>
-            @else
-                <div style="text-align: center; padding: 60px 20px;">
-                    <div style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;">📚</div>
-                    <h3 style="color: var(--color-light); margin-bottom: 10px;">No Materials Yet</h3>
-                    <p style="color: var(--color-light); opacity: 0.7; margin-bottom: 25px;">Start by adding your first learning material!</p>
-                    <a href="{{ route('materials.create') }}" 
-                        style="display: inline-block; padding: 12px 30px; background: var(--color-gold); color: var(--color-dark); border-radius: 25px; text-decoration: none; font-weight: 600;">
-                        ➕ Create First Material
+<!-- Materials Grid -->
+@if(count($materials) > 0)
+    <div class="materials-grid">
+        @foreach($materials as $material)
+            <div class="material-card">
+                <!-- Thumbnail or Icon -->
+                @if($material->thumbnail)
+                    <img src="{{ filter_var($material->thumbnail, FILTER_VALIDATE_URL) ? $material->thumbnail : Storage::url($material->thumbnail) }}" 
+                         alt="{{ $material->title }}" 
+                         class="material-thumbnail"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="material-icon {{ $material->type ?? 'document' }}" style="display:none;">
+                        @if($material->type === 'pdf')
+                            <i class="fas fa-file-pdf"></i>
+                        @elseif($material->type === 'video')
+                            <i class="fas fa-video"></i>
+                        @elseif($material->type === 'audio')
+                            <i class="fas fa-headphones"></i>
+                        @else
+                            <i class="fas fa-file-alt"></i>
+                        @endif
+                    </div>
+                @else
+                    <div class="material-icon {{ $material->type ?? 'document' }}">
+                        @if($material->type === 'pdf')
+                            <i class="fas fa-file-pdf"></i>
+                        @elseif($material->type === 'video')
+                            <i class="fas fa-video"></i>
+                        @elseif($material->type === 'audio')
+                            <i class="fas fa-headphones"></i>
+                        @else
+                            <i class="fas fa-file-alt"></i>
+                        @endif
+                    </div>
+                @endif
+                
+                <div class="material-body">
+                    <h3 class="material-title">{{ $material->title }}</h3>
+                    <p class="material-desc">{{ $material->description ?? 'Tajweed learning material' }}</p>
+                    <div class="material-meta">
+                        <span><i class="fas fa-calendar"></i> {{ $material->created_at->format('M d, Y') }}</span>
+                        <span class="material-badge {{ $material->is_public ? 'badge-public' : 'badge-private' }}">
+                            <i class="fas fa-{{ $material->is_public ? 'globe' : 'lock' }}"></i>
+                            {{ $material->is_public ? 'Public' : 'Private' }}
+                        </span>
+                    </div>
+                    <a href="{{ route('materials.show', $material->material_id) }}" class="btn-view">
+                        <i class="fas fa-eye"></i> View Material
                     </a>
                 </div>
+            </div>
+        @endforeach
+    </div>
+    
+    <!-- Pagination -->
+    @if($materials->hasPages())
+        <div style="margin-top: 30px; display: flex; justify-content: center;">
+            {{ $materials->links() }}
+        </div>
+    @endif
+@else
+    <div class="modern-card">
+        <div class="empty-state">
+            <i class="fas fa-book-open"></i>
+            <h3>No Materials Available</h3>
+            <p>{{ $isStudent ? 'Tajweed materials will appear here when your teacher adds them to the system.' : 'Start by creating your first teaching material.' }}</p>
+            @if(!$isStudent)
+                <a href="{{ route('materials.create') }}" class="btn-create" style="margin-top: 20px;">
+                    <i class="fas fa-plus-circle"></i> Create First Material
+                </a>
             @endif
         </div>
     </div>
-
-    <script>
-        // View toggle functionality
-        function setView(view) {
-            const container = document.getElementById('materialsContainer');
-            const cards = document.querySelectorAll('.material-card');
-            const gridBtn = document.getElementById('gridBtn');
-            const listBtn = document.getElementById('listBtn');
-            
-            if (view === 'grid') {
-                container.style.display = 'grid';
-                container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
-                container.classList.add('materials-grid');
-                container.classList.remove('materials-list');
-                
-                // Reset card styles for grid view
-                cards.forEach(card => {
-                    card.style.display = 'block';
-                    card.style.flexDirection = '';
-                    const thumbnail = card.querySelector('.material-thumbnail');
-                    const content = card.querySelector('.material-content');
-                    if (thumbnail) {
-                        thumbnail.style.width = '100%';
-                        thumbnail.style.height = '180px';
-                        thumbnail.style.flexShrink = '0';
-                    }
-                    if (content) {
-                        content.style.flex = '';
-                    }
-                });
-                
-                gridBtn.style.background = 'var(--color-gold)';
-                gridBtn.style.color = 'var(--color-dark)';
-                listBtn.style.background = 'transparent';
-                listBtn.style.color = 'var(--color-light)';
-                localStorage.setItem('materialsView', 'grid');
-            } else {
-                container.style.display = 'flex';
-                container.style.flexDirection = 'column';
-                container.style.gridTemplateColumns = 'none';
-                container.classList.remove('materials-grid');
-                container.classList.add('materials-list');
-                
-                // Update card styles for list view
-                cards.forEach(card => {
-                    card.style.display = 'flex';
-                    card.style.flexDirection = 'row';
-                    card.style.alignItems = 'stretch';
-                    const thumbnail = card.querySelector('.material-thumbnail');
-                    const content = card.querySelector('.material-content');
-                    if (thumbnail) {
-                        thumbnail.style.width = '250px';
-                        thumbnail.style.height = 'auto';
-                        thumbnail.style.minHeight = '200px';
-                        thumbnail.style.flexShrink = '0';
-                    }
-                    if (content) {
-                        content.style.flex = '1';
-                    }
-                });
-                
-                gridBtn.style.background = 'transparent';
-                gridBtn.style.color = 'var(--color-light)';
-                listBtn.style.background = 'var(--color-gold)';
-                listBtn.style.color = 'var(--color-dark)';
-                localStorage.setItem('materialsView', 'list');
-            }
-        }
-        
-        // Load saved view preference
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedView = localStorage.getItem('materialsView') || 'grid';
-            setView(savedView);
-        });
-    </script>
+@endif
 @endsection

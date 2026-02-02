@@ -123,7 +123,7 @@ class ClassroomController extends Controller
                 ->get()
                 ->keyBy('assignment_id');
             
-            return view('students.classroom-show', compact('classroom', 'assignments', 'submissions'));
+            return view('classroom.show', compact('classroom', 'assignments', 'submissions'));
         } else {
             abort(403, 'Unauthorized access to this classroom.');
         }
