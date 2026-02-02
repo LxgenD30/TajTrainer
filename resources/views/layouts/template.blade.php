@@ -19,11 +19,13 @@
             }
             
             :root {
-                --color-light-green: #E2F1AF;
-                --color-dark-green: #4D8B31;
-                --color-gold: #E3D888;
-                --color-dark: #1F271B;
-                --color-brown: #463F3A;
+                --primary-green: #0a5c36;
+                --light-green: #2e8b57;
+                --gold: #d4af37;
+                --cream: #f5f5dc;
+                --dark-green: #064e32;
+                --white: #ffffff;
+                --shadow: rgba(10, 92, 54, 0.15);
                 --sidebar-width: 280px;
             }
             
@@ -46,7 +48,7 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: linear-gradient(135deg, var(--color-dark) 0%, var(--color-brown) 100%);
+                background: linear-gradient(135deg, var(--dark-green) 0%, var(--color-brown) 100%);
                 opacity: 0;
                 pointer-events: none;
                 z-index: 9999;
@@ -88,7 +90,7 @@
                 position: absolute;
                 left: 0;
                 top: 0;
-                color: var(--color-gold);
+                color: var(--gold);
                 width: 0%;
                 overflow: hidden;
                 white-space: nowrap;
@@ -99,7 +101,7 @@
                 width: 40px;
                 height: 40px;
                 border: 3px solid rgba(227, 216, 136, 0.2);
-                border-top: 3px solid var(--color-gold);
+                border-top: 3px solid var(--gold);
                 border-radius: 50%;
                 animation: spin 0.8s linear infinite;
             }
@@ -153,8 +155,8 @@
                 height: 100%;
                 opacity: 0.05;
                 background-image: 
-                    repeating-linear-gradient(45deg, transparent, transparent 35px, var(--color-gold) 35px, var(--color-gold) 70px),
-                    repeating-linear-gradient(-45deg, transparent, transparent 35px, var(--color-gold) 35px, var(--color-gold) 70px);
+                    repeating-linear-gradient(45deg, transparent, transparent 35px, var(--gold) 35px, var(--gold) 70px),
+                    repeating-linear-gradient(-45deg, transparent, transparent 35px, var(--gold) 35px, var(--gold) 70px);
                 pointer-events: none;
                 z-index: 0;
             }
@@ -162,7 +164,7 @@
             /* Decorative Stars */
             .decorative-star {
                 position: fixed;
-                color: var(--color-gold);
+                color: var(--gold);
                 opacity: 0.2;
                 animation: twinkle 3s infinite;
                 z-index: 0;
@@ -189,20 +191,20 @@
             /* Sidebar */
             .sidebar {
                 width: var(--sidebar-width);
-                background: rgba(255, 255, 255, 0.95);
+                background: linear-gradient(180deg, var(--primary-green) 0%, var(--dark-green) 100%);
                 backdrop-filter: blur(10px);
-                border-right: 3px solid var(--color-dark-green);
+                border-right: 3px solid var(--gold);
                 padding: 30px 0;
                 position: fixed;
                 height: 100vh;
                 overflow-y: auto;
-                box-shadow: 5px 0 20px rgba(0, 0, 0, 0.3);
+                box-shadow: 5px 0 30px rgba(0, 0, 0, 0.5);
                 transition: transform 0.3s ease;
             }
             
             .sidebar-logo {
                 padding: 0 25px 30px;
-                border-bottom: 2px solid rgba(77, 139, 49, 0.3);
+                border-bottom: 2px solid rgba(227, 216, 136, 0.3);
                 margin-bottom: 30px;
             }
             
@@ -210,7 +212,7 @@
                 font-family: 'Amiri', serif;
                 font-size: 2rem;
                 font-weight: 700;
-                color: var(--color-gold);
+                color: var(--gold);
                 text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
                 display: flex;
                 align-items: center;
@@ -221,14 +223,14 @@
             .logo-icon {
                 width: 45px;
                 height: 45px;
-                background: var(--color-dark-green);
+                background: var(--gold);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 1.5rem;
-                color: var(--color-gold);
-                box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);
+                color: var(--dark-green);
+                box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
                 flex-shrink: 0;
             }
             
@@ -247,7 +249,7 @@
                 align-items: center;
                 gap: 12px;
                 padding: 14px 18px;
-                color: var(--color-light-green);
+                color: rgba(226, 241, 175, 0.8);
                 text-decoration: none;
                 border-radius: 12px;
                 transition: all 0.3s ease;
@@ -256,15 +258,15 @@
             }
             
             .nav-link:hover {
-                background: rgba(77, 139, 49, 0.2);
-                color: var(--color-gold);
+                background: rgba(227, 216, 136, 0.15);
+                color: var(--gold);
                 transform: translateX(5px);
             }
             
             .nav-link.active {
-                background: var(--color-dark-green);
-                color: var(--color-gold);
-                box-shadow: 0 4px 15px rgba(77, 139, 49, 0.3);
+                background: var(--gold);
+                color: var(--dark-green);
+                box-shadow: 0 4px 15px rgba(227, 216, 136, 0.4);
             }
             
             .nav-icon {
@@ -276,7 +278,7 @@
             /* User Profile Section in Sidebar */
             .sidebar-user {
                 padding: 20px 25px;
-                border-top: 2px solid rgba(77, 139, 49, 0.3);
+                border-top: 2px solid rgba(227, 216, 136, 0.3);
                 margin-top: 30px;
             }
             
@@ -287,9 +289,9 @@
             .btn-logout {
                 width: 100%;
                 padding: 12px;
-                background: transparent;
-                color: var(--color-light-green);
-                border: 2px solid rgba(197, 48, 48, 0.5);
+                background: rgba(197, 48, 48, 0.2);
+                color: #ffa8a8;
+                border: 2px solid rgba(197, 48, 48, 0.6);
                 border-radius: 10px;
                 font-size: 0.95rem;
                 font-weight: 600;
@@ -308,9 +310,9 @@
             
             .btn-primary {
                 padding: 12px 24px;
-                background: var(--color-dark-green);
-                color: var(--color-light-green);
-                border: 2px solid var(--color-dark-green);
+                background: var(--primary-green);
+                color: var(--light-green);
+                border: 2px solid var(--primary-green);
                 border-radius: 10px;
                 font-size: 0.95rem;
                 font-weight: 600;
@@ -323,9 +325,9 @@
             }
             
             .btn-primary:hover {
-                background: var(--color-gold);
-                border-color: var(--color-gold);
-                color: var(--color-dark);
+                background: var(--gold);
+                border-color: var(--gold);
+                color: var(--dark-green);
                 transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba(227, 216, 136, 0.3);
             }
@@ -333,8 +335,8 @@
             .btn-secondary {
                 padding: 12px 24px;
                 background: rgba(31, 39, 27, 0.5);
-                color: var(--color-light-green);
-                border: 2px solid var(--color-dark-green);
+                color: var(--light-green);
+                border: 2px solid var(--primary-green);
                 border-radius: 10px;
                 font-size: 0.95rem;
                 font-weight: 600;
@@ -348,8 +350,8 @@
             
             .btn-secondary:hover {
                 background: rgba(31, 39, 27, 0.8);
-                border-color: var(--color-gold);
-                color: var(--color-gold);
+                border-color: var(--gold);
+                color: var(--gold);
                 transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba(227, 216, 136, 0.2);
             }
@@ -364,13 +366,13 @@
             
             /* Top Bar */
             .top-bar {
-                background: rgba(70, 63, 58, 0.5);
+                background: linear-gradient(135deg, var(--primary-green) 0%, var(--light-green) 100%);
                 backdrop-filter: blur(10px);
                 border-radius: 20px;
-                border: 2px solid var(--color-dark-green);
+                border: 2px solid var(--gold);
                 padding: 20px 30px;
                 margin-bottom: 40px;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -386,23 +388,23 @@
                 align-items: center;
                 gap: 15px;
                 padding: 10px 20px;
-                background: rgba(31, 39, 27, 0.5);
+                background: rgba(0, 0, 0, 0.3);
                 border-radius: 15px;
-                border: 2px solid var(--color-dark-green);
+                border: 2px solid var(--gold);
             }
             
             .profile-picture {
                 width: 50px;
                 height: 50px;
-                background: var(--color-dark-green);
+                background: var(--gold);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 1.5rem;
-                color: var(--color-gold);
+                color: var(--dark-green);
                 flex-shrink: 0;
-                box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);
+                box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
             }
             
             .profile-info {
@@ -411,29 +413,29 @@
             }
             
             .profile-name {
-                color: var(--color-gold);
+                color: var(--gold);
                 font-weight: 700;
                 font-size: 1rem;
                 white-space: nowrap;
             }
             
             .profile-role {
-                color: var(--color-light-green);
+                color: var(--white);
                 font-size: 0.85rem;
-                opacity: 0.8;
+                opacity: 0.9;
             }
             
             .page-title {
                 font-family: 'Amiri', serif;
                 font-size: 2.2rem;
-                color: var(--color-gold);
+                color: var(--gold);
                 text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
                 margin: 0;
                 line-height: 1.2;
             }
             
             .page-subtitle {
-                color: var(--color-light-green);
+                color: var(--light-green);
                 font-size: 1rem;
                 opacity: 0.9;
                 margin-top: 5px;
@@ -442,11 +444,11 @@
             
             /* Content Card */
             .content-card {
-                background: rgba(70, 63, 58, 0.6);
+                background: linear-gradient(135deg, rgba(10, 92, 54, 0.95) 0%, rgba(6, 78, 50, 0.95) 100%);
                 backdrop-filter: blur(15px);
                 border-radius: 25px;
-                border: 3px solid var(--color-dark-green);
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                border: 3px solid var(--gold);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
                 padding: 40px;
                 margin-bottom: 30px;
             }
@@ -460,12 +462,12 @@
             .card-title {
                 font-family: 'Amiri', serif;
                 font-size: 1.8rem;
-                color: var(--color-gold);
+                color: var(--gold);
                 margin: 0;
             }
             
             .card-body {
-                color: var(--color-light-green);
+                color: var(--light-green);
                 line-height: 1.8;
                 font-size: 1.1rem;
             }
@@ -478,26 +480,26 @@
             .welcome-icon {
                 width: 100px;
                 height: 100px;
-                background: var(--color-dark-green);
+                background: var(--primary-green);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 3rem;
                 margin: 0 auto 25px;
-                color: var(--color-gold);
+                color: var(--gold);
                 box-shadow: 0 8px 30px rgba(77, 139, 49, 0.5);
             }
             
             .welcome-title {
                 font-family: 'Amiri', serif;
                 font-size: 2.5rem;
-                color: var(--color-gold);
+                color: var(--gold);
                 margin-bottom: 20px;
             }
             
             .welcome-message {
-                color: var(--color-light-green);
+                color: var(--light-green);
                 font-size: 1.2rem;
                 line-height: 1.8;
                 max-width: 700px;
@@ -511,8 +513,8 @@
                 top: 20px;
                 left: 20px;
                 z-index: 1000;
-                background: var(--color-dark-green);
-                color: var(--color-gold);
+                background: var(--primary-green);
+                color: var(--gold);
                 border: none;
                 width: 50px;
                 height: 50px;
@@ -606,12 +608,12 @@
             }
             
             .sidebar::-webkit-scrollbar-thumb {
-                background: var(--color-dark-green);
+                background: var(--primary-green);
                 border-radius: 3px;
             }
             
             .sidebar::-webkit-scrollbar-thumb:hover {
-                background: var(--color-gold);
+                background: var(--gold);
             }
         </style>
         

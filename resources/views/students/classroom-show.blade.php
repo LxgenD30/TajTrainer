@@ -12,8 +12,8 @@
     }
     
     .spinner {
-        border: 3px solid rgba(77, 139, 49, 0.3);
-        border-top: 3px solid var(--color-dark-green);
+        border: 3px solid rgba(10, 92, 54, 0.3);
+        border-top: 3px solid var(--primary-green);
         border-radius: 50%;
         width: 16px;
         height: 16px;
@@ -22,26 +22,30 @@
     }
     
     .compact-card {
-        background: rgba(255, 255, 255, 0.95);
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        background: white;
+        border: 3px solid var(--primary-green);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px var(--shadow);
     }
     
     .assignment-item {
-        background: #fafafa;
-        border-left: 4px solid var(--color-dark-green);
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 8px;
+        background: #f8faf9;
+        border-left: 5px solid var(--primary-green);
+        padding: 18px;
+        margin-bottom: 12px;
+        border-radius: 10px;
         transition: all 0.3s ease;
+        border: 2px solid #e8f5e9;
+        border-left-width: 5px;
     }
     
     .assignment-item:hover {
-        box-shadow: 0 4px 12px rgba(77, 139, 49, 0.2);
-        transform: translateX(3px);
+        box-shadow: 0 6px 16px rgba(10, 92, 54, 0.15);
+        transform: translateX(5px);
+        border-color: var(--gold);
+        border-left-color: var(--primary-green);
     }
     
     .status-badge {
@@ -67,18 +71,18 @@
 
 @section('content')
 <div style="padding: 0;">
-    <a href="{{ route('student.classes') }}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-dark-green); text-decoration: none; font-weight: 600; margin-bottom: 15px; transition: all 0.3s ease;" onmouseover="this.style.color='#3a6b25'" onmouseout="this.style.color='var(--color-dark-green)'">
+    <a href="{{ route('student.classes') }}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--primary-green); text-decoration: none; font-weight: 600; margin-bottom: 15px; transition: all 0.3s ease;" onmouseover="this.style.color='var(--dark-green)'" onmouseout="this.style.color='var(--primary-green)'">
         ← Back to My Classes
     </a>
 
     <!-- Classroom Header - Compact -->
     <div class="compact-card" style="margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 40px; height: 40px; background: var(--color-dark-green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;">
+            <div style="width: 40px; height: 40px; background: var(--primary-green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;">
                 🏫
             </div>
             <div style="flex: 1; min-width: 0;">
-                <h2 style="color: var(--color-dark-green); font-size: 1.5rem; margin: 0 0 5px 0;">{{ $classroom->class_name }}</h2>
+                <h2 style="color: var(--primary-green); font-size: 1.5rem; margin: 0 0 5px 0;">{{ $classroom->class_name }}</h2>
                 <div class="info-row">
                     <span>👨‍🏫 {{ $classroom->teacher->name ?? 'Unknown' }}</span>
                     <span>👥 {{ $classroom->students->count() }} Students</span>
@@ -90,7 +94,7 @@
 
     <!-- Assignments Section - Compact -->
     <div class="compact-card">
-        <h3 style="color: var(--color-dark-green); font-size: 1.3rem; margin: 0 0 15px 0;">📝 Assignments</h3>
+        <h3 style="color: var(--primary-green); font-size: 1.3rem; margin: 0 0 15px 0;">📝 Assignments</h3>
         
         @if($assignments->count() > 0)
             @foreach($assignments as $assignment)
@@ -102,10 +106,10 @@
                     $isGraded = $submission && $submission->status === 'graded';
                 @endphp
                 
-                <div class="assignment-item" style="border-left-color: {{ $isGraded ? '#4caf50' : ($isSubmitted ? '#ff9800' : ($isOverdue ? '#e74c3c' : 'var(--color-dark-green)')) }};">
+                <div class="assignment-item" style="border-left-color: {{ $isGraded ? '#4caf50' : ($isSubmitted ? '#ff9800' : ($isOverdue ? '#e74c3c' : 'var(--primary-green)')) }};">
                     <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px; margin-bottom: 10px;">
                         <div style="flex: 1; min-width: 0;">
-                            <h4 style="color: var(--color-dark-green); margin: 0 0 5px 0; font-size: 1.1rem;">
+                            <h4 style="color: var(--primary-green); margin: 0 0 5px 0; font-size: 1.1rem;">
                                 @if($assignment->surah)
                                     📖 {{ $assignment->surah }} ({{ $assignment->start_verse }}@if($assignment->end_verse)-{{ $assignment->end_verse }}@endif)
                                 @else
@@ -146,7 +150,7 @@
                                     ⚠ Overdue
                                 </div>
                             @else
-                                <div class="status-badge" style="background: #f5f5f5; color: var(--color-dark-green); border: 2px solid var(--color-dark-green);">
+                                <div class="status-badge" style="background: #f5f5f5; color: var(--primary-green); border: 2px solid var(--primary-green);">
                                     📌 Pending
                                 </div>
                             @endif
@@ -229,7 +233,7 @@
         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
             <div style="flex: 1;">
                 <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-                    <div style="width: 50px; height: 50px; background: var(--color-dark-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
+                    <div style="width: 50px; height: 50px; background: var(--primary-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
                         🏫
                     </div>
                     <div>
@@ -258,7 +262,7 @@
 
     <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 25px;">
         <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
-            <div style="width: 50px; height: 50px; background: var(--color-dark-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
+            <div style="width: 50px; height: 50px; background: var(--primary-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
                 📝
             </div>
             <div>
@@ -378,7 +382,7 @@
     @if($assignments->where('material')->isNotEmpty())
     <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
         <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
-            <div style="width: 50px; height: 50px; background: var(--color-dark-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
+            <div style="width: 50px; height: 50px; background: var(--primary-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
                 📚
             </div>
             <div>

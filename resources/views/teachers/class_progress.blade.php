@@ -11,7 +11,7 @@
 
     .back-link {
         display: inline-block;
-        color: var(--color-gold);
+        color: var(--gold);
         text-decoration: none;
         margin-bottom: 20px;
         font-size: 0.95rem;
@@ -30,7 +30,7 @@
 
     .stat-card {
         background: rgba(31, 39, 27, 0.6);
-        border: 2px solid var(--color-dark-green);
+        border: 2px solid var(--primary-green);
         border-radius: 10px;
         padding: 20px;
         text-align: center;
@@ -45,7 +45,7 @@
     .stat-value {
         font-size: 2.5rem;
         font-weight: bold;
-        color: var(--color-gold);
+        color: var(--gold);
         font-family: 'Cairo', sans-serif;
         margin-bottom: 5px;
     }
@@ -58,7 +58,7 @@
 
     .chart-card {
         background: rgba(31, 39, 27, 0.6);
-        border: 2px solid var(--color-dark-green);
+        border: 2px solid var(--primary-green);
         border-radius: 10px;
         padding: 25px;
         margin-bottom: 25px;
@@ -66,7 +66,7 @@
 
     .chart-title {
         font-size: 1.3rem;
-        color: var(--color-gold);
+        color: var(--gold);
         font-family: 'Amiri', serif;
         margin-bottom: 20px;
         padding-bottom: 10px;
@@ -92,7 +92,7 @@
 
     .student-name {
         font-size: 1.2rem;
-        color: var(--color-gold);
+        color: var(--gold);
         font-weight: 600;
         font-family: 'Cairo', sans-serif;
     }
@@ -100,7 +100,7 @@
     .student-accuracy {
         font-size: 1.5rem;
         font-weight: bold;
-        color: var(--color-gold);
+        color: var(--gold);
     }
 
     .weakness-mini-list {
@@ -131,7 +131,7 @@
 
     .error-name {
         font-size: 1rem;
-        color: var(--color-gold);
+        color: var(--gold);
         font-weight: 600;
         font-family: 'Cairo', sans-serif;
     }

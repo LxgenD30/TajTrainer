@@ -26,7 +26,7 @@ class StudentController extends Controller
         $totalAssignments = $student->classrooms->flatMap->assignments->count();
         $pendingAssignments = $totalAssignments - $completedAssignments;
         
-        return view('layouts.slayout.dashboard', compact('student', 'enrolledClassesCount', 'completedAssignments', 'averageScore', 'pendingAssignments'));
+        return view('students.index', compact('student', 'enrolledClassesCount', 'completedAssignments', 'averageScore', 'pendingAssignments'));
     }
 
     public function classes()
