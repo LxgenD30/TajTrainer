@@ -100,15 +100,20 @@
     }
     
     .welcome-content h1 {
-        color: var(--white);
+        color: var(--white) !important;
         font-size: 2.5rem;
         margin-bottom: 15px;
+        position: relative;
+        z-index: 3;
     }
     
     .welcome-content p {
         font-size: 1.2rem;
         opacity: 0.95;
         margin-bottom: 20px;
+        color: var(--white) !important;
+        position: relative;
+        z-index: 3;
     }
     
     .streak-counter {
@@ -119,6 +124,9 @@
         padding: 10px 20px;
         border-radius: 50px;
         font-weight: bold;
+        color: var(--white) !important;
+        position: relative;
+        z-index: 3;
     }
     
     .streak-icon {
