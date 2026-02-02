@@ -4,35 +4,21 @@
 @section('user-role', 'Teacher • Classroom Management')
 
 @section('navigation')
-    <a href="{{ url('/home') }}" class="nav-item">
+    <a href="{{ route('home') }}" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-home"></i>
         </div>
         <div class="nav-label">Dashboard</div>
     </a>
     
-    <a href="{{ url('/classrooms') }}" class="nav-item active">
+    <a href="{{ route('classroom.index') }}" class="nav-item active">
         <div class="nav-icon">
             <i class="fas fa-chalkboard-teacher"></i>
         </div>
         <div class="nav-label">My Classes</div>
     </a>
     
-    <a href="{{ url('/assignments') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-tasks"></i>
-        </div>
-        <div class="nav-label">Assignments</div>
-    </a>
-    
-    <a href="{{ url('/teacher/submissions') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-clipboard-check"></i>
-        </div>
-        <div class="nav-label">Submissions</div>
-    </a>
-    
-    <a href="{{ url('/materials') }}" class="nav-item">
+    <a href="{{ route('materials.index') }}" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-book-open"></i>
         </div>

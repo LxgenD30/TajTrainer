@@ -4,28 +4,28 @@
 @section('user-role', 'Teacher • Grading Queue')
 
 @section('navigation')
-    <a href="{{ url('/home') }}" class="nav-item">
+    <a href="{{ route('home') }}" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-home"></i>
         </div>
         <div class="nav-label">Dashboard</div>
     </a>
     
-    <a href="{{ url('/classrooms') }}" class="nav-item">
+    <a href="{{ route('classroom.index') }}" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-chalkboard-teacher"></i>
         </div>
         <div class="nav-label">My Classes</div>
     </a>
     
-    <a href="{{ url('/assignments') }}" class="nav-item">
+    <a href="{{ route('materials.index') }}" class="nav-item">
         <div class="nav-icon">
-            <i class="fas fa-tasks"></i>
+            <i class="fas fa-book-open"></i>
         </div>
-        <div class="nav-label">Assignments</div>
+        <div class="nav-label">Materials</div>
     </a>
     
-    <a href="{{ url('/teacher/submissions') }}" class="nav-item active">
+    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-clipboard-check"></i>
         </div>

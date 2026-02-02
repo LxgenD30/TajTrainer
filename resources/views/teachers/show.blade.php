@@ -12,6 +12,10 @@
         <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
         <div class="nav-label">My Classes</div>
     </a>
+    <a href="{{ route('materials.index') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+        <div class="nav-label">Materials</div>
+    </a>
     <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item active">
         <div class="nav-icon"><i class="fas fa-user-circle"></i></div>
         <div class="nav-label">Profile</div>

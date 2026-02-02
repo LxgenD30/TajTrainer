@@ -365,10 +365,17 @@
                     
                     <!-- Profile Dropdown -->
                     <div class="profile-dropdown">
-                        <a href="{{ route('students.show', Auth::id()) }}" class="dropdown-item">
-                            <i class="fas fa-user-circle"></i>
-                            <span>My Profile</span>
-                        </a>
+                        @if(Auth::user()->role_id == 3)
+                            <a href="{{ route('teachers.show', Auth::id()) }}" class="dropdown-item">
+                                <i class="fas fa-user-circle"></i>
+                                <span>My Profile</span>
+                            </a>
+                        @else
+                            <a href="{{ route('students.show', Auth::id()) }}" class="dropdown-item">
+                                <i class="fas fa-user-circle"></i>
+                                <span>My Profile</span>
+                            </a>
+                        @endif
                         <div class="dropdown-divider"></div>
                         <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
                             @csrf

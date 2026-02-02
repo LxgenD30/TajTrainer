@@ -18,13 +18,6 @@
         <div class="nav-label">My Classes</div>
     </a>
     
-    <a href="{{ route('assignments.index') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-tasks"></i>
-        </div>
-        <div class="nav-label">Assignments</div>
-    </a>
-    
     <a href="{{ route('materials.index') }}" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-book-open"></i>
@@ -465,7 +458,7 @@
             </div>
         </div>
         <div class="quick-actions">
-            <a href="{{ route('classrooms.create') }}" class="action-btn">
+            <a href="{{ route('classroom.create') }}" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-plus"></i>
                 </div>
@@ -474,13 +467,13 @@
                     <p>Create a new classroom</p>
                 </div>
             </a>
-            <a href="{{ route('assignments.create') }}" class="action-btn">
+            <a href="{{ route('classroom.index') }}" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-tasks"></i>
                 </div>
                 <div class="action-details">
-                    <h4>New Assignment</h4>
-                    <p>Create an assignment</p>
+                    <h4>View Classes</h4>
+                    <p>Manage your classrooms</p>
                 </div>
             </a>
             <a href="{{ route('materials.create') }}" class="action-btn">
@@ -492,7 +485,7 @@
                     <p>Add learning resources</p>
                 </div>
             </a>
-            <a href="{{ route('classrooms.index') }}" class="action-btn">
+            <a href="{{ route('classroom.index') }}" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
