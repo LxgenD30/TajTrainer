@@ -1,157 +1,166 @@
-@extends('layouts.dashboard')
+@extends('layouts.template')
 
 @section('title', $classroom->class_name)
-@section('user-role', 'Student • ' . $classroom->class_name)
-
-@section('navigation')
-    <a href="{{ url('/student/classes') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-home"></i>
-        </div>
-        <div class="nav-label">Dashboard</div>
-    </a>
-    
-    <a href="{{ url('/student/classes') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-users"></i>
-        </div>
-        <div class="nav-label">My Classes</div>
-    </a>
-    
-    <a href="{{ url('/student/practice') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-microphone-alt"></i>
-        </div>
-        <div class="nav-label">Practice</div>
-    </a>
-    
-    <a href="{{ url('/student/progress') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="nav-label">My Progress</div>
-    </a>
-    
-    <a href="{{ url('/student/materials') }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-book-open"></i>
-        </div>
-        <div class="nav-label">Materials</div>
-    </a>
-    
-    <a href="{{ route('students.show', Auth::id()) }}" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-user-circle"></i>
-        </div>
-        <div class="nav-label">Profile</div>
-    </a>
-    
-    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
-        @csrf
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon">
-                <i class="fas fa-sign-out-alt"></i>
-            </div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
-@endsection
 
 @section('extra-styles')
 <style>
+    /* Spinner Animation */
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
     
     .spinner {
-        border: 2px solid rgba(10, 92, 54, 0.3);
-        border-top: 2px solid var(--primary-green);
+        border: 3px solid rgba(10, 92, 54, 0.1);
+        border-top: 3px solid var(--primary-green);
         border-radius: 50%;
-        width: 14px;
-        height: 14px;
-        animation: spin 0.6s linear infinite;
+        width: 16px;
+        height: 16px;
+        animation: spin 0.8s linear infinite;
+        flex-shrink: 0;
+    }
+    
+    /* Back Navigation */
+    .back-nav {
+        padding: 25px 0 15px;
     }
     
     .back-link {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        color: var(--primary-green);
+        gap: 10px;
+        color: #1a1a1a;
         text-decoration: none;
-        font-weight: 600;
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
         font-family: 'El Messiri', sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 8px 16px;
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid #2a2a2a;
+        transition: all 0.3s ease;
     }
     
     .back-link:hover {
-        color: var(--dark-green);
+        background: rgba(10, 92, 54, 0.1);
         transform: translateX(-5px);
+        border-color: var(--primary-green);
     }
     
+    /* Classroom Header */
     .classroom-header {
-        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-        border-radius: 20px;
-        padding: 30px;
+        background: linear-gradient(135deg, var(--primary-green), #1abc9c);
+        border-radius: 25px;
+        padding: 40px;
         margin-bottom: 30px;
         color: var(--white);
-        box-shadow: 0 8px 20px var(--shadow);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
+    }
+    
+    .classroom-header:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
     }
     
     .classroom-title {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .classroom-title h1 {
+        color: var(--white);
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .classroom-title p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        max-width: 800px;
+        margin-bottom: 25px;
+    }
+    
+    .classroom-stats {
+        display: flex;
+        gap: 25px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 15px 25px;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        min-width: 150px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--gold);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 5px;
+    }
+    
+    /* Section Card */
+    .section-card {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+        transition: all 0.3s ease;
+    }
+    
+    .section-card:hover {
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.15);
+    }
+    
+    .section-header {
         display: flex;
         align-items: center;
         gap: 15px;
-        margin-bottom: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(10, 92, 54, 0.1);
     }
     
-    .classroom-icon {
+    .section-icon {
         width: 60px;
         height: 60px;
-        background: rgba(255, 255, 255, 0.2);
         border-radius: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
+        font-size: 1.8rem;
+        color: var(--white);
+        background: linear-gradient(135deg, #e74c3c, #e67e22);
     }
     
-    .classroom-title h2 {
-        color: var(--white);
-        font-size: 2rem;
+    .section-header h3 {
+        font-size: 1.5rem;
+        color: #1a1a1a;
         margin: 0;
     }
     
-    .classroom-meta {
-        display: flex;
-        gap: 25px;
-        font-size: 1rem;
-        flex-wrap: wrap;
-    }
-    
-    .classroom-meta span {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .assignments-section {
-        background: var(--white);
-        border-radius: 20px;
-        padding: 30px;
-        box-shadow: 0 8px 20px var(--shadow);
-    }
-    
-    .section-title {
-        font-size: 1.6rem;
-        color: var(--primary-green);
-        margin-bottom: 25px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
+    /* Assignments List */
     .assignments-list {
         display: flex;
         flex-direction: column;
@@ -159,199 +168,251 @@
     }
     
     .assignment-card {
-        background: linear-gradient(135deg, rgba(10, 92, 54, 0.03), rgba(46, 139, 87, 0.03));
-        border: 2px solid rgba(10, 92, 54, 0.15);
-        border-left: 5px solid var(--primary-green);
-        border-radius: 15px;
+        background: rgba(10, 92, 54, 0.03);
+        border-left: 4px solid var(--primary-green);
+        border-radius: 12px;
         padding: 25px;
         transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border: 2px solid rgba(10, 92, 54, 0.1);
     }
     
     .assignment-card:hover {
-        transform: translateX(8px);
-        border-color: var(--gold);
-        border-left-color: var(--primary-green);
-        box-shadow: 0 6px 20px rgba(10, 92, 54, 0.15);
+        transform: translateX(5px);
+        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.1);
     }
     
-    .assignment-card.graded {
-        border-left-color: #4caf50;
-    }
-    
-    .assignment-card.submitted {
-        border-left-color: #2196f3;
-    }
-    
-    .assignment-card.overdue {
-        border-left-color: #e74c3c;
-    }
+    .assignment-card.graded { border-left-color: #4caf50; }
+    .assignment-card.submitted { border-left-color: #ff9800; }
+    .assignment-card.overdue { border-left-color: #e74c3c; }
+    .assignment-card.pending { border-left-color: var(--primary-green); }
     
     .assignment-header {
         display: flex;
         justify-content: space-between;
-        align-items: start;
-        gap: 20px;
+        align-items: flex-start;
         margin-bottom: 15px;
     }
     
     .assignment-title h4 {
-        color: var(--primary-green);
-        font-size: 1.3rem;
-        margin: 0 0 8px 0;
+        font-size: 1.2rem;
+        color: #1a1a1a;
+        margin-bottom: 8px;
     }
     
-    .assignment-desc {
+    .assignment-title p {
         color: #666;
         font-size: 0.95rem;
-        line-height: 1.6;
+        line-height: 1.5;
     }
     
-    .status-badge {
-        display: inline-flex;
+    .assignment-status {
+        display: flex;
         align-items: center;
         gap: 8px;
         padding: 8px 16px;
         border-radius: 50px;
-        font-size: 0.9rem;
         font-weight: 600;
+        font-size: 0.9rem;
         white-space: nowrap;
-        font-family: 'El Messiri', sans-serif;
     }
     
-    .status-graded {
-        background: #4caf50;
-        color: white;
-    }
+    .status-graded { background: rgba(76, 175, 80, 0.1); color: #4caf50; }
+    .status-submitted { background: rgba(255, 152, 0, 0.1); color: #ff9800; }
+    .status-overdue { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+    .status-pending { background: rgba(10, 92, 54, 0.1); color: var(--primary-green); }
     
-    .status-submitted {
-        background: #2196f3;
-        color: white;
-    }
-    
-    .status-pending {
-        background: #ff9800;
-        color: white;
-    }
-    
-    .status-overdue {
-        background: #e74c3c;
-        color: white;
-    }
-    
-    .assignment-footer {
+    .assignment-details {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 15px;
         padding-top: 15px;
         border-top: 1px solid rgba(10, 92, 54, 0.1);
-        flex-wrap: wrap;
     }
     
-    .assignment-info {
+    .assignment-meta {
         display: flex;
         gap: 20px;
-        flex-wrap: wrap;
         font-size: 0.9rem;
         color: #666;
     }
     
-    .assignment-info span {
+    .assignment-meta span {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
     }
     
-    .btn-action {
-        padding: 10px 20px;
-        background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-        color: var(--white);
-        border: none;
+    .assignment-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        padding: 8px 20px;
         border-radius: 50px;
+        border: none;
         font-family: 'El Messiri', sans-serif;
         font-weight: 600;
-        text-decoration: none;
+        font-size: 0.9rem;
+        cursor: pointer;
         transition: all 0.3s ease;
+        text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 8px;
     }
     
-    .btn-action:hover {
-        transform: translateY(-2px);
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-green), #2e8b57);
+        color: var(--white);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-3px);
         box-shadow: 0 5px 15px rgba(10, 92, 54, 0.3);
     }
     
-    .btn-view {
-        background: linear-gradient(135deg, var(--gold), #e6c34a);
-        color: var(--dark-green);
+    .btn-secondary {
+        background: rgba(10, 92, 54, 0.08);
+        color: #1a1a1a;
     }
     
-    .empty-assignments {
+    .btn-secondary:hover {
+        background: rgba(10, 92, 54, 0.15);
+    }
+    
+    /* Feedback Section */
+    .feedback-section {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(10, 92, 54, 0.05);
+        border-radius: 10px;
+        border-left: 4px solid var(--gold);
+    }
+    
+    .feedback-section h5 {
+        color: #1a1a1a;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .feedback-content {
+        color: #666;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+    
+    /* No Content State */
+    .no-content {
         text-align: center;
-        padding: 80px 20px;
+        padding: 60px 20px;
         color: #999;
     }
     
-    .empty-assignments i {
-        font-size: 5rem;
+    .no-content-icon {
+        font-size: 4rem;
         margin-bottom: 20px;
         opacity: 0.3;
     }
     
-    .empty-assignments h3 {
-        font-size: 1.5rem;
+    .no-content h3 {
+        font-size: 1.3rem;
         margin-bottom: 10px;
-        color: var(--primary-green);
+        color: #666;
+    }
+    
+    .no-content p {
+        font-size: 0.95rem;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .classroom-header {
+            padding: 30px;
+        }
+        
+        .classroom-title h1 {
+            font-size: 2.2rem;
+        }
     }
     
     @media (max-width: 768px) {
-        .classroom-title {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
         .assignment-header {
             flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
         }
         
-        .assignment-footer {
+        .assignment-details {
             flex-direction: column;
+            gap: 15px;
             align-items: flex-start;
+        }
+        
+        .assignment-actions {
+            width: 100%;
+        }
+        
+        .btn-primary, .btn-secondary {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .section-card {
+            padding: 20px;
         }
     }
 </style>
 @endsection
 
 @section('content')
-<a href="{{ route('student.classes') }}" class="back-link">
-    <i class="fas fa-arrow-left"></i> Back to My Classes
-</a>
+<div class="back-nav">
+    <a href="{{ route('student.classes') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+        Back to My Classes
+    </a>
+</div>
 
 <!-- Classroom Header -->
 <div class="classroom-header">
     <div class="classroom-title">
-        <div class="classroom-icon">
-            <i class="fas fa-chalkboard-teacher"></i>
+        <h1>{{ $classroom->class_name }}</h1>
+        <p>{{ $classroom->description ?? 'Master the rules of Quranic recitation through detailed analysis and practice.' }}</p>
+        
+        <div class="classroom-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ $assignments->count() }}</div>
+                <div class="stat-label">Assignments</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ $classroom->students->count() }}</div>
+                <div class="stat-label">Students</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ $classroom->teacher->name ?? 'Unknown' }}</div>
+                <div class="stat-label">Teacher</div>
+            </div>
         </div>
-        <h2>{{ $classroom->class_name }}</h2>
-    </div>
-    <div class="classroom-meta">
-        <span><i class="fas fa-user"></i> {{ $classroom->teacher->name ?? 'Unknown Teacher' }}</span>
-        <span><i class="fas fa-users"></i> {{ $classroom->students->count() }} students</span>
-        <span><i class="fas fa-tasks"></i> {{ $assignments->count() }} assignments</span>
-        @if($classroom->description)
-        <span><i class="fas fa-info-circle"></i> {{ $classroom->description }}</span>
-        @endif
     </div>
 </div>
 
 <!-- Assignments Section -->
-<div class="assignments-section">
-    <h3 class="section-title">
-        <i class="fas fa-clipboard-list"></i>
-        Assignments
-    </h3>
+<div class="section-card">
+    <div class="section-header">
+        <div class="section-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <h3>Class Assignments</h3>
+    </div>
     
     @if($assignments->count() > 0)
         <div class="assignments-list">
@@ -368,7 +429,7 @@
                     $isPending = !$submission || ($submission->status === 'pending' && !$isGraded);
                 @endphp
                 
-                <div class="assignment-card {{ $isGraded ? 'graded' : ($isSubmitted ? 'submitted' : ($isOverdue ? 'overdue' : '')) }}">
+                <div class="assignment-card {{ $isGraded ? 'graded' : ($isSubmitted ? 'submitted' : ($isOverdue ? 'overdue' : 'pending')) }}">
                     <div class="assignment-header">
                         <div class="assignment-title">
                             <h4>
@@ -376,75 +437,77 @@
                                     <i class="fas fa-book-quran"></i> {{ $assignment->surah }} 
                                     ({{ $assignment->start_verse }}@if($assignment->end_verse)-{{ $assignment->end_verse }}@endif)
                                 @else
-                                    {{ $assignment->title ?? ($assignment->material ? $assignment->material->title : 'Assignment') }}
+                                    <i class="fas fa-file-alt"></i> {{ $assignment->title ?? ($assignment->material ? $assignment->material->title : 'Assignment') }}
                                 @endif
                             </h4>
-                            <p class="assignment-desc">{{ Str::limit($assignment->instructions, 150) }}</p>
+                            <p>{{ Str::limit($assignment->instructions, 150) }}</p>
                         </div>
                         
-                        <div>
+                        <div class="assignment-status 
+                            {{ $isGraded ? 'status-graded' : ($isSubmitted ? 'status-submitted' : ($isOverdue ? 'status-overdue' : 'status-pending')) }}">
                             @if($isGraded)
-                                <div class="status-badge status-graded">
-                                    <i class="fas fa-check-circle"></i>
-                                    {{ $score->score }}/{{ $assignment->total_marks }}
-                                </div>
+                                <i class="fas fa-check-circle"></i>
+                                Graded: {{ $score->score }}/{{ $assignment->total_marks }}
                             @elseif($isSubmitted)
-                                <div class="status-badge status-submitted">
-                                    <div class="spinner"></div>
-                                    Analyzing
-                                </div>
+                                <div class="spinner"></div>
+                                Analyzing...
                             @elseif($isOverdue)
-                                <div class="status-badge status-overdue">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    Overdue
-                                </div>
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Overdue
                             @else
-                                <div class="status-badge status-pending">
-                                    <i class="fas fa-clock"></i>
-                                    Pending
-                                </div>
+                                <i class="fas fa-clock"></i>
+                                Pending
                             @endif
                         </div>
                     </div>
                     
-                    <div class="assignment-footer">
-                        <div class="assignment-info">
+                    <div class="assignment-details">
+                        <div class="assignment-meta">
                             @if($assignment->due_date)
                             <span>
-                                <i class="fas fa-calendar"></i>
-                                Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y') }}
+                                <i class="far fa-calendar"></i>
+                                Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y g:i A') }}
                             </span>
                             @endif
                             <span>
                                 <i class="fas fa-star"></i>
-                                {{ $assignment->total_marks }} marks
+                                {{ $assignment->total_marks }} points
                             </span>
                             @if($assignment->tajweed_rules)
-                            <span>
-                                <i class="fas fa-brain"></i>
-                                Tajweed: {{ implode(', ', json_decode($assignment->tajweed_rules, true) ?? []) }}
+                            <span style="color: var(--primary-green);">
+                                <i class="fas fa-microphone"></i>
+                                Voice Submission
                             </span>
                             @endif
                         </div>
                         
-                        <div style="display: flex; gap: 10px;">
+                        <div class="assignment-actions">
                             @if($isGraded || $isSubmitted)
-                                <a href="{{ route('assignment.view', $assignment->assignment_id) }}" class="btn-action btn-view">
-                                    <i class="fas fa-eye"></i> View Details
+                                <a href="{{ route('assignment.view', $assignment->assignment_id) }}" class="btn-primary">
+                                    <i class="fas fa-eye"></i> View
                                 </a>
                             @else
-                                <a href="{{ route('assignment.submit', $assignment->assignment_id) }}" class="btn-action">
-                                    <i class="fas fa-upload"></i> Submit Assignment
+                                <a href="{{ route('assignment.submit', $assignment->assignment_id) }}" class="btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Submit
                                 </a>
                             @endif
                         </div>
                     </div>
+                    
+                    @if($isGraded && $score->feedback)
+                        <div class="feedback-section">
+                            <h5><i class="fas fa-comment-dots"></i> Teacher Feedback</h5>
+                            <div class="feedback-content">{{ $score->feedback }}</div>
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>
     @else
-        <div class="empty-assignments">
-            <i class="fas fa-clipboard-list"></i>
+        <div class="no-content">
+            <div class="no-content-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
             <h3>No Assignments Yet</h3>
             <p>Your teacher hasn't posted any assignments for this class.</p>
         </div>
