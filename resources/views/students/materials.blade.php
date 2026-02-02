@@ -39,7 +39,7 @@
         <div class="nav-label">Materials</div>
     </a>
     
-    <a href="{{ route('students.show', Auth::id()) }}" class="nav-item">
+    <a href="{{ route('student.dashboard') }}" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-user-circle"></i>
         </div>
@@ -391,7 +391,7 @@
                 }
             @endphp
             
-            <div class="material-card" data-type="{{ $type }}" onclick="window.location.href='{{ route('student.material.show', $material->id) }}'" style="cursor: pointer;">
+            <div class="material-card" data-type="{{ $type }}" onclick="window.location.href='{{ route('student.material.show', $material->material_id) }}'" style="cursor: pointer;">
                 <div class="material-icon-container">
                     <i class="fas {{ $icon }} material-icon"></i>
                 </div>
