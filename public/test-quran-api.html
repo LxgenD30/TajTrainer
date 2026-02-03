@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Quran API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #0a5c36;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1abc9c;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            min-height: 100px;
+        }
+        .arabic {
+            font-size: 24px;
+            direction: rtl;
+            text-align: center;
+            margin: 20px 0;
+            color: #0a5c36;
+        }
+        .translation {
+            font-size: 16px;
+            color: #333;
+            margin: 15px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕌 Quran API Test</h1>
+        <p>Testing AlQuran.cloud API endpoints</p>
+        
+        <button onclick="testSurahAPI()">Test Surah API</button>
+        <button onclick="testRandomAyah()">Test Random Ayah</button>
+        <button onclick="testSpecificAyah()">Test Specific Ayah (1:1)</button>
+        <button onclick="testAllEndpoints()">Test All Endpoints</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+            console.log(message);
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
+        async function testSurahAPI() {
+            clearResults();
+            log('🔄 Testing Surah API...');
+            
+            try {
+                const response = await fetch('https://api.alquran.cloud/v1/surah/1');
+                log(`Response Status: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+                
+                const data = await response.json();
+                log(`API Status: ${data.status}`, data.status === 'OK' ? 'success' : 'error');
+                
+                if (data.status === 'OK') {
+                    log(`<strong>Surah:</strong> ${data.data.englishName} (${data.data.name})<br>
+                         <strong>Ayahs:</strong> ${data.data.numberOfAyahs}<br>
+                         <strong>Revelation:</strong> ${data.data.revelationType}`, 'success');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRandomAyah() {
+            clearResults();
+            const surahNumber = Math.floor(Math.random() * 114) + 1;
+            log(`🔄 Testing Random Ayah from Surah ${surahNumber}...`);
+            
+            try {
+                // First get surah info
+                const surahResponse = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`);
+                log(`Surah API: ${surahResponse.status}`, surahResponse.ok ? 'success' : 'error');
+                
+                const surahData = await surahResponse.json();
+                const totalAyahs = surahData.data.numberOfAyahs;
+                const ayahNumber = Math.floor(Math.random() * totalAyahs) + 1;
+                
+                log(`Selected: Surah ${surahNumber}, Ayah ${ayahNumber}`);
+                
+                // Fetch ayah data
+                const [arabicResponse, tajweedResponse, translationResponse] = await Promise.all([
+                    fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/ar.alafasy`),
+                    fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/quran-tajweed`),
+                    fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/en.asad`)
+                ]);
+                
+                log(`Arabic: ${arabicResponse.status} | Tajweed: ${tajweedResponse.status} | Translation: ${translationResponse.status}`,
+                    (arabicResponse.ok && translationResponse.ok) ? 'success' : 'error');
+                
+                const arabicData = await arabicResponse.json();
+                const tajweedData = await tajweedResponse.json();
+                const translationData = await translationResponse.json();
+                
+                if (arabicData.status === 'OK' && translationData.status === 'OK') {
+                    log(`<div class="arabic">${arabicData.data.text}</div>
+                         <div class="translation">${translationData.data.text}</div>
+                         <div class="info">🎵 Audio URL: ${arabicData.data.audio ? '✅ Available' : '❌ Not available'}</div>`, 'success');
+                    
+                    if (arabicData.data.audio) {
+                        log(`<audio controls src="${arabicData.data.audio}" style="width: 100%; margin-top: 10px;"></audio>`, 'success');
+                    }
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSpecificAyah() {
+            clearResults();
+            log('🔄 Testing Ayah 1:1 (Bismillah)...');
+            
+            try {
+                const response = await fetch('https://api.alquran.cloud/v1/ayah/1:1/ar.alafasy');
+                log(`Response: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                const data = await response.json();
+                
+                if (data.status === 'OK') {
+                    log(`<div class="arabic">${data.data.text}</div>
+                         <div class="info">Surah: ${data.data.surah.englishName} (${data.data.surah.name})</div>
+                         <div class="info">🎵 Audio: ${data.data.audio}</div>`, 'success');
+                    
+                    if (data.data.audio) {
+                        log(`<audio controls src="${data.data.audio}" style="width: 100%; margin-top: 10px;"></audio>`, 'success');
+                    }
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAllEndpoints() {
+            clearResults();
+            log('🔄 Testing All API Endpoints...');
+            
+            const endpoints = [
+                { name: 'Surah List', url: 'https://api.alquran.cloud/v1/surah' },
+                { name: 'Surah Al-Fatihah', url: 'https://api.alquran.cloud/v1/surah/1' },
+                { name: 'Ayah 1:1 Arabic', url: 'https://api.alquran.cloud/v1/ayah/1:1/ar.alafasy' },
+                { name: 'Ayah 1:1 Tajweed', url: 'https://api.alquran.cloud/v1/ayah/1:1/quran-tajweed' },
+                { name: 'Ayah 1:1 Translation', url: 'https://api.alquran.cloud/v1/ayah/1:1/en.asad' }
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url);
+                    const data = await response.json();
+                    log(`${endpoint.name}: ${response.status} - ${data.status}`, 
+                        (response.ok && data.status === 'OK') ? 'success' : 'error');
+                } catch (error) {
+                    log(`${endpoint.name}: ❌ ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            log('✅ Page loaded. Click a button to test the API.', 'success');
+        });
+    </script>
+</body>
+</html>

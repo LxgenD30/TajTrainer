@@ -903,7 +903,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@section('extra-scripts')
 <script>
     let mediaRecorder;
     let audioChunks = [];
@@ -917,6 +917,7 @@
 
     // Load random ayah on page load
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Practice page loaded - initializing...');
         loadRandomAyah();
     });
 
