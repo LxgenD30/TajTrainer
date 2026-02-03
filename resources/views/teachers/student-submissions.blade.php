@@ -465,9 +465,8 @@
             @if(!$submission->marks)
                 <div class="grading-form">
                     <h5><i class="fas fa-pen"></i> Grade Submission</h5>
-                    <form action="{{ route('submissions.grade', $submission->id) }}" method="POST">
+                    <form action="{{ route('teacher.submission.update.grade', $submission->id) }}" method="POST">
                         @csrf
-                        @method('PUT')
                         
                         <div class="form-group">
                             <label for="marks-{{ $submission->id }}">

@@ -1,0 +1,334 @@
+<?php
+
+require __DIR__.'/vendor/autoload.php';
+
+$app = require_once __DIR__.'/bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+echo "═══════════════════════════════════════════════════════════════\n";
+echo "          COMPREHENSIVE SYSTEM CHECK FOR TAJTRAINER            \n";
+echo "═══════════════════════════════════════════════════════════════\n\n";
+
+$errors = [];
+$warnings = [];
+$passed = 0;
+$total = 0;
+
+function check($label, $result, $error = '') {
+    global $errors, $warnings, $passed, $total;
+    $total++;
+    if ($result) {
+        echo "✅ $label\n";
+        $passed++;
+    } else {
+        echo "❌ $label\n";
+        $errors[] = "$label: $error";
+    }
+}
+
+function warn($label, $message) {
+    global $warnings;
+    echo "⚠️  $label\n";
+    $warnings[] = "$label: $message";
+}
+
+// ============ ENVIRONMENT CHECKS ============
+echo "\n【 ENVIRONMENT CONFIGURATION 】\n";
+echo "───────────────────────────────────────────\n";
+
+check('APP_ENV is set', env('APP_ENV') !== null, 'APP_ENV not configured');
+check('APP_KEY is set', env('APP_KEY') !== null, 'APP_KEY not configured');
+check('Database connection configured', env('DB_DATABASE') !== null, 'DB_DATABASE not configured');
+
+// ============ DATABASE CHECKS ============
+echo "\n【 DATABASE CONNECTION 】\n";
+echo "───────────────────────────────────────────\n";
+
+try {
+    \DB::connection()->getPdo();
+    check('Database connection', true);
+    
+    // Check critical tables exist
+    $tables = ['users', 'students', 'teachers', 'classrooms', 'assignments', 
+               'assignment_submissions', 'materials', 'scores', 'tajweed_error_logs'];
+    
+    foreach ($tables as $table) {
+        $exists = \Schema::hasTable($table);
+        check("Table: $table", $exists, "Table $table does not exist");
+    }
+    
+    // Check critical columns
+    echo "\n【 DATABASE SCHEMA VERIFICATION 】\n";
+    echo "───────────────────────────────────────────\n";
+    
+    $columnChecks = [
+        'assignment_submissions' => ['status', 'audio_file_path', 'tajweed_analysis', 'student_id', 'assignment_id'],
+        'tajweed_error_logs' => ['assignment_submission_id', 'practice_session_id', 'error_type', 'severity'],
+        'scores' => ['user_id', 'assignment_id', 'score', 'feedback'],
+        'users' => ['email', 'password', 'role_id'],
+    ];
+    
+    foreach ($columnChecks as $table => $columns) {
+        foreach ($columns as $column) {
+            $exists = \Schema::hasColumn($table, $column);
+            check("Column: $table.$column", $exists, "Column $column missing in $table");
+        }
+    }
+    
+} catch (\Exception $e) {
+    check('Database connection', false, $e->getMessage());
+}
+
+// ============ STORAGE CHECKS ============
+echo "\n【 STORAGE & FILE SYSTEM 】\n";
+echo "───────────────────────────────────────────\n";
+
+$storagePaths = [
+    storage_path('app/public/audio'),
+    storage_path('app/public/materials'),
+    storage_path('logs'),
+    storage_path('framework/cache'),
+    storage_path('framework/sessions'),
+    storage_path('framework/views'),
+];
+
+foreach ($storagePaths as $path) {
+    $exists = is_dir($path);
+    $writable = $exists && is_writable($path);
+    check("Directory: " . basename($path), $exists, "Directory does not exist: $path");
+    if ($exists) {
+        check("Writable: " . basename($path), $writable, "Directory not writable: $path");
+    }
+}
+
+// Check symbolic link
+$publicStorage = public_path('storage');
+check('Public storage symlink', is_link($publicStorage) || is_dir($publicStorage), 
+      'Run: php artisan storage:link');
+
+// ============ API KEY CHECKS ============
+echo "\n【 EXTERNAL API CONFIGURATION 】\n";
+echo "───────────────────────────────────────────\n";
+
+$assemblyaiKey = env('ASSEMBLYAI_API_KEY');
+$openaiKey = env('OPENAI_API_KEY');
+
+check('AssemblyAI API key set', !empty($assemblyaiKey), 'ASSEMBLYAI_API_KEY not configured');
+if (!empty($assemblyaiKey)) {
+    check('AssemblyAI key format', strlen($assemblyaiKey) === 32, 'Key should be 32 characters');
+}
+
+check('OpenAI API key set', !empty($openaiKey), 'OPENAI_API_KEY not configured');
+if (!empty($openaiKey)) {
+    check('OpenAI key prefix', str_starts_with($openaiKey, 'sk-'), 'Key should start with sk-');
+}
+
+// ============ PYTHON ENVIRONMENT ============
+echo "\n【 PYTHON INTEGRATION 】\n";
+echo "───────────────────────────────────────────\n";
+
+$pythonPath = base_path('.venv/Scripts/python.exe');
+check('Python virtual environment', file_exists($pythonPath), 
+      'Python venv not found at: ' . $pythonPath);
+
+if (file_exists($pythonPath)) {
+    // Test Python accessibility
+    $pythonCmd = '"' . $pythonPath . '" -c "import sys; print(sys.version)"';
+    exec($pythonCmd . ' 2>&1', $output, $returnCode);
+    check('Python executable works', $returnCode === 0, 'Python execution failed');
+    
+    if ($returnCode === 0) {
+        echo "   Python version: " . trim($output[0]) . "\n";
+    }
+    
+    // Check Python dependencies
+    $dependencies = ['librosa', 'soundfile', 'parselmouth', 'openai', 'fastdtw'];
+    $pythonCheckCmd = '"' . $pythonPath . '" -c "';
+    $pythonCheckCmd .= 'import sys; modules=[';
+    foreach ($dependencies as $dep) {
+        $pythonCheckCmd .= "\"$dep\",";
+    }
+    $pythonCheckCmd .= ']; ';
+    $pythonCheckCmd .= 'missing=[m for m in modules if __import__(\"importlib.util\").util.find_spec(m) is None]; ';
+    $pythonCheckCmd .= 'print(\"MISSING:\" + \",\".join(missing) if missing else \"OK\")"';
+    
+    exec($pythonCheckCmd . ' 2>&1', $depOutput, $depReturn);
+    if ($depReturn === 0 && isset($depOutput[0])) {
+        if (trim($depOutput[0]) === 'OK') {
+            check('Python dependencies installed', true);
+        } else {
+            $missing = str_replace('MISSING:', '', trim($depOutput[0]));
+            check('Python dependencies installed', false, "Missing: $missing");
+        }
+    }
+    
+    // Check tajweed_analyzer.py exists
+    $analyzerPath = base_path('python/tajweed_analyzer.py');
+    check('Tajweed analyzer script', file_exists($analyzerPath), 
+          'tajweed_analyzer.py not found');
+}
+
+// ============ ROUTES CHECKS ============
+echo "\n【 CRITICAL ROUTES 】\n";
+echo "───────────────────────────────────────────\n";
+
+$criticalRoutes = [
+    'home',
+    'classroom.index',
+    'classroom.show',
+    'classroom.create',
+    'assignment.show',
+    'assignment.create',
+    'teacher.student.submissions',
+    'teacher.submission.grade',
+    'teacher.submission.update.grade',
+    'student.classes',
+    'student.assignment.submit',
+    'student.assignment.store',
+    'student.practice',
+    'student.practice.submit',
+    'materials.index',
+    'materials.show',
+];
+
+foreach ($criticalRoutes as $routeName) {
+    try {
+        $url = route($routeName, ['id' => 1, 'classroom' => 1, 'student' => 1, 'submission' => 1, 'assignment' => 1, 'material' => 1], false);
+        check("Route: $routeName", true);
+    } catch (\Exception $e) {
+        check("Route: $routeName", false, $e->getMessage());
+    }
+}
+
+// ============ MODEL RELATIONSHIPS ============
+echo "\n【 MODEL RELATIONSHIPS 】\n";
+echo "───────────────────────────────────────────\n";
+
+try {
+    // Test if models can be instantiated
+    $modelTests = [
+        'User' => \App\Models\User::class,
+        'Student' => \App\Models\Student::class,
+        'Teacher' => \App\Models\Teacher::class,
+        'Classroom' => \App\Models\Classroom::class,
+        'Assignment' => \App\Models\Assignment::class,
+        'AssignmentSubmission' => \App\Models\AssignmentSubmission::class,
+        'Material' => \App\Models\Material::class,
+        'Score' => \App\Models\Score::class,
+        'TajweedErrorLog' => \App\Models\TajweedErrorLog::class,
+    ];
+    
+    foreach ($modelTests as $name => $class) {
+        try {
+            $model = new $class();
+            check("Model: $name", true);
+        } catch (\Exception $e) {
+            check("Model: $name", false, $e->getMessage());
+        }
+    }
+} catch (\Exception $e) {
+    warn('Model checks', $e->getMessage());
+}
+
+// ============ JOB CLASSES ============
+echo "\n【 QUEUE JOBS 】\n";
+echo "───────────────────────────────────────────\n";
+
+$jobPath = app_path('Jobs/ProcessSubmissionAudio.php');
+check('ProcessSubmissionAudio job', file_exists($jobPath), 
+      'ProcessSubmissionAudio.php not found');
+
+// ============ SERVICE CLASSES ============
+echo "\n【 SERVICE CLASSES 】\n";
+echo "───────────────────────────────────────────\n";
+
+$servicePaths = [
+    'ProgressTracker' => app_path('Services/ProgressTracker.php'),
+];
+
+foreach ($servicePaths as $name => $path) {
+    check("Service: $name", file_exists($path), "$name service not found");
+}
+
+// ============ CONFIGURATION FILES ============
+echo "\n【 CONFIGURATION FILES 】\n";
+echo "───────────────────────────────────────────\n";
+
+$configFiles = [
+    'app', 'database', 'filesystems', 'queue', 'services', 'telegram'
+];
+
+foreach ($configFiles as $config) {
+    $path = config_path("$config.php");
+    check("Config: $config", file_exists($path), "Config file $config.php not found");
+}
+
+// ============ DATA INTEGRITY CHECKS ============
+echo "\n【 DATA INTEGRITY 】\n";
+echo "───────────────────────────────────────────\n";
+
+try {
+    // Check for orphaned records
+    $orphanedSubmissions = \DB::table('assignment_submissions')
+        ->leftJoin('assignments', 'assignment_submissions.assignment_id', '=', 'assignments.assignment_id')
+        ->whereNull('assignments.assignment_id')
+        ->count();
+    
+    if ($orphanedSubmissions > 0) {
+        warn('Orphaned submissions', "$orphanedSubmissions submissions without assignments");
+    } else {
+        check('No orphaned submissions', true);
+    }
+    
+    // Check for submissions with invalid status
+    $invalidStatus = \DB::table('assignment_submissions')
+        ->whereNotIn('status', ['pending', 'submitted', 'graded'])
+        ->count();
+    
+    if ($invalidStatus > 0) {
+        warn('Invalid submission status', "$invalidStatus submissions with invalid status");
+    } else {
+        check('Valid submission statuses', true);
+    }
+    
+} catch (\Exception $e) {
+    warn('Data integrity checks', $e->getMessage());
+}
+
+// ============ FINAL SUMMARY ============
+echo "\n═══════════════════════════════════════════════════════════════\n";
+echo "                        SYSTEM CHECK SUMMARY                    \n";
+echo "═══════════════════════════════════════════════════════════════\n\n";
+
+echo "✅ Passed: $passed / $total checks\n";
+
+if (count($errors) > 0) {
+    echo "\n❌ ERRORS (" . count($errors) . "):\n";
+    foreach ($errors as $error) {
+        echo "   • $error\n";
+    }
+}
+
+if (count($warnings) > 0) {
+    echo "\n⚠️  WARNINGS (" . count($warnings) . "):\n";
+    foreach ($warnings as $warning) {
+        echo "   • $warning\n";
+    }
+}
+
+$score = $total > 0 ? round(($passed / $total) * 100, 1) : 0;
+echo "\n───────────────────────────────────────────\n";
+echo "Overall System Health: $score%\n";
+
+if ($score >= 95 && count($errors) === 0) {
+    echo "\n✅ SYSTEM READY FOR PRODUCTION DEPLOYMENT\n";
+} elseif ($score >= 80) {
+    echo "\n⚠️  SYSTEM FUNCTIONAL BUT HAS WARNINGS\n";
+    echo "Review warnings before deployment\n";
+} else {
+    echo "\n❌ SYSTEM NOT READY FOR DEPLOYMENT\n";
+    echo "Fix critical errors before proceeding\n";
+}
+
+echo "═══════════════════════════════════════════════════════════════\n\n";
