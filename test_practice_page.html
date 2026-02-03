@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Page Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .verse-arabic {
+            font-size: 2rem;
+            text-align: center;
+            direction: rtl;
+            padding: 20px;
+            background: rgba(10, 92, 54, 0.05);
+            border-radius: 10px;
+            color: #0a5c36;
+            min-height: 80px;
+        }
+        .verse-translation {
+            font-size: 1.1rem;
+            padding: 20px;
+            background: rgba(212, 175, 55, 0.05);
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .verse-info {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 1.2rem;
+            color: #0a5c36;
+            font-weight: 600;
+        }
+        .btn {
+            background: linear-gradient(135deg, #0a5c36, #1abc9c);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(10, 92, 54, 0.3);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1 style="color: #0a5c36; text-align: center;">
+            <i class="fas fa-book-quran"></i> Quran Practice Test
+        </h1>
+        <p style="text-align: center; color: #666;">Testing API integration and verse display</p>
+    </div>
+
+    <div class="test-card">
+        <h3><i class="fas fa-play-circle"></i> Test Controls</h3>
+        <button class="btn" onclick="testLoadVerse()">
+            <i class="fas fa-sync-alt"></i> Load Test Verse
+        </button>
+        <div id="testStatus"></div>
+    </div>
+
+    <div class="test-card">
+        <h3><i class="fas fa-book-open"></i> Verse Display</h3>
+        <div class="verse-info" id="verseInfo">
+            <span id="surahName">---</span> | <span id="ayahNumber">---</span>
+        </div>
+        <div class="verse-arabic" id="arabicText">
+            <div class="loading">Click "Load Test Verse" to begin...</div>
+        </div>
+        <div class="verse-translation" id="translationText">
+            <div class="loading">Translation will appear here...</div>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3><i class="fas fa-headphones"></i> Audio Reference</h3>
+        <audio id="audioPlayer" controls style="width: 100%;"></audio>
+        <p id="audioStatus" style="color: #666; font-size: 0.9rem; margin-top: 10px;">Audio not loaded yet</p>
+    </div>
+
+    <script>
+    (function() {
+        'use strict';
+        
+        console.log('=== Practice Page Test Initialized ===');
+
+        function testLoadVerse() {
+            console.log('Starting test...');
+            updateStatus('Testing API connection...', 'info');
+            
+            // Test with Surah 1 (Al-Fatiha), Ayah 1
+            var testSurah = 1;
+            var testAyah = 1;
+            
+            document.getElementById('arabicText').innerHTML = '<div class="loading">Loading verse...</div>';
+            document.getElementById('translationText').innerHTML = '<div class="loading">Loading translation...</div>';
+            document.getElementById('surahName').textContent = '---';
+            document.getElementById('ayahNumber').textContent = '---';
+            
+            var apiUrl = 'https://api.alquran.cloud/v1/ayah/' + testSurah + ':' + testAyah + '/editions/quran-uthmani,ar.alafasy,en.asad';
+            console.log('Fetching from:', apiUrl);
+            
+            fetch(apiUrl)
+                .then(function(response) {
+                    console.log('Response received, status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('API request failed with status: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    console.log('Data received:', data);
+                    
+                    if (data.code !== 200 || !data.data || data.data.length < 3) {
+                        throw new Error('Invalid API response structure');
+                    }
+                    
+                    // Extract the three editions
+                    var arabicText = data.data[0].text;
+                    var audioData = data.data[1];
+                    var translationText = data.data[2].text;
+                    
+                    console.log('Arabic text:', arabicText);
+                    console.log('Audio URL:', audioData.audio);
+                    console.log('Translation:', translationText);
+                    
+                    // Update display
+                    document.getElementById('arabicText').textContent = arabicText;
+                    document.getElementById('translationText').textContent = translationText;
+                    document.getElementById('surahName').textContent = audioData.surah.englishName;
+                    document.getElementById('ayahNumber').textContent = 'Ayah ' + testAyah;
+                    
+                    // Update audio
+                    if (audioData.audio) {
+                        document.getElementById('audioPlayer').src = audioData.audio;
+                        document.getElementById('audioStatus').textContent = 'Audio ready: Sheikh Mishary Alafasy';
+                        document.getElementById('audioStatus').style.color = '#0a5c36';
+                    }
+                    
+                    updateStatus('✓ Test PASSED! Verse loaded successfully.', 'success');
+                    console.log('=== Test completed successfully ===');
+                })
+                .catch(function(error) {
+                    console.error('Test failed:', error);
+                    updateStatus('✗ Test FAILED: ' + error.message, 'error');
+                    
+                    document.getElementById('arabicText').innerHTML = '<div style="color: #e74c3c;">Error loading verse</div>';
+                    document.getElementById('translationText').innerHTML = '<div style="color: #e74c3c;">' + error.message + '</div>';
+                });
+        }
+
+        function updateStatus(message, type) {
+            var statusDiv = document.getElementById('testStatus');
+            statusDiv.className = 'status ' + type;
+            statusDiv.innerHTML = '<i class="fas fa-' + 
+                (type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle') + 
+                '"></i> ' + message;
+        }
+
+        window.testLoadVerse = testLoadVerse;
+        console.log('Test functions ready');
+        
+    })();
+    </script>
+</body>
+</html>

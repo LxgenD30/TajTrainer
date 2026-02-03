@@ -457,16 +457,15 @@
     function loadNewVerse() {
         console.log('=== loadNewVerse() called ===');
         
-        try {
-            console.log('Step 1: Show loading state');
-            document.getElementById('ayahArabic').innerHTML = '<div class="loading">Loading verse...</div>';
-            document.getElementById('ayahTranslation').innerHTML = '<div class="loading">Loading translation...</div>';
-            document.getElementById('surahInfo').textContent = '---';
-            document.getElementById('ayahInfo').textContent = '---';
-            
-            console.log('Step 2: Generate random surah');
-            currentSurah = Math.floor(Math.random() * 114) + 1;
-            console.log('Selected Surah:', currentSurah);
+        console.log('Step 1: Show loading state');
+        document.getElementById('ayahArabic').innerHTML = '<div class="loading">Loading verse...</div>';
+        document.getElementById('ayahTranslation').innerHTML = '<div class="loading">Loading translation...</div>';
+        document.getElementById('surahInfo').textContent = '---';
+        document.getElementById('ayahInfo').textContent = '---';
+        
+        console.log('Step 2: Generate random surah');
+        currentSurah = Math.floor(Math.random() * 114) + 1;
+        console.log('Selected Surah:', currentSurah);
             
             var surahUrl = 'https://api.alquran.cloud/v1/surah/' + currentSurah;
             console.log('Step 3: Fetching surah info from:', surahUrl);
