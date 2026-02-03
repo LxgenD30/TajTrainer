@@ -37,9 +37,9 @@ function warn($label, $message) {
 echo "\n【 ENVIRONMENT CONFIGURATION 】\n";
 echo "───────────────────────────────────────────\n";
 
-check('APP_ENV is set', env('APP_ENV') !== null, 'APP_ENV not configured');
-check('APP_KEY is set', env('APP_KEY') !== null, 'APP_KEY not configured');
-check('Database connection configured', env('DB_DATABASE') !== null, 'DB_DATABASE not configured');
+check('APP_ENV is set', config('app.env') !== null, 'APP_ENV not configured');
+check('APP_KEY is set', config('app.key') !== null, 'APP_KEY not configured');
+check('Database connection configured', config('database.connections.mysql.database') !== null, 'DB_DATABASE not configured');
 
 // ============ DATABASE CHECKS ============
 echo "\n【 DATABASE CONNECTION 】\n";
@@ -111,8 +111,8 @@ check('Public storage symlink', is_link($publicStorage) || is_dir($publicStorage
 echo "\n【 EXTERNAL API CONFIGURATION 】\n";
 echo "───────────────────────────────────────────\n";
 
-$assemblyaiKey = env('ASSEMBLYAI_API_KEY');
-$openaiKey = env('OPENAI_API_KEY');
+$assemblyaiKey = config('services.assemblyai.api_key');
+$openaiKey = config('services.openai.api_key');
 
 check('AssemblyAI API key set', !empty($assemblyaiKey), 'ASSEMBLYAI_API_KEY not configured');
 if (!empty($assemblyaiKey)) {
