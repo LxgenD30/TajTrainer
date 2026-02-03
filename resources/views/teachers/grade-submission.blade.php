@@ -167,11 +167,6 @@
                 </div>
             </div>
             @endif
-
-            @if($submission->tajweed_analysis)
-            <!-- Move to right column with grading form -->
-            @endif
-            @endif
         </div>
 
         <!-- Right Column: Analysis + Grading Form Combined -->
