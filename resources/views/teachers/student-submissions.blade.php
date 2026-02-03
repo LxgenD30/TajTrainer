@@ -370,22 +370,18 @@
 @section('content')
 <!-- Submissions Header -->
 <div class="submissions-header">
-    <h2><i class="fas fa-clipboard-check"></i> Student Submissions</h2>
-    <p>Review and grade student recitations with AI-powered Tajweed analysis</p>
+    <h2><i class="fas fa-clipboard-check"></i> {{ $student->name }}'s Submissions</h2>
+    <p>{{ $classroom->name }} • Review and grade student recitations</p>
+    <a href="{{ route('classroom.show', $classroom->id) }}" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px; color: white; text-decoration: none;">
+        <i class="fas fa-arrow-left"></i> Back to Class
+    </a>
 </div>
-
-@php
-    $submissions = \App\Models\AssignmentSubmission::with(['student', 'assignment'])
-        ->where('status', 'submitted')
-        ->latest()
-        ->get();
-@endphp
 
 @if($submissions->isEmpty())
     <div class="empty-submissions">
         <i class="fas fa-check-double"></i>
-        <h3>All Caught Up!</h3>
-        <p>No pending submissions to grade at the moment.</p>
+        <h3>No Submissions Yet</h3>
+        <p>{{ $student->name }} hasn't submitted any assignments yet.</p>
     </div>
 @else
     @foreach($submissions as $submission)
@@ -394,25 +390,25 @@
             <div class="submission-header">
                 <div class="student-info">
                     <div class="student-avatar">
-                        {{ strtoupper(substr($submission->student->user->name ?? 'S', 0, 1)) }}
+                        {{ strtoupper(substr($student->name, 0, 1)) }}
                     </div>
                     <div class="student-details">
-                        <h3>{{ $submission->student->user->name ?? 'Student Name' }}</h3>
+                        <h3>{{ $submission->assignment->title }}</h3>
                         <p>Submitted {{ $submission->created_at->diffForHumans() }}</p>
                     </div>
                 </div>
                 <span class="submission-status {{ $submission->marks ? 'status-graded' : 'status-pending' }}">
-                    {{ $submission->marks ? 'Graded' : 'Pending Review' }}
+                    {{ $submission->marks ? 'Graded: ' . $submission->marks . '/' . $submission->assignment->total_marks : 'Pending Review' }}
                 </span>
             </div>
             
             <!-- Assignment Info -->
             <div class="assignment-info">
-                <h4>{{ $submission->assignment->title ?? 'Assignment Title' }}</h4>
+                <h4>{{ $submission->assignment->title }}</h4>
                 <div class="info-grid">
                     <div class="info-item">
                         <i class="fas fa-book-open"></i>
-                        <span>{{ $submission->assignment->classroom->name ?? 'Class Name' }}</span>
+                        <span>{{ $classroom->name }}</span>
                     </div>
                     <div class="info-item">
                         <i class="fas fa-calendar"></i>
@@ -420,7 +416,7 @@
                     </div>
                     <div class="info-item">
                         <i class="fas fa-star"></i>
-                        <span>Total Marks: {{ $submission->assignment->total_marks ?? 100 }}</span>
+                        <span>Total Marks: {{ $submission->assignment->total_marks }}</span>
                     </div>
                 </div>
             </div>
