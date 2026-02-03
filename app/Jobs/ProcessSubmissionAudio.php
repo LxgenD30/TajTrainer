@@ -376,7 +376,7 @@ class ProcessSubmissionAudio implements ShouldQueue
         $pythonPath = env('PYTHON_PATH', '');
         
         if ($pythonPath && file_exists($pythonPath)) {
-            return '"' . $pythonPath . '"';
+            return $pythonPath;  // No quotes - escapeshellarg() will handle it
         }
         
         // Try common Python paths for different environments
@@ -395,7 +395,7 @@ class ProcessSubmissionAudio implements ShouldQueue
             }
             
             if (file_exists($path)) {
-                return '"' . $path . '"';
+                return $path;  // No quotes - escapeshellarg() will handle it
             }
         }
         
