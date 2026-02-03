@@ -542,6 +542,9 @@
                     document.getElementById('ayahArabic').innerHTML = '';
                     document.getElementById('ayahArabic').appendChild(errorDiv);
                     document.getElementById('ayahTranslation').innerHTML = '<div class="error">Failed to load translation</div>';
+                });
+    }
+
     window.loadNewVerse = loadNewVerse;
 
     function toggleReference() {
@@ -564,8 +567,8 @@
         console.log('toggleRecording() called');
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             stopRecording();
-        
-        navigator.mediaDevices.getUserMedia({ 
+        } else {
+            navigator.mediaDevices.getUserMedia({ 
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
@@ -629,10 +632,11 @@
             console.error('Error starting recording:', error);
             alert('Could not access microphone. Please check permissions.');
         });
-            document.getElementById('recordIcon').className = 'fas fa-stop';
-        document.getElementById('recordingStatus').textContent = 'Recording in progress...';
-        document.getElementById('recordingStatus').classList.add('active');
-        
+        }
+    }
+
+    window.toggleRecording = toggleRecording;
+
     function stopRecording() {
         console.log('stopRecording() called');
         if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -694,6 +698,16 @@
             } else {
                 alert('Analysis failed: ' + (result.message || 'Unknown error'));
             }
+        })
+        .catch(function(error) {
+            console.error('Analysis error:', error);
+            document.getElementById('analyzingOverlay').classList.remove('show');
+            alert('Analysis failed. Please try again.');
+        });
+    }
+
+    window.analyzeRecording = analyzeRecording;
+
     function displayAnalysisResults(analysis) {
         console.log('displayAnalysisResults() called with:', analysis);
         
