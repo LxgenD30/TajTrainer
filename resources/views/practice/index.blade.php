@@ -732,32 +732,6 @@
         );
     }));
 
-})(
-
-function displayAnalysisResults(analysis) {
-    const resultsDiv = document.getElementById('analysisResults');
-    
-    const accuracyScore = analysis.accuracy_score || (analysis.overall_score && analysis.overall_score.score) || 0;
-    const feedback = (analysis.overall_score && analysis.overall_score.feedback) || 'Analysis complete';
-    
-    let html = '<div style="background: rgba(26, 188, 156, 0.05); padding: 20px; border-radius: 15px; border: 2px solid rgba(26, 188, 156, 0.2);">';
-    html += '<h4 style="color: var(--primary-green); margin-bottom: 15px;">';
-    html += '<i class="fas fa-chart-line"></i> Analysis Results';
-    html += '</h4>';
-    html += '<div style="font-size: 3rem; font-weight: 700; color: var(--primary-green); text-align: center; margin: 20px 0;">';
-    html += accuracyScore + '%';
-    html += '</div>';
-    html += '<p style="text-align: center; color: #666; font-size: 1.1rem;">';
-    html += feedback;
-    html += '</p>';
-    html += '</div>';
-    
-    resultsDiv.innerHTML = html;
-    resultsDiv.style.display = 'block';
-    
-    console.log('✅ Results displayed');
-}
-
-console.log('✅ Practice page ready');
+})();
 </script>
 @endsection
