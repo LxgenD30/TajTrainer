@@ -482,9 +482,41 @@
 
 @section('extra-scripts')
 <script>
+    console.log('=== STUDENT SUBMISSIONS PAGE DEBUG ===');
     console.log('✓ Student submissions page loaded');
+    console.log('Classroom: {{ $classroom->name }}');
+    console.log('Student: {{ $student->name }}');
     console.log('Total submissions: {{ $submissions->count() }}');
-    console.log('Pending review: {{ $pendingSubmissions->count() ?? 0 }}');
-    console.log('Graded: {{ $gradedSubmissions->count() ?? 0 }}');
+    
+    @php
+        try {
+            $pendingCount = $pendingSubmissions->count() ?? 0;
+            $gradedCount = $gradedSubmissions->count() ?? 0;
+            echo "console.log('Pending review: {$pendingCount}');";
+            echo "console.log('Graded: {$gradedCount}');";
+        } catch (\Exception $e) {
+            echo "console.error('Error counting submissions: " . addslashes($e->getMessage()) . "');";
+        }
+    @endphp
+    
+    console.log('Testing score accessor on each submission...');
+    @foreach($submissions as $index => $submission)
+        try {
+            console.log('Submission {{ $index }}: ID={{ $submission->id }}, Assignment={{ $submission->assignment_id }}');
+            @php
+                try {
+                    $testScore = $submission->score;
+                    $scoreInfo = $testScore ? "Has score: {$testScore->score}" : "No score";
+                    echo "console.log('  ✓ Score accessor works: {$scoreInfo}');";
+                } catch (\Exception $e) {
+                    echo "console.error('  ✗ Score accessor failed: " . addslashes($e->getMessage()) . "');";
+                }
+            @endphp
+        } catch(e) {
+            console.error('  ✗ JavaScript error:', e);
+        }
+    @endforeach
+    
+    console.log('=== DEBUG END ===');
 </script>
 @endsection
