@@ -377,7 +377,7 @@
                         </span>
                     </div>
                 </div>
-                @if(isset($submission->score))
+                @if($submission->score)
                     <div class="info-item">
                         <div class="info-label">🎯 Score</div>
                         <div class="info-value" style="color: #d4af37;">{{ $submission->score->score ?? 'Not graded' }} / {{ $assignment->total_marks }}</div>
