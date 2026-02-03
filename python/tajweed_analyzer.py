@@ -357,13 +357,6 @@ class TajweedAnalyzer:
                 else:
                     results['percentage'] = 100  # No elongations detected, assume OK
                 
-                # Cleanup temp WAV file if created
-                if temp_wav_file and os.path.exists(temp_wav_file):
-                    try:
-                        os.remove(temp_wav_file)
-                    except:
-                        pass
-                
                 return results
             
             else:
@@ -980,6 +973,12 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
 
 def main():
     """Main function"""
+    # Force UTF-8 encoding for output (critical for Arabic text)
+    if sys.platform == 'win32':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    
     if len(sys.argv) < 2:
         print(json.dumps({
             'error': 'Usage: python tajweed_analyzer.py <audio_file> [expected_text] [--reference=<path>] [--no-whisper] [--no-openai]'

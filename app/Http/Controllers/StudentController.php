@@ -585,6 +585,7 @@ class StudentController extends Controller
             'surah_number' => 'required|integer',
             'ayah_number' => 'required|integer',
             'expected_text' => 'required|string',
+            'reference_audio_url' => 'nullable|url',
         ]);
 
         try {
@@ -675,21 +676,52 @@ class StudentController extends Controller
             // Call Python analyzer for proper Tajweed analysis
             $fullAudioPath = storage_path('app/public/' . $audioPath);
             
+            // Download reference audio if provided
+            $referenceAudioPath = null;
+            if ($request->has('reference_audio_url') && !empty($request->reference_audio_url)) {
+                try {
+                    \Log::info('Downloading reference audio from: ' . $request->reference_audio_url);
+                    
+                    $referenceUrl = $request->reference_audio_url;
+                    $referenceContent = file_get_contents($referenceUrl);
+                    
+                    if ($referenceContent !== false) {
+                        $referenceFilename = 'ref_' . time() . '_' . uniqid() . '.mp3';
+                        $referencePath = storage_path('app/public/practice_recordings/' . $referenceFilename);
+                        
+                        if (file_put_contents($referencePath, $referenceContent)) {
+                            $referenceAudioPath = $referencePath;
+                            \Log::info('✓ Reference audio downloaded: ' . $referenceAudioPath);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to download reference audio: ' . $e->getMessage());
+                }
+            }
+            
             try {
                 \Log::info('Starting Tajweed analysis for practice session');
                 \Log::info('Audio file: ' . $fullAudioPath);
+                \Log::info('Expected text: ' . substr($request->expected_text, 0, 50));
+                \Log::info('Reference audio: ' . ($referenceAudioPath ? 'Yes' : 'No'));
                 
-                // Run Python analyzer
+                // Run Python analyzer with reference audio
                 $pythonCmd = $this->getPythonCommand();
                 $analyzerPath = base_path('python/tajweed_analyzer.py');
                 
-                // Don't escape pythonCmd as getPythonCommand() already adds quotes
+                // Build command with expected text and reference audio
                 $command = sprintf(
-                    '%s %s %s',
+                    '%s %s %s %s',
                     $pythonCmd,
                     escapeshellarg($analyzerPath),
-                    escapeshellarg($fullAudioPath)
+                    escapeshellarg($fullAudioPath),
+                    escapeshellarg($request->expected_text)
                 );
+                
+                // Add reference audio if available
+                if ($referenceAudioPath) {
+                    $command .= ' --reference=' . escapeshellarg($referenceAudioPath);
+                }
                 
                 \Log::info('Executing Python command: ' . $command);
                 

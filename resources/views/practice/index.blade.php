@@ -664,6 +664,7 @@
     window.deleteRecording = deleteRecording;
 
     function analyzeRecording() {
+        console.log('=== ANALYSIS STARTED ===');
         console.log('analyzeRecording() called');
         
         if (!recordedBlob) {
@@ -671,36 +672,63 @@
             return;
         }
         
-        console.log('Starting analysis...');
+        console.log('✓ Recording blob validated');
+        console.log('Blob size:', recordedBlob.size, 'bytes');
+        console.log('Blob type:', recordedBlob.type);
+        
+        console.log('Starting AI analysis...');
         document.getElementById('analyzingOverlay').classList.add('show');
+        
+        console.log('Building request data:');
+        console.log('  - Surah:', currentSurah);
+        console.log('  - Ayah:', currentAyah);
+        console.log('  - Expected text:', document.getElementById('ayahArabic').textContent.substring(0, 50) + '...');
+        console.log('  - Reference audio:', currentAudioUrl);
         
         var formData = new FormData();
         formData.append('audio_file', recordedBlob, 'recording.webm');
         formData.append('surah_number', currentSurah);
         formData.append('ayah_number', currentAyah);
         formData.append('expected_text', document.getElementById('ayahArabic').textContent);
+        formData.append('reference_audio_url', currentAudioUrl);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+        
+        console.log('✓ FormData prepared, sending to server...');
         
         fetch('{{ route("student.practice.submit") }}', {
             method: 'POST',
             body: formData
         })
         .then(function(response) {
-            console.log('Analysis response received');
+            console.log('=== SERVER RESPONSE RECEIVED ===');
+            console.log('Response status:', response.status);
+            console.log('Response OK:', response.ok);
             return response.json();
         })
         .then(function(result) {
-            console.log('Analysis result:', result);
+            console.log('=== ANALYSIS COMPLETE ===');
+            console.log('Full result:', result);
+            console.log('Success:', result.success);
+            console.log('Audio saved to:', result.audio_path);
+            
             document.getElementById('analyzingOverlay').classList.remove('show');
             
             if (result.success) {
+                console.log('✓ Analysis successful!');
+                console.log('Accuracy score:', result.analysis.accuracy_score + '%');
+                if (result.analysis.python_analysis && result.analysis.python_analysis.whisper_transcription) {
+                    console.log('Transcribed text:', result.analysis.python_analysis.whisper_transcription);
+                }
                 displayAnalysisResults(result.analysis);
             } else {
+                console.error('✗ Analysis failed:', result.message);
                 alert('Analysis failed: ' + (result.message || 'Unknown error'));
             }
         })
         .catch(function(error) {
-            console.error('Analysis error:', error);
+            console.error('=== ANALYSIS ERROR ===');
+            console.error('Error:', error);
+            console.error('Error message:', error.message);
             document.getElementById('analyzingOverlay').classList.remove('show');
             alert('Analysis failed. Please try again.');
         });
@@ -709,28 +737,64 @@
     window.analyzeRecording = analyzeRecording;
 
     function displayAnalysisResults(analysis) {
+        console.log('=== DISPLAYING RESULTS ===');
         console.log('displayAnalysisResults() called with:', analysis);
         
         var resultsDiv = document.getElementById('analysisResults');
         var accuracyScore = analysis.accuracy_score || (analysis.overall_score && analysis.overall_score.score) || 0;
-        var feedback = (analysis.overall_score && analysis.overall_score.feedback) || 'Analysis complete';
+        var feedback = analysis.feedback || (analysis.overall_score && analysis.overall_score.feedback) || 'Analysis complete';
         
         var html = '<div style="background: rgba(26, 188, 156, 0.05); padding: 20px; border-radius: 15px; border: 2px solid rgba(26, 188, 156, 0.2);">';
+        
+        // Overall Score
         html += '<h4 style="color: var(--primary-green); margin-bottom: 15px;">';
-        html += '<i class="fas fa-chart-line"></i> Analysis Results';
+        html += '<i class="fas fa-chart-line"></i> Tajweed Analysis Results';
         html += '</h4>';
         html += '<div style="font-size: 3rem; font-weight: 700; color: var(--primary-green); text-align: center; margin: 20px 0;">';
         html += accuracyScore + '%';
         html += '</div>';
-        html += '<p style="text-align: center; color: #666; font-size: 1.1rem;">';
+        html += '<p style="text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 20px;">';
         html += feedback;
         html += '</p>';
+        
+        // Transcribed Text (if available)
+        if (analysis.python_analysis && analysis.python_analysis.whisper_transcription) {
+            var transcription = analysis.python_analysis.whisper_transcription;
+            // Remove special tokens like <|ar|><|transcribe|><|notimestamps|>
+            transcription = transcription.replace(/<\|[^|]+\|>/g, '').trim();
+            if (transcription) {
+                html += '<div style="background: rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0; direction: rtl;">';
+                html += '<h5 style="color: #d4af37; margin-bottom: 10px;"><i class="fas fa-microphone"></i> Your Recitation (Transcribed):</h5>';
+                html += '<p style="font-size: 1.5rem; color: #333; text-align: center;">' + transcription + '</p>';
+                html += '</div>';
+            }
+        }
+        
+        // Detailed Breakdown (if available)
+        if (analysis.details) {
+            html += '<div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid rgba(26, 188, 156, 0.2);">';
+            html += '<h5 style="color: var(--primary-green); margin-bottom: 10px;"><i class="fas fa-list-check"></i> Detailed Breakdown:</h5>';
+            html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+            
+            for (var key in analysis.details) {
+                var label = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase() });
+                var value = Math.round(analysis.details[key]);
+                html += '<div style="background: rgba(255, 255, 255, 0.5); padding: 10px; border-radius: 8px;">';
+                html += '<div style="font-size: 0.9rem; color: #666;">' + label + '</div>';
+                html += '<div style="font-size: 1.3rem; font-weight: 600; color: var(--primary-green);">' + value + '%</div>';
+                html += '</div>';
+            }
+            
+            html += '</div></div>';
+        }
+        
         html += '</div>';
         
         resultsDiv.innerHTML = html;
         resultsDiv.style.display = 'block';
         
-        console.log('Results displayed successfully');
+        console.log('✓ Results displayed successfully');
+        console.log('=== ANALYSIS PRESENTATION COMPLETE ===');
     }
 
     window.displayAnalysisResults = displayAnalysisResults;
