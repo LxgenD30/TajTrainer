@@ -167,11 +167,26 @@ class TeacherController extends Controller
     public function gradeSubmission($submissionId)
     {
         try {
+            \Log::info("=== GRADE SUBMISSION DEBUG START ===");
+            \Log::info("Loading submission ID: {$submissionId}");
+            
             $submission = \App\Models\AssignmentSubmission::with([
                 'assignment.classroom', 
-                'student.user',
-                'score' // Load existing score if it exists
+                'student.user'
+                // Note: 'score' is loaded via custom accessor, not relationship
             ])->findOrFail($submissionId);
+            
+            \Log::info("Submission loaded: ID={$submission->id}, Assignment={$submission->assignment_id}, Student={$submission->student_id}");
+            \Log::info("Testing score accessor...");
+            
+            try {
+                $testScore = $submission->score;
+                \Log::info("Score accessor works: " . ($testScore ? "Score ID {$testScore->score_id}, Score: {$testScore->score}" : "No score"));
+            } catch (\Exception $e) {
+                \Log::error("Score accessor FAILED: " . $e->getMessage());
+            }
+            
+            \Log::info("=== GRADE SUBMISSION DEBUG END ===");
 
             // Verify teacher owns the classroom
             if (!$submission->assignment || !$submission->assignment->classroom) {
