@@ -37,11 +37,26 @@ class AssignmentSubmission extends Model
 
     /**
      * Get the score for this submission
+     * Note: Due to composite key (user_id, assignment_id), we can't use a simple relationship
+     * Use the getScoreAttribute() accessor below instead
      */
-    public function score(): HasOne
+    public function scoreRelation(): HasOne
     {
-        return $this->hasOne(Score::class, 'assignment_id', 'assignment_id')
-                    ->where('user_id', $this->student_id);
+        return $this->hasOne(Score::class, 'assignment_id', 'assignment_id');
+    }
+    
+    /**
+     * Accessor to get the score with proper composite key matching
+     */
+    public function getScoreAttribute()
+    {
+        if (!isset($this->attributes['student_id']) || !isset($this->attributes['assignment_id'])) {
+            return null;
+        }
+        
+        return Score::where('user_id', $this->attributes['student_id'])
+                    ->where('assignment_id', $this->attributes['assignment_id'])
+                    ->first();
     }
     
     /**

@@ -33,8 +33,124 @@
         </a>
     </div>
 
-    <div style="display: grid; grid-template-columns: 500px 1fr; gap: 25px;">
-        <!-- Submission Details -->
+    <div style="display: grid; grid-template-columns: 400px 400px 1fr; gap: 20px;">
+        <!-- Column 1: Grading Form -->
+        <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a; height: fit-content; position: sticky; top: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
+                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
+                    ✏️
+                </div>
+                <div>
+                    <h3 style="color: #0a5c36; font-size: 1.2rem; margin-bottom: 3px; font-family: 'El Messiri', serif;">
+                        {{ $submission->status === 'graded' ? 'Update Grade' : 'Grade' }}
+                    </h3>
+                    <p style="color: #666; font-size: 0.85rem; margin: 0;">Evaluate performance</p>
+                </div>
+            </div>
+
+            @if($submission->score)
+            <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4caf50; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                <div style="color: #4caf50; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-check-circle"></i> Previously Graded</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">Score</div>
+                        <div style="font-size: 1.3rem; color: #4caf50; font-weight: 700;">{{ $submission->score->score }}/{{ $submission->assignment->total_marks }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px;">Percentage</div>
+                        <div style="font-size: 1.3rem; color: #4caf50; font-weight: 700;">{{ round(($submission->score->score / $submission->assignment->total_marks) * 100, 1) }}%</div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <form method="POST" action="{{ route('teacher.submission.update.grade', $submission->id) }}">
+                @csrf
+                
+                @php
+                    // Calculate suggested score from Tajweed analysis
+                    $suggestedScore = null;
+                    if($submission->tajweed_score) {
+                        $suggestedScore = round(($submission->tajweed_score / 100) * $submission->assignment->total_marks, 1);
+                    }
+                    $defaultScore = old('score', $submission->score->score ?? $suggestedScore ?? '');
+                @endphp
+
+                @if($submission->tajweed_score)
+                <div style="background: rgba(26, 188, 156, 0.08); border: 2px solid rgba(26, 188, 156, 0.25); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <div>
+                            <div style="color: #0a5c36; font-weight: 700; font-size: 0.95rem;">🤖 AI Score</div>
+                            <div style="font-size: 0.75rem; color: #666;">Auto-calculated</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 1.6rem; color: #0a5c36; font-weight: 800; line-height: 1;">{{ $submission->tajweed_score }}%</div>
+                            <div style="font-size: 0.8rem; color: #666; font-weight: 600;">{{ $submission->tajweed_grade }}</div>
+                        </div>
+                    </div>
+                    <div style="background: white; border-radius: 8px; padding: 12px;">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 3px;">Suggested Points:</div>
+                        <div style="font-size: 1.3rem; color: #0a5c36; font-weight: 700;">{{ $suggestedScore }} <span style="font-size: 0.9rem; opacity: 0.7;">/ {{ $submission->assignment->total_marks }}</span></div>
+                    </div>
+                </div>
+                @endif
+
+                <div style="margin-bottom: 18px;">
+                    <label style="display: block; color: #0a5c36; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem;">
+                        🎯 Points Earned <span style="color: #ff6b6b;">*</span>
+                    </label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input 
+                            type="number" 
+                            name="score" 
+                            min="0" 
+                            max="{{ $submission->assignment->total_marks }}"
+                            step="0.5"
+                            value="{{ $defaultScore }}"
+                            required
+                            style="flex: 1; padding: 12px; background: white; border: 2px solid {{ $suggestedScore && !$submission->score ? '#1abc9c' : 'rgba(10, 92, 54, 0.3)' }}; border-radius: 8px; color: #1a1a1a; font-size: 1.2rem; font-weight: 700;"
+                        >
+                        <span style="color: #666; font-size: 1rem; font-weight: 600;">/ {{ $submission->assignment->total_marks }}</span>
+                    </div>
+                    @error('score')
+                        <p style="color: #ff6b6b; font-size: 0.8rem; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                @php
+                    $defaultFeedback = old('feedback', $submission->score->feedback ?? '');
+                    if(!$defaultFeedback && $submission->tajweed_analysis) {
+                        $analysis = json_decode($submission->tajweed_analysis, true);
+                        if(isset($analysis['overall_score']['feedback'])) {
+                            $defaultFeedback = $analysis['overall_score']['feedback'];
+                        }
+                    }
+                @endphp
+
+                <div style="margin-bottom: 18px;">
+                    <label style="display: block; color: #0a5c36; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem;">
+                        💬 Feedback <span style="color: #ff6b6b;">*</span>
+                    </label>
+                    <textarea 
+                        name="feedback" 
+                        rows="6" 
+                        required
+                        placeholder="Provide feedback on recitation..."
+                        style="width: 100%; padding: 12px; background: white; border: 2px solid {{ $defaultFeedback && !$submission->score ? '#1abc9c' : 'rgba(10, 92, 54, 0.3)' }}; border-radius: 8px; color: #1a1a1a; font-size: 0.9rem; line-height: 1.5; resize: vertical; font-family: 'Cairo', sans-serif;"
+                    >{{ $defaultFeedback }}</textarea>
+                    @error('feedback')
+                        <p style="color: #ff6b6b; font-size: 0.8rem; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <button type="submit" 
+                    style="width: 100%; padding: 12px 20px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
+                    {{ $submission->status === 'graded' ? '📝 Update Grade' : '✓ Submit Grade' }}
+                </button>
+            </form>
+        </div>
+
+        <!-- Column 2: Submission Details -->
         <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
                 <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
@@ -429,179 +545,6 @@
             </div>
             @endif
             @endif
-        </div>
-
-        <!-- Grading Form (moved to right column) -->
-        <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
-                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
-                    ✏️
-                </div>
-                <div>
-                    <h3 style="color: #0a5c36; font-size: 1.3rem; margin-bottom: 5px; font-family: 'El Messiri', serif;">
-                        {{ $submission->status === 'graded' ? 'Update Grade' : 'Provide Grade' }}
-                    </h3>
-                    <p style="color: #666; font-size: 0.9rem; margin: 0;">Evaluate student performance</p>
-                </div>
-            </div>
-
-            @if($submission->score)
-            <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4caf50; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
-                <div style="color: #4caf50; font-weight: 600; margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-check-circle"></i> Previously Graded</div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <div>
-                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Score</div>
-                        <div style="font-size: 1.4rem; color: #4caf50; font-weight: 700;">{{ $submission->score->score }}/{{ $submission->assignment->total_marks }}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Percentage</div>
-                        <div style="font-size: 1.4rem; color: #4caf50; font-weight: 700;">{{ round(($submission->score->score / $submission->assignment->total_marks) * 100, 1) }}%</div>
-                    </div>
-                </div>
-                @if($submission->score->feedback)
-                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(76, 175, 80, 0.2);">
-                    <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Previous Feedback</div>
-                    <div style="font-size: 0.9rem; color: #1a1a1a; line-height: 1.6;">{{ Str::limit($submission->score->feedback, 100) }}</div>
-                </div>
-                @endif
-            </div>
-            @endif
-
-            <form method="POST" action="{{ route('teacher.submission.update.grade', $submission->id) }}">
-                @csrf
-                
-                @php
-                    // Calculate suggested score from Tajweed analysis
-                    $suggestedScore = null;
-                    if($submission->tajweed_score) {
-                        // Convert percentage to actual points (e.g., 85% of 100 marks = 85 points)
-                        $suggestedScore = round(($submission->tajweed_score / 100) * $submission->assignment->total_marks, 1);
-                    }
-                    $defaultScore = old('score', $submission->score->score ?? $suggestedScore ?? '');
-                @endphp
-
-                <!-- Tajweed AI Score Display (Always show if available) -->
-                @if($submission->tajweed_score)
-                <div style="background: rgba(26, 188, 156, 0.1); border: 2px solid rgba(26, 188, 156, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(26, 188, 156, 0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(26, 188, 156, 0.3);">🤖</div>
-                            <div>
-                                <div style="color: #0a5c36; font-weight: 700; font-size: 1.1rem;">AI Tajweed Analysis Score</div>
-                                <div style="font-size: 0.8rem; color: #666;">Based on Madd & Noon Sakin rules</div>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 2rem; color: #0a5c36; font-weight: 800; line-height: 1;">{{ $submission->tajweed_score }}%</div>
-                            <div style="font-size: 0.85rem; color: #666; font-weight: 600;">{{ $submission->tajweed_grade }}</div>
-                        </div>
-                    </div>
-                    <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(10, 92, 54, 0.1);">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="font-size: 0.9rem; color: #666;">
-                                <strong style="color: #1a1a1a;">Suggested Points:</strong>
-                            </div>
-                            <div style="font-size: 1.5rem; color: #0a5c36; font-weight: 700;">
-                                {{ $suggestedScore }}<span style="font-size: 1rem; opacity: 0.7;"> / {{ $submission->assignment->total_marks }}</span>
-                            </div>
-                        </div>
-                        @if(!$submission->score)
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(77, 139, 49, 0.3);">
-                            <p style="color: var(--light-green); font-size: 0.85rem; margin: 0; opacity: 0.9;">
-                                💡 This score has been automatically filled in the Points Earned field below. You can adjust it based on your evaluation.
-                            </p>
-                        </div>
-                        @else
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(77, 139, 49, 0.3);">
-                            <p style="color: var(--light-green); font-size: 0.85rem; margin: 0; opacity: 0.9;">
-                                📊 AI Score: <strong>{{ $suggestedScore }}</strong> | Your Score: <strong>{{ $submission->score->score }}</strong>
-                                @if(abs($suggestedScore - $submission->score->score) > ($submission->assignment->total_marks * 0.1))
-                                    <span style="color: #ff9800;">⚠️ Significant difference</span>
-                                @endif
-                            </p>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-                @endif
-
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 1rem;">
-                        🎯 Points Earned <span style="color: #ff6b6b;">*</span>
-                        @if($suggestedScore && !$submission->score)
-                        <span style="font-size: 0.85rem; color: #0a5c36; font-weight: 500; margin-left: 8px;">(Pre-filled from AI Analysis)</span>
-                        @endif
-                    </label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input 
-                            type="number" 
-                            name="score" 
-                            min="0" 
-                            max="{{ $submission->assignment->total_marks }}"
-                            step="0.5"
-                            value="{{ $defaultScore }}"
-                            required
-                            style="flex: 1; padding: 15px; background: white; border: 2px solid {{ $suggestedScore && !$submission->score ? '#1abc9c' : 'rgba(10, 92, 54, 0.3)' }}; border-radius: 10px; color: #1a1a1a; font-size: 1.3rem; font-weight: 700; transition: all 0.3s ease; {{ $suggestedScore && !$submission->score ? 'box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);' : '' }}"
-                            onfocus="this.style.borderColor='#1abc9c'; this.style.boxShadow='0 0 0 3px rgba(26, 188, 156, 0.1)'"
-                            onblur="this.style.borderColor='rgba(10, 92, 54, 0.3)'; this.style.boxShadow='none'"
-                        >
-                        <span style="color: #666; font-size: 1.1rem; font-weight: 600;">/ {{ $submission->assignment->total_marks }}</span>
-                    </div>
-                    @error('score')
-                        <p style="color: #ff6b6b; font-size: 0.85rem; margin-top: 5px;">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                @php
-                    // Get AI-generated feedback to pre-populate
-                    $defaultFeedback = old('feedback', $submission->score->feedback ?? '');
-                    if(!$defaultFeedback && $submission->tajweed_analysis) {
-                        $analysis = json_decode($submission->tajweed_analysis, true);
-                        if(isset($analysis['overall_score']['feedback'])) {
-                            $defaultFeedback = $analysis['overall_score']['feedback'];
-                        }
-                    }
-                @endphp
-
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 1rem;">
-                        💬 Feedback <span style="color: #ff6b6b;">*</span>
-                        @if($defaultFeedback && !$submission->score)
-                        <span style="font-size: 0.85rem; color: #0a5c36; font-weight: 500; margin-left: 8px;">(Pre-filled from AI Analysis)</span>
-                        @endif
-                    </label>
-                    <textarea 
-                        name="feedback" 
-                        rows="8" 
-                        required
-                        placeholder="Provide detailed feedback on the student's recitation, highlighting strengths and areas for improvement..."
-                        style="width: 100%; padding: 15px; background: white; border: 2px solid {{ $defaultFeedback && !$submission->score ? '#1abc9c' : 'rgba(10, 92, 54, 0.3)' }}; border-radius: 10px; color: #1a1a1a; font-size: 0.95rem; line-height: 1.6; resize: vertical; transition: all 0.3s ease; font-family: 'Cairo', sans-serif; {{ $defaultFeedback && !$submission->score ? 'box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);' : '' }}"
-                        onfocus="this.style.borderColor='#1abc9c'; this.style.boxShadow='0 0 0 3px rgba(26, 188, 156, 0.1)'"
-                        onblur="this.style.borderColor='rgba(10, 92, 54, 0.3)'; this.style.boxShadow='none'"
-                    >{{ $defaultFeedback }}</textarea>
-                    @error('feedback')
-                        <p style="color: #ff6b6b; font-size: 0.85rem; margin-top: 5px;">{{ $message }}</p>
-                    @enderror
-                    <p style="color: #666; font-size: 0.85rem; margin-top: 8px;">
-                        💡 Tip: Include specific feedback on Tajweed rules, pronunciation, and recitation quality.
-                    </p>
-                </div>
-
-                <div style="display: flex; gap: 15px; padding-top: 20px; border-top: 2px solid rgba(10, 92, 54, 0.2);">
-                    <a href="{{ route('teacher.student.submissions', ['classroom' => $submission->assignment->class_id, 'student' => $submission->student_id]) }}" 
-                        style="flex: 1; text-align: center; padding: 12px 25px; background: white; color: #666; border: 2px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease;"
-                        onmouseover="this.style.background='#f5f5f5'; this.style.borderColor='#bbb'"
-                        onmouseout="this.style.background='white'; this.style.borderColor='#ddd'">
-                        Cancel
-                    </a>
-                    <button type="submit" 
-                        style="flex: 2; padding: 12px 25px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(10, 92, 54, 0.4)'"
-                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(10, 92, 54, 0.3)'">
-                        {{ $submission->status === 'graded' ? '📝 Update Grade' : '✓ Submit Grade' }}
-                    </button>
-                </div>
-            </form>
         </div>
         </div> <!-- Close right column -->
     </div> <!-- Close grid -->
