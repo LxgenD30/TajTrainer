@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Materials Page Check</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .check-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #4caf50; }
+        .check-item.pending { border-left-color: #ff9800; }
+        .check-item.error { border-left-color: #f44336; }
+        h2 { color: #0a5c36; }
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+        .test-btn { background: #0a5c36; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .test-btn:hover { background: #1abc9c; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Materials Page Verification</h1>
+    
+    <h2>Quick Checks</h2>
+    
+    <div class="check-item">
+        <strong>✓ View Cache Cleared</strong><br>
+        Run in terminal: <code>php artisan view:clear && php artisan cache:clear</code>
+    </div>
+    
+    <div class="check-item">
+        <strong>✓ $isStudent Variable Added</strong><br>
+        MaterialController now passes <code>$isStudent</code> to view
+    </div>
+    
+    <div class="check-item">
+        <strong>✓ Thumbnail Logic Fixed</strong><br>
+        Handles both full URLs (YouTube) and local paths (uploaded files)
+    </div>
+    
+    <div class="check-item">
+        <strong>✓ JavaScript Section Fixed</strong><br>
+        Changed from <code>@push('scripts')</code> to <code>@section('extra-scripts')</code>
+    </div>
+    
+    <h2>Browser Tests</h2>
+    
+    <button class="test-btn" onclick="testLocalStorage()">Test localStorage</button>
+    <button class="test-btn" onclick="testConsole()">Test Console</button>
+    <button class="test-btn" onclick="openMaterialsPage()">Open Materials Page</button>
+    
+    <div id="results"></div>
+    
+    <h2>Manual Verification Steps</h2>
+    
+    <div class="check-item pending">
+        <strong>1. Open Materials Page</strong><br>
+        Navigate to: <a href="http://localhost/tajtrainerv2/public/Materials" target="_blank">http://localhost/tajtrainerv2/public/Materials</a>
+    </div>
+    
+    <div class="check-item pending">
+        <strong>2. Open Browser Console (F12)</strong><br>
+        You should see these logs:
+        <pre>Materials page script loaded
+DOM Content Loaded - Materials page
+Saved view preference: grid
+setView called with: grid
+Elements found: {container: true, cardsCount: 7, ...}
+Switching to grid view</pre>
+    </div>
+    
+    <div class="check-item pending">
+        <strong>3. Check Thumbnails Display</strong><br>
+        All materials with YouTube links or uploaded thumbnails should show images
+    </div>
+    
+    <div class="check-item pending">
+        <strong>4. Test View Toggle</strong><br>
+        - Click "List" button → Cards should change to horizontal layout<br>
+        - Click "Grid" button → Cards should return to grid layout<br>
+        - Refresh page → Should remember your last choice
+    </div>
+    
+    <div class="check-item pending">
+        <strong>5. Test Create/Update Material</strong><br>
+        - Click "Add New Material"<br>
+        - Fill in title, add YouTube link<br>
+        - Save → Thumbnail should auto-generate
+    </div>
+    
+    <h2>Debugging Tips</h2>
+    
+    <div class="check-item">
+        <strong>If View Toggle Doesn't Work:</strong><br>
+        1. Open Console (F12)<br>
+        2. Type: <code>setView('list')</code> and press Enter<br>
+        3. If it works → Check onclick attributes on buttons<br>
+        4. If error → Check console for JavaScript errors
+    </div>
+    
+    <div class="check-item">
+        <strong>If Thumbnails Don't Show:</strong><br>
+        1. Right-click on broken image → Inspect<br>
+        2. Check src attribute value<br>
+        3. Copy URL and paste in new tab<br>
+        4. If 404 → File doesn't exist<br>
+        5. If CORS error → YouTube might be blocking
+    </div>
+    
+    <div class="check-item">
+        <strong>Check Database:</strong><br>
+        Run: <code>php test_materials_display.php</code><br>
+        Shows all materials with their thumbnail URLs
+    </div>
+    
+    <script>
+        function testLocalStorage() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>localStorage Test Results:</h3>';
+            
+            try {
+                localStorage.setItem('test', 'works');
+                const value = localStorage.getItem('test');
+                localStorage.removeItem('test');
+                
+                results.innerHTML += '<div class="check-item">✓ localStorage is working</div>';
+                
+                const materialsView = localStorage.getItem('materialsView');
+                if (materialsView) {
+                    results.innerHTML += `<div class="check-item">✓ materialsView is set to: <strong>${materialsView}</strong></div>`;
+                } else {
+                    results.innerHTML += '<div class="check-item pending">⚠ materialsView not set yet (will be set to "grid" on first visit)</div>';
+                }
+            } catch (e) {
+                results.innerHTML += `<div class="check-item error">✗ localStorage error: ${e.message}</div>`;
+            }
+        }
+        
+        function testConsole() {
+            console.log('=== Materials Page Verification Test ===');
+            console.log('1. This message should appear in console');
+            console.log('2. Check if setView function exists:', typeof setView);
+            console.log('3. localStorage access:', localStorage.getItem('materialsView'));
+            console.log('4. Test complete!');
+            
+            document.getElementById('results').innerHTML = '<div class="check-item">✓ Check browser console (F12) for test output</div>';
+        }
+        
+        function openMaterialsPage() {
+            window.open('http://localhost/tajtrainerv2/public/Materials', '_blank');
+            document.getElementById('results').innerHTML = '<div class="check-item">✓ Materials page opened in new tab. Check console (F12) for logs.</div>';
+        }
+    </script>
+</body>
+</html>

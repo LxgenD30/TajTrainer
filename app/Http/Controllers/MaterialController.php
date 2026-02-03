@@ -14,7 +14,8 @@ class MaterialController extends Controller
     public function index()
     {
         $materials = Material::orderBy('created_at', 'desc')->paginate(12);
-        return view('materials.index', compact('materials'));
+        $isStudent = auth()->check() && auth()->user()->role_id == 2;
+        return view('materials.index', compact('materials', 'isStudent'));
     }
 
     /**

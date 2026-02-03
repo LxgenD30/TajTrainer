@@ -1,520 +1,253 @@
 @php
-    $isStudent = Auth::user()->role_id == 2; // Role 2 = Student, Role 3 = Teacher
-    $layout = $isStudent ? 'layouts.dashboard' : 'layouts.template';
+    $currentUser = Auth::user();
+    $isStudent = $currentUser->role_id == 2;
 @endphp
 
-@extends($layout)
+@extends('layouts.dashboard')
 
 @section('title', $material->title)
-@if($isStudent)
-    @section('user-role', 'Student • Material Details')
-@else
-    @section('page-title', $material->title)
-    @section('page-subtitle', 'Material Details')
-@endif
+@section('user-role', ($isStudent ? 'Student' : 'Teacher') . ' • Material Details')
 
-@if($isStudent)
 @section('navigation')
-    <a href="{{ route('student.dashboard') }}" class="nav-item">
-        <i class="fas fa-home nav-icon"></i>
-        <span class="nav-label">Dashboard</span>
-    </a>
-    <a href="{{ route('student.classes') }}" class="nav-item">
-        <i class="fas fa-users nav-icon"></i>
-        <span class="nav-label">My Classes</span>
-    </a>
-    <a href="{{ route('student.practice') }}" class="nav-item">
-        <i class="fas fa-microphone-alt nav-icon"></i>
-        <span class="nav-label">Practice</span>
-    </a>
-    <a href="{{ route('student.progress') }}" class="nav-item">
-        <i class="fas fa-chart-line nav-icon"></i>
-        <span class="nav-label">My Progress</span>
-    </a>
-    <a href="{{ route('student.materials') }}" class="nav-item active">
-        <i class="fas fa-book-open nav-icon"></i>
-        <span class="nav-label">Materials</span>
-    </a>
+    @if($isStudent)
+        <a href="{{ route('student.dashboard') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-home"></i></div>
+            <div class="nav-label">Dashboard</div>
+        </a>
+        <a href="{{ route('student.classes') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-users"></i></div>
+            <div class="nav-label">My Classes</div>
+        </a>
+        <a href="{{ route('student.practice') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-microphone-alt"></i></div>
+            <div class="nav-label">Practice</div>
+        </a>
+        <a href="{{ route('student.progress') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="nav-label">My Progress</div>
+        </a>
+        <a href="{{ route('student.materials') }}" class="nav-item active">
+            <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+            <div class="nav-label">Materials</div>
+        </a>
+    @else
+        <a href="{{ route('home') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-home"></i></div>
+            <div class="nav-label">Dashboard</div>
+        </a>
+        <a href="{{ route('classroom.index') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+            <div class="nav-label">My Classes</div>
+        </a>
+        <a href="{{ route('students.list') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
+            <div class="nav-label">My Students</div>
+        </a>
+        <a href="{{ route('materials.index') }}" class="nav-item active">
+            <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+            <div class="nav-label">Materials</div>
+        </a>
+    @endif
 @endsection
-@endif
 
 @section('content')
-<style>
-    .back-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: rgba(255, 255, 255, 0.9);
-        text-decoration: none;
-        font-weight: 600;
-        margin-bottom: 20px;
-        padding: 10px 20px;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        transition: all 0.3s ease;
-        position: relative;
-        z-index: 10;
-    }
-    
-    .back-button:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateX(-5px);
-        color: #ffffff;
-    }
-    
-    .material-header-card {
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        border-radius: 25px;
-        padding: 40px;
-        margin-bottom: 40px;
-        color: #ffffff;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
-        border: 3px solid #2a2a2a;
-    }
-    
-    .material-header-card:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
-        opacity: 0.4;
-    }
-    
-    .material-title-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        gap: 20px;
-        flex-wrap: wrap;
-        position: relative;
-        z-index: 2;
-    }
-    
-    .title-left {
-        flex: 1;
-        min-width: 300px;
-    }
-    
-    .material-title-large {
-        font-size: 2.5rem;
-        color: #ffffff !important;
-        margin-bottom: 15px;
-        font-weight: 700;
-        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    }
-    
-    .material-badges {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 15px;
-    }
-    
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        border-radius: 15px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(5px);
-        color: #ffffff;
-    }
-    
-    .badge-public {
-        background: rgba(255, 255, 255, 0.25);
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-    }
-    
-    .badge-private {
-        background: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    
-    .action-buttons {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .btn-action {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 25px;
-        border-radius: 25px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        border: 2px solid rgba(255, 255, 255, 0.4);
-        cursor: pointer;
-        font-size: 0.95rem;
-    }
-    
-    .btn-edit {
-        background: rgba(212, 175, 55, 0.9);
-        color: #1a1a1a;
-        border-color: #d4af37;
-    }
-    
-    .btn-edit:hover {
-        background: #d4af37;
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
-    }
-    
-    .btn-delete {
-        background: rgba(231, 76, 60, 0.9);
-        color: white;
-        border-color: #e74c3c;
-    }
-    
-    .btn-delete:hover {
-        background: #e74c3c;
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
-    }
-    
-    .content-card {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
-        border: 3px solid #2a2a2a;
-    }
-    
-    .video-container {
-        position: relative;
-        padding-bottom: 56.25%;
-        height: 0;
-        overflow: hidden;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-    
-    .video-container iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 15px;
-    }
-    
-    .thumbnail-container {
-        border-radius: 15px;
-        overflow: hidden;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .thumbnail-container img {
-        width: 100%;
-        height: auto;
-        display: block;
-    }
-    
-    .section-heading {
-        font-size: 1.6rem;
-        color: #0a5c36;
-        margin-bottom: 20px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .description-box {
-        background: rgba(10, 92, 54, 0.05);
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 5px solid #0a5c36;
-        line-height: 1.8;
-        font-size: 1.1rem;
-        color: #333;
-        white-space: pre-wrap;
-    }
-    
-    .resources-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .resource-card {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 20px;
-        background: linear-gradient(135deg, rgba(10, 92, 54, 0.05), rgba(46, 139, 87, 0.05));
-        border: 2px solid #0a5c36;
-        border-radius: 15px;
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-    
-    .resource-card:hover {
-        background: linear-gradient(135deg, rgba(10, 92, 54, 0.1), rgba(46, 139, 87, 0.1));
-        transform: translateY(-3px);
-        box-shadow: 0 5px 20px rgba(10, 92, 54, 0.2);
-    }
-    
-    .resource-icon-large {
-        font-size: 2.5rem;
-    }
-    
-    .resource-info h4 {
-        color: #0a5c36;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
-    
-    .resource-info p {
-        color: #666;
-        font-size: 0.9rem;
-        margin: 0;
-    }
-    
-    .tips-box {
-        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
-        border: 2px solid #d4af37;
-        border-radius: 15px;
-        padding: 25px;
-    }
-    
-    .tips-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-    
-    .tips-title {
-        color: #d4af37;
-        font-size: 1.3rem;
-        font-weight: 700;
-    }
-    
-    .tips-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .tips-list li {
-        position: relative;
-        padding-left: 30px;
-        margin-bottom: 12px;
-        color: #333;
-        line-height: 1.6;
-    }
-    
-    .tips-list li:before {
-        content: "✓";
-        position: absolute;
-        left: 0;
-        color: #d4af37;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    
-    /* Compact 2-Column Layout */
-    .material-content-grid {
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 25px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-    
-    @media (max-width: 1200px) {
-        .material-content-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    .material-sidebar {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    
-    .compact-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 5px 15px rgba(10, 92, 54, 0.1);
-        border: 2px solid rgba(10, 92, 54, 0.1);
-    }
-    
-    .compact-heading {
-        font-size: 1.1rem;
-        color: #0a5c36;
-        font-weight: 700;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-</style>
+    <!-- Success Message -->
+    @if(session('success'))
+        <div style="background: rgba(46, 125, 50, 0.2); border: 3px solid #4caf50; color: #2e7d32; padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">✓</span>
+            <span style="font-weight: 600;">{{ session('success') }}</span>
+        </div>
+    @endif
 
-<!-- Material Header with Back Button -->
-<section class="material-header-card">
-    @php
-        $backRoute = Auth::user()->role_id == 2 ? route('student.materials') : route('materials.index');
-    @endphp
-    
-    <div class="material-title-section">
-        <div class="title-left">
-            <h1 class="material-title-large">{{ $material->title }}</h1>
-            <div class="material-badges">
-                <span class="badge {{ $material->is_public ? 'badge-public' : 'badge-private' }}">
-                    <i class="fas fa-{{ $material->is_public ? 'globe' : 'lock' }}"></i>
-                    {{ $material->is_public ? 'Public' : 'Private' }}
-                </span>
-                <span class="badge">
-                    <i class="fas fa-calendar"></i>
-                    {{ $material->created_at->format('M d, Y') }}
-                </span>
-                @if($material->type)
-                    <span class="badge">
-                        <i class="fas fa-{{ $material->type === 'pdf' ? 'file-pdf' : ($material->type === 'video' ? 'video' : ($material->type === 'audio' ? 'headphones' : 'file-alt')) }}"></i>
-                        {{ ucfirst($material->type) }}
+    <!-- Back Button -->
+    <div style="margin-bottom: 20px;">
+        <a href="{{ route('materials.index') }}" 
+            style="display: inline-flex; align-items: center; gap: 10px; color: #1a1a1a; text-decoration: none; font-family: 'El Messiri', sans-serif; font-weight: 600; font-size: 1rem; padding: 8px 16px; border-radius: 50px; background: rgba(255, 255, 255, 0.9); border: 3px solid #2a2a2a; transition: all 0.3s ease;"
+            onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.transform='translateX(-5px)'; this.style.borderColor='#0a5c36'"
+            onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.transform='translateX(0)'; this.style.borderColor='#2a2a2a'">
+            <i class="fas fa-arrow-left"></i> Back to Materials
+        </a>
+    </div>
+
+    <!-- Material Header -->
+    <div style="background: white; border-radius: 25px; padding: 30px; margin-bottom: 30px; border: 3px solid #2a2a2a; box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 300px;">
+                <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; color: #0a5c36; font-weight: 700; line-height: 1.2;">
+                    {{ $material->title }}
+                </h1>
+                <p style="margin: 0 0 20px 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif; line-height: 1.6;">
+                    {{ $material->description ?? 'No description available' }}
+                </p>
+                
+                <!-- Meta Info -->
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                    <span style="padding: 6px 15px; background: rgba(10, 92, 54, 0.1); color: #0a5c36; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                        <i class="fas fa-calendar"></i> {{ $material->created_at->format('M d, Y') }}
                     </span>
-                @endif
+                    @if($material->is_public)
+                        <span style="padding: 6px 15px; background: rgba(26, 188, 156, 0.15); color: #1abc9c; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                            <i class="fas fa-globe"></i> Public
+                        </span>
+                    @endif
+                    <span style="padding: 6px 15px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                        @if($material->video_link)
+                            <i class="fas fa-video"></i> Video
+                        @elseif($material->file_path && Str::endsWith($material->file_path, '.pdf'))
+                            <i class="fas fa-file-pdf"></i> PDF
+                        @elseif($material->file_path && (Str::endsWith($material->file_path, '.mp3') || Str::endsWith($material->file_path, '.wav')))
+                            <i class="fas fa-volume-up"></i> Audio
+                        @else
+                            <i class="fas fa-file"></i> Document
+                        @endif
+                    </span>
+                </div>
             </div>
-        </div>
-        
-        <div class="action-buttons">
+
+            <!-- Action Buttons -->
             @if(!$isStudent)
-                <a href="{{ route('materials.edit', $material->material_id) }}" class="btn-action btn-edit">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-                <form action="{{ route('materials.destroy', $material->material_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this material?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn-action btn-delete">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </form>
+                <div style="display: flex; gap: 10px;">
+                    <a href="{{ route('materials.edit', $material->material_id) }}" 
+                       style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 15px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; border: 3px solid #d4af37;"
+                       onmouseover="this.style.background='rgba(212, 175, 55, 0.25)'"
+                       onmouseout="this.style.background='rgba(212, 175, 55, 0.15)'">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <form action="{{ route('materials.destroy', $material->material_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this material? This action cannot be undone.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" 
+                                style="padding: 12px 20px; background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 3px solid #e74c3c; border-radius: 15px; font-weight: 600; font-family: 'Cairo', sans-serif; cursor: pointer; transition: all 0.3s ease;"
+                                onmouseover="this.style.background='rgba(231, 76, 60, 0.25)'"
+                                onmouseout="this.style.background='rgba(231, 76, 60, 0.15)'">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
             @endif
-            <a href="{{ $backRoute }}" class="back-button">
-                <i class="fas fa-arrow-left"></i> Back to Materials
-            </a>
         </div>
     </div>
-</section>
 
-<!-- Success Message -->
-@if(session('success'))
-    <div style="background: linear-gradient(135deg, #d4f4dd, #a8e6cf); border-left: 5px solid #0a5c36; color: #064e32; padding: 15px 20px; border-radius: 10px; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; font-weight: 500; max-width: 1400px; margin-left: auto; margin-right: auto;">
-        <i class="fas fa-check-circle" style="font-size: 1.5rem;"></i>
-        <span>{{ session('success') }}</span>
-    </div>
-@endif
-
-<!-- Compact 2-Column Layout -->
-<div class="material-content-grid">
-    <!-- Left: Video -->
-    <div>
-        @if($material->video_link)
-            @php
-                preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $material->video_link, $matches);
-                $videoId = $matches[1] ?? null;
-            @endphp
-            @if($videoId)
-                <div class="content-card" style="padding: 0; overflow: hidden;">
-                    <div class="video-container" style="margin: 0;">
-                        <iframe 
-                            src="https://www.youtube.com/embed/{{ $videoId }}" 
-                            frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen>
-                        </iframe>
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 25px;">
+        <!-- Main Content -->
+        <div>
+            <!-- Video Player -->
+            @if($material->video_link)
+                <div style="background: white; border-radius: 20px; overflow: hidden; margin-bottom: 25px; border: 3px solid #e0e0e0; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);">
+                    <div style="padding: 20px; border-bottom: 3px solid #f5f5f5;">
+                        <h3 style="margin: 0; font-size: 1.3rem; color: #0a5c36; font-weight: 700; font-family: 'El Messiri', serif;">
+                            <i class="fas fa-video"></i> Video Lecture
+                        </h3>
+                    </div>
+                    <div style="position: relative; padding-top: 56.25%; background: #000;">
+                        @php
+                            preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $material->video_link, $matches);
+                            $videoId = $matches[1] ?? null;
+                        @endphp
+                        @if($videoId)
+                            <iframe src="https://www.youtube.com/embed/{{ $videoId }}" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen
+                                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                        @else
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                                <p>Invalid video link</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
-            @else
-                <div class="compact-card">
-                    <div class="resource-card">
-                        <div class="resource-icon-large">🎥</div>
-                        <div class="resource-info" style="flex: 1;">
-                            <h4>External Video</h4>
-                            <p>Click to watch the video</p>
+            @endif
+
+            <!-- File Download -->
+            @if($material->file_path)
+                <div style="background: white; border-radius: 20px; padding: 25px; border: 3px solid #e0e0e0; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);">
+                    <h3 style="margin: 0 0 15px 0; font-size: 1.3rem; color: #0a5c36; font-weight: 700; font-family: 'El Messiri', serif;">
+                        <i class="fas fa-file-download"></i> Downloadable File
+                    </h3>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px; background: rgba(10, 92, 54, 0.05); border-radius: 15px; border: 2px solid rgba(10, 92, 54, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                                @if(Str::endsWith($material->file_path, '.pdf'))
+                                    <i class="fas fa-file-pdf"></i>
+                                @elseif(Str::endsWith($material->file_path, ['.mp3', '.wav']))
+                                    <i class="fas fa-volume-up"></i>
+                                @elseif(Str::endsWith($material->file_path, ['.mp4', '.avi']))
+                                    <i class="fas fa-film"></i>
+                                @else
+                                    <i class="fas fa-file"></i>
+                                @endif
+                            </div>
+                            <div>
+                                <p style="margin: 0 0 5px 0; font-weight: 700; color: #1a1a1a; font-family: 'Cairo', sans-serif; font-size: 1.1rem;">
+                                    {{ basename($material->file_path) }}
+                                </p>
+                                <p style="margin: 0; font-size: 0.9rem; color: #666; font-family: 'Cairo', sans-serif;">
+                                    Click to download
+                                </p>
+                            </div>
                         </div>
-                        <a href="{{ $material->video_link }}" target="_blank" style="color: #0a5c36; font-size: 1.5rem;">
-                            <i class="fas fa-external-link-alt"></i>
+                        <a href="{{ asset('storage/' . $material->file_path) }}" 
+                           download
+                           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 12px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease;"
+                           onmouseover="this.style.transform='scale(1.05)'"
+                           onmouseout="this.style.transform='scale(1)'">
+                            <i class="fas fa-download"></i> Download
                         </a>
                     </div>
                 </div>
             @endif
-        @elseif($material->thumbnail)
-            <div class="content-card" style="padding: 0; overflow: hidden;">
-                <img src="{{ filter_var($material->thumbnail, FILTER_VALIDATE_URL) ? $material->thumbnail : Storage::url($material->thumbnail) }}" 
-                     alt="{{ $material->title }}"
-                     style="width: 100%; height: auto; display: block;">
-            </div>
-        @endif
-    </div>
-    
-    <!-- Right Sidebar: Description, Downloads, Tips -->
-    <div class="material-sidebar">
-        <!-- Description -->
-        @if($material->description)
-            <div class="compact-card">
-                <h3 class="compact-heading">
-                    <i class="fas fa-align-left"></i> Description
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Thumbnail -->
+            @if($material->thumbnail)
+                <div style="background: white; border-radius: 20px; overflow: hidden; margin-bottom: 25px; border: 3px solid #e0e0e0; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);">
+                    <img src="{{ asset('storage/' . $material->thumbnail) }}" 
+                         alt="{{ $material->title }}"
+                         style="width: 100%; display: block;"
+                         onerror="this.parentElement.style.display='none'">
+                </div>
+            @endif
+
+            <!-- Info Card -->
+            <div style="background: white; border-radius: 20px; padding: 25px; border: 3px solid #e0e0e0; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);">
+                <h3 style="margin: 0 0 20px 0; font-size: 1.3rem; color: #0a5c36; font-weight: 700; font-family: 'El Messiri', serif;">
+                    <i class="fas fa-info-circle"></i> Material Information
                 </h3>
-                <p style="color: #666; line-height: 1.6; font-size: 0.95rem;">{{ $material->description }}</p>
-            </div>
-        @endif
-        
-        <!-- Download Resources -->
-        @if($material->file_path || $material->video_link)
-            <div class="compact-card">
-                <h3 class="compact-heading">
-                    <i class="fas fa-download"></i> Resources
-                </h3>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    @if($material->file_path)
-                        <a href="{{ Storage::url($material->file_path) }}" target="_blank" download 
-                           style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(10, 92, 54, 0.05); border-radius: 10px; text-decoration: none; color: inherit; border: 2px solid rgba(10, 92, 54, 0.1); transition: all 0.3s ease;">
-                            <div style="font-size: 2rem;">📄</div>
-                            <div style="flex: 1;">
-                                <h4 style="color: #0a5c36; font-size: 0.95rem; margin-bottom: 3px;">PDF Document</h4>
-                                <p style="color: #999; font-size: 0.8rem; margin: 0;">Download or view</p>
-                            </div>
-                            <i class="fas fa-arrow-right" style="color: #0a5c36;"></i>
-                        </a>
-                    @endif
-                    
-                    @if($material->video_link)
-                        <a href="{{ $material->video_link }}" target="_blank" 
-                           style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(10, 92, 54, 0.05); border-radius: 10px; text-decoration: none; color: inherit; border: 2px solid rgba(10, 92, 54, 0.1); transition: all 0.3s ease;">
-                            <div style="font-size: 2rem;">🎥</div>
-                            <div style="flex: 1;">
-                                <h4 style="color: #0a5c36; font-size: 0.95rem; margin-bottom: 3px;">Video Link</h4>
-                                <p style="color: #999; font-size: 0.8rem; margin: 0;">Watch video</p>
-                            </div>
-                            <i class="fas fa-arrow-right" style="color: #0a5c36;"></i>
-                        </a>
-                    @endif
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="padding: 15px; background: rgba(10, 92, 54, 0.05); border-radius: 12px;">
+                        <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Cairo', sans-serif;">
+                            Created
+                        </p>
+                        <p style="margin: 0; font-size: 1rem; color: #1a1a1a; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                            {{ $material->created_at->format('F d, Y') }}
+                        </p>
+                    </div>
+                    <div style="padding: 15px; background: rgba(10, 92, 54, 0.05); border-radius: 12px;">
+                        <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Cairo', sans-serif;">
+                            Last Updated
+                        </p>
+                        <p style="margin: 0; font-size: 1rem; color: #1a1a1a; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                            {{ $material->updated_at->format('F d, Y') }}
+                        </p>
+                    </div>
+                    <div style="padding: 15px; background: rgba(10, 92, 54, 0.05); border-radius: 12px;">
+                        <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Cairo', sans-serif;">
+                            Visibility
+                        </p>
+                        <p style="margin: 0; font-size: 1rem; color: #1a1a1a; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                            @if($material->is_public)
+                                <i class="fas fa-globe" style="color: #1abc9c;"></i> Public
+                            @else
+                                <i class="fas fa-lock" style="color: #e74c3c;"></i> Private
+                            @endif
+                        </p>
+                    </div>
                 </div>
             </div>
-        @endif
-
+        </div>
     </div>
-</div>
 @endsection

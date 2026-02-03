@@ -45,27 +45,14 @@ class TajweedErrorLog extends Model
     }
     
     /**
-     * Get the user (student) through the session
-     */
-    public function getStudentAttribute()
-    {
-        if ($this->assignment_submission_id) {
-            return $this->assignmentSubmission->student;
-        } elseif ($this->practice_session_id) {
-            return $this->practiceSession->student;
-        }
-        return null;
-    }
-    
-    /**
      * Get the student through the session
      */
     public function getStudentAttribute()
     {
-        if ($this->practice_session_id) {
-            return $this->practiceSession?->student;
-        } elseif ($this->assignment_submission_id) {
+        if ($this->assignment_submission_id) {
             return $this->assignmentSubmission?->student;
+        } elseif ($this->practice_session_id) {
+            return $this->practiceSession?->student;
         }
         return null;
     }

@@ -12,14 +12,14 @@
         <span class="nav-label">My Classes</span>
     </a>
     
+    <a href="<?php echo e(route('students.list')); ?>" class="nav-item">
+        <i class="fas fa-user-graduate nav-icon"></i>
+        <span class="nav-label">My Students</span>
+    </a>
+    
     <a href="<?php echo e(route('materials.index')); ?>" class="nav-item">
         <i class="fas fa-book-open nav-icon"></i>
         <span class="nav-label">Materials</span>
-    </a>
-    
-    <a href="<?php echo e(route('teachers.show', Auth::id())); ?>" class="nav-item">
-        <i class="fas fa-user-circle nav-icon"></i>
-        <span class="nav-label">Profile</span>
     </a>
 <?php $__env->stopSection(); ?>
 

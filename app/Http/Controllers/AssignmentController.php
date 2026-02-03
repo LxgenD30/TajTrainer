@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Assignment;
+use App\Models\AssignmentSubmission;
 use App\Models\Material;
 use App\Models\Classroom;
 use Illuminate\Http\Request;
@@ -83,15 +84,27 @@ class AssignmentController extends Controller
     public function show(Assignment $assignment)
     {
         $classroom = Classroom::findOrFail($assignment->class_id);
+        $user = Auth::user();
         
-        // Ensure the assignment belongs to the authenticated teacher's classroom
-        if ($classroom->teacher_id !== Auth::id()) {
-            abort(403, 'Unauthorized access to this assignment.');
+        // Check if user is the teacher OR a student enrolled in this classroom
+        $isTeacher = $classroom->teacher_id === Auth::id();
+        $isEnrolledStudent = $user->role_id == 2 && $classroom->students()->where('user_id', Auth::id())->exists();
+        
+        if (!$isTeacher && !$isEnrolledStudent) {
+            abort(403, 'Unauthorized access to this assignment. You must be enrolled in this classroom.');
         }
 
         $assignment->load('material', 'classroom');
+        
+        // If student, check if they have a submission
+        $submission = null;
+        if ($isEnrolledStudent) {
+            $submission = AssignmentSubmission::where('assignment_id', $assignment->assignment_id)
+                ->where('student_id', Auth::id())
+                ->first();
+        }
 
-        return view('assignment.show', compact('assignment', 'classroom'));
+        return view('assignment.show', compact('assignment', 'classroom', 'submission'));
     }
 
     /**

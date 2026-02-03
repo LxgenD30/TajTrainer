@@ -69,6 +69,9 @@ class ClassroomController extends Controller
      */
     public function show(Classroom $classroom)
     {
+        // Refresh the classroom model to ensure we have latest data
+        $classroom->refresh();
+        
         $user = Auth::user();
         
         if ($user->role_id == 3) {
@@ -190,6 +193,11 @@ class ClassroomController extends Controller
             abort(403, 'Unauthorized access to this classroom.');
         }
 
+        // Remove all current student enrollments since access code is changing
+        // This ensures students with old code can't access the classroom anymore
+        $removedStudentsCount = $classroom->students()->count();
+        $classroom->students()->detach();
+
         // Generate new unique 6-digit access code
         do {
             $accessCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -199,6 +207,8 @@ class ClassroomController extends Controller
             'access_code' => $accessCode,
         ]);
 
-        return redirect()->route('classroom.edit', $classroom->id)->with('success', 'Access code regenerated successfully!');
+        $message = "Access code regenerated successfully! All {$removedStudentsCount} enrolled student(s) have been removed from this classroom. They will need to re-enroll with the new access code.";
+
+        return redirect()->route('classroom.edit', $classroom->id)->with('success', $message);
     }
 }

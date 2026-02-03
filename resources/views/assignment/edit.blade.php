@@ -1,246 +1,412 @@
-@extends('layouts.template')
+@extends('layouts.dashboard')
+
+@section('title', 'Edit Assignment')
+@section('user-role', 'Teacher • Edit Assignment')
+
+@section('navigation')
+    <a href="{{ route('home') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-home"></i></div>
+        <div class="nav-label">Dashboard</div>
+    </a>
+    <a href="{{ route('classroom.index') }}" class="nav-item active">
+        <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="nav-label">My Classes</div>
+    </a>
+    <a href="{{ route('students.list') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
+        <div class="nav-label">My Students</div>
+    </a>
+    <a href="{{ route('materials.index') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+        <div class="nav-label">Materials</div>
+    </a>
+@endsection
 
 @section('page-title', 'Edit Assignment')
 @section('page-subtitle', 'Update assignment in ' . $classroom->class_name)
 
 @section('content')
-    <div class="content-card">
-        <div class="card-header">
-            <h3 class="card-title">✏️ Edit Assignment</h3>
-        </div>
-        <div class="card-body">
-            <form action="{{ route('assignment.update', $assignment->assignment_id) }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+        border: 3px solid #2a2a2a;
+        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.2);
+    }
+    
+    .page-header h1 { color: white; font-size: 2rem; margin-bottom: 10px; }
+    .page-header p { opacity: 0.9; font-size: 1.05rem; }
+    
+    .form-card {
+        background: white;
+        border-radius: 15px;
+        padding: 35px;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+    }
+    
+    .form-section {
+        margin-bottom: 35px;
+        background: rgba(10, 92, 54, 0.05);
+        padding: 25px;
+        border-radius: 12px;
+        border: 2px solid #0a5c36;
+    }
+    
+    .form-section.gold { background: rgba(212, 175, 55, 0.1); border-color: #d4af37; }
+    
+    .section-title {
+        color: #0a5c36;
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title.gold { color: #d4af37; }
+    .section-desc { color: #666; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.6; }
+    
+    .form-label { display: block; color: #0a5c36; font-weight: 600; margin-bottom: 8px; font-size: 1rem; }
+    
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 12px 15px;
+        background: white;
+        color: #333;
+        border: 2px solid #0a5c36;
+        border-radius: 8px;
+        font-family: 'El Messiri', sans-serif;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: #d4af37;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+    
+    .form-textarea { resize: vertical; min-height: 120px; }
+    
+    .radio-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    
+    .radio-option {
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer;
+        background: rgba(212, 175, 55, 0.05);
+        padding: 18px;
+        border-radius: 10px;
+        border: 2px solid #0a5c36;
+        transition: all 0.3s ease;
+    }
+    
+    .radio-option:hover { border-color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+    .radio-option input[type="radio"] { margin-right: 12px; margin-top: 3px; width: 20px; height: 20px; cursor: pointer; }
+    .radio-label { flex: 1; }
+    .radio-title { color: #d4af37; font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; }
+    .radio-desc { color: #666; font-size: 0.85rem; line-height: 1.4; }
+    
+    .verse-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; }
+    
+    .verse-display {
+        background: rgba(10, 92, 54, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px solid #0a5c36;
+        margin-top: 15px;
+    }
+    
+    .verse-arabic {
+        font-family: 'Traditional Arabic', 'Arabic Typesetting', serif;
+        font-size: 1.5rem;
+        line-height: 2.5;
+        text-align: right;
+        color: #0a5c36;
+        margin-bottom: 15px;
+    }
+    
+    .verse-translation { color: #1abc9c; font-size: 0.95rem; line-height: 1.6; }
+    
+    .info-box {
+        margin-top: 15px;
+        padding: 15px 20px;
+        background: rgba(212, 175, 55, 0.1);
+        border-radius: 10px;
+        border-left: 4px solid #d4af37;
+    }
+    
+    .info-title { color: #d4af37; font-weight: 600; margin-bottom: 5px; font-size: 0.95rem; }
+    .info-content { color: #666; font-size: 0.9rem; line-height: 1.6; }
+    
+    .button-group { display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px; }
+    
+    .btn {
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        border: 2px solid;
+    }
+    
+    .btn-primary { background: #0a5c36; color: #d4af37; border-color: #0a5c36; }
+    .btn-primary:hover { background: #d4af37; color: #0a5c36; border-color: #d4af37; }
+    .btn-secondary { background: transparent; color: #1abc9c; border-color: #1abc9c; }
+    .btn-secondary:hover { background: rgba(26, 188, 156, 0.1); }
+    
+    .btn-insert {
+        padding: 8px 18px;
+        background: rgba(26, 188, 156, 0.2);
+        color: #1abc9c;
+        border: 2px solid #1abc9c;
+        border-radius: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .btn-insert:hover { background: rgba(26, 188, 156, 0.3); }
+    .error-text { color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block; }
+    .help-text { color: #666; font-size: 0.85rem; margin-top: 8px; opacity: 0.9; }
+    
+    .material-preview {
+        background: rgba(10, 92, 54, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        border: 2px solid #0a5c36;
+        margin-top: 15px;
+    }
+    
+    .preview-title { color: #1abc9c; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem; }
+    .current-selection {
+        background: rgba(26, 188, 156, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 4px solid #1abc9c;
+    }
+</style>
 
-                <!-- Select Reference Material (Optional) -->
-                <div style="margin-bottom: 25px; background: rgba(77, 139, 49, 0.1); padding: 20px; border-radius: 12px; border: 2px solid var(--color-light-green);">
-                    <h4 style="color: var(--color-light-green); margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 1.5rem;">📚</span> Select Reference Material (Optional)
-                    </h4>
-                    <p style="color: var(--color-light); opacity: 0.8; font-size: 0.9rem; margin-bottom: 15px;">
-                        Choose from existing materials to help students with this assignment
-                    </p>
-                    
-                    @if($assignment->material)
-                        <div style="background: rgba(77, 139, 49, 0.2); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                            <p style="margin: 0; color: var(--color-light-green); font-weight: 600;">Currently Selected: {{ $assignment->material->title }}</p>
-                            @if($assignment->material->file_path)
-                                <p style="margin: 5px 0 0 0; color: var(--color-light); font-size: 0.9rem;">📄 PDF attached</p>
-                            @endif
-                            @if($assignment->material->video_link)
-                                <p style="margin: 5px 0 0 0; color: var(--color-light); font-size: 0.9rem;">🎥 Video attached</p>
-                            @endif
-                        </div>
+<!-- Page Header -->
+<div class="page-header">
+    <h1>✏️ Edit Assignment</h1>
+    <p>Update assignment in {{ $classroom->class_name }}</p>
+</div>
+
+<!-- Form Card -->
+<div class="form-card">
+    <form action="{{ route('assignment.update', $assignment->assignment_id) }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        @method('PUT')
+
+        <!-- Reference Material Section -->
+        <div class="form-section">
+            <h4 class="section-title">
+                <span>📚</span> Select Reference Material (Optional)
+            </h4>
+            <p class="section-desc">
+                Choose from existing materials to help students with this assignment
+            </p>
+            
+            @if($assignment->material)
+                <div class="current-selection">
+                    <p style="margin: 0; color: #1abc9c; font-weight: 600;">Currently Selected: {{ $assignment->material->title }}</p>
+                    @if($assignment->material->file_path)
+                        <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">📄 PDF attached</p>
                     @endif
-                    
-                    <div style="margin-bottom: 0;">
-                        <label style="display: block; color: var(--color-light-green); font-weight: 600; margin-bottom: 8px;">
-                            Available Materials
-                        </label>
-                        <select name="material_id" id="materialSelect"
-                            style="width: 100%; padding: 12px 15px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif; font-size: 1rem;">
-                            <option value="">-- No material (students can reference on their own) --</option>
-                            @foreach($materials as $material)
-                                <option value="{{ $material->material_id }}" 
-                                    {{ old('material_id', $assignment->material_id) == $material->material_id ? 'selected' : '' }}>
-                                    {{ $material->title }}
-                                    @if($material->category)
-                                        ({{ $material->category }})
-                                    @endif
-                                    @if($material->file_path)
-                                        📄
-                                    @endif
-                                    @if($material->video_link)
-                                        🎥
-                                    @endif
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('material_id')
-                            <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                        @enderror
-                        <p style="color: var(--color-light); opacity: 0.7; font-size: 0.85rem; margin-top: 8px;">
-                            💡 Need to add new materials? Visit <a href="{{ route('materials.index') }}" style="color: var(--color-gold); text-decoration: underline;">Learning Materials</a> page first.
-                        </p>
-                    </div>
-                    
-                    <!-- Material Preview -->
-                    <div id="materialPreview" style="display: none; margin-top: 15px; background: rgba(31, 39, 27, 0.5); padding: 15px; border-radius: 8px; border: 2px solid var(--color-dark-green);">
-                        <h5 style="color: var(--color-light-green); margin: 0 0 10px 0; font-size: 0.95rem;">📋 Material Preview</h5>
-                        <div id="previewContent"></div>
-                    </div>
+                    @if($assignment->material->video_link)
+                        <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">🎥 Video attached</p>
+                    @endif
                 </div>
-
-                <!-- Tajweed Rules Selection -->
-                <div style="margin-bottom: 25px; background: rgba(227, 216, 136, 0.1); padding: 20px; border-radius: 12px; border: 2px solid var(--color-gold);">
-                    <h4 style="color: var(--color-gold); margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;">
-                        <span style="font-size: 1.5rem;">✨</span> Tajweed Rule to Focus On *
-                    </h4>
-                    <p style="color: var(--color-light); opacity: 0.8; font-size: 0.9rem; margin-bottom: 15px;">
-                        Select one specific Tajweed rule that students must pay attention to in this recitation
-                    </p>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                        <label style="display: flex; flex-direction: column; cursor: pointer; background: rgba(227, 216, 136, 0.1); padding: 15px; border-radius: 10px; border: 2px solid var(--color-dark-green); transition: all 0.3s ease;"
-                            onmouseover="this.style.borderColor='var(--color-gold)'; this.style.background='rgba(227, 216, 136, 0.2)'"
-                            onmouseout="this.style.borderColor='var(--color-dark-green)'; this.style.background='rgba(227, 216, 136, 0.1)'">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <input type="radio" name="tajweed_rules" value="Madd" 
-                                    {{ (old('tajweed_rules') == 'Madd') || (is_array($assignment->tajweed_rules) && in_array('Madd', $assignment->tajweed_rules)) ? 'checked' : '' }} required
-                                    style="margin-right: 10px; width: 20px; height: 20px; cursor: pointer;">
-                                <span style="color: var(--color-light); font-weight: 600; font-size: 1.05rem;">Madd (Elongation)</span>
-                            </div>
-                            <span style="color: var(--color-light); opacity: 0.7; font-size: 0.85rem; margin-left: 30px;">
-                                Proper elongation of vowels
-                            </span>
-                        </label>
-                        
-                        <label style="display: flex; flex-direction: column; cursor: pointer; background: rgba(227, 216, 136, 0.1); padding: 15px; border-radius: 10px; border: 2px solid var(--color-dark-green); transition: all 0.3s ease;"
-                            onmouseover="this.style.borderColor='var(--color-gold)'; this.style.background='rgba(227, 216, 136, 0.2)'"
-                            onmouseout="this.style.borderColor='var(--color-dark-green)'; this.style.background='rgba(227, 216, 136, 0.1)'">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <input type="radio" name="tajweed_rules" value="Idgham Bi Ghunnah" 
-                                    {{ (old('tajweed_rules') == 'Idgham Bi Ghunnah') || (is_array($assignment->tajweed_rules) && in_array('Idgham Bi Ghunnah', $assignment->tajweed_rules)) ? 'checked' : '' }} required
-                                    style="margin-right: 10px; width: 20px; height: 20px; cursor: pointer;">
-                                <span style="color: var(--color-light); font-weight: 600; font-size: 1.05rem;">Idgham Bi Ghunnah</span>
-                            </div>
-                            <span style="color: var(--color-light); opacity: 0.7; font-size: 0.85rem; margin-left: 30px;">
-                                Merging WITH nasalization
-                            </span>
-                        </label>
-                        
-                        <label style="display: flex; flex-direction: column; cursor: pointer; background: rgba(227, 216, 136, 0.1); padding: 15px; border-radius: 10px; border: 2px solid var(--color-dark-green); transition: all 0.3s ease;"
-                            onmouseover="this.style.borderColor='var(--color-gold)'; this.style.background='rgba(227, 216, 136, 0.2)'"
-                            onmouseout="this.style.borderColor='var(--color-dark-green)'; this.style.background='rgba(227, 216, 136, 0.1)'">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <input type="radio" name="tajweed_rules" value="Idgham Bila Ghunnah" 
-                                    {{ (old('tajweed_rules') == 'Idgham Bila Ghunnah') || (is_array($assignment->tajweed_rules) && in_array('Idgham Bila Ghunnah', $assignment->tajweed_rules)) ? 'checked' : '' }} required
-                                    style="margin-right: 10px; width: 20px; height: 20px; cursor: pointer;">
-                                <span style="color: var(--color-light); font-weight: 600; font-size: 1.05rem;">Idgham Bila Ghunnah</span>
-                            </div>
-                            <span style="color: var(--color-light); opacity: 0.7; font-size: 0.85rem; margin-left: 30px;">
-                                Merging WITHOUT nasalization
-                            </span>
-                        </label>
-                    </div>
-                    @error('tajweed_rules')
-                        <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <!-- Quran Verse Selection -->
-                <div style="margin-bottom: 25px; background: rgba(227, 216, 136, 0.1); padding: 20px; border-radius: 12px; border: 2px solid var(--color-gold);">
-                    <h4 style="color: var(--color-gold); margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 1.5rem;">📖</span> Assign Quran Verse for Recitation
-                    </h4>
-                    <p style="color: var(--color-light); opacity: 0.8; font-size: 0.9rem; margin-bottom: 15px;">
-                        Select the surah and verse range that students must recite for this assignment
-                    </p>
-                    
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
-                        <div>
-                            <label style="display: block; color: var(--color-gold); font-size: 0.9rem; margin-bottom: 5px;">Select Surah *</label>
-                            <select id="surahSelect" name="surah_number" required style="width: 100%; padding: 10px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif;" onchange="document.getElementById('surah_name_hidden').value = this.options[this.selectedIndex].getAttribute('data-name');">
-                                <option value="">Loading surahs...</option>
-                            </select>
-                            <input type="hidden" id="surah_name_hidden" name="surah" value="{{ old('surah', $assignment->surah) }}" required>
-                            <input type="hidden" id="currentSurah" value="{{ old('surah', $assignment->surah) }}">
-                            @error('surah')
-                                <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div>
-                            <label style="display: block; color: var(--color-gold); font-size: 0.9rem; margin-bottom: 5px;">Ayat From *</label>
-                            <input type="number" id="ayahFrom" name="start_verse" value="{{ old('start_verse', $assignment->start_verse) }}" min="1" placeholder="Start" required
-                                style="width: 100%; padding: 10px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif;">
-                            @error('start_verse')
-                                <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div>
-                            <label style="display: block; color: var(--color-gold); font-size: 0.9rem; margin-bottom: 5px;">Ayat To</label>
-                            <input type="number" id="ayahTo" name="end_verse" value="{{ old('end_verse', $assignment->end_verse) }}" min="1" placeholder="End"
-                                style="width: 100%; padding: 10px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif;">
-                            @error('end_verse')
-                                <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                    
-                    <div id="verseDisplay" style="display: none; background: rgba(31, 39, 27, 0.8); padding: 15px; border-radius: 8px; margin-bottom: 10px; margin-top: 15px;">
-                        <div id="verseContent" style="font-family: 'Traditional Arabic', 'Arabic Typesetting', serif; font-size: 1.5rem; line-height: 2.5; text-align: right; color: var(--color-light); margin-bottom: 10px;"></div>
-                        <div id="verseTranslation" style="color: var(--color-light-green); font-size: 0.95rem; line-height: 1.6;"></div>
-                    </div>
-                    
-                    <button type="button" id="insertVerseBtn" onclick="insertVerseToInstructions()" style="display: none; padding: 8px 18px; background: rgba(77, 139, 49, 0.3); color: var(--color-light-green); border: 2px solid var(--color-light-green); border-radius: 20px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-family: 'Cairo', sans-serif;"
-                        onmouseover="this.style.background='rgba(226, 241, 175, 0.2)'"
-                        onmouseout="this.style.background='rgba(77, 139, 49, 0.3)'">
-                        ➕ Insert to Instructions
-                    </button>
-                </div>
-
-                <!-- Instructions -->
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; color: var(--color-gold); font-weight: 600; margin-bottom: 8px;">
-                        📋 Instructions for Students *
-                    </label>
-                    <textarea name="instructions" rows="6" required
-                        style="width: 100%; padding: 12px 15px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif; font-size: 1rem; resize: vertical;"
-                        placeholder="Provide clear instructions for the assignment...">{{ old('instructions', $assignment->instructions) }}</textarea>
-                    @error('instructions')
-                        <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <!-- Due Date - Now Full Width -->
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; color: var(--color-gold); font-weight: 600; margin-bottom: 8px; font-size: 1.05rem;">
-                        📅 Due Date *
-                    </label>
-                    <input type="datetime-local" name="due_date" value="{{ old('due_date', $assignment->due_date->format('Y-m-d\TH:i')) }}" required
-                        style="width: 100%; padding: 12px 15px; background: rgba(31, 39, 27, 0.5); color: var(--color-light); border: 2px solid var(--color-dark-green); border-radius: 8px; font-family: 'Cairo', sans-serif; font-size: 1rem;">
-                    @error('due_date')
-                        <span style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <!-- Hidden fields for fixed values -->
-                <input type="hidden" name="total_marks" value="100">
-                <input type="hidden" name="is_voice_submission" value="1">
-                
-                <!-- Info box showing fixed values -->
-                <div style="background: rgba(77, 139, 49, 0.15); padding: 15px; border-radius: 8px; border-left: 4px solid var(--color-light-green); margin-bottom: 25px;">
-                    <p style="margin: 0; color: var(--color-light); font-size: 0.95rem;">
-                        <span style="color: var(--color-light-green); font-weight: 600;">ℹ️ Note:</span> 
-                        All assignments are automatically set to <strong>100 points</strong> and require <strong>voice recordings</strong>.
-                    </p>
-                </div>
-
-                <!-- Buttons -->
-                <div style="display: flex; gap: 15px; justify-content: flex-end;">
-                    <a href="{{ route('classroom.show', $classroom->id) }}" 
-                        style="padding: 12px 30px; background: transparent; color: var(--color-light-green); border: 2px solid var(--color-light-green); border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; display: inline-block;"
-                        onmouseover="this.style.background='rgba(226, 241, 175, 0.1)'"
-                        onmouseout="this.style.background='transparent'">
-                        Cancel
-                    </a>
-                    <button type="submit"
-                        style="padding: 12px 30px; background: var(--color-dark-green); color: var(--color-gold); border: none; border-radius: 25px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-family: 'Cairo', sans-serif;"
-                        onmouseover="this.style.background='var(--color-gold)'; this.style.color='var(--color-dark)'"
-                        onmouseout="this.style.background='var(--color-dark-green)'; this.style.color='var(--color-gold)'">
-                        Update Assignment
-                    </button>
-                </div>
-            </form>
+            @endif
+            
+            <div>
+                <label class="form-label">Available Materials</label>
+                <select name="material_id" id="materialSelect" class="form-select">
+                    <option value="">-- No material (students can reference on their own) --</option>
+                    @foreach($materials as $material)
+                        <option value="{{ $material->material_id }}" {{ old('material_id', $assignment->material_id) == $material->material_id ? 'selected' : '' }}>
+                            {{ $material->title }}
+                            @if($material->category)
+                                ({{ $material->category }})
+                            @endif
+                            @if($material->file_path)
+                                📄
+                            @endif
+                            @if($material->video_link)
+                                🎥
+                            @endif
+                        </option>
+                    @endforeach
+                </select>
+                @error('material_id')
+                    <span class="error-text">{{ $message }}</span>
+                @enderror
+                <p class="help-text">
+                    💡 Need to add new materials? Visit <a href="{{ route('materials.index') }}" style="color: #d4af37; text-decoration: underline;">Learning Materials</a> page first.
+                </p>
+            </div>
+            
+            <!-- Material Preview -->
+            <div id="materialPreview" class="material-preview" style="display: none;">
+                <h5 class="preview-title">📋 Material Preview</h5>
+                <div id="previewContent"></div>
+            </div>
         </div>
-    </div>
 
-    <script>
-        let currentVerseData = '';
+        <!-- Tajweed Rules Selection -->
+        <div class="form-section gold">
+            <h4 class="section-title gold">
+                <span>✨</span> Tajweed Rule to Focus On *
+            </h4>
+            <p class="section-desc">
+                Select one specific Tajweed rule that students must pay attention to in this recitation
+            </p>
+            
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="tajweed_rules" value="Madd" 
+                        {{ (old('tajweed_rules') == 'Madd') || (is_array($assignment->tajweed_rules) && in_array('Madd', $assignment->tajweed_rules)) ? 'checked' : '' }} required>
+                    <div class="radio-label">
+                        <div class="radio-title">Madd (Elongation)</div>
+                        <div class="radio-desc">Proper elongation of vowels</div>
+                    </div>
+                </label>
+                
+                <label class="radio-option">
+                    <input type="radio" name="tajweed_rules" value="Idgham Bi Ghunnah" 
+                        {{ (old('tajweed_rules') == 'Idgham Bi Ghunnah') || (is_array($assignment->tajweed_rules) && in_array('Idgham Bi Ghunnah', $assignment->tajweed_rules)) ? 'checked' : '' }} required>
+                    <div class="radio-label">
+                        <div class="radio-title">Idgham Bi Ghunnah</div>
+                        <div class="radio-desc">Merging WITH nasalization</div>
+                    </div>
+                </label>
+                
+                <label class="radio-option">
+                    <input type="radio" name="tajweed_rules" value="Idgham Bila Ghunnah" 
+                        {{ (old('tajweed_rules') == 'Idgham Bila Ghunnah') || (is_array($assignment->tajweed_rules) && in_array('Idgham Bila Ghunnah', $assignment->tajweed_rules)) ? 'checked' : '' }} required>
+                    <div class="radio-label">
+                        <div class="radio-title">Idgham Bila Ghunnah</div>
+                        <div class="radio-desc">Merging WITHOUT nasalization</div>
+                    </div>
+                </label>
+            </div>
+            @error('tajweed_rules')
+                <span class="error-text">{{ $message }}</span>
+            @enderror
+        </div>
 
-        // Load surahs from API when page loads
-        async function loadSurahs() {
+        <!-- Quran Verse Selection -->
+        <div class="form-section gold">
+            <h4 class="section-title gold">
+                <span>📖</span> Assign Quran Verse for Recitation
+            </h4>
+            <p class="section-desc">
+                Select the surah and verse range that students must recite for this assignment
+            </p>
+            
+            <div class="verse-grid">
+                <div>
+                    <label class="form-label">Select Surah *</label>
+                    <select id="surahSelect" name="surah_number" class="form-select" required>
+                        <option value="">Loading surahs...</option>
+                    </select>
+                    <input type="hidden" id="surah_name_hidden" name="surah" value="{{ old('surah', $assignment->surah) }}" required>
+                    <input type="hidden" id="currentSurah" value="{{ old('surah', $assignment->surah) }}">
+                    @error('surah')
+                        <span class="error-text">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div>
+                    <label class="form-label">Ayat From *</label>
+                    <input type="number" id="ayahFrom" name="start_verse" value="{{ old('start_verse', $assignment->start_verse) }}" min="1" placeholder="Start" required class="form-input">
+                    @error('start_verse')
+                        <span class="error-text">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div>
+                    <label class="form-label">Ayat To</label>
+                    <input type="number" id="ayahTo" name="end_verse" value="{{ old('end_verse', $assignment->end_verse) }}" min="1" placeholder="End" class="form-input">
+                    @error('end_verse')
+                        <span class="error-text">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
+            
+            <div id="verseDisplay" class="verse-display" style="display: none;">
+                <div id="verseContent" class="verse-arabic"></div>
+                <div id="verseTranslation" class="verse-translation"></div>
+            </div>
+            
+            <button type="button" id="insertVerseBtn" onclick="insertVerseToInstructions()" class="btn-insert" style="display: none;">
+                ➕ Insert to Instructions
+            </button>
+        </div>
+
+        <!-- Instructions -->
+        <div class="form-section">
+            <label class="form-label">
+                📋 Instructions for Students *
+            </label>
+            <textarea name="instructions" rows="6" required class="form-textarea" placeholder="Provide clear instructions for the assignment...">{{ old('instructions', $assignment->instructions) }}</textarea>
+            @error('instructions')
+                <span class="error-text">{{ $message }}</span>
+            @enderror
+        </div>
+
+        <!-- Due Date -->
+        <div class="form-section">
+            <label class="form-label">
+                📅 Due Date *
+            </label>
+            <input type="datetime-local" name="due_date" value="{{ old('due_date', $assignment->due_date->format('Y-m-d\TH:i')) }}" required class="form-input">
+            @error('due_date')
+                <span class="error-text">{{ $message }}</span>
+            @enderror
+        </div>
+
+        <!-- Hidden fields for fixed values -->
+        <input type="hidden" name="total_marks" value="100">
+        <input type="hidden" name="is_voice_submission" value="1">
+        
+        <!-- Info box showing fixed values -->
+        <div class="info-box">
+            <p style="margin: 0; color: #666; font-size: 0.95rem;">
+                <span style="color: #d4af37; font-weight: 600;">ℹ️ Note:</span> 
+                All assignments are automatically set to <strong>100 points</strong> and require <strong>voice recordings</strong>.
+            </p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="button-group">
+            <a href="{{ route('classroom.show', $classroom->id) }}" class="btn btn-secondary">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                Update Assignment
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let currentVerseData = '';
+
+    async function loadSurahs() {
             const surahSelect = document.getElementById('surahSelect');
             const currentSurah = document.getElementById('currentSurah').value;
             try {
@@ -269,6 +435,10 @@
                     for (let i = 0; i < options.length; i++) {
                         if (options[i].getAttribute('data-name') === currentSurah) {
                             surahSelect.selectedIndex = i;
+                            // Update hidden field with the selected surah name
+                            document.getElementById('surah_name_hidden').value = currentSurah;
+                            // Trigger the verse preview
+                            fetchQuranVerse();
                             break;
                         }
                     }
@@ -284,7 +454,14 @@
             loadSurahs();
             
             // Auto-preview verses when inputs change
-            document.getElementById('surahSelect').addEventListener('change', fetchQuranVerse);
+            document.getElementById('surahSelect').addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption && selectedOption.value) {
+                    // Update hidden field
+                    document.getElementById('surah_name_hidden').value = selectedOption.getAttribute('data-name');
+                }
+                fetchQuranVerse();
+            });
             document.getElementById('ayahFrom').addEventListener('input', debounce(fetchQuranVerse, 800));
             document.getElementById('ayahTo').addEventListener('input', debounce(fetchQuranVerse, 800));
         });
@@ -406,24 +583,24 @@
             
             if (material) {
                 let html = '<div style="display: grid; gap: 10px;">';
-                html += `<p style="margin: 0; color: var(--color-light); font-weight: 600; font-size: 1rem;">${material.title}</p>`;
+                html += `<p style="margin: 0; color: #0a5c36; font-weight: 600; font-size: 1rem;">${material.title}</p>`;
                 
                 if (material.category) {
-                    html += `<span style="display: inline-block; background: rgba(227, 216, 136, 0.2); color: var(--color-gold); padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; width: fit-content;">${material.category}</span>`;
+                    html += `<span style="display: inline-block; background: rgba(212, 175, 55, 0.2); color: #d4af37; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; width: fit-content;">${material.category}</span>`;
                 }
                 
                 if (material.content) {
-                    html += `<p style="margin: 5px 0 0 0; color: var(--color-light); opacity: 0.8; font-size: 0.9rem;">${material.content.substring(0, 150)}${material.content.length > 150 ? '...' : ''}</p>`;
+                    html += `<p style="margin: 5px 0 0 0; color: #666; opacity: 0.8; font-size: 0.9rem;">${material.content.substring(0, 150)}${material.content.length > 150 ? '...' : ''}</p>`;
                 }
                 
                 html += '<div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">';
                 
                 if (material.file_path) {
-                    html += '<span style="color: var(--color-light-green); font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">📄 PDF Available</span>';
+                    html += '<span style="color: #1abc9c; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">📄 PDF Available</span>';
                 }
                 
                 if (material.video_link) {
-                    html += '<span style="color: var(--color-light-green); font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">🎥 Video Available</span>';
+                    html += '<span style="color: #1abc9c; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">🎥 Video Available</span>';
                 }
                 
                 html += '</div></div>';
@@ -432,5 +609,4 @@
                 materialPreview.style.display = 'block';
             }
         });
-    </script>
-@endsection
+</script>

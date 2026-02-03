@@ -43,4 +43,8 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
     ],
 
+    'python' => [
+        'executable' => env('PYTHON_EXECUTABLE', 'python'),
+    ],
+
 ];

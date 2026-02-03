@@ -14,14 +14,14 @@
         <span class="nav-label">My Classes</span>
     </a>
     
+    <a href="{{ route('students.list') }}" class="nav-item">
+        <i class="fas fa-user-graduate nav-icon"></i>
+        <span class="nav-label">My Students</span>
+    </a>
+    
     <a href="{{ route('materials.index') }}" class="nav-item">
         <i class="fas fa-book-open nav-icon"></i>
         <span class="nav-label">Materials</span>
-    </a>
-    
-    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
-        <i class="fas fa-user-circle nav-icon"></i>
-        <span class="nav-label">Profile</span>
     </a>
 @endsection
 
@@ -317,7 +317,13 @@
     }
     
     .action-btn p {
-     Dashboard Layout -->
+        color: #666;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+</style>
+
+<!-- Dashboard Layout -->
 <div class="dashboard-layout">
     <!-- Main Content -->
     <div class="main-content">
@@ -346,91 +352,8 @@
                 <div class="stat-value">{{ $stats['total_materials'] }}</div>
                 <div class="stat-label">Materials</div>
             </div>
-            <div class="stat-card">
-        <div class="stat-icon">📚</div>
-        <div class="stat-value">{{ $stats['total_materials'] }}</div>
-        <div class="stat-label">Materials</div>
-    </div>
-</div>
-
-<!-- Grading Queue Section -->
-<div class="section-card">
-    <h2 class="section-title">
-        <i class="fas fa-clipboard-check"></i> Grading Queue
-    </h2>
-    
-    @php
-        $recentSubmissions = \App\Models\AssignmentSubmission::whereHas('assignment.classroom', function($q) {
-            $q->where('teacher_id', Auth::id());
-        })
-        ->where('status', 'submitted')
-        ->with('student', 'assignment')
-        ->latest()
-        ->take(5)
-        ->get();
-    @endphp
-    
-    @forelse($recentSubmissions as $submission)
-        <div class="submission-item">
-            <div class="submission-icon">
-                <i class="fas fa-user-graduate"></i>
-            </div>
-            <div class="submission-details">
-                <h4>{{ $submission->student->name }}</h4>
-                <p>
-                    <i class="fas fa-file-alt"></i> {{ Str::limit($submission->assignment->title, 40) }} • 
-                    <i class="fas fa-clock"></i> {{ $submission->created_at->diffForHumans() }}
-                </p>
-            </div>
-            <a href="{{ route('teacher.submission.grade', $submission->id) }}" style="display: inline-flex; align-items: center; gap: 8px; background: #0a5c36; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: 600;">
-                <i class="fas fa-check"></i> Grade
-            </a>
         </div>
-    @empty
-        <div class="empty-state">
-            <i class="fas fa-check-circle"></i>
-            <p>All caught up with grading! ✨</p>
-        </div>
-    @endforelse
-</div>
 
-<!-- Quick Actions Section -->
-<div class="section-card">
-    <h2 class="section-title">
-        <i class="fas fa-bolt"></i> Quick Actions
-    </h2>
-    
-    <div class="quick-actions-grid">
-        <a href="{{ route('classroom.create') }}" class="action-btn">
-            <i class="fas fa-plus-circle"></i>
-            <h4>New Class</h4>
-            <p>Create a new classroom</p>
-        </a>
-        
-        <a href="{{ route('classroom.index') }}" class="action-btn">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <h4>View Classes</h4>
-            <p>Manage your classrooms</p>
-        </a>
-        
-        <a href="{{ route('materials.create') }}" class="action-btn">
-            <i class="fas fa-file-upload"></i>
-            <h4>Upload Material</h4>
-            <p>Add learning resources</p>
-        </a>
-        
-        <a href="{{ route('materials.index') }}" class="action-btn">
-            <i class="fas fa-book-reader"></i>
-            <h4>View Materials</h4>
-            <p>Browse all materials</p>
-        </a>
-    </div>
-</div>
-
-<!-- Tajweed System Info -->
-<div class="section-card">
-    <h2 class="section-title">
-        <i class="fas fa-brain"></i> AI-Powered Tajweed Analysis System
         <!-- Quick Actions Section -->
         <div class="section-card">
             <h2 class="section-title">

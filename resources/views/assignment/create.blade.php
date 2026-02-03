@@ -4,24 +4,21 @@
 @section('user-role', 'Teacher • Create Assignment')
 
 @section('navigation')
-    <a href="{{ route('teacher.dashboard') }}" class="nav-item">
-        <i class="fas fa-home nav-icon"></i>
-        <span class="nav-label">Dashboard</span>
+    <a href="{{ route('home') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-home"></i></div>
+        <div class="nav-label">Dashboard</div>
     </a>
-    
-    <a href="{{ url('/classes') }}" class="nav-item">
-        <i class="fas fa-chalkboard-teacher nav-icon"></i>
-        <span class="nav-label">Classes</span>
+    <a href="{{ route('classroom.index') }}" class="nav-item active">
+        <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="nav-label">My Classes</div>
     </a>
-    
-    <a href="{{ route('assignments.index') }}" class="nav-item active">
-        <i class="fas fa-tasks nav-icon"></i>
-        <span class="nav-label">Assignments</span>
+    <a href="{{ route('students.list') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
+        <div class="nav-label">My Students</div>
     </a>
-    
-    <a href="{{ url('/submissions') }}" class="nav-item">
-        <i class="fas fa-file-alt nav-icon"></i>
-        <span class="nav-label">Submissions</span>
+    <a href="{{ route('materials.index') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+        <div class="nav-label">Materials</div>
     </a>
     
     <a href="{{ route('materials.index') }}" class="nav-item">

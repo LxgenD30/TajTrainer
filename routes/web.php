@@ -90,6 +90,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/students-list', [App\Http\Controllers\StudentListController::class, 'index'])
         ->name('students.list');
     
+    // Teacher's view of student profile
+    Route::get('/teacher/student/{student}', [App\Http\Controllers\StudentListController::class, 'show'])
+        ->name('teacher.student.profile');
+    
     // ===========================
     // CLASSROOM ROUTES
     // ===========================

@@ -16,43 +16,19 @@
         <div class="nav-label">My Classes</div>
     </a>
     
+    <a href="<?php echo e(route('students.list')); ?>" class="nav-item">
+        <div class="nav-icon">
+            <i class="fas fa-user-graduate"></i>
+        </div>
+        <div class="nav-label">My Students</div>
+    </a>
+    
     <a href="<?php echo e(route('materials.index')); ?>" class="nav-item">
         <div class="nav-icon">
             <i class="fas fa-book-open"></i>
         </div>
         <div class="nav-label">Materials</div>
     </a>
-    
-    <a href="<?php echo e(route('teachers.show', Auth::id())); ?>" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-clipboard-check"></i>
-        </div>
-        <div class="nav-label">Submissions</div>
-    </a>
-    
-    <a href="<?php echo e(url('/materials')); ?>" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-book-open"></i>
-        </div>
-        <div class="nav-label">Materials</div>
-    </a>
-    
-    <a href="<?php echo e(route('teachers.show', Auth::id())); ?>" class="nav-item">
-        <div class="nav-icon">
-            <i class="fas fa-user-circle"></i>
-        </div>
-        <div class="nav-label">Profile</div>
-    </a>
-    
-    <form action="<?php echo e(route('logout')); ?>" method="POST" style="display: inline;" class="nav-item">
-        <?php echo csrf_field(); ?>
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon">
-                <i class="fas fa-sign-out-alt"></i>
-            </div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('extra-styles'); ?>
@@ -398,7 +374,7 @@
 
 <?php
     $submissions = \App\Models\AssignmentSubmission::with(['student', 'assignment'])
-        ->whereNull('marks')
+        ->where('status', 'submitted')
         ->latest()
         ->get();
 ?>
@@ -468,7 +444,7 @@
             
             <!-- Tajweed Errors -->
             <?php
-                $errors = \App\Models\TajweedErrorLog::where('submission_id', $submission->id)->get();
+                $errors = \App\Models\TajweedErrorLog::where('assignment_submission_id', $submission->id)->get();
             ?>
             
             <?php if($errors->isNotEmpty()): ?>

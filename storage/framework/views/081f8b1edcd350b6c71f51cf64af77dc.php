@@ -31,37 +31,37 @@
 <div style="padding: 0;">
     <div style="margin-bottom: 20px;">
         <a href="<?php echo e(route('teacher.student.submissions', ['classroom' => $submission->assignment->class_id, 'student' => $submission->student_id])); ?>" 
-            style="display: inline-flex; align-items: center; gap: 8px; color: var(--gold); text-decoration: none; font-weight: 600; transition: all 0.3s ease;" 
-            onmouseover="this.style.color='var(--light-green)'" 
-            onmouseout="this.style.color='var(--gold)'">
-            ← Back to Student Submissions
+            style="display: inline-flex; align-items: center; gap: 8px; color: #1abc9c; text-decoration: none; font-weight: 600; font-size: 1rem; transition: all 0.3s ease; padding: 10px 20px; background: rgba(26, 188, 156, 0.1); border-radius: 10px;" 
+            onmouseover="this.style.background='rgba(26, 188, 156, 0.2)'; this.style.transform='translateX(-5px)'" 
+            onmouseout="this.style.background='rgba(26, 188, 156, 0.1)'; this.style.transform='translateX(0)'">
+            <i class="fas fa-arrow-left"></i> Back to Student Submissions
         </a>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
         <!-- Submission Details -->
-        <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
-                <div style="width: 50px; height: 50px; background: var(--primary-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
+        <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
                     📝
                 </div>
                 <div>
-                    <h3 style="color: var(--gold); font-size: 1.3rem; margin-bottom: 5px;">Submission Details</h3>
-                    <p style="color: var(--light-green); opacity: 0.8; font-size: 0.9rem; margin: 0;">Review student work</p>
+                    <h3 style="color: #0a5c36; font-size: 1.3rem; margin-bottom: 5px; font-family: 'El Messiri', serif;">Submission Details</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin: 0;">Review student work</p>
                 </div>
             </div>
 
             <!-- Student Info -->
-            <div style="background: rgba(70, 63, 58, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                <div style="color: var(--gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">👤 Student</div>
-                <div style="color: var(--light-green); font-size: 1rem; margin-bottom: 5px;"><?php echo e($submission->student->name); ?></div>
-                <div style="color: var(--light-green); font-size: 0.85rem; opacity: 0.8;"><?php echo e($submission->student->email); ?></div>
+            <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
+                <div style="color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-user-circle"></i> Student</div>
+                <div style="color: #1a1a1a; font-size: 1.1rem; margin-bottom: 5px; font-weight: 600;"><?php echo e($submission->student->name); ?></div>
+                <div style="color: #666; font-size: 0.9rem;"><?php echo e($submission->student->email); ?></div>
             </div>
 
             <!-- Assignment Info -->
-            <div style="background: rgba(70, 63, 58, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                <div style="color: var(--gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">📋 Assignment</div>
-                <h4 style="color: var(--light-green); margin: 0 0 10px 0; font-size: 1rem;">
+            <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
+                <div style="color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-book-quran"></i> Assignment</div>
+                <h4 style="color: #1a1a1a; margin: 0 0 10px 0; font-size: 1.1rem; font-weight: 600;">
                     <?php if($submission->assignment->surah): ?>
                         📖 <?php echo e($submission->assignment->surah); ?> 
                         (<?php echo e($submission->assignment->start_verse); ?><?php if($submission->assignment->end_verse): ?>-<?php echo e($submission->assignment->end_verse); ?><?php endif; ?>)
@@ -70,31 +70,31 @@
 
                     <?php endif; ?>
                 </h4>
-                <p style="color: var(--light-green); opacity: 0.9; margin: 0 0 10px 0; font-size: 0.9rem; line-height: 1.6;"><?php echo e($submission->assignment->instructions); ?></p>
-                <div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--light-green); opacity: 0.8;">
-                    <span>🎯 Total Marks: <?php echo e($submission->assignment->total_marks); ?></span>
-                    <span>📅 Due: <?php echo e($submission->assignment->due_date->format('M d, Y')); ?></span>
+                <p style="color: #666; margin: 0 0 10px 0; font-size: 0.9rem; line-height: 1.6;"><?php echo e($submission->assignment->instructions); ?></p>
+                <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #666;">
+                    <span><i class="fas fa-bullseye"></i> <?php echo e($submission->assignment->total_marks); ?> marks</span>
+                    <span><i class="far fa-calendar"></i> Due <?php echo e($submission->assignment->due_date->format('M d, Y')); ?></span>
                 </div>
             </div>
 
             <!-- Submission Time -->
-            <div style="background: rgba(70, 63, 58, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                <div style="color: var(--gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">⏰ Submission Time</div>
-                <div style="color: var(--light-green); font-size: 1rem;">
+            <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
+                <div style="color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;"><i class="far fa-clock"></i> Submission Time</div>
+                <div style="color: #1a1a1a; font-size: 1rem; font-weight: 600;">
                     <?php echo e($submission->created_at->format('M d, Y h:i A')); ?>
 
                     <?php if($submission->created_at->gt($submission->assignment->due_date)): ?>
-                        <span style="color: #e74c3c; font-weight: 600; margin-left: 10px;">⚠️ Late Submission</span>
+                        <span style="color: #e74c3c; font-weight: 600; margin-left: 10px; padding: 4px 10px; background: rgba(231, 76, 60, 0.1); border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-exclamation-triangle"></i> Late</span>
                     <?php else: ?>
-                        <span style="color: #4caf50; font-weight: 600; margin-left: 10px;">✓ On Time</span>
+                        <span style="color: #4caf50; font-weight: 600; margin-left: 10px; padding: 4px 10px; background: rgba(76, 175, 80, 0.1); border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-check-circle"></i> On Time</span>
                     <?php endif; ?>
                 </div>
             </div>
 
             <?php if($submission->audio_file_path): ?>
             <!-- Audio Submission -->
-            <div style="background: rgba(70, 63, 58, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                <div style="color: var(--gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">🎤 Voice Recording</div>
+            <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
+                <div style="color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-microphone"></i> Voice Recording</div>
                 <?php
                     $audioExt = pathinfo($submission->audio_file_path, PATHINFO_EXTENSION);
                     $mimeTypes = [
@@ -162,13 +162,14 @@
 
             <?php if($submission->transcription): ?>
             <!-- AI Transcription -->
-            <div style="background: rgba(70, 63, 58, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 8px; color: var(--gold); font-weight: 600; margin-bottom: 10px; font-size: 0.9rem;">
-                    <span>🤖 AI Transcription</span>
-                    <span style="font-size: 0.75rem; padding: 3px 8px; background: rgba(227, 216, 136, 0.2); border-radius: 12px; font-weight: 500;">Powered by AssemblyAI</span>
+            <div style="background: rgba(26, 188, 156, 0.1); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(26, 188, 156, 0.3);">
+                <div style="display: flex; align-items: center; gap: 8px; color: #0a5c36; font-weight: 600; margin-bottom: 12px; font-size: 0.9rem;">
+                    <i class="fas fa-robot"></i>
+                    <span>AI Transcription</span>
+                    <span style="font-size: 0.75rem; padding: 3px 8px; background: rgba(26, 188, 156, 0.2); border-radius: 12px; font-weight: 500; color: #0a5c36;">AssemblyAI</span>
                 </div>
-                <div style="background: rgba(31, 39, 27, 0.5); padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto;">
-                    <p style="color: var(--light-green); margin: 0; line-height: 2.2; direction: rtl; text-align: right; font-size: 1.8rem; font-family: 'Amiri', 'Traditional Arabic', serif; letter-spacing: 0.5px;">
+                <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid rgba(10, 92, 54, 0.1);">
+                    <p style="color: #1a1a1a; margin: 0; line-height: 2.2; direction: rtl; text-align: right; font-size: 1.8rem; font-family: 'Amiri', 'Traditional Arabic', serif; letter-spacing: 0.5px;">
                         <?php echo e($submission->transcription); ?>
 
                     </p>
@@ -178,22 +179,22 @@
 
             <?php if($submission->tajweed_analysis): ?>
             <!-- Tajweed Analysis -->
-            <div style="background: linear-gradient(135deg, rgba(77, 139, 49, 0.15) 0%, rgba(31, 39, 27, 0.6) 100%); border: 2px solid rgba(77, 139, 49, 0.4); padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
+            <div style="background: rgba(10, 92, 54, 0.08); border: 2px solid rgba(10, 92, 54, 0.2); padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(10, 92, 54, 0.1);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 40px; height: 40px; background: var(--primary-green); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">📖</div>
+                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">📖</div>
                         <div>
-                            <div style="color: var(--gold); font-weight: 700; font-size: 1.1rem;">Tajweed Analysis</div>
-                            <div style="font-size: 0.75rem; padding: 3px 10px; background: rgba(227, 216, 136, 0.2); border-radius: 12px; font-weight: 500; color: var(--gold); display: inline-block; margin-top: 3px;">🤖 AI-Powered</div>
+                            <div style="color: #0a5c36; font-weight: 700; font-size: 1.1rem; font-family: 'El Messiri', serif;">Tajweed Analysis</div>
+                            <div style="font-size: 0.75rem; padding: 3px 10px; background: rgba(26, 188, 156, 0.2); border-radius: 12px; font-weight: 500; color: #0a5c36; display: inline-block; margin-top: 3px;">🤖 AI-Powered</div>
                         </div>
                     </div>
                     <?php
                         $scoreColor = $submission->tajweed_score >= 90 ? '#4caf50' : ($submission->tajweed_score >= 70 ? '#8bc34a' : ($submission->tajweed_score >= 60 ? '#ff9800' : '#f44336'));
                     ?>
-                    <div style="padding: 12px 20px; background: rgba(76, 175, 80, 0.15); border: 2px solid <?php echo e($scoreColor); ?>; border-radius: 12px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);">
+                    <div style="padding: 12px 20px; background: white; border: 2px solid <?php echo e($scoreColor); ?>; border-radius: 12px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.15);">
                         <div style="text-align: center;">
                             <div style="color: <?php echo e($scoreColor); ?>; font-weight: 800; font-size: 1.8rem; line-height: 1;"><?php echo e($submission->tajweed_score); ?>%</div>
-                            <div style="color: var(--light-green); font-size: 0.9rem; font-weight: 600; margin-top: 2px;"><?php echo e($submission->tajweed_grade); ?></div>
+                            <div style="color: #666; font-size: 0.9rem; font-weight: 600; margin-top: 2px;"><?php echo e($submission->tajweed_grade); ?></div>
                         </div>
                     </div>
                 </div>
@@ -441,37 +442,37 @@
         </div>
 
         <!-- Grading Form -->
-        <div style="background: rgba(31, 39, 27, 0.6); backdrop-filter: blur(10px); border: 2px solid rgba(77, 139, 49, 0.3); border-radius: 15px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(77, 139, 49, 0.3);">
-                <div style="width: 50px; height: 50px; background: var(--primary-green); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(77, 139, 49, 0.4);">
+        <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
                     ✏️
                 </div>
                 <div>
-                    <h3 style="color: var(--gold); font-size: 1.3rem; margin-bottom: 5px;">
+                    <h3 style="color: #0a5c36; font-size: 1.3rem; margin-bottom: 5px; font-family: 'El Messiri', serif;">
                         <?php echo e($submission->status === 'graded' ? 'Update Grade' : 'Provide Grade'); ?>
 
                     </h3>
-                    <p style="color: var(--light-green); opacity: 0.8; font-size: 0.9rem; margin: 0;">Evaluate student performance</p>
+                    <p style="color: #666; font-size: 0.9rem; margin: 0;">Evaluate student performance</p>
                 </div>
             </div>
 
             <?php if($submission->score): ?>
-            <div style="background: rgba(76, 175, 80, 0.2); border: 2px solid #4caf50; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
-                <div style="color: #4caf50; font-weight: 600; margin-bottom: 10px; font-size: 1rem;">✓ Previously Graded</div>
+            <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4caf50; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                <div style="color: #4caf50; font-weight: 600; margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-check-circle"></i> Previously Graded</div>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
                     <div>
-                        <div style="font-size: 0.8rem; color: var(--light-green); opacity: 0.8; margin-bottom: 5px;">Score</div>
-                        <div style="font-size: 1.3rem; color: #4caf50; font-weight: 700;"><?php echo e($submission->score->score); ?>/<?php echo e($submission->assignment->total_marks); ?></div>
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Score</div>
+                        <div style="font-size: 1.4rem; color: #4caf50; font-weight: 700;"><?php echo e($submission->score->score); ?>/<?php echo e($submission->assignment->total_marks); ?></div>
                     </div>
                     <div>
-                        <div style="font-size: 0.8rem; color: var(--light-green); opacity: 0.8; margin-bottom: 5px;">Percentage</div>
-                        <div style="font-size: 1.3rem; color: #4caf50; font-weight: 700;"><?php echo e(round(($submission->score->score / $submission->assignment->total_marks) * 100, 1)); ?>%</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Percentage</div>
+                        <div style="font-size: 1.4rem; color: #4caf50; font-weight: 700;"><?php echo e(round(($submission->score->score / $submission->assignment->total_marks) * 100, 1)); ?>%</div>
                     </div>
                 </div>
                 <?php if($submission->score->feedback): ?>
-                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(76, 175, 80, 0.3);">
-                    <div style="font-size: 0.8rem; color: var(--light-green); opacity: 0.8; margin-bottom: 5px;">Previous Feedback</div>
-                    <div style="font-size: 0.9rem; color: var(--light-green); line-height: 1.6;"><?php echo e(Str::limit($submission->score->feedback, 100)); ?></div>
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(76, 175, 80, 0.2);">
+                    <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Previous Feedback</div>
+                    <div style="font-size: 0.9rem; color: #1a1a1a; line-height: 1.6;"><?php echo e(Str::limit($submission->score->feedback, 100)); ?></div>
                 </div>
                 <?php endif; ?>
             </div>
@@ -492,27 +493,27 @@
 
                 <!-- Tajweed AI Score Display (Always show if available) -->
                 <?php if($submission->tajweed_score): ?>
-                <div style="background: linear-gradient(135deg, rgba(227, 216, 136, 0.2) 0%, rgba(77, 139, 49, 0.15) 100%); border: 2px solid rgba(227, 216, 136, 0.5); border-radius: 12px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(227, 216, 136, 0.2);">
+                <div style="background: rgba(26, 188, 156, 0.1); border: 2px solid rgba(26, 188, 156, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(26, 188, 156, 0.1);">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 45px; height: 45px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(227, 216, 136, 0.4);">🤖</div>
+                            <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(26, 188, 156, 0.3);">🤖</div>
                             <div>
-                                <div style="color: var(--gold); font-weight: 700; font-size: 1.1rem;">AI Tajweed Analysis Score</div>
-                                <div style="font-size: 0.8rem; color: var(--light-green); opacity: 0.8;">Based on Madd & Noon Sakin rules</div>
+                                <div style="color: #0a5c36; font-weight: 700; font-size: 1.1rem;">AI Tajweed Analysis Score</div>
+                                <div style="font-size: 0.8rem; color: #666;">Based on Madd & Noon Sakin rules</div>
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 2rem; color: var(--gold); font-weight: 800; line-height: 1;"><?php echo e($submission->tajweed_score); ?>%</div>
-                            <div style="font-size: 0.85rem; color: var(--light-green); font-weight: 600;"><?php echo e($submission->tajweed_grade); ?></div>
+                            <div style="font-size: 2rem; color: #0a5c36; font-weight: 800; line-height: 1;"><?php echo e($submission->tajweed_score); ?>%</div>
+                            <div style="font-size: 0.85rem; color: #666; font-weight: 600;"><?php echo e($submission->tajweed_grade); ?></div>
                         </div>
                     </div>
-                    <div style="background: rgba(31, 39, 27, 0.5); border-radius: 8px; padding: 12px;">
+                    <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(10, 92, 54, 0.1);">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="font-size: 0.9rem; color: var(--light-green);">
-                                <strong>Suggested Points:</strong>
+                            <div style="font-size: 0.9rem; color: #666;">
+                                <strong style="color: #1a1a1a;">Suggested Points:</strong>
                             </div>
-                            <div style="font-size: 1.4rem; color: var(--gold); font-weight: 700;">
-                                <?php echo e($suggestedScore); ?><span style="font-size: 1rem; opacity: 0.8;"> / <?php echo e($submission->assignment->total_marks); ?></span>
+                            <div style="font-size: 1.5rem; color: #0a5c36; font-weight: 700;">
+                                <?php echo e($suggestedScore); ?><span style="font-size: 1rem; opacity: 0.7;"> / <?php echo e($submission->assignment->total_marks); ?></span>
                             </div>
                         </div>
                         <?php if(!$submission->score): ?>
@@ -536,10 +537,10 @@
                 <?php endif; ?>
 
                 <div style="margin-bottom: 25px;">
-                    <label style="display: block; color: var(--gold); font-weight: 600; margin-bottom: 10px; font-size: 1rem;">
+                    <label style="display: block; color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 1rem;">
                         🎯 Points Earned <span style="color: #ff6b6b;">*</span>
                         <?php if($suggestedScore && !$submission->score): ?>
-                        <span style="font-size: 0.85rem; color: var(--gold); font-weight: 500; margin-left: 8px;">(Pre-filled from AI Analysis)</span>
+                        <span style="font-size: 0.85rem; color: #0a5c36; font-weight: 500; margin-left: 8px;">(Pre-filled from AI Analysis)</span>
                         <?php endif; ?>
                     </label>
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -551,11 +552,11 @@
                             step="0.5"
                             value="<?php echo e($defaultScore); ?>"
                             required
-                            style="flex: 1; padding: 15px; background: rgba(70, 63, 58, 0.4); border: 2px solid <?php echo e($suggestedScore && !$submission->score ? 'var(--gold)' : 'rgba(77, 139, 49, 0.4)'); ?>; border-radius: 10px; color: var(--light-green); font-size: 1.3rem; font-weight: 700; transition: all 0.3s ease; <?php echo e($suggestedScore && !$submission->score ? 'box-shadow: 0 0 0 3px rgba(227, 216, 136, 0.2);' : ''); ?>"
-                            onfocus="this.style.borderColor='var(--gold)'"
-                            onblur="this.style.borderColor='rgba(77, 139, 49, 0.4)'"
+                            style="flex: 1; padding: 15px; background: white; border: 2px solid <?php echo e($suggestedScore && !$submission->score ? '#1abc9c' : 'rgba(10, 92, 54, 0.3)'); ?>; border-radius: 10px; color: #1a1a1a; font-size: 1.3rem; font-weight: 700; transition: all 0.3s ease; <?php echo e($suggestedScore && !$submission->score ? 'box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);' : ''); ?>"
+                            onfocus="this.style.borderColor='#1abc9c'; this.style.boxShadow='0 0 0 3px rgba(26, 188, 156, 0.1)'"
+                            onblur="this.style.borderColor='rgba(10, 92, 54, 0.3)'; this.style.boxShadow='none'"
                         >
-                        <span style="color: var(--light-green); font-size: 1.1rem; font-weight: 600;">/ <?php echo e($submission->assignment->total_marks); ?></span>
+                        <span style="color: #666; font-size: 1.1rem; font-weight: 600;">/ <?php echo e($submission->assignment->total_marks); ?></span>
                     </div>
                     <?php $__errorArgs = ['score'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -570,7 +571,7 @@ unset($__errorArgs, $__bag); ?>
                 </div>
 
                 <div style="margin-bottom: 25px;">
-                    <label style="display: block; color: var(--gold); font-weight: 600; margin-bottom: 10px; font-size: 1rem;">
+                    <label style="display: block; color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 1rem;">
                         💬 Feedback <span style="color: #ff6b6b;">*</span>
                     </label>
                     <textarea 
@@ -578,9 +579,9 @@ unset($__errorArgs, $__bag); ?>
                         rows="8" 
                         required
                         placeholder="Provide detailed feedback on the student's recitation, highlighting strengths and areas for improvement..."
-                        style="width: 100%; padding: 15px; background: rgba(70, 63, 58, 0.4); border: 2px solid rgba(77, 139, 49, 0.4); border-radius: 10px; color: var(--light-green); font-size: 0.95rem; line-height: 1.6; resize: vertical; transition: all 0.3s ease; font-family: 'Cairo', sans-serif;"
-                        onfocus="this.style.borderColor='var(--gold)'"
-                        onblur="this.style.borderColor='rgba(77, 139, 49, 0.4)'"
+                        style="width: 100%; padding: 15px; background: white; border: 2px solid rgba(10, 92, 54, 0.3); border-radius: 10px; color: #1a1a1a; font-size: 0.95rem; line-height: 1.6; resize: vertical; transition: all 0.3s ease; font-family: 'Cairo', sans-serif;"
+                        onfocus="this.style.borderColor='#1abc9c'; this.style.boxShadow='0 0 0 3px rgba(26, 188, 156, 0.1)'"
+                        onblur="this.style.borderColor='rgba(10, 92, 54, 0.3)'; this.style.boxShadow='none'"
                     ><?php echo e(old('feedback', $submission->score->feedback ?? '')); ?></textarea>
                     <?php $__errorArgs = ['feedback'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -592,18 +593,22 @@ $message = $__bag->first($__errorArgs[0]); ?>
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                    <p style="color: var(--light-green); opacity: 0.7; font-size: 0.85rem; margin-top: 8px;">
+                    <p style="color: #666; font-size: 0.85rem; margin-top: 8px;">
                         💡 Tip: Include specific feedback on Tajweed rules, pronunciation, and recitation quality.
                     </p>
                 </div>
 
-                <div style="display: flex; gap: 15px; padding-top: 20px; border-top: 2px solid rgba(77, 139, 49, 0.3);">
+                <div style="display: flex; gap: 15px; padding-top: 20px; border-top: 2px solid rgba(10, 92, 54, 0.2);">
                     <a href="<?php echo e(route('teacher.student.submissions', ['classroom' => $submission->assignment->class_id, 'student' => $submission->student_id])); ?>" 
-                        class="btn-secondary" 
-                        style="text-decoration: none; flex: 1; text-align: center;">
+                        style="flex: 1; text-align: center; padding: 12px 25px; background: white; color: #666; border: 2px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease;"
+                        onmouseover="this.style.background='#f5f5f5'; this.style.borderColor='#bbb'"
+                        onmouseout="this.style.background='white'; this.style.borderColor='#ddd'">
                         Cancel
                     </a>
-                    <button type="submit" class="btn-primary" style="flex: 2;">
+                    <button type="submit" 
+                        style="flex: 2; padding: 12px 25px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(10, 92, 54, 0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(10, 92, 54, 0.3)'">
                         <?php echo e($submission->status === 'graded' ? '📝 Update Grade' : '✓ Submit Grade'); ?>
 
                     </button>

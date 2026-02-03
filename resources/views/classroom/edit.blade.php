@@ -12,17 +12,14 @@
         <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
         <div class="nav-label">My Classes</div>
     </a>
-    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-user-circle"></i></div>
-        <div class="nav-label">Profile</div>
+    <a href="{{ route('students.list') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
+        <div class="nav-label">My Students</div>
     </a>
-    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
-        @csrf
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
+    <a href="{{ route('materials.index') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+        <div class="nav-label">Materials</div>
+    </a>
 @endsection
 
 @section('content')

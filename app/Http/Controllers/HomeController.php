@@ -20,7 +20,14 @@ class HomeController extends Controller
     {
         $stats = [];
         
+        \Log::info('HomeController index accessed', [
+            'user_id' => Auth::id(),
+            'role_id' => Auth::user()->role_id ?? 'null',
+            'user_name' => Auth::user()->name ?? 'unknown'
+        ]);
+        
         if (Auth::user()->role_id == 3) {
+            \Log::info('Loading teacher dashboard for user: ' . Auth::id());
             $teacherId = Auth::id();
             $stats['total_classes'] = Classroom::where('teacher_id', $teacherId)->count();
             $classroomIds = Classroom::where('teacher_id', $teacherId)->pluck('id')->toArray();
@@ -40,6 +47,7 @@ class HomeController extends Controller
             
             $stats['total_materials'] = Material::count();
             
+            \Log::info('Teacher stats calculated', $stats);
             return view('teachers.index', compact('stats'));
         } elseif (Auth::user()->role_id == 2) {
             // Student dashboard - show stats

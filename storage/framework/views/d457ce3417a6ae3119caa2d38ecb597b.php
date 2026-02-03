@@ -1,36 +1,36 @@
-@extends('layouts.dashboard')
 
-@section('title', 'Assignment Details')
-@section('user-role', (auth()->user()->role_id == 3 ? 'Teacher' : 'Student') . ' • Assignment Details')
 
-@section('navigation')
-    <a href="{{ route('home') }}" class="nav-item">
+<?php $__env->startSection('title', 'Assignment Details'); ?>
+<?php $__env->startSection('user-role', (auth()->user()->role_id == 3 ? 'Teacher' : 'Student') . ' • Assignment Details'); ?>
+
+<?php $__env->startSection('navigation'); ?>
+    <a href="<?php echo e(route('home')); ?>" class="nav-item">
         <div class="nav-icon"><i class="fas fa-home"></i></div>
         <div class="nav-label">Dashboard</div>
     </a>
-    <a href="{{ route('classroom.index') }}" class="nav-item active">
+    <a href="<?php echo e(route('classroom.index')); ?>" class="nav-item active">
         <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
         <div class="nav-label">My Classes</div>
     </a>
-    @if(auth()->user()->role_id == 3)
-    <a href="{{ route('students.list') }}" class="nav-item">
+    <?php if(auth()->user()->role_id == 3): ?>
+    <a href="<?php echo e(route('students.list')); ?>" class="nav-item">
         <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
         <div class="nav-label">My Students</div>
     </a>
-    @endif
-    <a href="{{ route('materials.index') }}" class="nav-item">
+    <?php endif; ?>
+    <a href="<?php echo e(route('materials.index')); ?>" class="nav-item">
         <div class="nav-icon"><i class="fas fa-book-open"></i></div>
         <div class="nav-label">Materials</div>
     </a>
-    @if(auth()->user()->role_id == 2)
-    <a href="{{ route('student.practice') }}" class="nav-item">
+    <?php if(auth()->user()->role_id == 2): ?>
+    <a href="<?php echo e(route('student.practice')); ?>" class="nav-item">
         <div class="nav-icon"><i class="fas fa-microphone"></i></div>
         <div class="nav-label">Practice</div>
     </a>
-    @endif
-@endsection
+    <?php endif; ?>
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .page-header {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
@@ -250,28 +250,28 @@
 <div class="page-header">
     <h1>📝 Assignment Details</h1>
     <div class="header-actions">
-        @if(auth()->user()->role_id == 3)
-            <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" class="btn btn-edit">
+        <?php if(auth()->user()->role_id == 3): ?>
+            <a href="<?php echo e(route('assignment.edit', $assignment->assignment_id)); ?>" class="btn btn-edit">
                 ✏️ Edit
             </a>
-            <form action="{{ route('assignment.destroy', $assignment->assignment_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this assignment?')">
-                @csrf
-                @method('DELETE')
+            <form action="<?php echo e(route('assignment.destroy', $assignment->assignment_id)); ?>" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this assignment?')">
+                <?php echo csrf_field(); ?>
+                <?php echo method_field('DELETE'); ?>
                 <button type="submit" class="btn btn-delete">
                     🗑️ Delete
                 </button>
             </form>
-        @else
-            @if(isset($submission))
+        <?php else: ?>
+            <?php if(isset($submission)): ?>
                 <span class="btn" style="background: rgba(149, 165, 166, 0.2); color: #7f8c8d; border-color: #95a5a6; cursor: default;">
                     ✅ Submitted
                 </span>
-            @else
-                <a href="{{ route('student.assignment.submit', $assignment->assignment_id) }}" class="btn" style="background: #95a5a6; color: white; border-color: #95a5a6;">
+            <?php else: ?>
+                <a href="<?php echo e(route('student.assignment.submit', $assignment->assignment_id)); ?>" class="btn" style="background: #95a5a6; color: white; border-color: #95a5a6;">
                     🎤 Attempt Assignment
                 </a>
-            @endif
-        @endif
+            <?php endif; ?>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -285,58 +285,58 @@
         <div class="info-grid">
             <div class="info-item">
                 <div class="info-label">Surah</div>
-                <div class="info-value">{{ $assignment->surah }}</div>
+                <div class="info-value"><?php echo e($assignment->surah); ?></div>
             </div>
             <div class="info-item">
                 <div class="info-label">Ayat From</div>
-                <div class="info-value">{{ $assignment->start_verse }}</div>
+                <div class="info-value"><?php echo e($assignment->start_verse); ?></div>
             </div>
             <div class="info-item">
                 <div class="info-label">Ayat To</div>
-                <div class="info-value">{{ $assignment->end_verse ?? 'N/A' }}</div>
+                <div class="info-value"><?php echo e($assignment->end_verse ?? 'N/A'); ?></div>
             </div>
         </div>
         
-        @if($assignment->tajweed_rules && count($assignment->tajweed_rules) > 0)
+        <?php if($assignment->tajweed_rules && count($assignment->tajweed_rules) > 0): ?>
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
                 <div class="info-label" style="margin-bottom: 10px;">✨ Focus on Tajweed Rules:</div>
                 <div class="rules-container">
-                    @foreach($assignment->tajweed_rules as $rule)
-                        <span class="rule-badge">{{ $rule }}</span>
-                    @endforeach
+                    <?php $__currentLoopData = $assignment->tajweed_rules; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rule): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <span class="rule-badge"><?php echo e($rule); ?></span>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
     </div>
 
     <!-- Reference Materials -->
-    @if($assignment->material)
+    <?php if($assignment->material): ?>
         <div class="detail-section">
             <h4 class="section-title">
                 <span>📚</span> Reference Materials
             </h4>
             <div class="material-info">
-                <p class="material-title">{{ $assignment->material->title }}</p>
+                <p class="material-title"><?php echo e($assignment->material->title); ?></p>
                 
                 <div class="material-links">
-                    @if($assignment->material->file_path)
-                        <a href="{{ Storage::url($assignment->material->file_path) }}" target="_blank" class="material-link">
+                    <?php if($assignment->material->file_path): ?>
+                        <a href="<?php echo e(Storage::url($assignment->material->file_path)); ?>" target="_blank" class="material-link">
                             📄 Download PDF
                         </a>
-                    @endif
+                    <?php endif; ?>
                     
-                    @if($assignment->material->video_link)
-                        <a href="{{ $assignment->material->video_link }}" target="_blank" class="material-link">
+                    <?php if($assignment->material->video_link): ?>
+                        <a href="<?php echo e($assignment->material->video_link); ?>" target="_blank" class="material-link">
                             🎥 Watch Video
                         </a>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Student Submission Section -->
-    @if(auth()->user()->role_id == 2 && isset($submission))
+    <?php if(auth()->user()->role_id == 2 && isset($submission)): ?>
         <div class="detail-section" style="background: rgba(46, 204, 113, 0.1); border-color: #27ae60;">
             <h4 class="section-title" style="color: #27ae60;">
                 <span>✅</span> Your Submission
@@ -345,78 +345,79 @@
             <div class="info-grid" style="margin-bottom: 20px;">
                 <div class="info-item">
                     <div class="info-label">📅 Submitted At</div>
-                    <div class="info-value" style="color: #27ae60;">{{ $submission->submitted_at ? $submission->submitted_at->format('F d, Y h:i A') : 'Processing...' }}</div>
+                    <div class="info-value" style="color: #27ae60;"><?php echo e($submission->submitted_at ? $submission->submitted_at->format('F d, Y h:i A') : 'Processing...'); ?></div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">📊 Status</div>
                     <div class="info-value" style="color: #27ae60;">
                         <span class="submission-badge" style="background: rgba(46, 204, 113, 0.2); border-color: #27ae60; color: #27ae60;">
-                            {{ ucfirst($submission->status ?? 'pending') }}
+                            <?php echo e(ucfirst($submission->status ?? 'pending')); ?>
+
                         </span>
                     </div>
                 </div>
-                @if(isset($submission->score))
+                <?php if(isset($submission->score)): ?>
                     <div class="info-item">
                         <div class="info-label">🎯 Score</div>
-                        <div class="info-value" style="color: #d4af37;">{{ $submission->score->marks_obtained ?? 'Not graded' }} / {{ $assignment->total_marks }}</div>
+                        <div class="info-value" style="color: #d4af37;"><?php echo e($submission->score->marks_obtained ?? 'Not graded'); ?> / <?php echo e($assignment->total_marks); ?></div>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
 
-            @if($submission->audio_file_path)
+            <?php if($submission->audio_file_path): ?>
                 <div style="margin-bottom: 20px;">
                     <div class="info-label" style="margin-bottom: 10px;">🎤 Your Recording</div>
                     <audio controls style="width: 100%; border-radius: 10px;">
-                        <source src="{{ Storage::url($submission->audio_file_path) }}" type="audio/mpeg">
+                        <source src="<?php echo e(Storage::url($submission->audio_file_path)); ?>" type="audio/mpeg">
                         Your browser does not support the audio element.
                     </audio>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            @if($submission->transcription)
+            <?php if($submission->transcription): ?>
                 <div style="margin-bottom: 20px;">
                     <div class="info-label" style="margin-bottom: 10px;">📝 Transcription</div>
                     <div class="instructions-box">
-                        <p class="instructions-text">{{ $submission->transcription }}</p>
+                        <p class="instructions-text"><?php echo e($submission->transcription); ?></p>
                     </div>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            @if($submission->tajweed_analysis && is_array($submission->tajweed_analysis))
+            <?php if($submission->tajweed_analysis && is_array($submission->tajweed_analysis)): ?>
                 <div>
                     <div class="info-label" style="margin-bottom: 10px;">🎯 Tajweed Analysis</div>
                     <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #27ae60;">
-                        @foreach($submission->tajweed_analysis as $key => $value)
+                        <?php $__currentLoopData = $submission->tajweed_analysis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div style="margin-bottom: 10px;">
-                                <strong style="color: #0a5c36;">{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
-                                <span>{{ is_array($value) ? json_encode($value) : $value }}</span>
+                                <strong style="color: #0a5c36;"><?php echo e(ucfirst(str_replace('_', ' ', $key))); ?>:</strong>
+                                <span><?php echo e(is_array($value) ? json_encode($value) : $value); ?></span>
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Assignment Info -->
     <div class="info-grid" style="margin-bottom: 30px;">
         <div class="info-item">
             <div class="info-label">📅 Due Date</div>
-            <div class="info-value">{{ $assignment->due_date->format('F d, Y h:i A') }}</div>
+            <div class="info-value"><?php echo e($assignment->due_date->format('F d, Y h:i A')); ?></div>
         </div>
         <div class="info-item">
             <div class="info-label">🎯 Total Marks</div>
-            <div class="info-value">{{ $assignment->total_marks }} points</div>
+            <div class="info-value"><?php echo e($assignment->total_marks); ?> points</div>
         </div>
         <div class="info-item">
             <div class="info-label">🎤 Submission Type</div>
             <div class="info-value">
                 <span class="submission-badge">
-                    @if($assignment->is_voice_submission)
+                    <?php if($assignment->is_voice_submission): ?>
                         🎤 Voice Recording
-                    @else
+                    <?php else: ?>
                         📝 Text Submission
-                    @endif
+                    <?php endif; ?>
                 </span>
             </div>
         </div>
@@ -426,13 +427,15 @@
     <div>
         <div class="info-label" style="margin-bottom: 10px; font-size: 1rem; font-weight: 600; color: #0a5c36;">📋 Instructions</div>
         <div class="instructions-box">
-            <p class="instructions-text">{{ $assignment->instructions }}</p>
+            <p class="instructions-text"><?php echo e($assignment->instructions); ?></p>
         </div>
     </div>
 
     <!-- Back Button -->
-    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-back">
+    <a href="<?php echo e(route('classroom.show', $classroom->id)); ?>" class="btn-back">
         ← Back to Classroom
     </a>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.dashboard', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\tajtrainerV2\resources\views/assignment/show.blade.php ENDPATH**/ ?>

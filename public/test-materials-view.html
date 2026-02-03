@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Materials View Toggle</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .view-toggle-btn {
+            padding: 10px 20px;
+            background: transparent;
+            color: #666;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .view-toggle-btn.active {
+            background: linear-gradient(135deg, #0a5c36, #1abc9c);
+            color: white;
+            border-color: #0a5c36;
+        }
+        
+        .view-toggle-btn:hover:not(.active) {
+            border-color: #0a5c36;
+            color: #0a5c36;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        #materialsContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        
+        .material-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 3px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .material-thumbnail {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        }
+        
+        .material-thumbnail img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .material-content {
+            padding: 20px;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            border: 2px solid #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Materials View Toggle Test</h1>
+    
+    <div class="status" id="status">
+        <strong>Status:</strong> <span id="statusText">Loading...</span>
+    </div>
+    
+    <div class="controls">
+        <button onclick="setView('grid')" id="gridBtn" class="view-toggle-btn active">
+            <i class="fas fa-th"></i> Grid
+        </button>
+        <button onclick="setView('list')" id="listBtn" class="view-toggle-btn">
+            <i class="fas fa-list"></i> List
+        </button>
+        <button onclick="testFunction()">Test Function</button>
+    </div>
+    
+    <div id="materialsContainer">
+        <div class="material-card">
+            <div class="material-thumbnail">
+                <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg" alt="Test">
+            </div>
+            <div class="material-content">
+                <h3>Test Material 1</h3>
+                <p>This is a test material card</p>
+            </div>
+        </div>
+        
+        <div class="material-card">
+            <div class="material-thumbnail">
+                <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg" alt="Test">
+            </div>
+            <div class="material-content">
+                <h3>Test Material 2</h3>
+                <p>This is another test material card</p>
+            </div>
+        </div>
+        
+        <div class="material-card">
+            <div class="material-thumbnail">
+                <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg" alt="Test">
+            </div>
+            <div class="material-content">
+                <h3>Test Material 3</h3>
+                <p>This is yet another test material card</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        console.log('Script loaded!');
+        
+        function testFunction() {
+            console.log('Test function called!');
+            document.getElementById('statusText').textContent = 'Test function works!';
+        }
+        
+        // View toggle functionality
+        function setView(view) {
+            console.log('setView called with:', view);
+            const container = document.getElementById('materialsContainer');
+            const cards = document.querySelectorAll('.material-card');
+            const thumbnails = document.querySelectorAll('.material-thumbnail');
+            const contents = document.querySelectorAll('.material-content');
+            const gridBtn = document.getElementById('gridBtn');
+            const listBtn = document.getElementById('listBtn');
+            
+            console.log('Found elements:', {
+                container: container ? 'yes' : 'no',
+                cards: cards.length,
+                thumbnails: thumbnails.length,
+                contents: contents.length
+            });
+            
+            if (view === 'grid') {
+                // Grid view styles
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+                container.style.gap = '25px';
+                
+                cards.forEach(card => {
+                    card.style.display = 'block';
+                    card.style.flexDirection = '';
+                });
+                
+                thumbnails.forEach(thumb => {
+                    thumb.style.width = '100%';
+                    thumb.style.paddingTop = '56.25%';
+                });
+                
+                contents.forEach(content => {
+                    content.style.flex = '';
+                });
+                
+                gridBtn.classList.add('active');
+                listBtn.classList.remove('active');
+                
+                document.getElementById('statusText').textContent = 'Grid view activated';
+            } else {
+                // List view styles
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.gap = '20px';
+                
+                cards.forEach(card => {
+                    card.style.display = 'flex';
+                    card.style.flexDirection = 'row';
+                });
+                
+                thumbnails.forEach(thumb => {
+                    thumb.style.width = '250px';
+                    thumb.style.paddingTop = '0';
+                    thumb.style.minHeight = '200px';
+                });
+                
+                contents.forEach(content => {
+                    content.style.flex = '1';
+                });
+                
+                listBtn.classList.add('active');
+                gridBtn.classList.remove('active');
+                
+                document.getElementById('statusText').textContent = 'List view activated';
+            }
+            
+            // Save preference to localStorage
+            localStorage.setItem('materialsView', view);
+            console.log('Saved to localStorage:', view);
+        }
+        
+        // Load saved view preference on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            const savedView = localStorage.getItem('materialsView') || 'grid';
+            console.log('Saved view from localStorage:', savedView);
+            setView(savedView);
+            document.getElementById('statusText').textContent = 'Page loaded with ' + savedView + ' view';
+        });
+        
+        console.log('All script parsed successfully!');
+    </script>
+</body>
+</html>

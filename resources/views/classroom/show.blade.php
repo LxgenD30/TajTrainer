@@ -1,28 +1,46 @@
 @extends('layouts.dashboard')
 
 @section('title', $classroom->class_name)
-@section('user-role', 'Teacher • ' . $classroom->class_name)
+@section('user-role', (auth()->user()->role_id == 3 ? 'Teacher' : 'Student') . ' • ' . $classroom->class_name)
 
 @section('navigation')
-    <a href="{{ route('home') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-home"></i></div>
-        <div class="nav-label">Dashboard</div>
-    </a>
-    <a href="{{ route('classroom.index') }}" class="nav-item active">
-        <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-        <div class="nav-label">My Classes</div>
-    </a>
-    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-user-circle"></i></div>
-        <div class="nav-label">Profile</div>
-    </a>
-    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
-        @csrf
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
+    @if(auth()->user()->role_id == 3)
+        {{-- Teacher Navigation --}}
+        <a href="{{ route('home') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-home"></i></div>
+            <div class="nav-label">Dashboard</div>
+        </a>
+        <a href="{{ route('classroom.index') }}" class="nav-item active">
+            <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+            <div class="nav-label">My Classes</div>
+        </a>
+        <a href="{{ route('students.list') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
+            <div class="nav-label">My Students</div>
+        </a>
+        <a href="{{ route('materials.index') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+            <div class="nav-label">Materials</div>
+        </a>
+    @else
+        {{-- Student Navigation --}}
+        <a href="{{ route('home') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-home"></i></div>
+            <div class="nav-label">Dashboard</div>
+        </a>
+        <a href="{{ route('student.classes') }}" class="nav-item active">
+            <div class="nav-icon"><i class="fas fa-chalkboard"></i></div>
+            <div class="nav-label">My Classes</div>
+        </a>
+        <a href="{{ route('materials.index') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+            <div class="nav-label">Materials</div>
+        </a>
+        <a href="{{ route('student.practice') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-microphone"></i></div>
+            <div class="nav-label">Practice</div>
+        </a>
+    @endif
 @endsection
 
 @section('content')
@@ -33,16 +51,6 @@
             <span style="font-weight: 600;">{{ session('success') }}</span>
         </div>
     @endif
-
-    <!-- Back Button -->
-    <div style="margin-bottom: 20px;">
-        <a href="{{ route('classroom.index') }}" 
-            style="display: inline-flex; align-items: center; gap: 10px; color: #1a1a1a; text-decoration: none; font-family: 'El Messiri', sans-serif; font-weight: 600; font-size: 1rem; padding: 8px 16px; border-radius: 50px; background: rgba(255, 255, 255, 0.9); border: 3px solid #2a2a2a; transition: all 0.3s ease;"
-            onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.transform='translateX(-5px)'; this.style.borderColor='#0a5c36'"
-            onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.transform='translateX(0)'; this.style.borderColor='#2a2a2a'">
-            <i class="fas fa-arrow-left"></i> Back to Classes
-        </a>
-    </div>
 
     <!-- Classroom Header Banner (Like Student Welcome Banner) -->
     <div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 25px; padding: 40px; margin-bottom: 30px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25); border: 3px solid #2a2a2a;">
@@ -62,7 +70,7 @@
                     <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Students</div>
                 </div>
                 <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
-                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1; color: #ffd700;">{{ $classroom->assignments->count() }}</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1; color: #ffd700;">{{ $assignments->count() }}</div>
                     <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Assignments</div>
                 </div>
                 <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
@@ -72,50 +80,70 @@
             </div>
 
             <!-- Quick Actions (Inside Banner) -->
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <a href="{{ route('classroom.edit', $classroom->id) }}" 
-                    style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
-                    onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
-                    onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
-                    <i class="fas fa-edit"></i> Edit Classroom
-                </a>
-                <a href="#" 
-                    style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
-                    onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
-                    onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
-                    <i class="fas fa-plus"></i> New Assignment
-                </a>
-                <form action="{{ route('classroom.destroy', $classroom->id) }}" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" onclick="return confirm('Are you sure you want to delete this classroom? This action cannot be undone.')"
-                        style="padding: 12px 25px; background: rgba(231, 76, 60, 0.2); color: white; border: 2px solid rgba(231, 76, 60, 0.4); backdrop-filter: blur(10px); border-radius: 50px; cursor: pointer; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
-                        onmouseover="this.style.background='rgba(231, 76, 60, 0.3)'; this.style.borderColor='rgba(231, 76, 60, 0.6)'"
-                        onmouseout="this.style.background='rgba(231, 76, 60, 0.2)'; this.style.borderColor='rgba(231, 76, 60, 0.4)'">
-                        <i class="fas fa-trash-alt"></i> Delete
-                    </button>
-                </form>
-            </div>
+            @if(auth()->user()->role_id == 3)
+                {{-- Teacher Actions --}}
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <a href="{{ route('classroom.index') }}" 
+                        style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
+                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
+                        <i class="fas fa-arrow-left"></i> Back to Classes
+                    </a>
+                    <a href="{{ route('classroom.edit', $classroom->id) }}" 
+                        style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
+                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
+                        <i class="fas fa-edit"></i> Edit Classroom
+                    </a>
+                    <a href="{{ route('assignment.create', $classroom->id) }}" 
+                        style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
+                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
+                        <i class="fas fa-plus"></i> New Assignment
+                    </a>
+                    <form action="{{ route('classroom.destroy', $classroom->id) }}" method="POST" style="display: inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" onclick="return confirm('Are you sure you want to delete this classroom? This action cannot be undone.')"
+                            style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; cursor: pointer; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
+                            onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
+                            onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
+                            <i class="fas fa-trash-alt"></i> Delete Classroom
+                        </button>
+                    </form>
+                </div>
+            @else
+                {{-- Student Actions --}}
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <a href="{{ route('student.classes') }}" 
+                        style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
+                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
+                        <i class="fas fa-arrow-left"></i> Back to My Classes
+                    </a>
+                </div>
+            @endif
         </div>
     </div>
 
-    <!-- Two Column Layout -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
-        <!-- Students Section -->
-        <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
-                <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
-                    <i class="fas fa-users"></i> Students ({{ $classroom->students->count() }})
-                </h3>
-            </div>
-            
-            @if($classroom->students->count() > 0)
+    <!-- Two Column Layout for Teacher, Single Column for Student -->
+    <div style="display: grid; grid-template-columns: {{ auth()->user()->role_id == 3 ? '1fr 1fr' : '1fr' }}; gap: 30px; margin-bottom: 30px;">
+        <!-- Students Section (Teachers Only) -->
+        @if(auth()->user()->role_id == 3)
+            <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                    <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
+                        <i class="fas fa-users"></i> Students ({{ $classroom->students->count() }})
+                    </h3>
+                </div>
+                
+                @if($classroom->students->count() > 0)
                 <div style="display: flex; flex-direction: column; gap: 15px;">
                     @foreach($classroom->students as $student)
-                        <div style="background: rgba(10, 92, 54, 0.05); border-radius: 12px; padding: 15px 20px; border: 2px solid rgba(10, 92, 54, 0.1); transition: all 0.3s ease;"
+                        <div style="background: rgba(10, 92, 54, 0.05); border-radius: 12px; padding: 15px 20px; border: 2px solid rgba(10, 92, 54, 0.3); transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(10, 92, 54, 0.1);"
                             onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.borderColor='#0a5c36'"
                             onmouseout="this.style.background='rgba(10, 92, 54, 0.05)'; this.style.borderColor='rgba(10, 92, 54, 0.1)'">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
                                     <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
                                         {{ strtoupper(substr($student->name, 0, 1)) }}
@@ -125,10 +153,29 @@
                                         <div style="font-size: 0.85rem; color: #666;">{{ $student->email }}</div>
                                     </div>
                                 </div>
-                                <span style="padding: 6px 15px; background: rgba(76, 175, 80, 0.1); color: #4caf50; border-radius: 50px; font-size: 0.85rem; font-weight: 600;">
-                                    Active
-                                </span>
+                                @php
+                                    $submissionCount = \App\Models\AssignmentSubmission::where('student_id', $student->id)
+                                        ->whereHas('assignment', function($query) use ($classroom) {
+                                            $query->where('class_id', $classroom->id);
+                                        })->count();
+                                    $gradedCount = \App\Models\AssignmentSubmission::where('student_id', $student->id)
+                                        ->where('status', 'graded')
+                                        ->whereHas('assignment', function($query) use ($classroom) {
+                                            $query->where('class_id', $classroom->id);
+                                        })->count();
+                                @endphp
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="padding: 6px 15px; background: rgba(76, 175, 80, 0.1); color: #4caf50; border-radius: 50px; font-size: 0.85rem; font-weight: 600;">
+                                        {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}
+                                    </span>
+                                </div>
                             </div>
+                            <a href="{{ route('teacher.student.submissions', ['classroom' => $classroom->id, 'student' => $student->id]) }}" 
+                                style="display: block; width: 100%; padding: 10px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                <i class="fas fa-clipboard-check"></i> View Submissions & Grade
+                            </a>
                         </div>
                     @endforeach
                 </div>
@@ -139,30 +186,33 @@
                     <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #999;">Share the access code to invite students</p>
                 </div>
             @endif
-        </div>
+            </div>
+        @endif
 
         <!-- Assignments Section -->
         <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
                 <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
-                    <i class="fas fa-tasks"></i> Assignments ({{ $classroom->assignments->count() }})
+                    <i class="fas fa-tasks"></i> Assignments ({{ $assignments->count() }})
                 </h3>
-                <a href="#" style="padding: 8px 20px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
+                @if(auth()->user()->role_id == 3)
+                <a href="{{ route('assignment.create', $classroom->id) }}" style="padding: 8px 20px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
                     <i class="fas fa-plus"></i> New
                 </a>
+                @endif
             </div>
             
-            @if($classroom->assignments->count() > 0)
+            @if($assignments->count() > 0)
                 <div style="display: flex; flex-direction: column; gap: 15px;">
-                    @foreach($classroom->assignments as $assignment)
+                    @foreach($assignments as $assignment)
                         <div style="background: rgba(10, 92, 54, 0.05); border-left: 4px solid #0a5c36; border-radius: 12px; padding: 20px; transition: all 0.3s ease;"
                             onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.transform='translateX(5px)'"
                             onmouseout="this.style.background='rgba(10, 92, 54, 0.05)'; this.style.transform='translateX(0)'">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                                 <h4 style="margin: 0; font-family: 'Cairo', sans-serif; font-size: 1.1rem; color: #1a1a1a;">
-                                    {{ $assignment->title ?? 'Assignment' }}
+                                    {{ $assignment->surah }} ({{ $assignment->start_verse }}{{ $assignment->end_verse ? '-' . $assignment->end_verse : '' }})
                                 </h4>
                                 <span style="padding: 5px 12px; background: rgba(212, 175, 55, 0.1); color: #d4af37; border-radius: 50px; font-size: 0.8rem; font-weight: 600;">
                                     {{ $assignment->total_marks }} pts
@@ -171,21 +221,23 @@
                             <div style="display: flex; align-items: center; gap: 15px; font-size: 0.85rem; color: #666; margin-bottom: 15px;">
                                 <span><i class="far fa-calendar"></i> Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y') }}</span>
                                 @php
-                                    $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->id)->count();
+                                    $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->assignment_id)->count();
                                 @endphp
-                                <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submissions</span>
+                                <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}</span>
                             </div>
                             <div style="display: flex; gap: 10px;">
-                                <a href="#" style="flex: 1; padding: 8px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                <a href="{{ route('assignment.show', $assignment->assignment_id) }}" style="flex: 1; padding: 8px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
                                     onmouseover="this.style.background='#0a5c36'; this.style.color='white'"
                                     onmouseout="this.style.background='white'; this.style.color='#0a5c36'">
                                     View
                                 </a>
-                                <a href="#" style="flex: 1; padding: 8px; background: white; color: #ff9800; border: 2px solid #ff9800; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                @if(auth()->user()->role_id == 3)
+                                <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" style="flex: 1; padding: 8px; background: white; color: #ff9800; border: 2px solid #ff9800; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
                                     onmouseover="this.style.background='#ff9800'; this.style.color='white'"
                                     onmouseout="this.style.background='white'; this.style.color='#ff9800'">
                                     Edit
                                 </a>
+                                @endif
                             </div>
                         </div>
                     @endforeach

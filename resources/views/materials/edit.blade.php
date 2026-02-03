@@ -1,394 +1,197 @@
-@extends('layouts.template')
+@extends('layouts.dashboard')
 
-@section('page-title', 'Edit Material')
-@section('page-subtitle', 'Update Material Details')
+@section('title', 'Edit Material')
+@section('user-role', 'Teacher • Edit Material')
+
+@section('navigation')
+    <a href="{{ route('home') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-home"></i></div>
+        <div class="nav-label">Dashboard</div>
+    </a>
+    <a href="{{ route('classroom.index') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="nav-label">My Classes</div>
+    </a>
+    <a href="{{ route('students.list') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
+        <div class="nav-label">My Students</div>
+    </a>
+    <a href="{{ route('materials.index') }}" class="nav-item active">
+        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+        <div class="nav-label">Materials</div>
+    </a>
+@endsection
 
 @section('content')
-<style>
-    .form-card {
-        background: white;
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
-        border: 3px solid #2a2a2a;
-        max-width: 900px;
-        margin: 0 auto;
-    }
-    
-    .form-header {
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 3px solid #f5f5dc;
-    }
-    
-    .form-header h2 {
-        font-size: 2rem;
-        color: #0a5c36;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .form-group {
-        margin-bottom: 25px;
-    }
-    
-    .form-label {
-        display: block;
-        color: #0a5c36;
-        font-weight: 700;
-        margin-bottom: 10px;
-        font-size: 1.1rem;
-    }
-    
-    .form-input,
-    .form-textarea {
-        width: 100%;
-        padding: 15px;
-        background: rgba(10, 92, 54, 0.05);
-        color: #333;
-        border: 2px solid rgba(10, 92, 54, 0.2);
-        border-radius: 12px;
-        font-family: 'El Messiri', sans-serif;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .form-input:focus,
-    .form-textarea:focus {
-        outline: none;
-        border-color: #0a5c36;
-        background: rgba(10, 92, 54, 0.08);
-    }
-    
-    .form-textarea {
-        resize: vertical;
-        min-height: 120px;
-    }
-    
-    .form-hint {
-        display: block;
-        color: #666;
-        font-size: 0.9rem;
-        margin-top: 6px;
-    }
-    
-    .current-resources-box {
-        background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.05));
-        padding: 20px;
-        border-radius: 15px;
-        border: 2px solid #27ae60;
-        margin-bottom: 20px;
-    }
-    
-    .current-resources-title {
-        color: #27ae60;
-        font-weight: 700;
-        font-size: 1.2rem;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .current-item {
-        margin-bottom: 12px;
-        color: #333;
-        padding: 10px;
-        background: white;
-        border-radius: 8px;
-    }
-    
-    .current-thumbnail {
-        max-width: 300px;
-        max-height: 200px;
-        border-radius: 10px;
-        margin-top: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .resources-section {
-        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
-        padding: 25px;
-        border-radius: 15px;
-        border: 2px solid #d4af37;
-        margin-bottom: 25px;
-    }
-    
-    .section-title-resources {
-        color: #d4af37;
-        font-weight: 700;
-        font-size: 1.3rem;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .preview-box {
-        margin-top: 15px;
-        padding: 20px;
-        background: white;
-        border-radius: 12px;
-        text-align: center;
-        border: 2px dashed #0a5c36;
-    }
-    
-    .preview-box img {
-        max-width: 100%;
-        max-height: 250px;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .preview-label {
-        color: #0a5c36;
-        font-weight: 600;
-        margin-bottom: 10px;
-    }
-    
-    .checkbox-container {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 15px;
-        background: rgba(10, 92, 54, 0.05);
-        border-radius: 12px;
-        border: 2px solid rgba(10, 92, 54, 0.2);
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .checkbox-container:hover {
-        background: rgba(10, 92, 54, 0.1);
-        border-color: #0a5c36;
-    }
-    
-    .checkbox-container input[type="checkbox"] {
-        width: 24px;
-        height: 24px;
-        cursor: pointer;
-    }
-    
-    .checkbox-label {
-        color: #0a5c36;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-    
-    .button-group {
-        display: flex;
-        gap: 15px;
-        margin-top: 30px;
-    }
-    
-    .btn-submit {
-        flex: 1;
-        padding: 15px 30px;
-        background: linear-gradient(135deg, #0a5c36, #2e8b57);
-        color: white;
-        border: none;
-        border-radius: 25px;
-        font-weight: 700;
-        font-size: 1.1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-submit:hover {
-        background: linear-gradient(135deg, #064e32, #0a5c36);
-        transform: scale(1.02);
-    }
-    
-    .btn-cancel {
-        flex: 1;
-        padding: 15px 30px;
-        background: transparent;
-        color: #e74c3c;
-        border: 2px solid #e74c3c;
-        border-radius: 25px;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .btn-cancel:hover {
-        background: rgba(231, 76, 60, 0.1);
-    }
-</style>
-
-<div class="form-card">
-    <div class="form-header">
-        <h2><i class="fas fa-edit"></i> Edit Material</h2>
+    <!-- Back Button -->
+    <div style="margin-bottom: 20px;">
+        <a href="{{ route('materials.show', $material->material_id) }}" 
+            style="display: inline-flex; align-items: center; gap: 10px; color: #1a1a1a; text-decoration: none; font-family: 'El Messiri', sans-serif; font-weight: 600; font-size: 1rem; padding: 8px 16px; border-radius: 50px; background: rgba(255, 255, 255, 0.9); border: 3px solid #2a2a2a; transition: all 0.3s ease;"
+            onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.transform='translateX(-5px)'; this.style.borderColor='#0a5c36'"
+            onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.transform='translateX(0)'; this.style.borderColor='#2a2a2a'">
+            <i class="fas fa-arrow-left"></i> Back to Material
+        </a>
     </div>
 
-    <form action="{{ route('materials.update', $material->material_id) }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
+    <!-- Page Header -->
+    <div style="background: white; border-radius: 25px; padding: 30px; margin-bottom: 30px; border: 3px solid #2a2a2a; box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);">
+        <h1 style="margin: 0 0 10px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; color: #0a5c36; font-weight: 700;">
+            <i class="fas fa-edit"></i> Edit Material
+        </h1>
+        <p style="margin: 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif;">
+            Update material information and files
+        </p>
+    </div>
 
-        <!-- Title -->
-        <div class="form-group">
-            <label class="form-label">📝 Material Title *</label>
-            <input type="text" name="title" value="{{ old('title', $material->title) }}" required class="form-input" placeholder="Enter a descriptive title for this material">
-            @error('title')
-                <span style="color: #e74c3c; font-size: 0.9rem; display: block; margin-top: 5px;">{{ $message }}</span>
-            @enderror
-        </div>
+    <!-- Form Card -->
+    <div style="background: white; border-radius: 25px; padding: 40px; border: 3px solid #e0e0e0; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);">
+        <form action="{{ route('materials.update', $material->material_id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
 
-        <!-- Description -->
-        <div class="form-group">
-            <label class="form-label">📄 Description</label>
-            <textarea name="description" class="form-textarea" placeholder="Describe this material and its learning objectives">{{ old('description', $material->description) }}</textarea>
-            <span class="form-hint">Provide helpful context for students using this material</span>
-            @error('description')
-                <span style="color: #e74c3c; font-size: 0.9rem; display: block; margin-top: 5px;">{{ $message }}</span>
-            @enderror
-        </div>
-
-        <!-- Current Resources -->
-        @if($material->file_path || $material->video_link || $material->thumbnail)
-            <div class="current-resources-box">
-                <h4 class="current-resources-title">
-                    <i class="fas fa-check-circle"></i> Current Resources
-                </h4>
-                
-                @if($material->thumbnail)
-                    <div class="current-item">
-                        <strong>📸 Current Thumbnail:</strong>
-                        <img src="{{ filter_var($material->thumbnail, FILTER_VALIDATE_URL) ? $material->thumbnail : Storage::url($material->thumbnail) }}" 
-                             alt="Current thumbnail" 
-                             class="current-thumbnail">
-                    </div>
-                @endif
-                
-                @if($material->file_path)
-                    <div class="current-item">
-                        <strong>📄 File:</strong> 
-                        <a href="{{ Storage::url($material->file_path) }}" target="_blank" style="color: #0a5c36; text-decoration: underline;">View current file</a>
-                    </div>
-                @endif
-                
-                @if($material->video_link)
-                    <div class="current-item">
-                        <strong>🎥 Video:</strong> 
-                        <a href="{{ $material->video_link }}" target="_blank" style="color: #0a5c36; text-decoration: underline; word-break: break-all;">{{ Str::limit($material->video_link, 80) }}</a>
-                    </div>
-                @endif
-            </div>
-        @endif
-
-        <!-- Resources Section -->
-        <div class="resources-section">
-            <h3 class="section-title-resources">
-                <i class="fas fa-folder-open"></i> Update Resources
-            </h3>
-
-            <!-- Video Link -->
-            <div class="form-group">
-                <label class="form-label">🎥 Video Link</label>
-                <input type="url" name="video_link" id="videoLinkInput" value="{{ old('video_link', $material->video_link) }}" class="form-input" placeholder="https://youtube.com/watch?v=... or any video URL" oninput="previewVideoThumbnail()">
-                <span class="form-hint">YouTube links will automatically extract thumbnails</span>
-                @error('video_link')
-                    <span style="color: #e74c3c; font-size: 0.9rem; display: block; margin-top: 5px;">{{ $message }}</span>
+            <!-- Title -->
+            <div style="margin-bottom: 25px;">
+                <label for="title" style="display: block; margin-bottom: 8px; font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif; font-size: 1rem;">
+                    <i class="fas fa-heading"></i> Material Title *
+                </label>
+                <input type="text" 
+                       name="title" 
+                       id="title" 
+                       value="{{ old('title', $material->title) }}"
+                       required
+                       style="width: 100%; padding: 12px 15px; border: 3px solid #e0e0e0; border-radius: 12px; font-size: 1rem; font-family: 'Cairo', sans-serif; transition: all 0.3s ease;"
+                       onfocus="this.style.borderColor='#0a5c36'; this.style.boxShadow='0 0 0 4px rgba(10, 92, 54, 0.1)'"
+                       onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"
+                       placeholder="e.g., Introduction to Tajweed Rules">
+                @error('title')
+                    <p style="margin: 5px 0 0 0; color: #e74c3c; font-size: 0.9rem; font-family: 'Cairo', sans-serif;">{{ $message }}</p>
                 @enderror
-                
-                <!-- Video Thumbnail Preview -->
-                <div id="videoThumbnailPreview" style="display: none;" class="preview-box">
-                    <p class="preview-label">🎬 Video Thumbnail Preview:</p>
-                    <img id="videoPreviewImage" src="" alt="Video Preview">
+            </div>
+
+            <!-- Description -->
+            <div style="margin-bottom: 25px;">
+                <label for="description" style="display: block; margin-bottom: 8px; font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif; font-size: 1rem;">
+                    <i class="fas fa-align-left"></i> Description
+                </label>
+                <textarea name="description" 
+                          id="description" 
+                          rows="4"
+                          style="width: 100%; padding: 12px 15px; border: 3px solid #e0e0e0; border-radius: 12px; font-size: 1rem; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; resize: vertical;"
+                          onfocus="this.style.borderColor='#0a5c36'; this.style.boxShadow='0 0 0 4px rgba(10, 92, 54, 0.1)'"
+                          onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"
+                          placeholder="Describe what students will learn from this material">{{ old('description', $material->description) }}</textarea>
+                @error('description')
+                    <p style="margin: 5px 0 0 0; color: #e74c3c; font-size: 0.9rem; font-family: 'Cairo', sans-serif;">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+                <!-- Video Link -->
+                <div>
+                    <label for="video_link" style="display: block; margin-bottom: 8px; font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif; font-size: 1rem;">
+                        <i class="fas fa-video"></i> Video Link (YouTube)
+                    </label>
+                    <input type="url" 
+                           name="video_link" 
+                           id="video_link" 
+                           value="{{ old('video_link', $material->video_link) }}"
+                           style="width: 100%; padding: 12px 15px; border: 3px solid #e0e0e0; border-radius: 12px; font-size: 1rem; font-family: 'Cairo', sans-serif; transition: all 0.3s ease;"
+                           onfocus="this.style.borderColor='#0a5c36'; this.style.boxShadow='0 0 0 4px rgba(10, 92, 54, 0.1)'"
+                           onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"
+                           placeholder="https://www.youtube.com/watch?v=...">
+                    @error('video_link')
+                        <p style="margin: 5px 0 0 0; color: #e74c3c; font-size: 0.9rem; font-family: 'Cairo', sans-serif;">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Public Checkbox -->
+                <div style="display: flex; align-items: center; margin-top: 35px;">
+                    <input type="checkbox" 
+                           name="is_public" 
+                           id="is_public" 
+                           value="1"
+                           {{ old('is_public', $material->is_public) ? 'checked' : '' }}
+                           style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                    <label for="is_public" style="font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif; font-size: 1rem; cursor: pointer;">
+                        <i class="fas fa-globe"></i> Make this material public
+                    </label>
                 </div>
             </div>
+
+            <!-- Current File Display -->
+            @if($material->file_path)
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(26, 188, 156, 0.1); border-radius: 12px; border: 2px solid #1abc9c;">
+                    <p style="margin: 0; font-weight: 600; color: #1abc9c; font-family: 'Cairo', sans-serif;">
+                        <i class="fas fa-check-circle"></i> Current File: {{ basename($material->file_path) }}
+                    </p>
+                </div>
+            @endif
 
             <!-- File Upload -->
-            <div class="form-group">
-                <label class="form-label">📄 File {{ $material->file_path ? '(Replace Current)' : '' }}</label>
-                <input type="file" name="file" accept=".pdf,.doc,.docx,.mp3,.mp4" id="materialFile" class="form-input" style="padding: 12px;">
-                <span class="form-hint">{{ $material->file_path ? 'Upload new file to replace existing. Leave empty to keep current.' : 'Supported: PDF, DOC, DOCX, MP3, MP4 (Max 20MB)' }}</span>
+            <div style="margin-bottom: 25px;">
+                <label for="file" style="display: block; margin-bottom: 8px; font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif; font-size: 1rem;">
+                    <i class="fas fa-file-upload"></i> {{ $material->file_path ? 'Replace File' : 'Upload File' }} (PDF, DOC, MP3, MP4)
+                </label>
+                <input type="file" 
+                       name="file" 
+                       id="file"
+                       accept=".pdf,.doc,.docx,.mp3,.mp4"
+                       style="width: 100%; padding: 12px; border: 3px solid #e0e0e0; border-radius: 12px; font-family: 'Cairo', sans-serif; background: white; transition: all 0.3s ease;"
+                       onfocus="this.style.borderColor='#0a5c36'"
+                       onblur="this.style.borderColor='#e0e0e0'">
+                <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #666; font-family: 'Cairo', sans-serif;">
+                    <i class="fas fa-info-circle"></i> Max file size: 20MB. Leave empty to keep current file.
+                </p>
                 @error('file')
-                    <span style="color: #e74c3c; font-size: 0.9rem; display: block; margin-top: 5px;">{{ $message }}</span>
+                    <p style="margin: 5px 0 0 0; color: #e74c3c; font-size: 0.9rem; font-family: 'Cairo', sans-serif;">{{ $message }}</p>
                 @enderror
             </div>
+
+            <!-- Current Thumbnail Display -->
+            @if($material->thumbnail)
+                <div style="margin-bottom: 20px;">
+                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif;">Current Thumbnail:</p>
+                    <img src="{{ asset('storage/' . $material->thumbnail) }}" 
+                         alt="Current thumbnail"
+                         style="max-width: 300px; border-radius: 12px; border: 3px solid #e0e0e0;">
+                </div>
+            @endif
 
             <!-- Thumbnail Upload -->
-            <div class="form-group">
-                <label class="form-label">🖼️ Thumbnail {{ $material->thumbnail ? '(Replace Current)' : '(Optional)' }}</label>
-                <input type="file" name="thumbnail" accept="image/*" id="thumbnailFile" class="form-input" style="padding: 12px;" onchange="previewThumbnail(event)">
-                <span class="form-hint">{{ $material->thumbnail ? 'Upload new image to replace existing. Leave empty to keep current.' : 'JPG, PNG, or GIF (Max 2MB)' }}</span>
+            <div style="margin-bottom: 30px;">
+                <label for="thumbnail" style="display: block; margin-bottom: 8px; font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif; font-size: 1rem;">
+                    <i class="fas fa-image"></i> {{ $material->thumbnail ? 'Replace Thumbnail' : 'Thumbnail Image' }} (Optional)
+                </label>
+                <input type="file" 
+                       name="thumbnail" 
+                       id="thumbnail"
+                       accept="image/jpeg,image/png,image/jpg,image/gif"
+                       style="width: 100%; padding: 12px; border: 3px solid #e0e0e0; border-radius: 12px; font-family: 'Cairo', sans-serif; background: white; transition: all 0.3s ease;"
+                       onfocus="this.style.borderColor='#0a5c36'"
+                       onblur="this.style.borderColor='#e0e0e0'">
+                <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #666; font-family: 'Cairo', sans-serif;">
+                    <i class="fas fa-info-circle"></i> Leave empty to keep current thumbnail. YouTube videos will auto-generate if removed.
+                </p>
                 @error('thumbnail')
-                    <span style="color: #e74c3c; font-size: 0.9rem; display: block; margin-top: 5px;">{{ $message }}</span>
+                    <p style="margin: 5px 0 0 0; color: #e74c3c; font-size: 0.9rem; font-family: 'Cairo', sans-serif;">{{ $message }}</p>
                 @enderror
-                
-                <!-- Thumbnail Preview -->
-                <div id="thumbnailPreview" style="display: none;" class="preview-box">
-                    <p class="preview-label">New Thumbnail Preview:</p>
-                    <img id="previewImage" src="" alt="Preview">
-                </div>
             </div>
-        </div>
 
-        <!-- Visibility -->
-        <div class="form-group">
-            <label class="checkbox-container">
-                <input type="checkbox" name="is_public" value="1" {{ old('is_public', $material->is_public) ? 'checked' : '' }}>
-                <span class="checkbox-label">
-                    🌐 Make this material publicly available to all students
-                </span>
-            </label>
-            <span class="form-hint" style="margin-left: 36px;">Uncheck to restrict access to specific classes only</span>
-        </div>
-
-        <!-- Submit Buttons -->
-        <div class="button-group">
-            <button type="submit" class="btn-submit">
-                <i class="fas fa-save"></i> Update Material
-            </button>
-            <a href="{{ route('materials.show', $material->material_id) }}" class="btn-cancel">
-                <i class="fas fa-times"></i> Cancel
-            </a>
-        </div>
-    </form>
-</div>
-
-<script>
-    function previewThumbnail(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('previewImage').src = e.target.result;
-                document.getElementById('thumbnailPreview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    
-    function previewVideoThumbnail() {
-        const videoLink = document.getElementById('videoLinkInput').value;
-        const previewDiv = document.getElementById('videoThumbnailPreview');
-        const previewImg = document.getElementById('videoPreviewImage');
-        
-        // Check if it's a YouTube link
-        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-        const match = videoLink.match(youtubeRegex);
-        
-        if (match && match[1]) {
-            const videoId = match[1];
-            previewImg.src = 'https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg';
-            previewDiv.style.display = 'block';
-        } else {
-            previewDiv.style.display = 'none';
-        }
-    }
-    
-    // Check on page load if there's a YouTube link
-    document.addEventListener('DOMContentLoaded', function() {
-        previewVideoThumbnail();
-    });
-</script>
+            <!-- Submit Buttons -->
+            <div style="display: flex; gap: 15px; padding-top: 20px; border-top: 3px solid #f5f5f5;">
+                <button type="submit" 
+                        style="flex: 1; padding: 15px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border: none; border-radius: 15px; font-weight: 700; font-size: 1.1rem; font-family: 'Cairo', sans-serif; cursor: pointer; transition: all 0.3s ease;"
+                        onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 5px 20px rgba(10, 92, 54, 0.4)'"
+                        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                    <i class="fas fa-save"></i> Update Material
+                </button>
+                <a href="{{ route('materials.show', $material->material_id) }}" 
+                   style="flex: 1; padding: 15px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 3px solid #e74c3c; border-radius: 15px; font-weight: 700; font-size: 1.1rem; font-family: 'Cairo', sans-serif; text-decoration: none; text-align: center; transition: all 0.3s ease;"
+                   onmouseover="this.style.background='rgba(231, 76, 60, 0.2)'"
+                   onmouseout="this.style.background='rgba(231, 76, 60, 0.1)'">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
 @endsection

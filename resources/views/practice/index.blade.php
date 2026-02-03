@@ -924,31 +924,54 @@
         try {
             // Random surah (1-114)
             const surahNumber = Math.floor(Math.random() * 114) + 1;
+            console.log('🔄 Loading random ayah from Surah:', surahNumber);
             
             // First, get surah info to know how many ayahs
             const surahResponse = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`);
+            
+            if (!surahResponse.ok) {
+                console.error('❌ Failed to fetch surah info:', surahResponse.status, surahResponse.statusText);
+                throw new Error(`Failed to fetch surah: ${surahResponse.status}`);
+            }
+            
             const surahData = await surahResponse.json();
+            console.log('✅ Surah data received:', surahData);
             
             if (surahData.status === 'OK') {
                 const totalAyahs = surahData.data.numberOfAyahs;
                 const ayahNumber = Math.floor(Math.random() * totalAyahs) + 1;
+                console.log(`🎯 Selected Ayah ${ayahNumber} from ${totalAyahs} ayahs`);
                 
                 // Fetch the specific ayah with Arabic text, tajweed text, translation, and audio
+                console.log('📡 Fetching ayah data with 3 parallel requests...');
                 const [arabicResponse, tajweedResponse, translationResponse] = await Promise.all([
                     fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/ar.alafasy`),
                     fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/quran-tajweed`),
                     fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${ayahNumber}/en.asad`)
                 ]);
 
+                // Check responses
+                if (!arabicResponse.ok) console.error('❌ Arabic response failed:', arabicResponse.status);
+                if (!tajweedResponse.ok) console.warn('⚠️ Tajweed response failed:', tajweedResponse.status);
+                if (!translationResponse.ok) console.error('❌ Translation response failed:', translationResponse.status);
+
                 const arabicData = await arabicResponse.json();
                 const tajweedData = await tajweedResponse.json();
                 const translationData = await translationResponse.json();
+
+                console.log('📦 API Responses:', {
+                    arabic: arabicData.status,
+                    tajweed: tajweedData.status,
+                    translation: translationData.status
+                });
 
                 if (arabicData.status === 'OK' && translationData.status === 'OK') {
                     currentSurah = surahNumber;
                     currentAyah = ayahNumber;
                     currentAudioUrl = arabicData.data.audio;
                     currentTajweedText = tajweedData.status === 'OK' ? tajweedData.data.text : arabicData.data.text;
+
+                    console.log('🎵 Audio URL:', currentAudioUrl);
 
                     document.getElementById('ayahArabic').textContent = arabicData.data.text;
                     document.getElementById('surahInfo').textContent = `Surah ${arabicData.data.surah.englishName} (${arabicData.data.surah.name})`;
@@ -966,11 +989,24 @@
                     // Hide reference section when loading new verse
                     referenceSectionVisible = false;
                     document.getElementById('referenceSection').style.display = 'none';
+                    
+                    console.log('✅ Ayah loaded successfully!');
+                } else {
+                    console.error('❌ API returned non-OK status:', { arabicData, translationData });
+                    throw new Error('API returned error status');
                 }
+            } else {
+                console.error('❌ Surah data status not OK:', surahData);
+                throw new Error('Surah API returned error status');
             }
         } catch (error) {
-            console.error('Error loading ayah:', error);
+            console.error('💥 Error loading ayah:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
             document.getElementById('ayahArabic').textContent = 'Error loading verse. Please try again.';
+            document.getElementById('ayahTranslation').textContent = 'Check console for details.';
         }
     }
 
