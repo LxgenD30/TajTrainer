@@ -678,9 +678,10 @@
         formData.append('audio_file', recordedBlob, 'recording.webm');
         formData.append('surah_number', currentSurah);
         formData.append('ayah_number', currentAyah);
+        formData.append('expected_text', document.getElementById('ayahArabic').textContent);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
         
-        fetch('/api/analyze-practice', {
+        fetch('{{ route("student.practice.submit") }}', {
             method: 'POST',
             body: formData
         })
