@@ -922,7 +922,9 @@
         const recordedAudio = document.getElementById('recordedAudio')?.value;
         const uploadedFile = document.getElementById('audioFileInput')?.files?.length > 0;
         
-        console.log('=== Form Submission Check ===');
+        console.log('=== Assignment Submission Check ===');
+        console.log('Assignment ID: {{ $assignment->assignment_id }}');
+        console.log('Surah: {{ $assignment->surah }} ({{ $assignment->start_verse }}-{{ $assignment->end_verse ?? $assignment->start_verse }})');
         console.log('Has recorded audio:', !!recordedAudio);
         console.log('Has uploaded file:', uploadedFile);
         
@@ -933,7 +935,11 @@
             return false;
         }
         
-        console.log('📤 Submitting assignment...');
+        console.log('✅ Validation passed');
+        console.log('📤 Submitting assignment to server...');
+        console.log('⏳ Please wait while we process your submission...');
+        console.log('🔄 Server will analyze your recitation using Whisper AI + Tajweed rules');
+        console.log('📊 This may take 15-30 seconds for first-time analysis (downloading AI model)');
         @endif
         
         document.getElementById('submittingOverlay').style.display = 'flex';
@@ -944,6 +950,8 @@
             submitBtn.style.opacity = '0.6';
             submitBtn.style.cursor = 'not-allowed';
         }
+        
+        console.log('🎯 Form submitted successfully - waiting for server response...');
     });
 
     console.log('✓ Recording interface ready');

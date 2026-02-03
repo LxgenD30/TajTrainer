@@ -136,8 +136,11 @@ class TeacherController extends Controller
     public function gradeSubmission($submissionId)
     {
         try {
-            $submission = \App\Models\AssignmentSubmission::with(['assignment.classroom', 'student.user'])
-                ->findOrFail($submissionId);
+            $submission = \App\Models\AssignmentSubmission::with([
+                'assignment.classroom', 
+                'student.user',
+                'score' // Load existing score if it exists
+            ])->findOrFail($submissionId);
 
             // Verify teacher owns the classroom
             if (!$submission->assignment || !$submission->assignment->classroom) {
@@ -155,6 +158,11 @@ class TeacherController extends Controller
                     \Log::warning('Audio file not found for submission ' . $submissionId . ': ' . $submission->audio_file_path);
                     // Don't fail - just log it, the view will handle it
                 }
+            }
+            
+            // Load score relationship if not already loaded
+            if (!$submission->relationLoaded('score')) {
+                $submission->load('score');
             }
 
             return view('teachers.grade-submission', compact('submission'));

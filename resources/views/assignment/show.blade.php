@@ -263,7 +263,7 @@
             </form>
         @else
             @if(isset($submission))
-                <span class="btn" style="background: rgba(149, 165, 166, 0.2); color: #7f8c8d; border-color: #95a5a6; cursor: default;">
+                <span class="btn" style="background: #95a5a6; color: white; border-color: #95a5a6; cursor: default;">
                     ✅ Submitted
                 </span>
             @else
