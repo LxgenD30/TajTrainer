@@ -464,62 +464,73 @@ async function loadNewVerse() {
         currentSurah = Math.floor(Math.random() * 114) + 1;
         console.log('📚 Selected Surah:', currentSurah);
         
-        // Get surah info to know total ayahs
-        const surahResponse = await fetch(`https://api.alquran.cloud/v1/surah/${currentSurah}`);
+        // Get surah info - using multi edition endpoint
+        const surahUrl = `https://api.alquran.cloud/v1/surah/${currentSurah}`;
+        console.log('📡 Fetching:', surahUrl);
+        
+        const surahResponse = await fetch(surahUrl);
         
         if (!surahResponse.ok) {
-            throw new Error(`Surah API failed: ${surahResponse.status}`);
+            throw new Error(`Surah API failed: ${surahResponse.status} ${surahResponse.statusText}`);
         }
         
         const surahData = await surahResponse.json();
-        console.log('✅ Surah data received:', surahData.data.englishName);
+        console.log('✅ Surah data:', surahData);
         
-        if (surahData.status !== 'OK') {
-            throw new Error('Surah API returned error status');
+        if (surahData.code !== 200 || surahData.status !== 'OK') {
+            throw new Error('Surah API returned error');
         }
         
         const totalAyahs = surahData.data.numberOfAyahs;
         currentAyah = Math.floor(Math.random() * totalAyahs) + 1;
         console.log(`🎯 Selected Ayah ${currentAyah} of ${totalAyahs}`);
         
-        // Fetch ayah with audio, tajweed, and translation
-        console.log('📡 Fetching ayah data...');
-        const [arabicRes, translationRes] = await Promise.all([
-            fetch(`https://api.alquran.cloud/v1/ayah/${currentSurah}:${currentAyah}/ar.alafasy`),
-            fetch(`https://api.alquran.cloud/v1/ayah/${currentSurah}:${currentAyah}/en.asad`)
-        ]);
+        // Fetch multiple editions in single call - more efficient
+        const ayahUrl = `https://api.alquran.cloud/v1/ayah/${currentSurah}:${currentAyah}/editions/quran-uthmani,ar.alafasy,en.asad`;
+        console.log('📡 Fetching:', ayahUrl);
         
-        if (!arabicRes.ok || !translationRes.ok) {
-            throw new Error('Failed to fetch ayah data');
+        const ayahResponse = await fetch(ayahUrl);
+        
+        if (!ayahResponse.ok) {
+            throw new Error(`Ayah API failed: ${ayahResponse.status} ${ayahResponse.statusText}`);
         }
         
-        const arabicData = await arabicRes.json();
-        const translationData = await translationRes.json();
+        const ayahData = await ayahResponse.json();
+        console.log('✅ Ayah data:', ayahData);
         
-        console.log('✅ Ayah data received');
+        if (ayahData.code !== 200 || ayahData.status !== 'OK' || !ayahData.data) {
+            throw new Error('Ayah API returned error');
+        }
         
-        if (arabicData.status === 'OK' && translationData.status === 'OK') {
-            // Update display
-            document.getElementById('ayahArabic').textContent = arabicData.data.text;
-            document.getElementById('surahInfo').textContent = arabicData.data.surah.englishName;
-            document.getElementById('ayahInfo').textContent = `Ayah ${currentAyah}`;
-            document.getElementById('ayahTranslation').textContent = translationData.data.text;
-            
-            // Set reference audio
-            currentAudioUrl = arabicData.data.audio;
+        // Extract data from multi-edition response
+        const arabicText = ayahData.data[0].text; // quran-uthmani
+        const audioData = ayahData.data[1]; // ar.alafasy
+        const translationText = ayahData.data[2].text; // en.asad
+        
+        // Update display
+        document.getElementById('ayahArabic').textContent = arabicText;
+        document.getElementById('surahInfo').textContent = audioData.surah.englishName;
+        document.getElementById('ayahInfo').textContent = `Ayah ${currentAyah}`;
+        document.getElementById('ayahTranslation').textContent = translationText;
+        
+        // Set reference audio
+        if (audioData.audio) {
+            currentAudioUrl = audioData.audio;
             document.getElementById('referenceAudio').src = currentAudioUrl;
-            
-            console.log('✅ Verse loaded successfully!');
+            console.log('🎵 Audio URL:', currentAudioUrl);
         } else {
-            throw new Error('API returned error status');
+            console.warn('⚠️ No audio available');
         }
+        
+        console.log('✅ Verse loaded successfully!');
         
     } catch (error) {
         console.error('❌ Error loading verse:', error);
+        console.error('Error stack:', error.stack);
         document.getElementById('ayahArabic').innerHTML = `
             <div class="error">
                 <i class="fas fa-exclamation-triangle"></i>
-                Error loading verse. Please try again.
+                Failed to load verse. Please try again.
                 <br><small>${error.message}</small>
             </div>`;
         document.getElementById('ayahTranslation').innerHTML = `

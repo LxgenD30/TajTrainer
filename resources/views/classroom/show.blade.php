@@ -170,12 +170,29 @@
                                     </span>
                                 </div>
                             </div>
-                            <a href="{{ route('teacher.student.submissions', ['classroom' => $classroom->id, 'student' => $student->id]) }}" 
-                                style="display: block; width: 100%; padding: 10px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
-                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                                <i class="fas fa-clipboard-check"></i> View Submissions & Grade
-                            </a>
+                            @php
+                                $latestSubmission = \App\Models\AssignmentSubmission::where('student_id', $student->id)
+                                    ->whereHas('assignment', function($query) use ($classroom) {
+                                        $query->where('class_id', $classroom->id);
+                                    })
+                                    ->latest()
+                                    ->first();
+                            @endphp
+                            @if($latestSubmission)
+                                <a href="{{ route('teacher.submission.grade', $latestSubmission->id) }}" 
+                                    style="display: block; width: 100%; padding: 10px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <i class="fas fa-clipboard-check"></i> View Submissions & Grade
+                                </a>
+                            @else
+                                <a href="{{ route('teacher.student.submissions', ['classroom' => $classroom->id, 'student' => $student->id]) }}" 
+                                    style="display: block; width: 100%; padding: 10px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <i class="fas fa-clipboard-check"></i> View All Submissions
+                                </a>
+                            @endif
                         </div>
                     @endforeach
                 </div>
