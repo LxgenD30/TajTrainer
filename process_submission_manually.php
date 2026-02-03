@@ -67,7 +67,7 @@ echo "✓ Audio file exists (" . round(filesize($audioPath) / 1024, 2) . " KB)\n
 
 // Dispatch job
 echo "Dispatching ProcessSubmissionAudio job...\n";
-\App\Jobs\ProcessSubmissionAudio::dispatch($submission);
+\App\Jobs\ProcessSubmissionAudio::dispatch($submission->id);
 echo "✓ Job dispatched to queue\n\n";
 
 // Wait a moment

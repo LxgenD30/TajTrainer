@@ -41,7 +41,7 @@ echo "✓ Audio file exists: $audioPath\n\n";
 // Try to instantiate the job
 echo "Creating ProcessSubmissionAudio job instance...\n";
 try {
-    $job = new \App\Jobs\ProcessSubmissionAudio($submission);
+    $job = new \App\Jobs\ProcessSubmissionAudio($submission->id);
     echo "✓ Job instantiated successfully\n\n";
 } catch (\Exception $e) {
     echo "✗ ERROR: Cannot instantiate job\n";
