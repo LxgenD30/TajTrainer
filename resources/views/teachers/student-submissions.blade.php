@@ -401,7 +401,6 @@
         </h3>
         <div style="display: grid; gap: 15px;">
             @foreach($pendingSubmissions as $submission)
-            @foreach($pendingSubmissions as $submission)
                 <div style="background: white; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'">
                     <div style="flex: 1;">
                         <h4 style="color: #0a5c36; margin-bottom: 8px; font-size: 1.1rem;">
