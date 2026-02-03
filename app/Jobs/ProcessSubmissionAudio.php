@@ -77,7 +77,7 @@ class ProcessSubmissionAudio implements ShouldQueue
                     
                     Score::updateOrCreate(
                         [
-                            'assignment_id' => $assignment->id,
+                            'assignment_id' => $assignment->assignment_id,
                             'user_id' => $submission->student_id,
                         ],
                         [

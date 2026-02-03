@@ -19,6 +19,8 @@ class Assignment extends Model
         'total_marks',
         'is_voice_submission',
         'tajweed_rules',
+        'expected_recitation',
+        'reference_audio_url',
     ];
 
     protected $casts = [

@@ -307,6 +307,28 @@
                 </div>
             </div>
         @endif
+        
+        @if($assignment->expected_recitation)
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
+                <div class="info-label" style="margin-bottom: 10px;">📝 Expected Arabic Text:</div>
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 10px; direction: rtl; text-align: center; font-size: 1.5rem; font-weight: bold; color: #d4af37;">
+                    {{ $assignment->expected_recitation }}
+                </div>
+            </div>
+        @endif
+        
+        @if($assignment->reference_audio_url)
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
+                <div class="info-label" style="margin-bottom: 10px;">🎧 Reference Audio (Sheikh Alafasy):</div>
+                <audio controls style="width: 100%; border-radius: 10px;">
+                    <source src="{{ $assignment->reference_audio_url }}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+                <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-top: 10px;">
+                    Listen to the correct pronunciation before recording your own recitation.
+                </p>
+            </div>
+        @endif
     </div>
 
     <!-- Reference Materials -->
