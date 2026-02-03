@@ -610,3 +610,4 @@
             }
         });
 </script>
+@endsection
