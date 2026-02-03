@@ -432,263 +432,307 @@
 
 @section('extra-scripts')
 <script>
-console.log('🚀 Practice page script loaded');
-
-// Global variables
-let currentSurah = null;
-let currentAyah = null;
-let currentAudioUrl = null;
-let mediaRecorder = null;
-let audioChunks = [];
-let recordingTimer = null;
-let recordingSeconds = 0;
-let recordedBlob = null;
-
-// Load random verse on page load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📖 DOM loaded, loading verse...');
-    loadNewVerse();
-});
-
-async function loadNewVerse() {
-    console.log('🔄 Loading new verse...');
+(function() {
+    'use strict';
     
-    try {
-        // Show loading state
-        document.getElementById('ayahArabic').innerHTML = '<div class="loading">Loading verse...</div>';
-        document.getElementById('ayahTranslation').innerHTML = '<div class="loading">Loading translation...</div>';
-        document.getElementById('surahInfo').textContent = '---';
-        document.getElementById('ayahInfo').textContent = '---';
+    console.log('=== Practice Page Initializing ===');
+
+    // Global variables
+    var currentSurah = null;
+    var currentAyah = null;
+    var currentAudioUrl = null;
+    var mediaRecorder = null;
+    var audioChunks = [];
+    var recordingTimer = null;
+    var recordingSeconds = 0;
+    var recordedBlob = null;
+
+    // Load random verse on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded');
+        console.log('Starting to load verse...');
+        loadNewVerse();
+    });
+
+    function loadNewVerse() {
+        console.log('=== loadNewVerse() called ===');
         
-        // Random surah (1-114)
-        currentSurah = Math.floor(Math.random() * 114) + 1;
-        console.log('📚 Selected Surah:', currentSurah);
+        try {
+            console.log('Step 1: Show loading state');
+            document.getElementById('ayahArabic').innerHTML = '<div class="loading">Loading verse...</div>';
+            document.getElementById('ayahTranslation').innerHTML = '<div class="loading">Loading translation...</div>';
+            document.getElementById('surahInfo').textContent = '---';
+            document.getElementById('ayahInfo').textContent = '---';
+            
+            console.log('Step 2: Generate random surah');
+            currentSurah = Math.floor(Math.random() * 114) + 1;
+            console.log('Selected Surah:', currentSurah);
+            
+            var surahUrl = 'https://api.alquran.cloud/v1/surah/' + currentSurah;
+            console.log('Step 3: Fetching surah info from:', surahUrl);
+            
+            fetch(surahUrl)
+                .then(function(response) {
+                    console.log('Step 4: Surah response received, status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Surah API failed: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function(surahData) {
+                    console.log('Step 5: Surah data parsed:', surahData);
+                    
+                    if (surahData.code !== 200 || surahData.status !== 'OK') {
+                        throw new Error('Surah API returned error status');
+                    }
+                    
+                    var totalAyahs = surahData.data.numberOfAyahs;
+                    currentAyah = Math.floor(Math.random() * totalAyahs) + 1;
+                    console.log('Selected Ayah', currentAyah, 'of', totalAyahs);
+                    
+                    var ayahUrl = 'https://api.alquran.cloud/v1/ayah/' + currentSurah + ':' + currentAyah + '/editions/quran-uthmani,ar.alafasy,en.asad';
+                    console.log('Step 6: Fetching ayah from:', ayahUrl);
+                    
+                    return fetch(ayahUrl);
+                })
+                .then(function(response) {
+                    console.log('Step 7: Ayah response received, status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Ayah API failed: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function(ayahData) {
+                    console.log('Step 8: Ayah data parsed:', ayahData);
+                    
+                    if (ayahData.code !== 200 || ayahData.status !== 'OK' || !ayahData.data) {
+                        throw new Error('Ayah API returned error');
+                    }
+                    
+                    console.log('Step 9: Extracting data from response');
+                    var arabicText = ayahData.data[0].text;
+                    var audioData = ayahData.data[1];
+                    var translationText = ayahData.data[2].text;
+                    
+                    console.log('Step 10: Updating display');
+                    document.getElementById('ayahArabic').textContent = arabicText;
+                    document.getElementById('surahInfo').textContent = audioData.surah.englishName;
+                    document.getElementById('ayahInfo').textContent = 'Ayah ' + currentAyah;
+                    document.getElementById('ayahTranslation').textContent = translationText;
+                    
+                    if (audioData.audio) {
+                        currentAudioUrl = audioData.audio;
+                        document.getElementById('referenceAudio').src = currentAudioUrl;
+                        console.log('Step 11: Audio URL set:', currentAudioUrl);
+                    } else {
+                        console.warn('No audio available for this ayah');
+                    }
+                    
+                    console.log('=== Verse loaded successfully! ===');
+                })
+                .catch(function(error) {
+                    console.error('ERROR in loadNewVerse:', error);
+                    console.error('Error message:', error.message);
+                    console.error('Error stack:', error.stack);
+                    
+                    var errorDiv = document.createElement('div');
+                    errorDiv.className = 'error';
+                    errorDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed to load verse. Please try again.<br><small>' + error.message + '</small>';
+                    
+                    document.getElementById('ayahArabic').innerHTML = '';
+                    document.getElementById('ayahArabic').appendChild(errorDiv);
+                    document.getElementById('ayahTranslation').innerHTML = '<div class="error">Failed to load translation</div>';
+    window.loadNewVerse = loadNewVerse;
+
+    function toggleReference() {
+        console.log('toggleReference() called');
+        var section = document.getElementById('referenceSection');
+        var btnText = document.getElementById('refBtnText');
         
-        // Get surah info - using multi edition endpoint
-        const surahUrl = `https://api.alquran.cloud/v1/surah/${currentSurah}`;
-        console.log('📡 Fetching:', surahUrl);
-        
-        const surahResponse = await fetch(surahUrl);
-        
-        if (!surahResponse.ok) {
-            throw new Error(`Surah API failed: ${surahResponse.status} ${surahResponse.statusText}`);
-        }
-        
-        const surahData = await surahResponse.json();
-        console.log('✅ Surah data:', surahData);
-        
-        if (surahData.code !== 200 || surahData.status !== 'OK') {
-            throw new Error('Surah API returned error');
-        }
-        
-        const totalAyahs = surahData.data.numberOfAyahs;
-        currentAyah = Math.floor(Math.random() * totalAyahs) + 1;
-        console.log(`🎯 Selected Ayah ${currentAyah} of ${totalAyahs}`);
-        
-        // Fetch multiple editions in single call - more efficient
-        const ayahUrl = `https://api.alquran.cloud/v1/ayah/${currentSurah}:${currentAyah}/editions/quran-uthmani,ar.alafasy,en.asad`;
-        console.log('📡 Fetching:', ayahUrl);
-        
-        const ayahResponse = await fetch(ayahUrl);
-        
-        if (!ayahResponse.ok) {
-            throw new Error(`Ayah API failed: ${ayahResponse.status} ${ayahResponse.statusText}`);
-        }
-        
-        const ayahData = await ayahResponse.json();
-        console.log('✅ Ayah data:', ayahData);
-        
-        if (ayahData.code !== 200 || ayahData.status !== 'OK' || !ayahData.data) {
-            throw new Error('Ayah API returned error');
-        }
-        
-        // Extract data from multi-edition response
-        const arabicText = ayahData.data[0].text; // quran-uthmani
-        const audioData = ayahData.data[1]; // ar.alafasy
-        const translationText = ayahData.data[2].text; // en.asad
-        
-        // Update display
-        document.getElementById('ayahArabic').textContent = arabicText;
-        document.getElementById('surahInfo').textContent = audioData.surah.englishName;
-        document.getElementById('ayahInfo').textContent = `Ayah ${currentAyah}`;
-        document.getElementById('ayahTranslation').textContent = translationText;
-        
-        // Set reference audio
-        if (audioData.audio) {
-            currentAudioUrl = audioData.audio;
-            document.getElementById('referenceAudio').src = currentAudioUrl;
-            console.log('🎵 Audio URL:', currentAudioUrl);
+        if (section.classList.contains('show')) {
+            section.classList.remove('show');
+            btnText.textContent = 'Show Reference';
         } else {
-            console.warn('⚠️ No audio available');
+            section.classList.add('show');
+            btnText.textContent = 'Hide Reference';
         }
-        
-        console.log('✅ Verse loaded successfully!');
-        
-    } catch (error) {
-        console.error('❌ Error loading verse:', error);
-        console.error('Error stack:', error.stack);
-        document.getElementById('ayahArabic').innerHTML = `
-            <div class="error">
-                <i class="fas fa-exclamation-triangle"></i>
-                Failed to load verse. Please try again.
-                <br><small>${error.message}</small>
-            </div>`;
-        document.getElementById('ayahTranslation').innerHTML = `
-            <div class="error">Failed to load translation</div>`;
     }
-}
 
-function toggleReference() {
-    const section = document.getElementById('referenceSection');
-    const btnText = document.getElementById('refBtnText');
-    
-    if (section.classList.contains('show')) {
-        section.classList.remove('show');
-        btnText.textContent = 'Show Reference';
-    } else {
-        section.classList.add('show');
-        btnText.textContent = 'Hide Reference';
-    }
-}
+    window.toggleReference = toggleReference;
 
-async function toggleRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        stopRecording();
-    } else {
-        await startRecording();
-    }
-}
-
-async function startRecording() {
-    try {
-        console.log('🎤 Starting recording...');
+    function toggleRecording() {
+        console.log('toggleRecording() called');
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            stopRecording();
         
-        // Request microphone access
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        navigator.mediaDevices.getUserMedia({ 
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
                 sampleRate: 44100
             }
-        });
-        
-        console.log('✅ Microphone access granted');
-        
-        // Determine MIME type
-        let mimeType = 'audio/webm;codecs=opus';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = 'audio/webm';
-        }
-        
-        mediaRecorder = new MediaRecorder(stream, { mimeType });
-        audioChunks = [];
-        recordingSeconds = 0;
-        
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                audioChunks.push(event.data);
+        })
+        .then(function(stream) {
+            console.log('Microphone access granted');
+            
+            var mimeType = 'audio/webm;codecs=opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'audio/webm';
+                console.log('Using fallback MIME type:', mimeType);
             }
-        };
-        
-        mediaRecorder.onstop = () => {
-            console.log('⏹️ Recording stopped');
-            const audioBlob = new Blob(audioChunks, { type: mimeType });
-            recordedBlob = audioBlob;
             
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audioPlayer = document.getElementById('audioPlayer');
-            audioPlayer.src = audioUrl;
+            mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+            audioChunks = [];
+            recordingSeconds = 0;
             
-            document.getElementById('audioPlayback').style.display = 'block';
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
             
-            // Stop all tracks
-            stream.getTracks().forEach(track => track.stop());
-        };
-        
-        mediaRecorder.start(1000);
-        
-        // Update UI
-        document.getElementById('recordBtn').classList.add('recording');
-        document.getElementById('recordIcon').className = 'fas fa-stop';
+            mediaRecorder.onstop = function() {
+                console.log('Recording stopped');
+                var audioBlob = new Blob(audioChunks, { type: mimeType });
+                recordedBlob = audioBlob;
+                
+                var audioUrl = URL.createObjectURL(audioBlob);
+                var audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = audioUrl;
+                
+                document.getElementById('audioPlayback').style.display = 'block';
+                
+                stream.getTracks().forEach(function(track) {
+                    track.stop();
+                });
+            };
+            
+            mediaRecorder.start(1000);
+            
+            document.getElementById('recordBtn').classList.add('recording');
+            document.getElementById('recordIcon').className = 'fas fa-stop';
+            document.getElementById('recordingStatus').textContent = 'Recording in progress...';
+            document.getElementById('recordingStatus').classList.add('active');
+            
+            recordingTimer = setInterval(function() {
+                recordingSeconds++;
+                var minutes = Math.floor(recordingSeconds / 60).toString();
+                var seconds = (recordingSeconds % 60).toString();
+                if (minutes.length < 2) minutes = '0' + minutes;
+                if (seconds.length < 2) seconds = '0' + seconds;
+                document.getElementById('recordingTimer').textContent = minutes + ':' + seconds;
+            }, 1000);
+            
+            console.log('Recording started');
+        })
+        .catch(function(error) {
+            console.error('Error starting recording:', error);
+            alert('Could not access microphone. Please check permissions.');
+        });
+            document.getElementById('recordIcon').className = 'fas fa-stop';
         document.getElementById('recordingStatus').textContent = 'Recording in progress...';
         document.getElementById('recordingStatus').classList.add('active');
         
-        // Start timer
-        recordingTimer = setInterval(() => {
-            recordingSeconds++;
-            const minutes = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
-            const seconds = (recordingSeconds % 60).toString().padStart(2, '0');
-            document.getElementById('recordingTimer').textContent = `${minutes}:${seconds}`;
-        }, 1000);
-        
-        console.log('✅ Recording started');
-        
-    } catch (error) {
-        console.error('❌ Error starting recording:', error);
-        alert('Could not access microphone. Please check permissions.');
+    function stopRecording() {
+        console.log('stopRecording() called');
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            clearInterval(recordingTimer);
+            
+            document.getElementById('recordBtn').classList.remove('recording');
+            document.getElementById('recordIcon').className = 'fas fa-microphone';
+            document.getElementById('recordingStatus').textContent = 'Recording complete';
+            document.getElementById('recordingStatus').classList.remove('active');
+        }
     }
-}
 
-function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        clearInterval(recordingTimer);
+    window.stopRecording = stopRecording;
+
+    function deleteRecording() {
+        console.log('deleteRecording() called');
+        document.getElementById('audioPlayback').style.display = 'none';
+        document.getElementById('analysisResults').style.display = 'none';
+        document.getElementById('recordingTimer').textContent = '00:00';
+        document.getElementById('recordingStatus').textContent = 'Ready to record';
+        recordedBlob = null;
+        audioChunks = [];
+    }
+
+    window.deleteRecording = deleteRecording;
+
+    function analyzeRecording() {
+        console.log('analyzeRecording() called');
         
-        // Update UI
-        document.getElementById('recordBtn').classList.remove('recording');
-        document.getElementById('recordIcon').className = 'fas fa-microphone';
-        document.getElementById('recordingStatus').textContent = 'Recording complete';
-        document.getElementById('recordingStatus').classList.remove('active');
-    }
-}
-
-function deleteRecording() {
-    document.getElementById('audioPlayback').style.display = 'none';
-    document.getElementById('analysisResults').style.display = 'none';
-    document.getElementById('recordingTimer').textContent = '00:00';
-    document.getElementById('recordingStatus').textContent = 'Ready to record';
-    recordedBlob = null;
-    audioChunks = [];
-    console.log('🗑️ Recording deleted');
-}
-
-async function analyzeRecording() {
-    if (!recordedBlob) {
-        alert('No recording to analyze');
-        return;
-    }
-    
-    try {
-        console.log('🧠 Analyzing recording...');
+        if (!recordedBlob) {
+            alert('No recording to analyze');
+            return;
+        }
+        
+        console.log('Starting analysis...');
         document.getElementById('analyzingOverlay').classList.add('show');
         
-        const formData = new FormData();
+        var formData = new FormData();
         formData.append('audio_file', recordedBlob, 'recording.webm');
         formData.append('surah_number', currentSurah);
         formData.append('ayah_number', currentAyah);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
         
-        const response = await fetch('/api/analyze-practice', {
+        fetch('/api/analyze-practice', {
             method: 'POST',
             body: formData
-        });
+        })
+        .then(function(response) {
+            console.log('Analysis response received');
+            return response.json();
+        })
+        .then(function(result) {
+            console.log('Analysis result:', result);
+            document.getElementById('analyzingOverlay').classList.remove('show');
+            
+            if (result.success) {
+                displayAnalysisResults(result.analysis);
+            } else {
+                alert('Analysis failed: ' + (result.message || 'Unknown error'));
+            }
+    function displayAnalysisResults(analysis) {
+        console.log('displayAnalysisResults() called with:', analysis);
         
-        const result = await response.json();
+        var resultsDiv = document.getElementById('analysisResults');
+        var accuracyScore = analysis.accuracy_score || (analysis.overall_score && analysis.overall_score.score) || 0;
+        var feedback = (analysis.overall_score && analysis.overall_score.feedback) || 'Analysis complete';
         
-        document.getElementById('analyzingOverlay').classList.remove('show');
+        var html = '<div style="background: rgba(26, 188, 156, 0.05); padding: 20px; border-radius: 15px; border: 2px solid rgba(26, 188, 156, 0.2);">';
+        html += '<h4 style="color: var(--primary-green); margin-bottom: 15px;">';
+        html += '<i class="fas fa-chart-line"></i> Analysis Results';
+        html += '</h4>';
+        html += '<div style="font-size: 3rem; font-weight: 700; color: var(--primary-green); text-align: center; margin: 20px 0;">';
+        html += accuracyScore + '%';
+        html += '</div>';
+        html += '<p style="text-align: center; color: #666; font-size: 1.1rem;">';
+        html += feedback;
+        html += '</p>';
+        html += '</div>';
         
-        if (result.success) {
-            displayAnalysisResults(result.analysis);
-        } else {
-            alert('Analysis failed: ' + (result.message || 'Unknown error'));
-        }
+        resultsDiv.innerHTML = html;
+        resultsDiv.style.display = 'block';
         
-    } catch (error) {
-        console.error('❌ Analysis error:', error);
-        document.getElementById('analyzingOverlay').classList.remove('show');
-        alert('Failed to analyze recording. Please try again.');
+        console.log('Results displayed successfully');
     }
-}
+
+    window.displayAnalysisResults = displayAnalysisResults;
+
+    console.log('=== Practice page initialization complete ===');
+    console.log('Available functions:', Object.keys(window).filter(function(key) {
+        return typeof window[key] === 'function' && (
+            key === 'loadNewVerse' || 
+            key === 'toggleReference' || 
+            key === 'toggleRecording' ||
+            key === 'deleteRecording' ||
+            key === 'analyzeRecording'
+        );
+    }));
+
+})(
 
 function displayAnalysisResults(analysis) {
     const resultsDiv = document.getElementById('analysisResults');
