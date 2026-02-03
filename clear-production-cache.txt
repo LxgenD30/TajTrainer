@@ -1,0 +1,15 @@
+# Run these commands on your production server (cPanel Terminal or SSH)
+
+cd ~/public_html
+# or wherever your Laravel app is installed
+
+# Clear all Laravel caches
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan optimize:clear
+
+# If you have OPcache enabled (common on production)
+# You may need to restart PHP-FPM or Apache
+# Contact cPanel support if the error persists after running above commands

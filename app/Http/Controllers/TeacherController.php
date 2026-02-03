@@ -105,29 +105,60 @@ class TeacherController extends Controller
      */
     public function studentSubmissions($classroomId, $studentId)
     {
-        $classroom = \App\Models\Classroom::findOrFail($classroomId);
-        
-        // Verify teacher owns this classroom
-        if ($classroom->teacher_id !== Auth::id()) {
-            abort(403, 'Unauthorized access to this classroom.');
+        try {
+            \Log::info("=== STUDENT SUBMISSIONS DEBUG START ===");
+            \Log::info("Classroom ID: {$classroomId}, Student ID: {$studentId}");
+            
+            $classroom = \App\Models\Classroom::findOrFail($classroomId);
+            \Log::info("Classroom loaded: {$classroom->name}");
+            
+            // Verify teacher owns this classroom
+            if ($classroom->teacher_id !== Auth::id()) {
+                abort(403, 'Unauthorized access to this classroom.');
+            }
+
+            $student = \App\Models\User::findOrFail($studentId);
+            \Log::info("Student loaded: {$student->name}");
+            
+            // Get all assignments for this classroom
+            $assignments = \App\Models\Assignment::where('class_id', $classroomId)
+                ->with('material')
+                ->orderBy('due_date', 'desc')
+                ->get();
+            \Log::info("Assignments loaded: " . $assignments->count());
+
+            // Get all submissions from this student for this classroom's assignments
+            \Log::info("Fetching submissions...");
+            $submissions = \App\Models\AssignmentSubmission::where('student_id', $studentId)
+                ->whereIn('assignment_id', $assignments->pluck('assignment_id'))
+                ->with(['assignment'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            \Log::info("Submissions loaded: " . $submissions->count());
+            
+            // Test each submission's score accessor
+            foreach ($submissions as $index => $submission) {
+                \Log::info("Submission {$index}: ID={$submission->id}, Assignment={$submission->assignment_id}, Student={$submission->student_id}");
+                try {
+                    $score = $submission->score;
+                    \Log::info("  Score accessor worked: " . ($score ? "Score ID {$score->score_id}" : "No score"));
+                } catch (\Exception $e) {
+                    \Log::error("  Score accessor FAILED: " . $e->getMessage());
+                    \Log::error("  Stack trace: " . $e->getTraceAsString());
+                }
+            }
+            
+            \Log::info("=== STUDENT SUBMISSIONS DEBUG END ===");
+
+            return view('teachers.student-submissions', compact('classroom', 'student', 'submissions', 'assignments'));
+            
+        } catch (\Exception $e) {
+            \Log::error("=== STUDENT SUBMISSIONS ERROR ===");
+            \Log::error("Error: " . $e->getMessage());
+            \Log::error("File: " . $e->getFile() . " Line: " . $e->getLine());
+            \Log::error("Stack trace: " . $e->getTraceAsString());
+            return back()->withErrors(['error' => 'Failed to load submission: ' . $e->getMessage()]);
         }
-
-        $student = \App\Models\User::findOrFail($studentId);
-        
-        // Get all assignments for this classroom
-        $assignments = \App\Models\Assignment::where('class_id', $classroomId)
-            ->with('material')
-            ->orderBy('due_date', 'desc')
-            ->get();
-
-        // Get all submissions from this student for this classroom's assignments
-        $submissions = \App\Models\AssignmentSubmission::where('student_id', $studentId)
-            ->whereIn('assignment_id', $assignments->pluck('assignment_id'))
-            ->with(['assignment'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return view('teachers.student-submissions', compact('classroom', 'student', 'submissions', 'assignments'));
     }
 
     /**
