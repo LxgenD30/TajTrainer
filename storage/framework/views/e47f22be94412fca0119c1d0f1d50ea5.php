@@ -465,9 +465,8 @@
             <?php if(!$submission->marks): ?>
                 <div class="grading-form">
                     <h5><i class="fas fa-pen"></i> Grade Submission</h5>
-                    <form action="<?php echo e(route('submissions.grade', $submission->id)); ?>" method="POST">
+                    <form action="<?php echo e(route('teacher.submission.update.grade', $submission->id)); ?>" method="POST">
                         <?php echo csrf_field(); ?>
-                        <?php echo method_field('PUT'); ?>
                         
                         <div class="form-group">
                             <label for="marks-<?php echo e($submission->id); ?>">

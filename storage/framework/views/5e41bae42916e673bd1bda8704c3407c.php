@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', $classroom->class_name); ?>
 <?php $__env->startSection('user-role', (auth()->user()->role_id == 3 ? 'Teacher' : 'Student') . ' • ' . $classroom->class_name); ?>
 

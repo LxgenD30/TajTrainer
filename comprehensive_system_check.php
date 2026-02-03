@@ -128,23 +128,43 @@ if (!empty($openaiKey)) {
 echo "\n【 PYTHON INTEGRATION 】\n";
 echo "───────────────────────────────────────────\n";
 
-$pythonPath = base_path('.venv/Scripts/python.exe');
-check('Python virtual environment', file_exists($pythonPath), 
-      'Python venv not found at: ' . $pythonPath);
+// Detect Python path based on environment
+$pythonPaths = [
+    env('PYTHON_PATH', '/usr/bin/python3'),  // From .env (Linux production)
+    base_path('python/venv/bin/python'),      // Linux venv
+    base_path('.venv/Scripts/python.exe'),    // Windows venv
+    '/usr/bin/python3',                       // System Python3 (Linux)
+    'C:\\Python\\python.exe',                 // System Python (Windows)
+];
 
-if (file_exists($pythonPath)) {
+$pythonPath = null;
+foreach ($pythonPaths as $path) {
+    if (file_exists($path)) {
+        $pythonPath = $path;
+        break;
+    }
+}
+
+if ($pythonPath) {
+    check('Python executable found', true);
+    echo "   Path: $pythonPath\n";
+    
     // Test Python accessibility
-    $pythonCmd = '"' . $pythonPath . '" -c "import sys; print(sys.version)"';
+    $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+    $pythonCmd = $isWindows ? '"' . $pythonPath . '"' : $pythonPath;
+    $pythonCmd .= ' -c "import sys; print(sys.version)"';
+    
     exec($pythonCmd . ' 2>&1', $output, $returnCode);
     check('Python executable works', $returnCode === 0, 'Python execution failed');
     
-    if ($returnCode === 0) {
+    if ($returnCode === 0 && isset($output[0])) {
         echo "   Python version: " . trim($output[0]) . "\n";
     }
     
     // Check Python dependencies
     $dependencies = ['librosa', 'soundfile', 'parselmouth', 'openai', 'fastdtw'];
-    $pythonCheckCmd = '"' . $pythonPath . '" -c "';
+    $pythonCheckCmd = $isWindows ? '"' . $pythonPath . '"' : $pythonPath;
+    $pythonCheckCmd .= ' -c "';
     $pythonCheckCmd .= 'import sys; modules=[';
     foreach ($dependencies as $dep) {
         $pythonCheckCmd .= "\"$dep\",";
@@ -153,6 +173,7 @@ if (file_exists($pythonPath)) {
     $pythonCheckCmd .= 'missing=[m for m in modules if __import__(\"importlib.util\").util.find_spec(m) is None]; ';
     $pythonCheckCmd .= 'print(\"MISSING:\" + \",\".join(missing) if missing else \"OK\")"';
     
+    $depOutput = [];
     exec($pythonCheckCmd . ' 2>&1', $depOutput, $depReturn);
     if ($depReturn === 0 && isset($depOutput[0])) {
         if (trim($depOutput[0]) === 'OK') {
@@ -167,6 +188,8 @@ if (file_exists($pythonPath)) {
     $analyzerPath = base_path('python/tajweed_analyzer.py');
     check('Tajweed analyzer script', file_exists($analyzerPath), 
           'tajweed_analyzer.py not found');
+} else {
+    check('Python executable found', false, 'No Python found in common locations');
 }
 
 // ============ ROUTES CHECKS ============
