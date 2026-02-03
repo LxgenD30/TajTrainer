@@ -107,8 +107,8 @@ class AssignmentController extends Controller
         if ($isEnrolledStudent) {
             $submission = AssignmentSubmission::where('assignment_id', $assignment->assignment_id)
                 ->where('student_id', Auth::id())
-                ->with('score')
                 ->first();
+            // Note: Score is loaded via custom accessor getScoreAttribute() - no need to eager load
         }
 
         return view('assignment.show', compact('assignment', 'classroom', 'submission'));

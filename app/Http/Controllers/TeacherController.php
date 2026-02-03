@@ -160,10 +160,7 @@ class TeacherController extends Controller
                 }
             }
             
-            // Load score relationship if not already loaded
-            if (!$submission->relationLoaded('score')) {
-                $submission->load('score');
-            }
+            // Note: Score is loaded via custom accessor getScoreAttribute() - no need to eager load
 
             return view('teachers.grade-submission', compact('submission'));
         } catch (\Exception $e) {
