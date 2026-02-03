@@ -36,36 +36,30 @@ class ProcessSubmissionAudio implements ShouldQueue
             $submission = AssignmentSubmission::findOrFail($this->submissionId);
             $assignment = Assignment::findOrFail($submission->assignment_id);
             
-            // Step 1: Transcribe audio using AssemblyAI if needed
-            if ($submission->audio_file_path && config('services.assemblyai.api_key')) {
-                if (empty($submission->transcription) || trim($submission->transcription) === '') {
-                    try {
-                        Log::info('Transcribing audio with AssemblyAI: ' . $submission->audio_file_path);
-                        $transcription = $this->transcribeWithAssemblyAI($submission->audio_file_path);
-                        $submission->transcription = $transcription;
-                        $submission->save();
-                        Log::info('✓ Transcription completed: ' . substr($transcription, 0, 100));
-                    } catch (\Exception $e) {
-                        Log::error('AssemblyAI transcription failed: ' . $e->getMessage());
-                        // Keep status as 'submitted' - teacher can manually grade
-                        return;
-                    }
-                }
-            }
+            Log::info('Submission audio path: ' . ($submission->audio_file_path ?? 'NONE'));
+            Log::info('Assignment: ' . $assignment->surah . ' ' . $assignment->start_verse . '-' . ($assignment->end_verse ?? $assignment->start_verse));
             
-            // Step 2: Analyze Tajweed rules
-            if ($submission->audio_file_path && $submission->transcription) {
+            // Analyze with Python (handles both Whisper transcription AND Tajweed analysis in one call)
+            if ($submission->audio_file_path) {
                 try {
-                    Log::info('Starting Tajweed analysis for submission #' . $submission->id);
+                    Log::info('Starting Python analysis (Whisper + Tajweed) for submission #' . $submission->id);
                     
+                    // Python analyzer does BOTH transcription (Whisper) and Tajweed analysis
                     $tajweedAnalysis = $this->analyzeTajweed(
                         $submission->audio_file_path,
-                        $submission->transcription,
+                        '', // No pre-transcription needed, Python does it
                         $assignment->surah,
                         $assignment->start_verse,
                         $assignment->end_verse
                     );
                     
+                    // Extract transcription from Python output
+                    if (isset($tajweedAnalysis['whisper_transcription'])) {
+                        $submission->transcription = $tajweedAnalysis['whisper_transcription'];
+                        Log::info('✓ Whisper transcription: ' . substr($submission->transcription, 0, 100));
+                    }
+                    
+                    // Store full Tajweed analysis
                     $submission->tajweed_analysis = json_encode($tajweedAnalysis);
                     $submission->save();
                     
@@ -74,7 +68,7 @@ class ProcessSubmissionAudio implements ShouldQueue
                     // Log errors to database
                     $this->logTajweedErrors($submission, $tajweedAnalysis, 'assignment');
                     
-                    // Step 3: Create score
+                    // Create score based on analysis
                     $overallScore = $tajweedAnalysis['overall_score']['score'] ?? 0;
                     $feedback = $tajweedAnalysis['overall_score']['feedback'] ?? 'Analysis completed.';
                     $scoreValue = round(($overallScore / 100) * $assignment->total_marks);
@@ -94,16 +88,19 @@ class ProcessSubmissionAudio implements ShouldQueue
                     
                     Log::info('✓ Score created');
                     
+                    // Mark as graded
+                    $submission->status = 'graded';
+                    $submission->save();
+                    
                 } catch (\Exception $e) {
-                    Log::error('Tajweed analysis failed: ' . $e->getMessage());
+                    Log::error('Python analysis failed: ' . $e->getMessage());
+                    Log::error('Stack trace: ' . $e->getTraceAsString());
                     // Keep status as 'submitted' - teacher can manually grade
                     return;
                 }
+            } else {
+                Log::warning('No audio file path for submission #' . $submission->id . ' - skipping analysis');
             }
-            
-            // Mark as graded (completed with score)
-            $submission->status = 'graded';
-            $submission->save();
             
             Log::info("=== Processing Audio Job Completed for Submission #{$this->submissionId} ===");
             
@@ -243,19 +240,24 @@ class ProcessSubmissionAudio implements ShouldQueue
         
         Log::info('Expected text: ' . substr($expectedText, 0, 50) . '...');
         
-        // Call Python analyzer
+        // Call Python analyzer (it will do Whisper transcription internally)
         $result = $this->callPythonAnalyzer($audioPath, $expectedText, $referenceAudio);
         
         // Add additional data
         $result['expected_text'] = $expectedText;
         $result['tajweed_text'] = $tajweedText;
         $result['reference_audio'] = $referenceAudio;
-        $result['transcribed_text'] = $transcription;
+        
+        // Use transcription from Python (Whisper) if available
+        $pythonTranscription = $result['whisper_transcription'] ?? $result['transcribed_text'] ?? '';
+        $result['transcribed_text'] = $pythonTranscription;
         
         // Calculate text accuracy
-        $textAccuracy = $this->calculateTextAccuracy($transcription, $expectedText);
-        $result['text_accuracy'] = $textAccuracy;
-        Log::info('Text accuracy: ' . number_format($textAccuracy, 2) . '%');
+        if (!empty($pythonTranscription)) {
+            $textAccuracy = $this->calculateTextAccuracy($pythonTranscription, $expectedText);
+            $result['text_accuracy'] = $textAccuracy;
+            Log::info('Text accuracy: ' . number_format($textAccuracy, 2) . '%');
+        }
         
         return $result;
     }
@@ -264,7 +266,7 @@ class ProcessSubmissionAudio implements ShouldQueue
     {
         $fullPath = storage_path('app/public/' . $audioPath);
         $pythonScript = base_path('python/tajweed_analyzer.py');
-        $pythonExecutable = config('services.python.executable', '/usr/bin/python3');
+        $pythonExecutable = $this->getPythonCommand();
         
         // Download reference audio
         $referenceUrl = $referenceAudio[0]['url'] ?? null;
@@ -294,18 +296,37 @@ class ProcessSubmissionAudio implements ShouldQueue
         Log::info('Python command: ' . $command);
         Log::info('OpenAI API key configured: ' . ($openaiKey ? 'Yes' : 'No'));
         
-        // Execute
-        $output = [];
-        $exitCode = 0;
-        exec($command . ' 2>&1', $output, $exitCode);
+        // Execute using proc_open for better control (consistent with practice page)
+        $descriptorspec = [
+            0 => ["pipe", "r"],
+            1 => ["pipe", "w"],
+            2 => ["pipe", "w"]
+        ];
         
-        $outputStr = implode("\n", $output);
-        Log::info('Python exit code: ' . $exitCode);
-        Log::info('Python output length: ' . strlen($outputStr));
+        $process = proc_open($command, $descriptorspec, $pipes);
+        $outputStr = '';
         
-        if ($exitCode !== 0 && $exitCode !== -1) {
-            Log::error('Python script failed with exit code: ' . $exitCode);
-            Log::error('Output: ' . $outputStr);
+        if (is_resource($process)) {
+            fclose($pipes[0]);
+            $outputStr = stream_get_contents($pipes[1]);
+            $errors = stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $exitCode = proc_close($process);
+            
+            if (!empty($errors)) {
+                Log::warning('Python stderr: ' . $errors);
+            }
+            Log::info('Python exit code: ' . $exitCode);
+            Log::info('Python output length: ' . strlen($outputStr));
+            
+            if ($exitCode !== 0 && $exitCode !== -1) {
+                Log::error('Python script failed with exit code: ' . $exitCode);
+                Log::error('Output: ' . $outputStr);
+            }
+        } else {
+            Log::error('Failed to execute Python process');
+            throw new \Exception('Failed to execute Python analyzer');
         }
         
         // Parse JSON output
@@ -343,6 +364,43 @@ class ProcessSubmissionAudio implements ShouldQueue
         file_put_contents($path, $audioData);
         
         return $path;
+    }
+    
+    /**
+     * Get Python command with proper path resolution
+     * Same logic as StudentController for consistency
+     */
+    private function getPythonCommand()
+    {
+        // Check for Python path from environment variable (hosting)
+        $pythonPath = env('PYTHON_PATH', '');
+        
+        if ($pythonPath && file_exists($pythonPath)) {
+            return '"' . $pythonPath . '"';
+        }
+        
+        // Try common Python paths for different environments
+        $possiblePaths = [
+            'C:\\Users\\moham\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe', // Windows local
+            '/usr/bin/python3',  // Linux
+            '/usr/local/bin/python3',  // Linux/Mac
+            'python3',  // System PATH
+            'python',  // Fallback
+        ];
+        
+        foreach ($possiblePaths as $path) {
+            // For system commands (no path separator), just return them
+            if (strpos($path, '/') === false && strpos($path, '\\') === false) {
+                return $path;
+            }
+            
+            if (file_exists($path)) {
+                return '"' . $path . '"';
+            }
+        }
+        
+        // Ultimate fallback
+        return 'python3';
     }
     
     private function extractJsonFromOutput($output)
