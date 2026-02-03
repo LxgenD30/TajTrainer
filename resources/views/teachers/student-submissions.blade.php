@@ -371,7 +371,7 @@
 <!-- Submissions Header -->
 <div class="submissions-header">
     <h2><i class="fas fa-clipboard-check"></i> {{ $student->name }}'s Submissions</h2>
-    <p>{{ $classroom->name }} • Review and grade student recitations</p>
+    <p>{{ $classroom->name }} • Review and grade student work</p>
     <a href="{{ route('classroom.show', $classroom->id) }}" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px; color: white; text-decoration: none;">
         <i class="fas fa-arrow-left"></i> Back to Class
     </a>
@@ -384,158 +384,101 @@
         <p>{{ $student->name }} hasn't submitted any assignments yet.</p>
     </div>
 @else
-    @foreach($submissions as $submission)
-        <div class="submission-card">
-            <!-- Submission Header -->
-            <div class="submission-header">
-                <div class="student-info">
-                    <div class="student-avatar">
-                        {{ strtoupper(substr($student->name, 0, 1)) }}
-                    </div>
-                    <div class="student-details">
-                        <h3>{{ $submission->assignment->title }}</h3>
-                        <p>Submitted {{ $submission->created_at->diffForHumans() }}</p>
-                    </div>
-                </div>
-                <span class="submission-status {{ $submission->marks ? 'status-graded' : 'status-pending' }}">
-                    {{ $submission->marks ? 'Graded: ' . $submission->marks . '/' . $submission->assignment->total_marks : 'Pending Review' }}
-                </span>
-            </div>
-            
-            <!-- Assignment Info -->
-            <div class="assignment-info">
-                <h4>{{ $submission->assignment->title }}</h4>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <i class="fas fa-book-open"></i>
-                        <span>{{ $classroom->name }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-calendar"></i>
-                        <span>Due: {{ $submission->assignment->due_date ? \Carbon\Carbon::parse($submission->assignment->due_date)->format('M d, Y') : 'N/A' }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-star"></i>
-                        <span>Total Marks: {{ $submission->assignment->total_marks }}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Audio Player -->
-            @if($submission->audio_file_path)
-                <div class="audio-player">
-                    <h5><i class="fas fa-headphones"></i> Student Recitation</h5>
-                    <div class="audio-controls">
-                        <button class="play-btn" onclick="togglePlay('audio-{{ $submission->id }}')">
-                            <i class="fas fa-play"></i>
-                        </button>
-                        <div class="audio-timeline">
-                            <div class="audio-progress"></div>
+    <!-- Pending Review Section -->
+    @php
+        $pendingSubmissions = $submissions->filter(function($sub) {
+            return $sub->status !== 'graded';
+        });
+        $gradedSubmissions = $submissions->filter(function($sub) {
+            return $sub->status === 'graded';
+        });
+    @endphp
+
+    @if($pendingSubmissions->isNotEmpty())
+    <div style="background: rgba(255, 193, 7, 0.1); border: 2px solid #ffc107; border-radius: 15px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #f57c00; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-clock"></i> Pending Review ({{ $pendingSubmissions->count() }})
+        </h3>
+        <div style="display: grid; gap: 15px;">
+            @foreach($pendingSubmissions as $submission)
+            @foreach($pendingSubmissions as $submission)
+                <div style="background: white; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'">
+                    <div style="flex: 1;">
+                        <h4 style="color: #0a5c36; margin-bottom: 8px; font-size: 1.1rem;">
+                            📖 {{ $submission->assignment->surah ?? 'Assignment' }} 
+                            @if($submission->assignment->start_verse)
+                                ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
+                            @endif
+                        </h4>
+                        <div style="display: flex; gap: 20px; color: #666; font-size: 0.9rem;">
+                            <span><i class="fas fa-calendar"></i> Submitted {{ $submission->created_at->format('M d, Y') }}</span>
+                            <span><i class="fas fa-clock"></i> {{ $submission->created_at->diffForHumans() }}</span>
+                            @if($submission->audio_file_path)
+                                <span><i class="fas fa-microphone"></i> Voice Recording</span>
+                            @endif
                         </div>
-                        <span class="audio-time">0:00 / 0:00</span>
                     </div>
-                    <audio id="audio-{{ $submission->id }}" src="{{ asset('storage/' . $submission->audio_file_path) }}" style="display: none;"></audio>
+                    <a href="{{ route('teacher.submission.grade', $submission->id) }}" 
+                        style="padding: 12px 25px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(10, 92, 54, 0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(10, 92, 54, 0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 92, 54, 0.3)'">
+                        <i class="fas fa-eye"></i> View Details & Grade
+                    </a>
                 </div>
-            @endif
-            
-            <!-- Tajweed Errors -->
-            @php
-                $tajweedErrors = \App\Models\TajweedErrorLog::where('assignment_submission_id', $submission->id)->get();
-            @endphp
-            
-            @if($tajweedErrors->isNotEmpty())
-                <div class="tajweed-errors">
-                    <h5><i class="fas fa-exclamation-triangle"></i> Detected Tajweed Issues ({{ $tajweedErrors->count() }})</h5>
-                    <div class="error-list">
-                        @foreach($tajweedErrors as $error)
-                            <div class="error-item">
-                                <h6>{{ ucfirst($error->error_type) }}</h6>
-                                <p>{{ $error->error_message }}</p>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-            
-            <!-- Grading Form -->
-            @if(!$submission->marks)
-                <div class="grading-form">
-                    <h5><i class="fas fa-pen"></i> Grade Submission</h5>
-                    <form action="{{ route('teacher.submission.update.grade', $submission->id) }}" method="POST">
-                        @csrf
-                        
-                        <div class="form-group">
-                            <label for="marks-{{ $submission->id }}">
-                                <i class="fas fa-award"></i> Marks Obtained
-                            </label>
-                            <input 
-                                type="number" 
-                                id="marks-{{ $submission->id }}" 
-                                name="marks" 
-                                min="0" 
-                                max="{{ $submission->assignment->total_marks ?? 100 }}" 
-                                required
-                                placeholder="Enter marks (out of {{ $submission->assignment->total_marks ?? 100 }})"
-                            >
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="feedback-{{ $submission->id }}">
-                                <i class="fas fa-comment-dots"></i> Teacher Feedback
-                            </label>
-                            <textarea 
-                                id="feedback-{{ $submission->id }}" 
-                                name="feedback" 
-                                rows="4"
-                                placeholder="Provide constructive feedback on the student's recitation..."
-                            ></textarea>
-                        </div>
-                        
-                        <button type="submit" class="btn-submit-grade">
-                            <i class="fas fa-check-circle"></i> Submit Grade
-                        </button>
-                    </form>
-                </div>
-            @endif
+            @endforeach
         </div>
-    @endforeach
+    </div>
+    @endif
+
+    <!-- Graded Submissions Section -->
+    @if($gradedSubmissions->isNotEmpty())
+    <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4caf50; border-radius: 15px; padding: 25px;">
+        <h3 style="color: #2e7d32; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-check-circle"></i> Graded Submissions ({{ $gradedSubmissions->count() }})
+        </h3>
+        <div style="display: grid; gap: 15px;">
+            @foreach($gradedSubmissions as $submission)
+                @php
+                    $score = \App\Models\Score::where('user_id', $submission->student_id)
+                        ->where('assignment_id', $submission->assignment_id)
+                        ->first();
+                @endphp
+                <div style="background: white; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'">
+                    <div style="flex: 1;">
+                        <h4 style="color: #0a5c36; margin-bottom: 8px; font-size: 1.1rem;">
+                            📖 {{ $submission->assignment->surah ?? 'Assignment' }} 
+                            @if($submission->assignment->start_verse)
+                                ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
+                            @endif
+                        </h4>
+                        <div style="display: flex; gap: 20px; color: #666; font-size: 0.9rem;">
+                            <span><i class="fas fa-calendar"></i> Submitted {{ $submission->created_at->format('M d, Y') }}</span>
+                            @if($score)
+                                <span style="color: #4caf50; font-weight: 600;">
+                                    <i class="fas fa-star"></i> Score: {{ $score->score }}/{{ $submission->assignment->total_marks }}
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                    <a href="{{ route('teacher.submission.grade', $submission->id) }}" 
+                        style="padding: 12px 25px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease;"
+                        onmouseover="this.style.background='#0a5c36'; this.style.color='white'"
+                        onmouseout="this.style.background='white'; this.style.color='#0a5c36'">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 @endif
 @endsection
 
 @section('extra-scripts')
 <script>
-    function togglePlay(audioId) {
-        const audio = document.getElementById(audioId);
-        const btn = event.currentTarget;
-        const icon = btn.querySelector('i');
-        
-        if (audio.paused) {
-            audio.play();
-            icon.classList.remove('fa-play');
-            icon.classList.add('fa-pause');
-        } else {
-            audio.pause();
-            icon.classList.remove('fa-pause');
-            icon.classList.add('fa-play');
-        }
-        
-        audio.addEventListener('timeupdate', function() {
-            const progress = (audio.currentTime / audio.duration) * 100;
-            btn.closest('.audio-player').querySelector('.audio-progress').style.width = progress + '%';
-            
-            const currentMin = Math.floor(audio.currentTime / 60);
-            const currentSec = Math.floor(audio.currentTime % 60);
-            const durationMin = Math.floor(audio.duration / 60);
-            const durationSec = Math.floor(audio.duration % 60);
-            
-            btn.closest('.audio-player').querySelector('.audio-time').textContent = 
-                `${currentMin}:${currentSec.toString().padStart(2, '0')} / ${durationMin}:${durationSec.toString().padStart(2, '0')}`;
-        });
-        
-        audio.addEventListener('ended', function() {
-            icon.classList.remove('fa-pause');
-            icon.classList.add('fa-play');
-        });
-    }
+    console.log('✓ Student submissions page loaded');
+    console.log('Total submissions: {{ $submissions->count() }}');
+    console.log('Pending review: {{ $pendingSubmissions->count() ?? 0 }}');
+    console.log('Graded: {{ $gradedSubmissions->count() ?? 0 }}');
 </script>
 @endsection
