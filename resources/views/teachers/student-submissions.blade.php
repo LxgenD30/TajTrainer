@@ -444,14 +444,14 @@
             
             <!-- Tajweed Errors -->
             @php
-                $errors = \App\Models\TajweedErrorLog::where('assignment_submission_id', $submission->id)->get();
+                $tajweedErrors = \App\Models\TajweedErrorLog::where('assignment_submission_id', $submission->id)->get();
             @endphp
             
-            @if($errors->isNotEmpty())
+            @if($tajweedErrors->isNotEmpty())
                 <div class="tajweed-errors">
-                    <h5><i class="fas fa-exclamation-triangle"></i> Detected Tajweed Issues ({{ $errors->count() }})</h5>
+                    <h5><i class="fas fa-exclamation-triangle"></i> Detected Tajweed Issues ({{ $tajweedErrors->count() }})</h5>
                     <div class="error-list">
-                        @foreach($errors as $error)
+                        @foreach($tajweedErrors as $error)
                             <div class="error-item">
                                 <h6>{{ ucfirst($error->error_type) }}</h6>
                                 <p>{{ $error->error_message }}</p>
