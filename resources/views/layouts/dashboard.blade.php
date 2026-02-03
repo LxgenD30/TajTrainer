@@ -482,8 +482,8 @@
                 observer.observe(item);
             });
         });
-
-        @yield('extra-scripts')
     </script>
+
+    @yield('extra-scripts')
 </body>
 </html>
