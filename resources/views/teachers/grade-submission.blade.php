@@ -12,25 +12,18 @@
         <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
         <div class="nav-label">My Classes</div>
     </a>
+    <a href="{{ route('students.list') }}" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
+        <div class="nav-label">My Students</div>
+    </a>
     <a href="{{ route('materials.index') }}" class="nav-item">
         <div class="nav-icon"><i class="fas fa-book-open"></i></div>
         <div class="nav-label">Materials</div>
     </a>
-    <a href="{{ route('teachers.show', Auth::id()) }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-user-circle"></i></div>
-        <div class="nav-label">Profile</div>
-    </a>
-    <form action="{{ route('logout') }}" method="POST" style="display: inline;" class="nav-item">
-        @csrf
-        <button type="submit" style="all: unset; width: 100%; cursor: pointer;">
-            <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
-            <div class="nav-label">Logout</div>
-        </button>
-    </form>
 @endsection
 
 @section('content')
-<div style="padding: 0;">
+<div style="padding: 0; max-width: 1600px; margin: 0 auto;">
     <div style="margin-bottom: 20px;">
         <a href="{{ route('teacher.student.submissions', ['classroom' => $submission->assignment->class_id, 'student' => $submission->student_id]) }}" 
             style="display: inline-flex; align-items: center; gap: 8px; color: #1abc9c; text-decoration: none; font-weight: 600; font-size: 1rem; transition: all 0.3s ease; padding: 10px 20px; background: rgba(26, 188, 156, 0.1); border-radius: 10px;" 
@@ -40,7 +33,7 @@
         </a>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+    <div style="display: grid; grid-template-columns: 500px 1fr; gap: 25px;">
         <!-- Submission Details -->
         <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
@@ -175,6 +168,14 @@
             </div>
             @endif
 
+            @if($submission->tajweed_analysis)
+            <!-- Move to right column with grading form -->
+            @endif
+            @endif
+        </div>
+
+        <!-- Right Column: Analysis + Grading Form Combined -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
             @if($submission->tajweed_analysis)
             <!-- Tajweed Analysis -->
             <div style="background: white; border: 3px solid #0a5c36; padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(10, 92, 54, 0.15); margin-bottom: 25px;">
@@ -435,7 +436,7 @@
             @endif
         </div>
 
-        <!-- Grading Form -->
+        <!-- Grading Form (moved to right column) -->
         <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
                 <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
@@ -607,6 +608,7 @@
                 </div>
             </form>
         </div>
-    </div>
+        </div> <!-- Close right column -->
+    </div> <!-- Close grid -->
 </div>
 @endsection
