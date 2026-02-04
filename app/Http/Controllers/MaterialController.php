@@ -51,10 +51,11 @@ class MaterialController extends Controller
      */
     public function searchOnline(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'query' => 'required|string|max:255',
         ]);
 
+        $searchQuery = $validated['query'];
         $apiKey = config('services.tavily.api_key');
         
         if (!$apiKey) {
@@ -69,7 +70,7 @@ class MaterialController extends Controller
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])->post('https://api.tavily.com/search', [
-                'query' => $request->input('query') . ' educational materials learning resources',
+                'query' => $searchQuery . ' educational materials learning resources',
                 'search_depth' => 'basic',
                 'max_results' => 4,
                 'include_images' => true,
@@ -92,7 +93,11 @@ class MaterialController extends Controller
                 ], $response->status());
             }
         } catch (\Exception $e) {
-            Log::error('Tavily Search Exception: ' . $e->getMessage());
+            Log::error('Tavily Search Exception: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while searching. Please try again.'
