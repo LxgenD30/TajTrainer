@@ -12,21 +12,23 @@
     .back-button {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        color: rgba(255, 255, 255, 0.9);
+        gap: 10px;
+        color: #1a1a1a;
         text-decoration: none;
-        font-weight: 600;
-        padding: 10px 20px;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        font-weight: 700;
+        font-size: 1rem;
+        padding: 12px 24px;
+        border-radius: 50px;
+        background: #d4af37;
+        border: 3px solid #b8860b;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        white-space: nowrap;
     }
     
     .back-button:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateX(-5px);
-        color: #ffffff;
+        background: #ffcc33;
+        transform: translateY(-2px);
     }
     
     .assignment-header {

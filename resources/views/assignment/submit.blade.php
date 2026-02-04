@@ -33,22 +33,23 @@
     .back-link {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        color: #0a5c36;
+        gap: 10px;
+        color: #1a1a1a;
         text-decoration: none;
         font-weight: 700;
-        padding: 10px 16px;
-        background: linear-gradient(135deg, #d4af37, #f1c40f);
-        border-radius: 10px;
+        font-size: 1rem;
+        padding: 12px 24px;
+        border-radius: 50px;
+        background: #d4af37;
+        border: 3px solid #b8860b;
         transition: all 0.3s ease;
-        width: fit-content;
-        border: 2px solid rgba(0, 0, 0, 0.1);
-        box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        white-space: nowrap;
     }
     
     .back-link:hover {
+        background: #ffcc33;
         transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(212, 175, 55, 0.4);
     }
     
     .assignment-header-card {

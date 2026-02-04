@@ -118,9 +118,9 @@
         @endif
     </div>
     <a href="{{ route('materials.index') }}" 
-        style="display: inline-flex; align-items: center; gap: 8px; color: white; text-decoration: none; font-family: 'El Messiri', sans-serif; font-weight: 700; font-size: 1rem; padding: 12px 24px; border-radius: 50px; background: rgba(255, 255, 255, 0.15); border: 2px solid white; transition: all 0.3s ease;"
-        onmouseover="this.style.background='white'; this.style.color='#0a5c36'"
-        onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'; this.style.color='white'">
+        style="display: inline-flex; align-items: center; gap: 10px; color: #1a1a1a; text-decoration: none; font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 1rem; padding: 12px 24px; border-radius: 50px; background: #d4af37; border: 3px solid #b8860b; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); white-space: nowrap;"
+        onmouseover="this.style.background='#ffcc33'; this.style.transform='translateY(-2px)';"
+        onmouseout="this.style.background='#d4af37'; this.style.transform='translateY(0)';">
         <i class="fas fa-arrow-left"></i> Back to Materials
     </a>
 </div>
