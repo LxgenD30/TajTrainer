@@ -57,60 +57,47 @@
     }
     
     .btn {
-        padding: 10px 20px;
-        border-radius: 20px;
+        height: 45px;
+        padding: 0 20px;
+        border-radius: 12px;
         font-weight: 600;
+        font-size: 0.95rem;
         cursor: pointer;
         transition: all 0.3s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
-        border: 2px solid;
+        border: 2px solid transparent;
+        white-space: nowrap;
     }
-    
+
+    .btn-back {
+        background: white;
+        color: #0a5c36;
+        border-color: white;
+    }
+
     .btn-edit {
         background: #d4af37;
         color: #0a5c36;
         border-color: #d4af37;
     }
-    
-    .btn-edit:hover {
-        background: rgba(212, 175, 55, 0.8);
-    }
-    
+
     .btn-delete {
         background: #e74c3c;
         color: white;
         border-color: #e74c3c;
+        /* Matches button height for form submission */
+        font-family: inherit;
     }
-    
-    .btn-delete:hover {
-        background: #c0392b;
-    }
-    
-    .btn-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: linear-gradient(135deg, #e74c3c, #c0392b);
-        color: white;
-        border: 2px solid #c0392b;
-        padding: 12px 25px;
-        border-radius: 25px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
-    }
-    
-    .btn-back:hover {
-        background: linear-gradient(135deg, #c0392b, #a93226);
+
+    .btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
-    }
-    
-    .detail-card {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        opacity: 0.9;
+    }    .detail-card {
         background: white;
         border-radius: 15px;
         padding: 30px;
@@ -252,23 +239,21 @@
 <div class="page-header">
     <h1>📝 Assignment Details</h1>
     <div class="header-actions">
+        <a href="{{ route('classroom.show', $classroom->id) }}" class="btn btn-back">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+
         @if(auth()->user()->role_id == 3)
             <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" class="btn btn-edit">
-                ✏️ Edit
+                <i class="fas fa-edit"></i> Edit
             </a>
             <form action="{{ route('assignment.destroy', $assignment->assignment_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this assignment?')">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-delete">
-                    🗑️ Delete
+                    <i class="fas fa-trash"></i> Delete
                 </button>
             </form>
-        @else
-            @if(isset($submission))
-                <span class="btn" style="background: #95a5a6; color: white; border-color: #95a5a6; cursor: default;">
-                    ✅ Submitted
-                </span>
-            @endif
         @endif
     </div>
 </div>
@@ -312,7 +297,7 @@
         @if($assignment->expected_recitation)
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(0, 0, 0, 0.2);">
                 <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">📝 Expected Arabic Text:</div>
-                <div style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #d4af37; font-family: 'Amiri', serif;">
+                <div style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #000000; font-family: 'Amiri', serif;">
                     {{ $assignment->expected_recitation }}
                 </div>
             </div>
@@ -455,11 +440,6 @@
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-back" style="font-size: 1.1rem; padding: 12px 25px;">
-                    ← Back to Classroom
-                </a>
-            </div>
         </div>
     @elseif(auth()->user()->role_id == 2 && isset($submission))
         <!-- Student View: Their Own Submission -->
