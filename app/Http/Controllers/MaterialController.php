@@ -519,7 +519,7 @@ class MaterialController extends Controller
                                 'size' => $file->getSize(),
                             ]);
                         }
-                    } elseif ($itemData['type'] === 'file' && !empty($itemData['pdf_url'])) {
+                    } elseif (($itemData['type'] === 'file' || $itemData['type'] === 'image') && !empty($itemData['pdf_url'])) {
                         // PDF from search result - try to download it
                         Log::info('Attempting to download PDF from search', [
                             'url' => $itemData['pdf_url'],
@@ -743,8 +743,8 @@ class MaterialController extends Controller
                     $item->title = $itemData['title'] ?? null;
                     $item->description = $itemData['description'] ?? null;
 
-                    // Handle different item types
-                    if ($itemData['type'] === 'file' && $request->hasFile("items.{$index}.file")) {
+                    // Handle different item types (both 'image' and 'file' use file uploads)
+                    if (($itemData['type'] === 'file' || $itemData['type'] === 'image') && $request->hasFile("items.{$index}.file")) {
                         $file = $request->file("items.{$index}.file");
                         if ($file->getError() === UPLOAD_ERR_OK && $file->isValid() && $file->getSize() > 0) {
                             // Delete old file if exists
@@ -768,7 +768,7 @@ class MaterialController extends Controller
                                 $item->path = 'materials/' . $filename;
                             }
                         }
-                    } elseif ($itemData['type'] === 'file' && !empty($itemData['pdf_url'])) {
+                    } elseif (($itemData['type'] === 'file' || $itemData['type'] === 'image') && !empty($itemData['pdf_url'])) {
                         // PDF from search result - download it
                         try {
                             $downloadedPath = $this->downloadPDF($itemData['pdf_url']);

@@ -863,7 +863,7 @@ function addMaterialItem() {
             
             <div class="radio-group">
                 <div class="radio-option">
-                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="file" onchange="toggleItemFields(${itemId}, 'images')" required>
+                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="image" onchange="toggleItemFields(${itemId}, 'images')" required>
                     <label for="type_file_${itemId}">Images</label>
                 </div>
                 <div class="radio-option">

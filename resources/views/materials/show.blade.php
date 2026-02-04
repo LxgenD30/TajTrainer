@@ -216,11 +216,12 @@
                         </p>
                     @endif
                     
-                    @if($item->type === 'file')
+                    @if($item->type === 'file' || $item->type === 'image')
                         @php
                             $extension = strtolower(pathinfo($item->path, PATHINFO_EXTENSION));
                             $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                            $isImage = in_array($extension, $imageExtensions);
+                            // Check if it's an image type OR has image extension
+                            $isImage = $item->type === 'image' || in_array($extension, $imageExtensions);
                             
                             // Debug logging
                             \Log::info('Material Item Display Debug', [

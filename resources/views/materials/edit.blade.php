@@ -840,7 +840,7 @@ function addMaterialItem() {
             
             <div class="radio-group">
                 <div class="radio-option">
-                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="file" onchange="toggleItemFields(${itemId}, 'images')" required>
+                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="image" onchange="toggleItemFields(${itemId}, 'images')" required>
                     <label for="type_file_${itemId}">Images</label>
                 </div>
                 <div class="radio-option">
@@ -1089,14 +1089,15 @@ function addExistingItem(item) {
     itemDiv.dataset.displayNumber = itemCounter;
     
     const isFile = item.type === 'file';
+    const isImage = item.type === 'image';
     const isYoutube = item.type === 'youtube';
     
-    // Detect if it's an image or document
+    // Detect if it's an image or document based on extension (fallback for old data)
     const fileExt = item.path ? item.path.split('.').pop().toLowerCase() : '';
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    const isImage = imageExtensions.includes(fileExt);
+    const hasImageExt = imageExtensions.includes(fileExt);
     
-    const fileDisplay = (isFile && item.path) ? `<p style="margin: 10px 0 0 0; padding: 10px; background: rgba(26,188,156,0.1); border-radius: 8px; color: #1abc9c; font-weight: 600;"><i class="fas fa-check-circle"></i> Current file: ${item.path.split('/').pop()}</p>` : '';
+    const fileDisplay = ((isFile || isImage) && item.path) ? `<p style="margin: 10px 0 0 0; padding: 10px; background: rgba(26,188,156,0.1); border-radius: 8px; color: #1abc9c; font-weight: 600;"><i class="fas fa-check-circle"></i> Current file: ${item.path.split('/').pop()}</p>` : '';
     
     itemDiv.innerHTML = `
         <input type="hidden" name="items[${itemCounter}][id]" value="${item.id}">
@@ -1111,11 +1112,11 @@ function addExistingItem(item) {
         
         <div class="radio-group">
             <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="file" id="images_${itemCounter}" ${isFile && isImage ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'images')" required>
+                <input type="radio" name="items[${itemCounter}][type]" value="image" id="images_${itemCounter}" ${isImage || (isFile && hasImageExt) ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'images')" required>
                 <label for="images_${itemCounter}">Images</label>
             </div>
             <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="file" id="document_${itemCounter}" ${isFile && !isImage ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'document')">
+                <input type="radio" name="items[${itemCounter}][type]" value="file" id="document_${itemCounter}" ${isFile && !hasImageExt && !isImage ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'document')">
                 <label for="document_${itemCounter}">Document</label>
             </div>
             <div class="radio-option">
@@ -1124,19 +1125,19 @@ function addExistingItem(item) {
             </div>
         </div>
         
-        <div id="fields_images_${itemCounter}" class="${!(isFile && isImage) ? 'hidden' : ''}">
+        <div id="fields_images_${itemCounter}" class="${!(isImage || (isFile && hasImageExt)) ? 'hidden' : ''}">
             <div class="form-group">
-                <label>Upload Images ${item.path && isFile && isImage ? '(leave empty to keep current)' : ''}</label>
+                <label>Upload Images ${item.path && (isImage || hasImageExt) ? '(leave empty to keep current)' : ''}</label>
                 <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
-                ${isFile && isImage ? fileDisplay : ''}
+                ${(isImage || (isFile && hasImageExt)) ? fileDisplay : ''}
             </div>
         </div>
         
-        <div id="fields_document_${itemCounter}" class="${!(isFile && !isImage) ? 'hidden' : ''}">
+        <div id="fields_document_${itemCounter}" class="${!(isFile && !hasImageExt && !isImage) ? 'hidden' : ''}">
             <div class="form-group">
-                <label>Upload Document ${item.path && isFile && !isImage ? '(leave empty to keep current)' : ''}</label>
+                <label>Upload Document ${item.path && isFile && !hasImageExt ? '(leave empty to keep current)' : ''}</label>
                 <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".pdf,.doc,.docx">
-                ${isFile && !isImage ? fileDisplay : ''}
+                ${isFile && !hasImageExt && !isImage ? fileDisplay : ''}
             </div>
         </div>
         
