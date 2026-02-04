@@ -70,30 +70,7 @@
                 </a>
             @endif
             
-            <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; font-weight: 700; color: white; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); padding-right: 250px;">
-                <i class="fas fa-chalkboard-teacher"></i> {{ $classroom->class_name }}
-            </h1>
-            <p style="margin: 0 0 30px 0; font-size: 1.1rem; opacity: 0.95; font-weight: 500; font-family: 'Cairo', sans-serif; line-height: 1.6; color: white;">
-                {{ $classroom->description ?? 'Manage your classroom students and assignments' }}
-            </p>
-            
-            <!-- Stats Grid (Like Student Stats) -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
-                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{ $classroom->students->count() }}</div>
-                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Students</div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
-                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1; color: #ffd700;">{{ $assignments->count() }}</div>
-                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Assignments</div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
-                    <div style="font-size: 1.6rem; font-weight: 700; line-height: 1; letter-spacing: 3px; font-family: 'JetBrains Mono', monospace;">{{ $classroom->access_code }}</div>
-                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Access Code</div>
-                </div>
-            </div>
-
-            <!-- Quick Actions (Inside Banner) -->
+                      <!-- Quick Actions (Inside Banner) -->
             @if(auth()->user()->role_id == 3)
                 {{-- Teacher Actions --}}
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -122,6 +99,30 @@
                     </form>
                 </div>
             @endif
+            
+            <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; font-weight: 700; color: white; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); padding-right: 250px;">
+                <i class="fas fa-chalkboard-teacher"></i> {{ $classroom->class_name }}
+            </h1>
+            <p style="margin: 0 0 30px 0; font-size: 1.1rem; opacity: 0.95; font-weight: 500; font-family: 'Cairo', sans-serif; line-height: 1.6; color: white;">
+                {{ $classroom->description ?? 'Manage your classroom students and assignments' }}
+            </p>
+            
+            <!-- Stats Grid (Like Student Stats) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{ $classroom->students->count() }}</div>
+                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Students</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1; color: #ffd700;">{{ $assignments->count() }}</div>
+                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Assignments</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
+                    <div style="font-size: 1.6rem; font-weight: 700; line-height: 1; letter-spacing: 3px; font-family: 'JetBrains Mono', monospace;">{{ $classroom->access_code }}</div>
+                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Access Code</div>
+                </div>
+            </div>
+
         </div>
     </div>
 
