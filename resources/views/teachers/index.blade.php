@@ -387,44 +387,6 @@
             </div>
         </div>
 
-        <!-- Tajweed System Info -->
-        <div class="section-card">
-            <h2 class="section-title">
-                <i class="fas fa-brain"></i> AI-Powered Tajweed Analysis System
-            </h2>
-            <p style="font-size: 1.05rem; line-height: 1.8; color: #555; font-weight: 600;">
-                TajTrainer uses advanced AI technology to analyze student recitations for Tajweed accuracy. Our system detects:
-            </p>
-            <div class="info-grid">
-                <div class="info-box">
-                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Makharij</strong>
-                    Pronunciation points
-                </div>
-                <div class="info-box">
-                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Ghunnah</strong>
-                    Nasal sounds
-                </div>
-                <div class="info-box">
-                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Idgham</strong>
-                    Letter merging
-                </div>
-                <div class="info-box">
-                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Qalqalah</strong>
-                    Echo sound
-                </div>
-                <div class="info-box">
-                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Madd</strong>
-                    Elongation rules
-                </div>
-                <div class="info-box">
-                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Ikhfa</strong>
-                    Concealment
-                </div>
-            </div>
-            <p style="margin-top: 20px; font-size: 1.05rem; color: #666; font-style: italic; font-weight: 600;">
-                All submissions are automatically analyzed, providing detailed feedback to help students perfect their recitation.
-            </p>
-        </div>
     </div>
     
     <!-- Sidebar - Grading Queue -->
