@@ -742,6 +742,15 @@ class MaterialController extends Controller
                     $item->type = $itemData['type'];
                     $item->title = $itemData['title'] ?? null;
                     $item->description = $itemData['description'] ?? null;
+                    
+                    // Log before processing
+                    Log::info('Update item - before file processing', [
+                        'item_id' => $item->item_id ?? 'new',
+                        'new_type' => $itemData['type'],
+                        'existing_path' => $item->path,
+                        'has_file' => $request->hasFile("items.{$index}.file"),
+                        'index' => $index
+                    ]);
 
                     // Handle different item types (both 'image' and 'file' use file uploads)
                     if (($itemData['type'] === 'file' || $itemData['type'] === 'image') && $request->hasFile("items.{$index}.file")) {
@@ -828,12 +837,30 @@ class MaterialController extends Controller
                             $item->path = $urlPath;
                         }
                     }
+                    
+                    // Log before saving
+                    Log::info('Update item - before save', [
+                        'item_id' => $item->item_id ?? 'new',
+                        'type' => $item->type,
+                        'path' => $item->path,
+                        'will_save' => (bool)($item->path || $item->type === 'file' || $item->type === 'image')
+                    ]);
 
-                    if ($item->path || $item->type === 'file') {
+                    if ($item->path || $item->type === 'file' || $item->type === 'image') {
                         $item->save();
                         if (!in_array($item->item_id, $keptItemIds)) {
                             $keptItemIds[] = $item->item_id;
                         }
+                        Log::info('Item saved successfully', [
+                            'item_id' => $item->item_id,
+                            'type' => $item->type,
+                            'path' => $item->path
+                        ]);
+                    } else {
+                        Log::warning('Item not saved - no path', [
+                            'type' => $item->type,
+                            'item_data' => $itemData
+                        ]);
                     }
                 }
             }
