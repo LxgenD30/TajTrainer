@@ -352,7 +352,7 @@
                 <a href="{{ route('home') }}" class="logo">
                     <i class="fas fa-book-quran logo-icon"></i>
                     <div class="logo-text">
-                        <span class="logo-font">Taj</span>Trainer
+                        <span class="logo-font">Taj @yield ('navigation')</span>Trainer
                     </div>
                 </a>
                 
