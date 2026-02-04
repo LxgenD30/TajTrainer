@@ -1743,7 +1743,7 @@ class StudentController extends Controller
         $pythonPath = env('PYTHON_PATH', '');
         
         if ($pythonPath && file_exists($pythonPath)) {
-            return '"' . $pythonPath . '"';
+            return $pythonPath;
         }
         
         // Try common Python paths for different environments
@@ -1762,7 +1762,7 @@ class StudentController extends Controller
             }
             
             if (file_exists($path)) {
-                return '"' . $path . '"';
+                return $path;
             }
         }
         
