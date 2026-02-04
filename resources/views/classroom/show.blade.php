@@ -68,10 +68,7 @@
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
                     <i class="fas fa-arrow-left"></i> Back to My Classes
                 </a>
-            @endif
-            
-                      <!-- Quick Actions (Inside Banner) -->
-            @if(auth()->user()->role_id == 3)
+            @else
                 {{-- Teacher Actions --}}
                 <div style="position: absolute; top: 0; right: 0; display: flex; gap: 12px; flex-wrap: wrap; z-index: 10;">
                     <a href="{{ route('classroom.index') }}" 
