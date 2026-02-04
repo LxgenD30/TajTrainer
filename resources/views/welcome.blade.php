@@ -1383,9 +1383,9 @@
                 const randomAyah = Math.floor(Math.random() * totalAyahs) + 1;
                 console.log('Selected Ayah:', randomAyah, 'of', totalAyahs);
                 
-                // Fetch verse with Arabic text, audio, and English translation
-                // editions: quran-uthmani (Arabic text), ar.alafasy (audio), en.sahih (English translation)
-                const ayahUrl = `https://api.alquran.cloud/v1/ayah/${randomSurah}:${randomAyah}/editions/quran-uthmani,ar.alafasy,en.sahih`;
+                // Fetch verse with Arabic text and English translation
+                // editions: quran-uthmani (Arabic text), en.sahih (English translation)
+                const ayahUrl = `https://api.alquran.cloud/v1/ayah/${randomSurah}:${randomAyah}/editions/quran-uthmani,en.sahih`;
                 const ayahResponse = await fetch(ayahUrl);
                 
                 if (!ayahResponse.ok) {
@@ -1402,26 +1402,23 @@
                 
                 // Extract data from response
                 const arabicText = ayahData.data[0].text; // Uthmani text
-                const audioData = ayahData.data[1]; // Alafasy audio
-                const translationText = ayahData.data[2].text; // English translation
+                const translationText = ayahData.data[1].text; // English translation
+                const surahInfo = ayahData.data[0].surah;
                 
                 // Update UI
-                document.getElementById('verseTitle').textContent = `${audioData.surah.englishName} (${randomSurah}:${randomAyah})`;
+                document.getElementById('verseTitle').textContent = `${surahInfo.englishName} (${randomSurah}:${randomAyah})`;
                 document.getElementById('verseArabic').textContent = arabicText;
                 document.getElementById('verseTranslation').textContent = translationText;
                 
-                // Set audio source
-                if (audioData.audio) {
-                    currentAudioUrl = audioData.audio;
-                    audioElement.src = currentAudioUrl;
-                    console.log('Audio URL set:', currentAudioUrl);
-                    loadingStatus.textContent = 'Audio ready! Click play or use controls below.';
-                    loadingStatus.style.color = '#0a5c36';
-                } else {
-                    console.warn('No audio available for this ayah');
-                    loadingStatus.textContent = 'Audio not available for this verse.';
-                    loadingStatus.style.color = '#e74c3c';
-                }
+                // Construct direct audio URL from reliable CDN (Everyayah.com - Alafasy)
+                const paddedSurah = String(randomSurah).padStart(3, '0');
+                const paddedAyah = String(randomAyah).padStart(3, '0');
+                currentAudioUrl = `https://everyayah.com/data/Alafasy_64kbps/${paddedSurah}${paddedAyah}.mp3`;
+                
+                audioElement.src = currentAudioUrl;
+                console.log('Audio URL set:', currentAudioUrl);
+                loadingStatus.textContent = 'Audio ready! Click play or use controls below.';
+                loadingStatus.style.color = '#0a5c36';
                 
                 console.log('Verse loaded successfully!');
                 
@@ -1431,8 +1428,8 @@
                 document.getElementById('verseArabic').textContent = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ';
                 document.getElementById('verseTranslation').textContent = 'In the name of Allah, the Most Gracious, the Most Merciful';
                 
-                // Fallback audio - Al-Fatiha verse 1
-                const fallbackUrl = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3';
+                // Fallback audio - Al-Fatiha verse 1 (using Everyayah CDN)
+                const fallbackUrl = 'https://everyayah.com/data/Alafasy_64kbps/001001.mp3';
                 audioElement.src = fallbackUrl;
                 currentAudioUrl = fallbackUrl;
                 loadingStatus.textContent = 'Error loading random verse. Showing Al-Fatiha.';
