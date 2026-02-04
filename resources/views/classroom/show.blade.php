@@ -73,7 +73,7 @@
                       <!-- Quick Actions (Inside Banner) -->
             @if(auth()->user()->role_id == 3)
                 {{-- Teacher Actions --}}
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <div style="position: absolute; top: 0; right: 0; display: flex; gap: 12px; flex-wrap: wrap; z-index: 10;">
                     <a href="{{ route('classroom.index') }}" 
                         style="padding: 10px 20px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);"
                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
@@ -94,12 +94,9 @@
                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
                         <i class="fas fa-plus"></i> New Assignment
                     </a>
-
-                    <form action="{{ route('classroom.destroy', $classroom->id) }}" method="POST" style="display: inline;">
-                    </form>
                 </div>
             @endif
-            
+
             <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; font-weight: 700; color: white; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); padding-right: 250px;">
                 <i class="fas fa-chalkboard-teacher"></i> {{ $classroom->class_name }}
             </h1>
