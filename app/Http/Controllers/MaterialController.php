@@ -332,6 +332,7 @@ class MaterialController extends Controller
             'items.*.type' => 'required|in:file,youtube',
             'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:20480',
             'items.*.youtube_link' => 'nullable|url',
+            'items.*.pdf_url' => 'nullable|url',
             'items.*.title' => 'nullable|string|max:255',
             'items.*.description' => 'nullable|string',
         ]);
@@ -371,7 +372,17 @@ class MaterialController extends Controller
 
             // Process material items
             if (!empty($validated['items']) && is_array($validated['items'])) {
+                Log::info('Processing material items', ['count' => count($validated['items'])]);
+                
                 foreach ($validated['items'] as $index => $itemData) {
+                    Log::info('Processing item', [
+                        'index' => $index,
+                        'type' => $itemData['type'],
+                        'has_file' => $request->hasFile("items.{$index}.file"),
+                        'has_pdf_url' => !empty($itemData['pdf_url']),
+                        'pdf_url' => $itemData['pdf_url'] ?? null,
+                    ]);
+                    
                     $item = new MaterialItem();
                     $item->material_id = $material->material_id;
                     $item->type = $itemData['type'];
@@ -397,22 +408,32 @@ class MaterialController extends Controller
                         }
                     } elseif ($itemData['type'] === 'file' && !empty($itemData['pdf_url'])) {
                         // PDF from search result - download it
+                        Log::info('Attempting to download PDF from search', [
+                            'url' => $itemData['pdf_url'],
+                            'index' => $index
+                        ]);
+                        
                         try {
                             $downloadedPath = $this->downloadPDF($itemData['pdf_url']);
                             if ($downloadedPath) {
                                 $item->path = $downloadedPath;
-                                Log::info('PDF downloaded from search', [
+                                Log::info('PDF downloaded successfully', [
                                     'url' => $itemData['pdf_url'],
-                                    'path' => $downloadedPath
+                                    'path' => $downloadedPath,
+                                    'full_path' => storage_path('app/public/' . $downloadedPath)
                                 ]);
                             } else {
-                                Log::warning('PDF download failed, skipping item', [
+                                Log::warning('PDF download returned null, skipping item', [
                                     'url' => $itemData['pdf_url']
                                 ]);
                                 continue; // Skip this item if download failed
                             }
                         } catch (\Exception $e) {
-                            Log::error('PDF download error: ' . $e->getMessage());
+                            Log::error('PDF download exception', [
+                                'url' => $itemData['pdf_url'],
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString()
+                            ]);
                             continue; // Skip this item
                         }
                     } elseif ($itemData['type'] === 'youtube') {
@@ -456,15 +477,19 @@ class MaterialController extends Controller
                             'item_id' => $item->item_id,
                             'type' => $item->type,
                             'path' => $item->path,
-                            'material_id' => $item->material_id
+                            'material_id' => $item->material_id,
+                            'title' => $item->title
                         ]);
                     } else {
                         Log::warning('Material item not saved - no path', [
                             'type' => $itemData['type'],
-                            'index' => $index
+                            'index' => $index,
+                            'item_data' => $itemData
                         ]);
                     }
                 }
+                
+                Log::info('Finished processing all items');
             }
 
             DB::commit();
@@ -847,42 +872,91 @@ Respond with ONLY the category name, nothing else. If Ghunnah or nasal sound is 
      */
     private function downloadPDF(string $url): ?string
     {
+        Log::info('downloadPDF called', ['url' => $url]);
+        
         try {
             // Download PDF with timeout
+            Log::info('Sending HTTP request to download PDF');
             $response = Http::withoutVerifying()
                 ->timeout(30)
                 ->get($url);
 
+            Log::info('HTTP response received', [
+                'status' => $response->status(),
+                'successful' => $response->successful(),
+                'size' => strlen($response->body())
+            ]);
+
             if (!$response->successful()) {
+                Log::warning('PDF download HTTP request failed', [
+                    'status' => $response->status(),
+                    'url' => $url
+                ]);
                 return null;
             }
 
             $content = $response->body();
             
             // Validate it's actually a PDF
-            if (substr($content, 0, 4) !== '%PDF') {
-                Log::warning('URL does not contain valid PDF content: ' . $url);
+            $header = substr($content, 0, 4);
+            Log::info('Checking PDF header', [
+                'header' => $header,
+                'is_pdf' => $header === '%PDF'
+            ]);
+            
+            if ($header !== '%PDF') {
+                Log::warning('URL does not contain valid PDF content', [
+                    'url' => $url,
+                    'header' => $header,
+                    'first_100_chars' => substr($content, 0, 100)
+                ]);
                 return null;
             }
 
             // Create directory if it doesn't exist
             $destinationPath = storage_path('app/public/materials/pdfs');
+            Log::info('Checking/creating destination directory', ['path' => $destinationPath]);
+            
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0755, true);
+                Log::info('Created directory', ['path' => $destinationPath]);
             }
 
             // Generate unique filename
             $filename = time() . '_' . uniqid() . '.pdf';
             $fullPath = $destinationPath . '/' . $filename;
+            $relativePath = 'materials/pdfs/' . $filename;
+
+            Log::info('Saving PDF file', [
+                'filename' => $filename,
+                'full_path' => $fullPath,
+                'relative_path' => $relativePath,
+                'content_size' => strlen($content)
+            ]);
 
             // Save file
-            if (file_put_contents($fullPath, $content) !== false) {
-                return 'materials/pdfs/' . $filename;
+            $bytesWritten = file_put_contents($fullPath, $content);
+            
+            if ($bytesWritten !== false) {
+                Log::info('PDF file saved successfully', [
+                    'bytes_written' => $bytesWritten,
+                    'file_exists' => file_exists($fullPath),
+                    'file_size' => filesize($fullPath),
+                    'relative_path' => $relativePath
+                ]);
+                return $relativePath;
+            } else {
+                Log::error('Failed to write PDF file', ['full_path' => $fullPath]);
+                return null;
             }
 
             return null;
         } catch (\Exception $e) {
-            Log::error('PDF download error: ' . $e->getMessage());
+            Log::error('PDF download exception', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return null;
         }
     }
