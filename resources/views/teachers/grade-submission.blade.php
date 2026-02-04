@@ -267,6 +267,7 @@
                     }
                 </script>
             </div>
+            @endif
 
             @if($submission->transcription)
             <!-- AI Transcription -->
@@ -282,6 +283,7 @@
                     </p>
                 </div>
             </div>
+            @endif
         </div>
 
         <!-- Column 3: Tajweed Analysis (1fr flexible) -->
