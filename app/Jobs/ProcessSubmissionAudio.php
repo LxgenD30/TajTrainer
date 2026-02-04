@@ -269,7 +269,7 @@ class ProcessSubmissionAudio implements ShouldQueue
         // Add additional data
         $result['expected_text'] = $expectedText;
         $result['tajweed_text'] = $tajweedText;
-        $result['reference_audio'] = $referenceAudio;
+        $result['reference_audio'] = $referenceAudioPath;
         
         // Use transcription from Python (Whisper) if available
         $pythonTranscription = $result['whisper_transcription'] ?? $result['transcribed_text'] ?? '';
