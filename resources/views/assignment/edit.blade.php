@@ -475,8 +475,8 @@
         </div>
         
         <div class="header-actions">
-            <div style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.15); padding: 11px 15px; border-radius: 10px;">
-                <label style="color: #d4af37; font-size: 0.87rem; font-weight: 700; white-space: nowrap; margin: 0;">
+            <div style="display: flex; align-items: center; gap: 10px; background: rgba(41, 128, 185, 0.25); padding: 11px 15px; border-radius: 10px; border: 2px solid rgba(41, 128, 185, 0.4);">
+                <label style="color: #ffffff; font-size: 0.87rem; font-weight: 700; white-space: nowrap; margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
                     📅 Due Date & Time *
                 </label>
                 <input type="datetime-local" id="dueDateInput" name="due_date_temp" value="{{ old('due_date', $assignment->due_date->format('Y-m-d\TH:i')) }}" required 
@@ -484,7 +484,7 @@
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-cancel">
+                <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-cancel" style="background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 2px solid rgba(231, 76, 60, 0.3);">
                     Cancel
                 </a>
                 <button type="submit" form="assignmentForm" class="btn-submit">
@@ -677,10 +677,10 @@
             </div>
 
             <!-- View Modal -->
-            <div id="viewModal" class="view-modal" style="display: none;">
+            <div id="viewModal" class="view-modal">
                 <div class="view-modal-content">
-                    <span class="view-close" onclick="closeViewModal()">&times;</span>
-                    <div id="viewModalContent"></div>
+                    <button class="view-modal-close" onclick="closeViewModal()">&times;</button>
+                    <div id="viewModalBody"></div>
                 </div>
             </div>
     </form>
@@ -964,53 +964,50 @@
             if (!item) return;
             
             const modal = document.getElementById('viewModal');
-            const modalContent = document.getElementById('viewModalContent');
+            const modalBody = document.getElementById('viewModalBody');
             
-            let contentHtml = '';
+            let content = '';
             
-            if (itemType === 'image') {
-                contentHtml = `
-                    <h3 style="margin: 0 0 15px 0; color: #0a5c36; font-size: 1.3rem;">🖼️ ${item.title}</h3>
-                    <img src="/storage/${item.file_path}" alt="${item.title}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                `;
-            } else if (itemType === 'file') {
-                contentHtml = `
-                    <h3 style="margin: 0 0 15px 0; color: #0a5c36; font-size: 1.3rem;">📄 ${item.title}</h3>
-                    <iframe src="/storage/${item.file_path}" style="width: 100%; height: 500px; border: none; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"></iframe>
-                    <a href="/storage/${item.file_path}" target="_blank" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #1abc9c; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
-                        📥 Download PDF
-                    </a>
-                `;
+            if (itemType === 'image' || itemType === 'file') {
+                const path = item.path;
+                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(path.split('.').pop().toLowerCase());
+                
+                if (isImage) {
+                    content = `<img src="/storage/${path}" style="max-width: 100%; border-radius: 10px; border: 2px solid #000000;" alt="${item.title || 'Image'}">`;
+                } else {
+                    content = `<iframe src="/storage/${path}" style="width: 100%; height: 600px; border: 2px solid #000000; border-radius: 10px;"></iframe>`;
+                }
             } else if (itemType === 'youtube') {
-                const videoId = extractYoutubeId(item.youtube_url);
-                contentHtml = `
-                    <h3 style="margin: 0 0 15px 0; color: #0a5c36; font-size: 1.3rem;">🎥 ${item.title}</h3>
-                    <iframe width="100%" height="400" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"></iframe>
-                `;
+                const videoId = extractYoutubeId(item.path || item.youtube_link);
+                if (videoId) {
+                    content = `<iframe width="100%" height="500" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 10px; border: 2px solid #000000;"></iframe>`;
+                }
             } else if (itemType === 'url') {
-                contentHtml = `
-                    <h3 style="margin: 0 0 15px 0; color: #0a5c36; font-size: 1.3rem;">🔗 ${item.title}</h3>
-                    <p style="color: #666; margin-bottom: 15px;">External resource link:</p>
-                    <a href="${item.external_url}" target="_blank" style="display: inline-block; padding: 12px 24px; background: #1abc9c; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                        🌐 Open Link
-                    </a>
-                `;
+                content = `<iframe src="${item.path}" style="width: 100%; height: 600px; border: 2px solid #000000; border-radius: 10px;"></iframe>`;
             }
             
-            modalContent.innerHTML = contentHtml;
-            modal.style.display = 'block';
+            if (item.title) {
+                content = `<h3 style="color: #000000; margin-bottom: 15px;">${item.title}</h3>` + content;
+            }
+            
+            if (item.description) {
+                content += `<p style="color: #000000; margin-top: 15px; font-size: 0.9rem;">${item.description}</p>`;
+            }
+            
+            modalBody.innerHTML = content;
+            modal.classList.add('active');
         }
 
         // Close Modal
         function closeViewModal() {
-            document.getElementById('viewModal').style.display = 'none';
+            document.getElementById('viewModal').classList.remove('active');
         }
 
         // Helper function to extract YouTube video ID
         function extractYoutubeId(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
+            if (!url) return null;
+            const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+            return match ? match[1] : null;
         }
 
         // Sync due date between header input and hidden field
