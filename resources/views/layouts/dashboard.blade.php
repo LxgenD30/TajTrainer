@@ -352,10 +352,14 @@
                 <a href="{{ route('home') }}" class="logo">
                     <i class="fas fa-book-quran logo-icon"></i>
                     <div class="logo-text">
-                        <span class="logo-font">Taj @yield ('navigation')</span>Trainer
+                        <span class="logo-font">Taj</span>Trainer
                     </div>
                 </a>
                 
+                <nav class="main-nav">
+                @yield ('navigation')
+                </nav>
+
                 <div class="user-profile" id="userProfile">
                     <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}</div>
                     <div class="user-info">
