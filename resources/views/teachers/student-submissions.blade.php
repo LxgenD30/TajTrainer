@@ -391,92 +391,126 @@
         <p>{{ $student->name }} hasn't submitted any assignments yet.</p>
     </div>
 @else
-    <!-- Pending Review Section -->
+    <!-- 2-Column Grid Layout: Pending Review | Graded -->
     @php
+        // Filter: Pending Review includes 'submitted' and 'pending_review' statuses
         $pendingSubmissions = $submissions->filter(function($sub) {
-            return $sub->status !== 'graded';
+            return in_array($sub->status, ['submitted', 'pending_review']);
         });
+        // Filter: Graded submissions only
         $gradedSubmissions = $submissions->filter(function($sub) {
             return $sub->status === 'graded';
         });
     @endphp
 
-    @if($pendingSubmissions->isNotEmpty())
-    <div style="background: rgba(255, 193, 7, 0.1); border: 2px solid #ffc107; border-radius: 15px; padding: 25px; margin-bottom: 30px;">
-        <h3 style="color: #f57c00; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-clock"></i> Pending Review ({{ $pendingSubmissions->count() }})
-        </h3>
-        <div style="display: grid; gap: 15px;">
-            @foreach($pendingSubmissions as $submission)
-                <div style="background: white; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'">
-                    <div style="flex: 1;">
-                        <h4 style="color: #0a5c36; margin-bottom: 8px; font-size: 1.1rem;">
-                            📖 {{ $submission->assignment->surah ?? 'Assignment' }} 
-                            @if($submission->assignment->start_verse)
-                                ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
-                            @endif
-                        </h4>
-                        <div style="display: flex; gap: 20px; color: #666; font-size: 0.9rem;">
-                            <span><i class="fas fa-calendar"></i> Submitted {{ $submission->created_at->format('M d, Y') }}</span>
-                            <span><i class="fas fa-clock"></i> {{ $submission->created_at->diffForHumans() }}</span>
-                            @if($submission->audio_file_path)
-                                <span><i class="fas fa-microphone"></i> Voice Recording</span>
-                            @endif
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
+        <!-- Left Column: Pending Review -->
+        <div>
+            @if($pendingSubmissions->isNotEmpty())
+            <div style="background: rgba(255, 193, 7, 0.1); border: 3px solid #ffc107; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(255,193,7,0.15);">
+                <h3 style="color: #f57c00; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700;">
+                    <i class="fas fa-clock"></i> Pending Review ({{ $pendingSubmissions->count() }})
+                </h3>
+                <div style="display: grid; gap: 20px;">
+                    @foreach($pendingSubmissions as $submission)
+                        <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); transition: all 0.3s ease; border: 2px solid #f0f0f0;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.15)'; this.style.borderColor='#ffc107'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.1)'; this.style.borderColor='#f0f0f0'">
+                            <h4 style="color: #0a5c36; margin-bottom: 12px; font-size: 1.3rem; font-weight: 700;">
+                                📖 {{ $submission->assignment->surah ?? 'Assignment' }} 
+                                @if($submission->assignment->start_verse)
+                                    ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
+                                @endif
+                            </h4>
+                            <div style="display: grid; gap: 10px; margin-bottom: 18px;">
+                                <div style="color: #666; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-calendar"></i> Submitted {{ $submission->created_at->format('M d, Y') }}
+                                </div>
+                                <div style="color: #666; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-clock"></i> {{ $submission->created_at->diffForHumans() }}
+                                </div>
+                                @if($submission->audio_file_path)
+                                <div style="color: #1abc9c; font-size: 1rem; display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                                    <i class="fas fa-microphone"></i> Voice Recording
+                                </div>
+                                @endif
+                            </div>
+                            <a href="{{ route('teacher.submission.grade', $submission->id) }}" 
+                                style="width: 100%; padding: 14px 30px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(10, 92, 54, 0.3);"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(10, 92, 54, 0.4)'"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(10, 92, 54, 0.3)'">
+                                <i class="fas fa-eye"></i> View Details & Grade
+                            </a>
                         </div>
-                    </div>
-                    <a href="{{ route('teacher.submission.grade', $submission->id) }}" 
-                        style="padding: 12px 25px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(10, 92, 54, 0.3);"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(10, 92, 54, 0.4)'"
-                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 92, 54, 0.3)'">
-                        <i class="fas fa-eye"></i> View Details & Grade
-                    </a>
+                    @endforeach
                 </div>
-            @endforeach
+            </div>
+            @else
+            <div style="background: rgba(255, 193, 7, 0.05); border: 2px dashed #ffc107; border-radius: 20px; padding: 40px; text-align: center;">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #ffc107; opacity: 0.5; margin-bottom: 15px;"></i>
+                <h4 style="color: #f57c00; font-size: 1.2rem; margin-bottom: 8px;">No Pending Submissions</h4>
+                <p style="color: #666; font-size: 1rem; margin: 0;">All submissions have been graded</p>
+            </div>
+            @endif
         </div>
-    </div>
-    @endif
 
-    <!-- Graded Submissions Section -->
-    @if($gradedSubmissions->isNotEmpty())
-    <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4caf50; border-radius: 15px; padding: 25px;">
-        <h3 style="color: #2e7d32; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-check-circle"></i> Graded Submissions ({{ $gradedSubmissions->count() }})
-        </h3>
-        <div style="display: grid; gap: 15px;">
-            @foreach($gradedSubmissions as $submission)
-                @php
-                    $score = \App\Models\Score::where('user_id', $submission->student_id)
-                        ->where('assignment_id', $submission->assignment_id)
-                        ->first();
-                @endphp
-                <div style="background: white; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'">
-                    <div style="flex: 1;">
-                        <h4 style="color: #0a5c36; margin-bottom: 8px; font-size: 1.1rem;">
-                            📖 {{ $submission->assignment->surah ?? 'Assignment' }} 
-                            @if($submission->assignment->start_verse)
-                                ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
-                            @endif
-                        </h4>
-                        <div style="display: flex; gap: 20px; color: #666; font-size: 0.9rem;">
-                            <span><i class="fas fa-calendar"></i> Submitted {{ $submission->created_at->format('M d, Y') }}</span>
-                            @if($score)
-                                <span style="color: #4caf50; font-weight: 600;">
-                                    <i class="fas fa-star"></i> Score: {{ $score->score }}/{{ $submission->assignment->total_marks }}
-                                </span>
-                            @endif
+        <!-- Right Column: Graded Submissions -->
+        <div>
+            @if($gradedSubmissions->isNotEmpty())
+            <div style="background: rgba(76, 175, 80, 0.1); border: 3px solid #4caf50; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(76,175,80,0.15);">
+                <h3 style="color: #2e7d32; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700;">
+                    <i class="fas fa-check-circle"></i> Graded Submissions ({{ $gradedSubmissions->count() }})
+                </h3>
+                <div style="display: grid; gap: 20px;">
+                    @foreach($gradedSubmissions as $submission)
+                        @php
+                            $score = \App\Models\Score::where('user_id', $submission->student_id)
+                                ->where('assignment_id', $submission->assignment_id)
+                                ->first();
+                        @endphp
+                        <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); transition: all 0.3s ease; border: 2px solid #f0f0f0;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.15)'; this.style.borderColor='#4caf50'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.1)'; this.style.borderColor='#f0f0f0'">
+                            <h4 style="color: #0a5c36; margin-bottom: 12px; font-size: 1.3rem; font-weight: 700;">
+                                📖 {{ $submission->assignment->surah ?? 'Assignment' }} 
+                                @if($submission->assignment->start_verse)
+                                    ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
+                                @endif
+                            </h4>
+                            <div style="display: grid; gap: 10px; margin-bottom: 18px;">
+                                <div style="color: #666; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-calendar"></i> Submitted {{ $submission->created_at->format('M d, Y') }}
+                                </div>
+                                @if($score)
+                                <div style="padding: 12px; background: rgba(76, 175, 80, 0.15); border-radius: 10px; border: 2px solid #4caf50;">
+                                    <div style="color: #2e7d32; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-star"></i> Score: {{ $score->score }}/{{ $submission->assignment->total_marks }}
+                                        <span style="font-size: 0.95rem; opacity: 0.8;">({{ round(($score->score / $submission->assignment->total_marks) * 100, 1) }}%)</span>
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+                            <a href="{{ route('teacher.submission.grade', $submission->id) }}" 
+                                style="width: 100%; padding: 14px 30px; background: white; color: #0a5c36; border: 3px solid #0a5c36; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;"
+                                onmouseover="this.style.background='#0a5c36'; this.style.color='white'"
+                                onmouseout="this.style.background='white'; this.style.color='#0a5c36'">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
                         </div>
-                    </div>
-                    <a href="{{ route('teacher.submission.grade', $submission->id) }}" 
-                        style="padding: 12px 25px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease;"
-                        onmouseover="this.style.background='#0a5c36'; this.style.color='white'"
-                        onmouseout="this.style.background='white'; this.style.color='#0a5c36'">
-                        <i class="fas fa-eye"></i> View Details
-                    </a>
+                    @endforeach
                 </div>
-            @endforeach
+            </div>
+            @else
+            <div style="background: rgba(76, 175, 80, 0.05); border: 2px dashed #4caf50; border-radius: 20px; padding: 40px; text-align: center;">
+                <i class="fas fa-clipboard-check" style="font-size: 3rem; color: #4caf50; opacity: 0.5; margin-bottom: 15px;"></i>
+                <h4 style="color: #2e7d32; font-size: 1.2rem; margin-bottom: 8px;">No Graded Submissions</h4>
+                <p style="color: #666; font-size: 1rem; margin: 0;">Pending submissions will appear here after grading</p>
+            </div>
+            @endif
         </div>
     </div>
-    @endif
+
+    @media (max-width: 1200px) {
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
 @endif
 @endsection
 

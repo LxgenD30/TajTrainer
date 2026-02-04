@@ -276,33 +276,36 @@
 </div>
 
 <!-- Assignment Details Card -->
-<div class="detail-card">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+    
+    <!-- LEFT COLUMN: Assignment Details -->
+    <div class="detail-card">
     <!-- Quran Verse Section -->
     <div class="detail-section gold">
-        <h4 class="section-title gold">
+        <h4 class="section-title gold" style="font-size: 1.4rem;">
             <span>📖</span> Assigned Quran Verse
         </h4>
         <div class="info-grid">
             <div class="info-item">
-                <div class="info-label">Surah</div>
-                <div class="info-value">{{ $assignment->surah }}</div>
+                <div class="info-label" style="font-size: 1rem;">Surah</div>
+                <div class="info-value" style="font-size: 1.3rem;">{{ $assignment->surah }}</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Ayat From</div>
-                <div class="info-value">{{ $assignment->start_verse }}</div>
+                <div class="info-label" style="font-size: 1rem;">Ayat From</div>
+                <div class="info-value" style="font-size: 1.3rem;">{{ $assignment->start_verse }}</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Ayat To</div>
-                <div class="info-value">{{ $assignment->end_verse ?? 'N/A' }}</div>
+                <div class="info-label" style="font-size: 1rem;">Ayat To</div>
+                <div class="info-value" style="font-size: 1.3rem;">{{ $assignment->end_verse ?? 'N/A' }}</div>
             </div>
         </div>
         
         @if($assignment->tajweed_rules && count($assignment->tajweed_rules) > 0)
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
-                <div class="info-label" style="margin-bottom: 10px;">✨ Focus on Tajweed Rules:</div>
+                <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">✨ Focus on Tajweed Rules:</div>
                 <div class="rules-container">
                     @foreach($assignment->tajweed_rules as $rule)
-                        <span class="rule-badge">{{ $rule }}</span>
+                        <span class="rule-badge" style="font-size: 1rem;">{{ $rule }}</span>
                     @endforeach
                 </div>
             </div>
@@ -310,8 +313,8 @@
         
         @if($assignment->expected_recitation)
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
-                <div class="info-label" style="margin-bottom: 10px;">📝 Expected Arabic Text:</div>
-                <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 10px; direction: rtl; text-align: center; font-size: 1.5rem; font-weight: bold; color: #d4af37;">
+                <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">📝 Expected Arabic Text:</div>
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #d4af37; font-family: 'Amiri', serif;">
                     {{ $assignment->expected_recitation }}
                 </div>
             </div>
@@ -319,12 +322,12 @@
         
         @if($assignment->reference_audio_url)
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
-                <div class="info-label" style="margin-bottom: 10px;">🎧 Reference Audio (Sheikh Alafasy):</div>
+                <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">🎧 Reference Audio (Sheikh Alafasy):</div>
                 <audio controls style="width: 100%; border-radius: 10px;">
                     <source src="{{ $assignment->reference_audio_url }}" type="audio/mpeg">
                     Your browser does not support the audio element.
                 </audio>
-                <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-top: 10px;">
+                <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.6); margin-top: 10px;">
                     Listen to the correct pronunciation before recording your own recitation.
                 </p>
             </div>
@@ -334,21 +337,21 @@
     <!-- Reference Materials -->
     @if($assignment->material)
         <div class="detail-section">
-            <h4 class="section-title">
+            <h4 class="section-title" style="font-size: 1.4rem;">
                 <span>📚</span> Reference Materials
             </h4>
             <div class="material-info">
-                <p class="material-title">{{ $assignment->material->title }}</p>
+                <p class="material-title" style="font-size: 1.2rem;">{{ $assignment->material->title }}</p>
                 
                 <div class="material-links">
                     @if($assignment->material->file_path)
-                        <a href="{{ Storage::url($assignment->material->file_path) }}" target="_blank" class="material-link">
+                        <a href="{{ Storage::url($assignment->material->file_path) }}" target="_blank" class="material-link" style="font-size: 1rem;">
                             📄 Download PDF
                         </a>
                     @endif
                     
                     @if($assignment->material->video_link)
-                        <a href="{{ $assignment->material->video_link }}" target="_blank" class="material-link">
+                        <a href="{{ $assignment->material->video_link }}" target="_blank" class="material-link" style="font-size: 1rem;">
                             🎥 Watch Video
                         </a>
                     @endif
@@ -357,83 +360,20 @@
         </div>
     @endif
 
-    <!-- Student Submission Section -->
-    @if(auth()->user()->role_id == 2 && isset($submission))
-        <div class="detail-section" style="background: rgba(46, 204, 113, 0.1); border-color: #27ae60;">
-            <h4 class="section-title" style="color: #27ae60;">
-                <span>✅</span> Your Submission
-            </h4>
-            
-            <div class="info-grid" style="margin-bottom: 20px;">
-                <div class="info-item">
-                    <div class="info-label">📅 Submitted At</div>
-                    <div class="info-value" style="color: #27ae60;">{{ $submission->submitted_at ? $submission->submitted_at->format('F d, Y h:i A') : 'Processing...' }}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">📊 Status</div>
-                    <div class="info-value" style="color: #27ae60;">
-                        <span class="submission-badge" style="background: rgba(46, 204, 113, 0.2); border-color: #27ae60; color: #27ae60;">
-                            {{ ucfirst($submission->status ?? 'pending') }}
-                        </span>
-                    </div>
-                </div>
-                @if($submission->score)
-                    <div class="info-item">
-                        <div class="info-label">🎯 Score</div>
-                        <div class="info-value" style="color: #d4af37;">{{ $submission->score->score ?? 'Not graded' }} / {{ $assignment->total_marks }}</div>
-                    </div>
-                @endif
-            </div>
-
-            @if($submission->audio_file_path)
-                <div style="margin-bottom: 20px;">
-                    <div class="info-label" style="margin-bottom: 10px;">🎤 Your Recording</div>
-                    <audio controls style="width: 100%; border-radius: 10px;">
-                        <source src="{{ Storage::url($submission->audio_file_path) }}" type="audio/mpeg">
-                        Your browser does not support the audio element.
-                    </audio>
-                </div>
-            @endif
-
-            @if($submission->transcription)
-                <div style="margin-bottom: 20px;">
-                    <div class="info-label" style="margin-bottom: 10px;">📝 Transcription</div>
-                    <div class="instructions-box">
-                        <p class="instructions-text">{{ $submission->transcription }}</p>
-                    </div>
-                </div>
-            @endif
-
-            @if($submission->tajweed_analysis && is_array($submission->tajweed_analysis))
-                <div>
-                    <div class="info-label" style="margin-bottom: 10px;">🎯 Tajweed Analysis</div>
-                    <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #27ae60;">
-                        @foreach($submission->tajweed_analysis as $key => $value)
-                            <div style="margin-bottom: 10px;">
-                                <strong style="color: #0a5c36;">{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
-                                <span>{{ is_array($value) ? json_encode($value) : $value }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-        </div>
-    @endif
-
     <!-- Assignment Info -->
-    <div class="info-grid" style="margin-bottom: 30px;">
+    <div class="info-grid" style="margin-top: 30px;">
         <div class="info-item">
-            <div class="info-label">📅 Due Date</div>
-            <div class="info-value">{{ $assignment->due_date->format('F d, Y h:i A') }}</div>
+            <div class="info-label" style="font-size: 1rem;">📅 Due Date</div>
+            <div class="info-value" style="font-size: 1.2rem;">{{ $assignment->due_date->format('F d, Y h:i A') }}</div>
         </div>
         <div class="info-item">
-            <div class="info-label">🎯 Total Marks</div>
-            <div class="info-value">{{ $assignment->total_marks }} points</div>
+            <div class="info-label" style="font-size: 1rem;">🎯 Total Marks</div>
+            <div class="info-value" style="font-size: 1.2rem;">{{ $assignment->total_marks }} points</div>
         </div>
         <div class="info-item">
-            <div class="info-label">🎤 Submission Type</div>
-            <div class="info-value">
-                <span class="submission-badge">
+            <div class="info-label" style="font-size: 1rem;">🎤 Submission Type</div>
+            <div class="info-value" style="font-size: 1.2rem;">
+                <span class="submission-badge" style="font-size: 1rem;">
                     @if($assignment->is_voice_submission)
                         🎤 Voice Recording
                     @else
@@ -445,15 +385,104 @@
     </div>
 
     <!-- Instructions -->
-    <div>
-        <div class="info-label" style="margin-bottom: 10px; font-size: 1rem; font-weight: 600; color: #0a5c36;">📋 Instructions</div>
+    <div style="margin-top: 30px;">
+        <div class="info-label" style="margin-bottom: 10px; font-size: 1.1rem; font-weight: 600; color: #0a5c36;">📋 Instructions</div>
         <div class="instructions-box">
-            <p class="instructions-text">{{ $assignment->instructions }}</p>
+            <p class="instructions-text" style="font-size: 1rem;">{{ $assignment->instructions }}</p>
         </div>
     </div>
+    </div> <!-- End LEFT COLUMN -->
+    
+    <!-- RIGHT COLUMN: Your Submission -->
+    <!-- RIGHT COLUMN: Your Submission -->
+    <div class="detail-card">
+    @if(auth()->user()->role_id == 2 && isset($submission))
+        <div class="detail-section" style="background: rgba(46, 204, 113, 0.1); border-color: #27ae60;">
+            <h4 class="section-title" style="color: #27ae60; font-size: 1.4rem;">
+                <span>✅</span> Your Submission
+            </h4>
+            
+            <div class="info-grid" style="margin-bottom: 25px;">
+                <div class="info-item">
+                    <div class="info-label" style="font-size: 1rem;">📅 Submitted At</div>
+                    <div class="info-value" style="color: #27ae60; font-size: 1.2rem;">{{ $submission->submitted_at ? $submission->submitted_at->format('F d, Y h:i A') : 'Processing...' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label" style="font-size: 1rem;">📊 Status</div>
+                    <div class="info-value" style="color: #27ae60; font-size: 1.2rem;">
+                        <span class="submission-badge" style="background: rgba(46, 204, 113, 0.2); border-color: #27ae60; color: #27ae60; font-size: 1rem;">
+                            {{ ucfirst($submission->status ?? 'pending') }}
+                        </span>
+                    </div>
+                </div>
+                @if($submission->score)
+                    <div class="info-item">
+                        <div class="info-label" style="font-size: 1rem;">🎯 Score</div>
+                        <div class="info-value" style="color: #d4af37; font-size: 1.2rem;">{{ $submission->score->score ?? 'Not graded' }} / {{ $assignment->total_marks }}</div>
+                    </div>
+                @endif
+            </div>
 
-    <!-- Back Button -->
-    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-back">
+            @if($submission->audio_file_path)
+                <div style="margin-bottom: 25px;">
+                    <div class="info-label" style="margin-bottom: 12px; font-size: 1rem;">🎤 Your Recording</div>
+                    <audio controls style="width: 100%; border-radius: 10px;">
+                        <source src="{{ Storage::url($submission->audio_file_path) }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            @endif
+
+            @if($submission->transcription)
+                <div style="margin-bottom: 25px;">
+                    <div class="info-label" style="margin-bottom: 12px; font-size: 1rem;">📝 Transcription</div>
+                    <div class="instructions-box">
+                        <p class="instructions-text" style="font-size: 1.1rem; font-family: 'Amiri', serif; direction: rtl; text-align: right;">{{ $submission->transcription }}</p>
+                    </div>
+                </div>
+            @endif
+
+            @if($submission->tajweed_analysis && is_array($submission->tajweed_analysis))
+                <div>
+                    <div class="info-label" style="margin-bottom: 12px; font-size: 1rem;">🎯 Tajweed Analysis</div>
+                    <div style="background: white; padding: 25px; border-radius: 10px; border: 2px solid #27ae60;">
+                        @foreach($submission->tajweed_analysis as $key => $value)
+                            <div style="margin-bottom: 15px;">
+                                <strong style="color: #0a5c36; font-size: 1rem;">{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
+                                <span style="font-size: 1rem;">{{ is_array($value) ? json_encode($value) : $value }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
+    @else
+        <!-- No Submission Yet - Placeholder -->
+        <div class="detail-section" style="background: rgba(149, 165, 166, 0.1); border-color: #95a5a6; text-align: center; padding: 60px 30px;">
+            <div style="font-size: 5rem; margin-bottom: 20px; opacity: 0.4;">📝</div>
+            <h4 style="color: #7f8c8d; font-size: 1.3rem; margin-bottom: 15px;">No Submission Yet</h4>
+            <p style="color: #95a5a6; font-size: 1rem; line-height: 1.6; margin-bottom: 25px;">
+                @if(auth()->user()->role_id == 2)
+                    Start recording your recitation to submit this assignment.
+                @else
+                    Waiting for student submission.
+                @endif
+            </p>
+            @if(auth()->user()->role_id == 2)
+                <a href="{{ route('student.assignment.submit', $assignment->assignment_id) }}" 
+                   style="display: inline-block; padding: 14px 30px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(10, 92, 54, 0.3);">
+                    🎤 Start Recording
+                </a>
+            @endif
+        </div>
+    @endif
+    </div> <!-- End RIGHT COLUMN -->
+    
+</div> <!-- End 2-column grid -->
+
+<!-- Back Button (centered below) -->
+<div style="text-align: center; margin-top: 30px;">
+    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-back" style="font-size: 1.1rem; padding: 14px 30px;">
         ← Back to Classroom
     </a>
 </div>

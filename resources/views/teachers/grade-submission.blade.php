@@ -33,8 +33,8 @@
         </a>
     </div>
 
-    <div style="display: grid; grid-template-columns: 400px 400px 1fr; gap: 20px;">
-        <!-- Column 1: Grading Form -->
+    <div style="display: grid; grid-template-columns: 320px 1fr 1fr 350px; gap: 25px; max-width: 1800px; margin: 0 auto;">
+        <!-- Column 1: Grading Form (320px fixed width) -->
         <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a; height: fit-content; position: sticky; top: 20px;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
                 <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
@@ -150,7 +150,7 @@
             </form>
         </div>
 
-        <!-- Column 2: Submission Details -->
+        <!-- Column 2: Submission Details (1fr flexible) -->
         <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
                 <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">
@@ -282,10 +282,9 @@
                     </p>
                 </div>
             </div>
-            @endif
         </div>
 
-        <!-- Right Column: Analysis + Grading Form Combined -->
+        <!-- Column 3: Tajweed Analysis (1fr flexible) -->
         <div style="display: flex; flex-direction: column; gap: 20px;">
             @if($submission->tajweed_analysis)
             <!-- Tajweed Analysis -->
@@ -468,50 +467,58 @@
                     </div>
                 </div>
             </div>
+            @endif
+        </div> <!-- End Column 3: Tajweed Analysis -->
             
+        <!-- Column 4: AI Teaching Assistant (350px fixed width) -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            @if($submission->tajweed_analysis)
+            @php
+                $analysis = is_array($submission->tajweed_analysis) ? $submission->tajweed_analysis : json_decode($submission->tajweed_analysis, true);
+            @endphp
             {{-- OpenAI Intelligent Feedback for Teacher Reference --}}
             {{-- Always show AI feedback box, with message if not available yet --}}
-            <div style="background: white; border: 3px solid #667eea; padding: 30px; border-radius: 20px; margin-top: 25px; box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);">
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 3px solid rgba(102, 126, 234, 0.15);">
-                    <div style="width: 55px; height: 55px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);">🤖</div>
-                    <div style="flex: 1;">
-                        <div style="color: #667eea; font-weight: 800; font-size: 1.4rem; margin-bottom: 5px;">AI Teaching Assistant</div>
-                        <div style="font-size: 0.85rem; padding: 5px 14px; background: rgba(102, 126, 234, 0.1); border-radius: 15px; font-weight: 600; color: #667eea; display: inline-block;">✨ Reference Only - Use Your Professional Judgment</div>
+            <div style="background: white; border: 3px solid #667eea; padding: 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2); height: fit-content; position: sticky; top: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(102, 126, 234, 0.15);">
+                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);">🤖</div>
+                    <div>
+                        <div style="color: #667eea; font-weight: 700; font-size: 1.2rem; margin-bottom: 3px;">AI Assistant</div>
+                        <div style="font-size: 0.75rem; padding: 4px 10px; background: rgba(102, 126, 234, 0.1); border-radius: 10px; font-weight: 600; color: #667eea; display: inline-block;">Reference Only</div>
                     </div>
                 </div>
 
                 @if(isset($analysis['ai_feedback']))
                     @if(isset($analysis['ai_feedback']['summary']))
-                    <div style="background: rgba(102, 126, 234, 0.08); padding: 25px; border-radius: 15px; margin-bottom: 20px; border-left: 5px solid #667eea;">
-                        <h4 style="color: #667eea; font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 1.3rem;">📊</span> <span>AI Performance Summary</span>
+                    <div style="background: rgba(102, 126, 234, 0.08); padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #667eea;">
+                        <h4 style="color: #667eea; font-size: 1rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.1rem;">📊</span> <span>Summary</span>
                         </h4>
-                        <p style="color: #1a1a1a; line-height: 1.9; margin: 0; font-size: 1rem;">{{ $analysis['ai_feedback']['summary'] }}</p>
+                        <p style="color: #1a1a1a; line-height: 1.7; margin: 0; font-size: 0.95rem;">{{ $analysis['ai_feedback']['summary'] }}</p>
                     </div>
                     @endif
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px;">
                         @if(isset($analysis['ai_feedback']['strengths']) && count($analysis['ai_feedback']['strengths']) > 0)
-                        <div style="background: rgba(76, 175, 80, 0.08); padding: 25px; border-radius: 15px; border-left: 5px solid #4caf50;">
-                            <h4 style="color: #4caf50; font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 1.3rem;">💪</span> <span>Identified Strengths</span>
+                        <div style="background: rgba(76, 175, 80, 0.08); padding: 18px; border-radius: 12px; border-left: 4px solid #4caf50;">
+                            <h4 style="color: #4caf50; font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.1rem;">💪</span> <span>Strengths</span>
                             </h4>
-                            <ul style="margin: 0; padding-left: 20px; color: #1a1a1a; line-height: 1.9; font-size: 0.95rem;">
+                            <ul style="margin: 0; padding-left: 18px; color: #1a1a1a; line-height: 1.6; font-size: 0.9rem;">
                                 @foreach($analysis['ai_feedback']['strengths'] as $strength)
-                                <li style="margin-bottom: 10px;">{{ $strength }}</li>
+                                <li style="margin-bottom: 8px;">{{ $strength }}</li>
                                 @endforeach
                             </ul>
                         </div>
                         @endif
 
                         @if(isset($analysis['ai_feedback']['improvements']) && count($analysis['ai_feedback']['improvements']) > 0)
-                        <div style="background: rgba(255, 152, 0, 0.08); padding: 25px; border-radius: 15px; border-left: 5px solid #ff9800;">
-                            <h4 style="color: #ff9800; font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 1.3rem;">🎯</span> <span>Suggested Improvements</span>
+                        <div style="background: rgba(255, 152, 0, 0.08); padding: 18px; border-radius: 12px; border-left: 4px solid #ff9800;">
+                            <h4 style="color: #ff9800; font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.1rem;">🎯</span> <span>Improvements</span>
                             </h4>
-                            <ul style="margin: 0; padding-left: 20px; color: #1a1a1a; line-height: 1.9; font-size: 0.95rem;">
+                            <ul style="margin: 0; padding-left: 18px; color: #1a1a1a; line-height: 1.6; font-size: 0.9rem;">
                                 @foreach($analysis['ai_feedback']['improvements'] as $improvement)
-                                <li style="margin-bottom: 10px;">
+                                <li style="margin-bottom: 8px;">
                                     @if(is_array($improvement))
                                         {{ $improvement['issue'] ?? '' }}
                                     @else
@@ -525,28 +532,26 @@
                     </div>
 
                     @if(isset($analysis['ai_feedback']['next_steps']))
-                    <div style="background: rgba(102, 126, 234, 0.08); padding: 25px; border-radius: 15px; border-left: 5px solid #667eea;">
-                        <h4 style="color: #667eea; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 1.3rem;">🚀</span> <span>Recommended Next Steps</span>
+                    <div style="background: rgba(102, 126, 234, 0.08); padding: 18px; border-radius: 12px; border-left: 4px solid #667eea;">
+                        <h4 style="color: #667eea; font-size: 1rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.1rem;">🚀</span> <span>Next Steps</span>
                         </h4>
-                        <p style="color: #1a1a1a; line-height: 1.9; margin: 0; font-size: 0.95rem;">{{ $analysis['ai_feedback']['next_steps'] }}</p>
+                        <p style="color: #1a1a1a; line-height: 1.6; margin: 0; font-size: 0.9rem;">{{ $analysis['ai_feedback']['next_steps'] }}</p>
                     </div>
                     @endif
                 @else
                     {{-- No AI feedback available --}}
-                    <div style="background: rgba(255, 107, 107, 0.08); padding: 25px; border-radius: 15px; border-left: 5px solid #ff6b6b; text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.6;">⚠️</div>
-                        <h4 style="color: #ff6b6b; font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">AI Feedback Not Generated</h4>
-                        <p style="color: #666; margin: 0; line-height: 1.7; font-size: 0.95rem;">
-                            {{ $analysis['overall_score']['feedback'] ?? 'The Python audio analyzer failed to generate AI feedback. Check server logs for details about missing dependencies or execution errors.' }}
+                    <div style="background: rgba(255, 107, 107, 0.08); padding: 20px; border-radius: 12px; border-left: 4px solid #ff6b6b; text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.6;">⚠️</div>
+                        <h4 style="color: #ff6b6b; font-size: 1rem; font-weight: 700; margin-bottom: 8px;">Not Generated</h4>
+                        <p style="color: #666; margin: 0; line-height: 1.6; font-size: 0.85rem;">
+                            {{ $analysis['overall_score']['feedback'] ?? 'Failed to generate AI feedback. Check logs.' }}
                         </p>
                     </div>
                 @endif
             </div>
             @endif
-            @endif
-        </div>
-        </div> <!-- Close right column -->
-    </div> <!-- Close grid -->
+        </div> <!-- End Column 4: AI Teaching Assistant -->
+    </div> <!-- Close 4-column grid -->
 </div>
 @endsection

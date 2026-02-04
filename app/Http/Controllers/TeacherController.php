@@ -246,7 +246,7 @@ class TeacherController extends Controller
             ]
         );
 
-        // Update submission status
+        // Update submission status to graded after teacher reviews
         $submission->update(['status' => 'graded']);
 
         return redirect()

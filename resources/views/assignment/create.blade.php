@@ -319,18 +319,23 @@
         @csrf
         <input type="hidden" name="class_id" value="{{ $classroom->id }}">
 
+        <!-- 2-Column Grid Layout -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+            
+            <!-- LEFT COLUMN: Reference Materials + Tajweed Rules -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
         <!-- Reference Material Section -->
         <div class="form-section">
-            <h4 class="section-title">
-                <span>📚</span> Select Reference Material (Optional)
+            <h4 class="section-title" style="font-size: 1.4rem;">
+                <span>📚</span> Select Reference Material
             </h4>
-            <p class="section-desc">
-                Choose from existing materials to help students with this assignment
+            <p class="section-desc" style="font-size: 1rem;">
+                Choose from existing materials to help students with this assignment (optional)
             </p>
             
             <div>
-                <label class="form-label">Available Materials</label>
-                <select name="material_id" id="materialSelect" class="form-select">
+                <label class="form-label" style="font-size: 1.05rem;">Available Materials</label>
+                <select name="material_id" id="materialSelect" class="form-select" style="font-size: 1rem;">
                     <option value="">-- No material (students can reference on their own) --</option>
                     @foreach($materials as $material)
                         <option value="{{ $material->material_id }}" {{ old('material_id') == $material->material_id ? 'selected' : '' }}>
@@ -350,7 +355,7 @@
                 @error('material_id')
                     <span class="error-text">{{ $message }}</span>
                 @enderror
-                <p class="help-text">
+                <p class="help-text" style="font-size: 0.95rem;">
                     💡 Need to add new materials? Visit <a href="{{ route('materials.index') }}" style="color: #d4af37; text-decoration: underline;">Learning Materials</a> page first.
                 </p>
             </div>
@@ -363,35 +368,35 @@
 
         <!-- Tajweed Rules Section -->
         <div class="form-section gold">
-            <h4 class="section-title gold">
+            <h4 class="section-title gold" style="font-size: 1.4rem;">
                 <span>✨</span> Tajweed Rules to Focus On *
             </h4>
-            <p class="section-desc">
+            <p class="section-desc" style="font-size: 1rem;">
                 Select the specific Tajweed rules that students should focus on during recitation
             </p>
             
-            <div class="radio-group">
-                <label class="radio-option">
+            <div class="radio-group" style="grid-template-columns: 1fr;">
+                <label class="radio-option" style="padding: 20px;">
                     <input type="radio" name="tajweed_rules" value="Madd" {{ old('tajweed_rules', 'Madd') == 'Madd' ? 'checked' : '' }} required>
                     <div class="radio-label">
-                        <div class="radio-title">1. Madd (Elongation)</div>
-                        <div class="radio-desc">Proper lengthening of vowels (ا و ي)</div>
+                        <div class="radio-title" style="font-size: 1.05rem;">1. Madd (Elongation)</div>
+                        <div class="radio-desc" style="font-size: 0.95rem;">Proper lengthening of vowels (ا و ي)</div>
                     </div>
                 </label>
                 
-                <label class="radio-option">
+                <label class="radio-option" style="padding: 20px;">
                     <input type="radio" name="tajweed_rules" value="Idgham Bi Ghunnah" {{ old('tajweed_rules') == 'Idgham Bi Ghunnah' ? 'checked' : '' }} required>
                     <div class="radio-label">
-                        <div class="radio-title">2. Idgham Bi Ghunnah</div>
-                        <div class="radio-desc">Merging WITH nasalization (و م ن ي)</div>
+                        <div class="radio-title" style="font-size: 1.05rem;">2. Idgham Bi Ghunnah</div>
+                        <div class="radio-desc" style="font-size: 0.95rem;">Merging WITH nasalization (و م ن ي)</div>
                     </div>
                 </label>
                 
-                <label class="radio-option">
+                <label class="radio-option" style="padding: 20px;">
                     <input type="radio" name="tajweed_rules" value="Idgham Bila Ghunnah" {{ old('tajweed_rules') == 'Idgham Bila Ghunnah' ? 'checked' : '' }} required>
                     <div class="radio-label">
-                        <div class="radio-title">3. Idgham Bila Ghunnah</div>
-                        <div class="radio-desc">Merging WITHOUT nasalization (ر ل)</div>
+                        <div class="radio-title" style="font-size: 1.05rem;">3. Idgham Bila Ghunnah</div>
+                        <div class="radio-desc" style="font-size: 0.95rem;">Merging WITHOUT nasalization (ر ل)</div>
                     </div>
                 </label>
             </div>
@@ -399,20 +404,23 @@
                 <span class="error-text">{{ $message }}</span>
             @enderror
         </div>
-
+            </div> <!-- End LEFT COLUMN -->
+            
+            <!-- RIGHT COLUMN: Quran Verse Selection + Instructions -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
         <!-- Quran Verse Selection -->
         <div class="form-section gold">
-            <h4 class="section-title gold">
+            <h4 class="section-title gold" style="font-size: 1.4rem;">
                 <span>📖</span> Assign Quran Verse for Recitation
             </h4>
-            <p class="section-desc">
+            <p class="section-desc" style="font-size: 1rem;">
                 Select the surah and verse range that students must recite
             </p>
             
-            <div class="verse-grid">
+            <div class="verse-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                 <div>
-                    <label class="form-label">Select Surah *</label>
-                    <select id="surahSelect" name="surah_number" required class="form-select" onchange="document.getElementById('surah_name_hidden').value = this.options[this.selectedIndex].getAttribute('data-name');">
+                    <label class="form-label" style="font-size: 1.05rem;">Select Surah *</label>
+                    <select id="surahSelect" name="surah_number" required class="form-select" style="font-size: 1rem;" onchange="document.getElementById('surah_name_hidden').value = this.options[this.selectedIndex].getAttribute('data-name');">
                         <option value="">Loading surahs...</option>
                     </select>
                     <input type="hidden" id="surah_name_hidden" name="surah" required>
@@ -421,15 +429,15 @@
                     @enderror
                 </div>
                 <div>
-                    <label class="form-label">Ayat From *</label>
-                    <input type="number" id="ayahFrom" name="start_verse" min="1" placeholder="Start" required class="form-input">
+                    <label class="form-label" style="font-size: 1.05rem;">Ayat From *</label>
+                    <input type="number" id="ayahFrom" name="start_verse" min="1" placeholder="Start" required class="form-input" style="font-size: 1rem;">
                     @error('start_verse')
                         <span class="error-text">{{ $message }}</span>
                     @enderror
                 </div>
                 <div>
-                    <label class="form-label">Ayat To</label>
-                    <input type="number" id="ayahTo" name="end_verse" min="1" placeholder="End" class="form-input">
+                    <label class="form-label" style="font-size: 1.05rem;">Ayat To</label>
+                    <input type="number" id="ayahTo" name="end_verse" min="1" placeholder="End" class="form-input" style="font-size: 1rem;">
                     @error('end_verse')
                         <span class="error-text">{{ $message }}</span>
                     @enderror
@@ -441,47 +449,56 @@
                 <div id="verseTranslation" class="verse-translation"></div>
             </div>
             
-            <button type="button" id="insertVerseBtn" onclick="insertVerseToInstructions()" style="display: none; margin-top: 15px;" class="btn-insert">
+            <button type="button" id="insertVerseBtn" onclick="insertVerseToInstructions()" style="display: none; margin-top: 15px; font-size: 1rem;" class="btn-insert">
                 ➕ Insert to Instructions
             </button>
         </div>
 
         <!-- Instructions -->
-        <div>
-            <label class="form-label">📋 Instructions for Students *</label>
-            <textarea name="instructions" rows="6" required class="form-textarea" placeholder="Provide clear instructions for the assignment...">{{ old('instructions') }}</textarea>
+        <div class="form-section">
+            <h4 class="section-title" style="font-size: 1.4rem; margin-bottom: 15px;">
+                <span>📋</span> Instructions for Students *
+            </h4>
+            <textarea name="instructions" rows="10" required class="form-textarea" style="font-size: 1rem;" placeholder="Provide clear instructions for the assignment...">{{ old('instructions') }}</textarea>
             @error('instructions')
                 <span class="error-text">{{ $message }}</span>
             @enderror
         </div>
+            </div> <!-- End RIGHT COLUMN -->
+            
+        </div> <!-- End 2-column grid -->
 
-        <!-- Due Date -->
-        <div style="margin-top: 25px;">
-            <label class="form-label">📅 Due Date & Time *</label>
-            <input type="datetime-local" name="due_date" value="{{ old('due_date') }}" required class="form-input" style="max-width: 500px;">
+        <!-- Due Date & Submit (centered at bottom) -->
+        <div style="background: rgba(10, 92, 54, 0.05); padding: 30px; border-radius: 15px; border: 2px solid #0a5c36; margin-bottom: 20px;">
+            <div style="max-width: 600px; margin: 0 auto;">
+        <div>
+            <label class="form-label" style="font-size: 1.1rem; text-align: center; display: block; margin-bottom: 15px;">📅 Due Date & Time *</label>
+            <input type="datetime-local" name="due_date" value="{{ old('due_date') }}" required class="form-input" style="text-align: center; font-size: 1.05rem;">
             @error('due_date')
-                <span class="error-text">{{ $message }}</span>
+                <span class="error-text" style="display: block; text-align: center;">{{ $message }}</span>
             @enderror
             
             <input type="hidden" name="total_marks" value="100">
             <input type="hidden" name="is_voice_submission" value="1">
             
-            <div class="info-box">
-                <div class="info-title">📋 Assignment Details:</div>
-                <div class="info-content">
+            <div class="info-box" style="margin-top: 20px;">
+                <div class="info-title" style="font-size: 1rem;">📋 Assignment Details:</div>
+                <div class="info-content" style="font-size: 1rem;">
                     • Total Marks: <strong style="color: #d4af37;">100 points</strong> (fixed)<br>
                     • Submission Type: <strong style="color: #d4af37;">Voice Recording Only</strong><br>
                     • Auto-graded with Tajweed analysis
                 </div>
             </div>
         </div>
+            </div>
+        </div>
 
         <!-- Buttons -->
-        <div class="button-group">
-            <a href="{{ route('classroom.show', $classroom->id) }}" class="btn btn-secondary">
+        <div class="button-group" style="justify-content: center;">
+            <a href="{{ route('classroom.show', $classroom->id) }}" class="btn btn-secondary" style="font-size: 1.05rem; padding: 14px 35px;">
                 Cancel
             </a>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary" style="font-size: 1.05rem; padding: 14px 35px;">
                 Create Assignment
             </button>
         </div>

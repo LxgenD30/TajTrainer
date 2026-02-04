@@ -110,8 +110,8 @@ class ProcessSubmissionAudio implements ShouldQueue
                     
                     Log::info('✓ Score created');
                     
-                    // Mark as graded
-                    $submission->status = 'graded';
+                    // Mark as pending review (teacher must manually review and finalize)
+                    $submission->status = 'pending_review';
                     $submission->save();
                     
                 } catch (\Exception $e) {
