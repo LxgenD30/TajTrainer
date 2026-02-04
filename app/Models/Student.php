@@ -33,4 +33,9 @@ class Student extends Model
     {
         return $this->hasMany(Score::class, 'user_id');
     }
+
+    public function submissions()
+    {
+        return $this->hasMany(AssignmentSubmission::class, 'student_id', 'id');
+    }
 }
