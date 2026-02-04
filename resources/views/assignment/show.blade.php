@@ -53,7 +53,8 @@
     
     .header-actions {
         display: flex;
-        gap: 10px;
+        gap: 12px;
+        align-items: center;
     }
     
     .btn {
@@ -239,10 +240,35 @@
 <div class="page-header">
     <h1>📝 Assignment Details</h1>
     <div class="header-actions">
+        @if(auth()->user()->role_id == 2)
+            {{-- Student Status --}}
+            @if(isset($submission))
+                <span class="btn" style="background: #27ae60; color: white; border-color: #27ae60; cursor: default;">
+                    <i class="fas fa-check-circle"></i> Completed
+                </span>
+            @else
+                <span class="btn" style="background: #e67e22; color: white; border-color: #e67e22; cursor: default;">
+                    <i class="fas fa-clock"></i> Pending
+                </span>
+            @endif
+        @else
+            {{-- Teacher Status (Shows if everyone has submitted) --}}
+            @if($notSubmittedStudents->isEmpty())
+                <span class="btn" style="background: #27ae60; color: white; border-color: #27ae60; cursor: default;">
+                    <i class="fas fa-check-double"></i> All Submitted
+                </span>
+            @else
+                <span class="btn" style="background: #3498db; color: white; border-color: #3498db; cursor: default;">
+                    <i class="fas fa-tasks"></i> In Progress
+                </span>
+            @endif
+        @endif
+
         <a href="{{ route('classroom.show', $classroom->id) }}" class="btn btn-back">
             <i class="fas fa-arrow-left"></i> Back
         </a>
 
+        {{-- Teacher Edit/Delete Actions --}}
         @if(auth()->user()->role_id == 3)
             <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" class="btn btn-edit">
                 <i class="fas fa-edit"></i> Edit
