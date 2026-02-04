@@ -234,15 +234,15 @@
         <div class="stat-label">Overall Accuracy</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ $overallProgress['total_sessions'] ?? 0 }}</div>
-        <div class="stat-label">Total Sessions</div>
+        <div class="stat-value">{{ $overallProgress['total_attempts'] ?? 0 }}</div>
+        <div class="stat-label">Total Attempts</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ $overallProgress['total_errors'] ?? 0 }}</div>
+        <div class="stat-value">{{ $overallProgress['error_count'] ?? 0 }}</div>
         <div class="stat-label">Errors Logged</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ $overallProgress['total_correct'] ?? 0 }}</div>
+        <div class="stat-value">{{ $overallProgress['correct_count'] ?? 0 }}</div>
         <div class="stat-label">Correct Rules</div>
     </div>
 </div>
@@ -280,15 +280,20 @@
             <h3 class="section-title" style="font-size: 1.5rem;">Improvement Trend</h3>
         </div>
         @php
-            $trend = $improvementTrends['overall_trend'] ?? 'stable';
-            $trendValue = $improvementTrends['trend_percentage'] ?? 0;
-            $trendIcon = $trend === 'improving' ? '↗' : ($trend === 'declining' ? '↘' : '→');
-            $trendColor = $trend === 'improving' ? '#2ecc71' : ($trend === 'declining' ? '#e74c3c' : '#f39c12');
+            $isImproving = $improvementTrends['is_improving'] ?? false;
+            $trendValue = abs($improvementTrends['accuracy_change'] ?? 0);
+            $trend = $isImproving ? 'improving' : ($trendValue > 0 ? 'declining' : 'stable');
+            $trendIcon = $isImproving ? '↗' : ($trendValue > 0 ? '↘' : '→');
+            $trendColor = $isImproving ? '#2ecc71' : ($trendValue > 0 ? '#e74c3c' : '#f39c12');
         @endphp
         <div class="trend-indicator">
             <div class="trend-arrow" style="color: {{ $trendColor }};">{{ $trendIcon }}</div>
-            <div class="trend-value" style="color: {{ $trendColor }};">{{ abs($trendValue) }}%</div>
-            <div class="trend-label">{{ ucfirst($trend) }} over time</div>
+            <div class="trend-value" style="color: {{ $trendColor }};">{{ number_format($trendValue, 1) }}%</div>
+            <div class="trend-label">{{ ucfirst($trend) }} this week</div>
+            <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 10px;">
+                Current: {{ number_format($improvementTrends['current_week_accuracy'] ?? 0, 1) }}% | 
+                Previous: {{ number_format($improvementTrends['previous_week_accuracy'] ?? 0, 1) }}%
+            </p>
         </div>
     </div>
     
@@ -342,10 +347,10 @@
                     {{ $error->rule_name ?? 'Unknown Rule' }}
                 </div>
                 <div style="font-size: 0.95rem; color: #666; margin-bottom: 12px;">
-                    Occurred <strong>{{ $error->occurrence_count ?? 0 }} times</strong>
+                    Occurred <strong>{{ $error->occurrences ?? 0 }} times</strong>
                 </div>
-                <div style="font-size: 0.9rem; color: #999;">
-                    {{ $error->last_occurrence ?? 'Recently' }}
+                <div style="font-size: 0.85rem; color: #999; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                    {{ $error->issue_description ?? 'Practice this rule more' }}
                 </div>
             </div>
         @endforeach

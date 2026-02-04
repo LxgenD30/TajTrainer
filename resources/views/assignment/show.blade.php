@@ -266,11 +266,6 @@
                 <span class="btn" style="background: #95a5a6; color: white; border-color: #95a5a6; cursor: default;">
                     ✅ Submitted
                 </span>
-            @else
-                <a href="{{ route('student.assignment.submit', $assignment->assignment_id) }}" class="btn" style="background: #95a5a6; color: white; border-color: #95a5a6;">
-                    🎤 Attempt Assignment
-                </a>
-            @endif
         @endif
     </div>
 </div>

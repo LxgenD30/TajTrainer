@@ -250,24 +250,44 @@
         
         /* Alert Messages */
         .alert {
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+            padding: 18px 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border: 3px solid;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert i {
+            font-size: 1.5rem;
         }
         
         .alert-success {
-            background-color: rgba(46, 139, 87, 0.1);
-            border-left: 4px solid var(--light-green);
-            color: var(--dark-green);
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.95), rgba(39, 174, 96, 0.95));
+            border-color: #27ae60;
+            color: white;
         }
         
         .alert-error {
-            background-color: rgba(220, 53, 69, 0.1);
-            border-left: 4px solid #dc3545;
-            color: #721c24;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.95), rgba(192, 57, 43, 0.95));
+            border-color: #c0392b;
+            color: white;
         }
         
         /* Responsive Design */
