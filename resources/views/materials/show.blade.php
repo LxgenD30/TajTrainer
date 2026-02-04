@@ -213,12 +213,12 @@
             <div class="info-value">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
-                        {{ strtoupper(substr($material->user->name ?? 'U', 0, 2)) }}
+                        {{ strtoupper(substr(optional($material->user)->name ?? 'U', 0, 2)) }}
                     </div>
                     <div>
-                        <div style="font-weight: 600; color: #2a2a2a;">{{ $material->user->name ?? 'Unknown' }}</div>
+                        <div style="font-weight: 600; color: #2a2a2a;">{{ optional($material->user)->name ?? 'Unknown' }}</div>
                         <div style="font-size: 0.85rem; color: #999;">
-                            {{ $material->user->role_id == 3 ? 'Teacher' : 'Student' }}
+                            {{ optional($material->user)->role_id == 3 ? 'Teacher' : 'Student' }}
                         </div>
                     </div>
                 </div>

@@ -183,29 +183,34 @@
     }
     
     .category-pills {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
         gap: 10px;
-        flex-wrap: wrap;
     }
     
     .category-pill {
-        padding: 10px 20px;
+        padding: 10px 15px;
         border: 2px solid #ddd;
-        border-radius: 25px;
+        border-radius: 8px;
         background: white;
         cursor: pointer;
         font-weight: 600;
         transition: all 0.3s ease;
+        text-align: center;
+    }
+    
+    .category-pill:has(input:checked) {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        color: white;
+        border-color: #0a5c36;
     }
     
     .category-pill input[type="radio"] {
         display: none;
     }
     
-    .category-pill input[type="radio"]:checked + label {
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        color: white;
-        border-color: #0a5c36;
+    .category-pill label {
+        color: inherit;
     }
     
     .item-card {
@@ -283,6 +288,106 @@
         .form-row {
             grid-template-columns: 1fr;
         }
+        .category-pills {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Custom Alert */
+    .custom-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        min-width: 300px;
+        max-width: 400px;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+    }
+    
+    .custom-alert.success {
+        background: linear-gradient(135deg, #27ae60, #229954);
+        color: white;
+        border: 2px solid #1e8449;
+    }
+    
+    .custom-alert.error {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        border: 2px solid #a93226;
+    }
+    
+    .custom-alert.info {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: 2px solid #1f5f8b;
+    }
+    
+    .custom-alert.warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        color: white;
+        border: 2px solid #d68910;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Preview Modal */
+    .preview-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .preview-modal.active {
+        display: flex;
+    }
+    
+    .preview-content {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+    }
+    
+    .preview-close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #e74c3c;
+        color: white;
+        border: none;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        font-weight: 700;
     }
 </style>
 
@@ -416,9 +521,96 @@
     </form>
 </div>
 
+<!-- Preview Modal -->
+<div id="previewModal" class="preview-modal">
+    <div class="preview-content">
+        <button class="preview-close" onclick="closePreview()">&times;</button>
+        <h2 style="margin: 0 0 20px 0; font-family: 'El Messiri', sans-serif; color: #0a5c36;">
+            <i class="fas fa-eye"></i> Preview Result
+        </h2>
+        <div id="previewBody"></div>
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn btn-secondary" onclick="closePreview()">
+                <i class="fas fa-times"></i> Close
+            </button>
+            <button class="btn btn-primary" id="addPreviewBtn" onclick="addPreviewResult()">
+                <i class="fas fa-plus"></i> Add to Material
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 let itemCounter = 0;
 let currentSearchType = 'pdf';
+let previewResult = null;
+
+// Custom Alert System
+function showCustomAlert(message, type = 'info') {
+    console.log(`[ALERT ${type.toUpperCase()}]:`, message);
+    
+    const alert = document.createElement('div');
+    alert.className = `custom-alert ${type}`;
+    
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                 type === 'error' ? 'fa-exclamation-circle' : 
+                 type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+    
+    alert.innerHTML = `
+        <i class="fas ${icon}" style="font-size: 1.5rem;"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => alert.remove(), 300);
+    }, 3000);
+}
+
+// Preview Modal Functions
+function openPreview(result) {
+    console.log('[PREVIEW] Opening preview for result:', result);
+    previewResult = result;
+    
+    const modal = document.getElementById('previewModal');
+    const body = document.getElementById('previewBody');
+    
+    body.innerHTML = `
+        ${result.is_pdf ? '<div style="background: #e74c3c; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; font-weight: 700; margin-bottom: 15px;"><i class="fas fa-file-pdf"></i> PDF Document</div>' : ''}
+        ${result.video_id ? '<div style="background: #ff0000; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; font-weight: 700; margin-bottom: 15px;"><i class="fab fa-youtube"></i> YouTube Video</div>' : ''}
+        
+        <h3 style="margin: 15px 0 10px 0; color: #2a2a2a;">${escapeHtml(result.title)}</h3>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #e0e0e0;">
+            <strong style="color: #0a5c36;"><i class="fas fa-link"></i> URL:</strong>
+            <p style="margin: 5px 0 0 0; word-break: break-all; color: #666;">${escapeHtml(result.url)}</p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #e0e0e0;">
+            <strong style="color: #0a5c36;"><i class="fas fa-align-left"></i> Description:</strong>
+            <p style="margin: 5px 0 0 0; line-height: 1.6; color: #666;">${escapeHtml(result.content)}</p>
+        </div>
+        
+        ${result.is_pdf ? `<div style="background: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: 8px; border: 2px solid #27ae60; margin: 15px 0;"><i class="fas fa-download" style="color: #27ae60;"></i> <strong style="color: #27ae60;">PDF will be downloaded to server</strong></div>` : ''}
+    `;
+    
+    modal.classList.add('active');
+}
+
+function closePreview() {
+    console.log('[PREVIEW] Closing preview modal');
+    document.getElementById('previewModal').classList.remove('active');
+    previewResult = null;
+}
+
+function addPreviewResult() {
+    if (!previewResult) return;
+    console.log('[PREVIEW] Adding result to material:', previewResult);
+    addFromSearch(window.searchResults.indexOf(previewResult));
+    closePreview();
+}
 
 // Set search type
 function setSearchType(type) {
@@ -433,9 +625,11 @@ function setSearchType(type) {
 async function searchOnline() {
     const query = document.getElementById('searchQuery').value.trim();
     if (!query) {
-        alert('Please enter a search query');
+        showCustomAlert('Please enter a search query', 'warning');
         return;
     }
+    
+    console.log('[SEARCH] Starting search:', { query, type: currentSearchType });
     
     const resultsDiv = document.getElementById('searchResults');
     resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: white;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p style="margin-top: 10px;">Searching...</p></div>';
@@ -454,14 +648,20 @@ async function searchOnline() {
         });
         
         const data = await response.json();
+        console.log('[SEARCH] Response received:', data);
         
         if (data.success) {
+            console.log('[SEARCH] Results found:', data.results.length);
             displayResults(data.results);
         } else {
+            console.error('[SEARCH] Search failed:', data.message);
             resultsDiv.innerHTML = `<div style="padding: 20px; background: rgba(231, 76, 60, 0.2); border: 2px solid rgba(231, 76, 60, 0.5); border-radius: 8px; color: white; margin-top: 15px;"><i class="fas fa-exclamation-triangle"></i> ${data.message || 'Search failed'}</div>`;
+            showCustomAlert(data.message || 'Search failed', 'error');
         }
     } catch (error) {
+        console.error('[SEARCH] Error:', error);
         resultsDiv.innerHTML = '<div style="padding: 20px; background: rgba(231, 76, 60, 0.2); border: 2px solid rgba(231, 76, 60, 0.5); border-radius: 8px; color: white; margin-top: 15px;"><i class="fas fa-exclamation-triangle"></i> An error occurred during search</div>';
+        showCustomAlert('An error occurred during search', 'error');
     }
 }
 
@@ -497,13 +697,17 @@ function displayResults(results) {
 // Add from search
 function addFromSearch(index) {
     const result = window.searchResults[index];
+    console.log('[ADD] Adding search result to material:', result);
+    
     const itemId = addMaterialItem();
     
     if (result.video_id) {
+        console.log('[ADD] Type: YouTube video, ID:', result.video_id);
         document.getElementById(`type_youtube_${itemId}`).checked = true;
         toggleItemFields(itemId, 'youtube');
         document.querySelector(`[name="items[${itemId}][youtube_link]"]`).value = result.url;
     } else {
+        console.log('[ADD] Type: URL', result.is_pdf ? '(PDF will be auto-downloaded)' : '');
         document.getElementById(`type_url_${itemId}`).checked = true;
         toggleItemFields(itemId, 'url');
         document.querySelector(`[name="items[${itemId}][url]"]`).value = result.url;
@@ -512,25 +716,17 @@ function addFromSearch(index) {
     document.querySelector(`[name="items[${itemId}][title]"]`).value = result.title;
     document.querySelector(`[name="items[${itemId}][description]"]`).value = result.content.substring(0, 200);
     
+    showCustomAlert('Resource added to material', 'success');
+    
     // Scroll to the new item
     document.querySelector(`[data-item-id="${itemId}"]`).scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-// Download PDF
-function downloadPDF(url, filename) {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.pdf';
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 }
 
 // Add material item
 function addMaterialItem() {
     itemCounter++;
     const itemId = itemCounter;
+    console.log('[ITEM] Adding new material item #' + itemId);
     const container = document.getElementById('materialItemsContainer');
     
     const html = `
@@ -606,7 +802,9 @@ function toggleItemFields(itemId, type) {
 // Remove item
 function removeItem(itemId) {
     if (confirm('Remove this item?')) {
+        console.log('[ITEM] Removing item #' + itemId);
         document.querySelector(`[data-item-id="${itemId}"]`).remove();
+        showCustomAlert('Item removed', 'info');
     }
 }
 
@@ -616,9 +814,11 @@ async function suggestCategory() {
     const description = document.querySelector('[name="description"]').value;
     
     if (!title && !description) {
-        alert('Please enter a title or description first');
+        showCustomAlert('Please enter a title or description first', 'warning');
         return;
     }
+    
+    console.log('[AI] Requesting category suggestion for:', { title, description });
     
     const suggestionDiv = document.getElementById('aiSuggestion');
     suggestionDiv.style.display = 'block';
@@ -635,8 +835,10 @@ async function suggestCategory() {
         });
         
         const data = await response.json();
+        console.log('[AI] Response received:', data);
         
         if (data.success && data.category) {
+            console.log('[AI] Suggested category:', data.category);
             document.getElementById('suggestedCategory').textContent = data.category;
             suggestionDiv.innerHTML = `<strong style="color: #3498db;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong><p style="margin: 5px 0 0 0; font-weight: 600;">${data.category}</p>`;
             
@@ -644,11 +846,17 @@ async function suggestCategory() {
             if (data.category === 'Madd Rules') document.getElementById('cat1').checked = true;
             else if (data.category === 'Idgham Billa Ghunnah') document.getElementById('cat2').checked = true;
             else if (data.category === 'Idgham Bi Ghunnah') document.getElementById('cat3').checked = true;
+            
+            showCustomAlert('AI suggested: ' + data.category, 'success');
         } else {
+            console.warn('[AI] Could not determine category');
             suggestionDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Could not determine category';
+            showCustomAlert('Could not determine category', 'warning');
         }
     } catch (error) {
+        console.error('[AI] Error:', error);
         suggestionDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error getting suggestion';
+        showCustomAlert('Error getting AI suggestion', 'error');
     }
 }
 
