@@ -31,9 +31,10 @@
             font-family: 'Amiri', serif;
             color: #333;
             background: linear-gradient(135deg, #1f271b 0%, #2d3e2e 100%);
-            line-height: 1.6;
+            line-height: 1.7;
             overflow-x: hidden;
             min-height: 100vh;
+            font-size: 16px;
         }
         
         h1, h2, h3, h4 {
@@ -130,7 +131,7 @@
         }
         
         .user-info p {
-            font-size: 0.9rem;
+            font-size: 1.05rem;
             opacity: 0.9;
         }
         
@@ -171,7 +172,7 @@
             width: 100%;
             text-align: left;
             font-family: 'El Messiri', sans-serif;
-            font-size: 1rem;
+            font-size: 1.15rem;
             cursor: pointer;
         }
         
@@ -221,7 +222,7 @@
             color: rgba(255, 255, 255, 0.8);
             font-family: 'El Messiri', sans-serif;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
         }
         
         .nav-item:hover {
@@ -256,7 +257,7 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             font-weight: 600;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             border: 3px solid;

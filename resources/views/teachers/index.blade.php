@@ -64,7 +64,7 @@
     }
     
     .welcome-content p {
-        font-size: 1.1rem;
+        font-size: 1.25rem;
         opacity: 0.95;
         line-height: 1.6;
     }

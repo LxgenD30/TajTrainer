@@ -38,7 +38,7 @@
                 <h1 style="margin: 0 0 10px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; color: #0a5c36; font-weight: 700;">
                     <i class="fas fa-user-graduate"></i> My Students
                 </h1>
-                <p style="margin: 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif;">
+                <p style="margin: 0; font-size: 1.25rem; color: #666; font-family: 'Cairo', sans-serif;">
                     {{ $students->count() }} student{{ $students->count() != 1 ? 's' : '' }} enrolled across {{ $classrooms->count() }} classroom{{ $classrooms->count() != 1 ? 's' : '' }}
                 </p>
             </div>
@@ -63,7 +63,7 @@
                             <h3 style="margin: 0 0 5px 0; font-size: 1.3rem; color: #1a1a1a; font-weight: 700; font-family: 'El Messiri', serif;">
                                 {{ $student->user->name }}
                             </h3>
-                            <p style="margin: 0; font-size: 0.9rem; color: #666; font-family: 'Cairo', sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <p style="margin: 0; font-size: 1.05rem; color: #666; font-family: 'Cairo', sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                 <i class="fas fa-envelope" style="color: #0a5c36;"></i> {{ $student->user->email }}
                             </p>
                         </div>
@@ -78,7 +78,7 @@
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-layer-group" style="color: #0a5c36; width: 20px;"></i>
-                                <span style="padding: 4px 12px; background: rgba(26, 188, 156, 0.15); color: #1abc9c; border-radius: 12px; font-size: 0.9rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                                <span style="padding: 4px 12px; background: rgba(26, 188, 156, 0.15); color: #1abc9c; border-radius: 12px; font-size: 1.05rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
                                     {{ ucfirst($student->level ?? 'Beginner') }}
                                 </span>
                             </div>
@@ -118,7 +118,7 @@
         <div style="background: white; border-radius: 25px; padding: 60px 40px; text-align: center; border: 3px solid #e0e0e0;">
             <div style="font-size: 5rem; margin-bottom: 20px; opacity: 0.3;">👥</div>
             <h3 style="margin: 0 0 10px 0; font-size: 1.8rem; color: #333; font-family: 'El Messiri', serif;">No Students Yet</h3>
-            <p style="margin: 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif;">
+            <p style="margin: 0; font-size: 1.25rem; color: #666; font-family: 'Cairo', sans-serif;">
                 Students will appear here once they enroll in your classrooms.
             </p>
         </div>

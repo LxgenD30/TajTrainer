@@ -69,7 +69,7 @@
     }
 
     .practice-header p {
-        font-size: 1.1rem;
+        font-size: 1.25rem;
         color: #ffffff;
         opacity: 0.95;
         line-height: 1.6;
@@ -453,7 +453,7 @@
         <!-- Analysis Results Card (3rd Column) -->
         <div class="card">
             <h3><i class="fas fa-chart-line"></i> Tajweed Analysis Results</h3>
-            <div id="analysisResults" style="min-height: 300px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 1.1rem;">
+            <div id="analysisResults" style="min-height: 300px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 1.25rem;">
                 <div style="text-align: center;">
                     <i class="fas fa-brain" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
                     <p>Analysis results will appear here after recording</p>
@@ -816,7 +816,7 @@
                 var label = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase() });
                 var value = Math.round(analysis.details[key]);
                 breakdownHtml += '<div style="background: rgba(26, 188, 156, 0.1); padding: 20px; border-radius: 10px; text-align: center; border: 2px solid rgba(26, 188, 156, 0.2);">';
-                breakdownHtml += '<div style="font-size: 1.1rem; color: #666; margin-bottom: 8px; font-weight: 600;">' + label + '</div>';
+                breakdownHtml += '<div style="font-size: 1.25rem; color: #666; margin-bottom: 8px; font-weight: 600;">' + label + '</div>';
                 breakdownHtml += '<div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-green);">' + value + '%</div>';
                 breakdownHtml += '</div>';
             }

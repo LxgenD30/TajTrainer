@@ -438,7 +438,7 @@
                 <div style="margin-bottom: 25px;">
                     <div class="info-label" style="margin-bottom: 12px; font-size: 1rem;">📝 Transcription</div>
                     <div class="instructions-box">
-                        <p class="instructions-text" style="font-size: 1.1rem; font-family: 'Amiri', serif; direction: rtl; text-align: right;">{{ $submission->transcription }}</p>
+                        <p class="instructions-text" style="font-size: 1.25rem; font-family: 'Amiri', serif; direction: rtl; text-align: right;">{{ $submission->transcription }}</p>
                     </div>
                 </div>
             @endif
@@ -471,7 +471,7 @@
             </p>
             @if(auth()->user()->role_id == 2)
                 <a href="{{ route('student.assignment.submit', $assignment->assignment_id) }}" 
-                   style="display: inline-block; padding: 14px 30px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(10, 92, 54, 0.3);">
+                   style="display: inline-block; padding: 14px 30px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1.25rem; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(10, 92, 54, 0.3);">
                     🎤 Start Recording
                 </a>
             @endif
@@ -483,7 +483,7 @@
 
 <!-- Back Button (centered below) -->
 <div style="text-align: center; margin-top: 30px;">
-    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-back" style="font-size: 1.1rem; padding: 14px 30px;">
+    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-back" style="font-size: 1.25rem; padding: 14px 30px;">
         ← Back to Classroom
     </a>
 </div>

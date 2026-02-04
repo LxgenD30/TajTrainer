@@ -216,7 +216,7 @@
     
     .info-content {
         color: #666;
-        font-size: 0.9rem;
+        font-size: 1.05rem;
         line-height: 1.6;
     }
     
@@ -270,7 +270,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-size: 0.9rem;
+        font-size: 1.05rem;
     }
     
     .btn-insert:hover {
@@ -279,7 +279,7 @@
     
     .error-text {
         color: #e74c3c;
-        font-size: 0.9rem;
+        font-size: 1.05rem;
         margin-top: 5px;
         display: block;
     }
@@ -328,7 +328,7 @@
                     <input type="datetime-local" name="due_date" value="{{ old('due_date') }}" required 
                         style="padding: 8px 12px; border: 1px solid #333; border-radius: 8px; font-size: 0.95rem; background: #2a2a2a; color: white; outline: none;">
                     @error('due_date')
-                        <span style="color: #ff4d4d; font-size: 0.8rem; position: absolute; bottom: -20px;">{{ $message }}</span>
+                        <span style="color: #ff4d4d; font-size: 0.95rem; position: absolute; bottom: -20px;">{{ $message }}</span>
                     @enderror
                 </div>
 

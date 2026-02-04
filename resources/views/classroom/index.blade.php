@@ -291,7 +291,7 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">📚</div>
                     <h3 style="color: #0a5c36; font-size: 1.5rem; margin-bottom: 15px; font-weight: 600;">No Classes Yet</h3>
-                    <p style="color: #666; font-size: 1.1rem; line-height: 1.6;">Use the access code from your teacher to enroll in your first class</p>
+                    <p style="color: #666; font-size: 1.25rem; line-height: 1.6;">Use the access code from your teacher to enroll in your first class</p>
                 </div>
             @else
                 <div style="display: grid; gap: 20px;" id="classesContainer">
@@ -300,7 +300,7 @@
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
                                 <div style="flex: 1;">
                                     <h3 style="color: #0a5c36; font-size: 1.4rem; margin-bottom: 12px; font-weight: 700;">{{ $classroom->class_name }}</h3>
-                                    <p style="color: #666; margin-bottom: 15px; line-height: 1.6; font-size: 1rem;">{{ $classroom->description ?? 'No description available' }}</p>
+                                    <p style="color: #666; margin-bottom: 15px; line-height: 1.6; font-size: 1.15rem;">{{ $classroom->description ?? 'No description available' }}</p>
                                 </div>
                                 <div style="display: flex; gap: 10px;">
                                     <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-view-class">
@@ -362,7 +362,7 @@
                         maxlength="6"
                         class="enroll-form-input"
                     >
-                    <p style="color: #999; font-size: 0.9rem; margin-top: 10px; line-height: 1.5;">
+                    <p style="color: #999; font-size: 1.05rem; margin-top: 10px; line-height: 1.5;">
                         <i class="fas fa-info-circle" style="color: #d4af37;"></i> Ask your teacher for the 6-digit access code
                     </p>
                 </div>
@@ -377,7 +377,7 @@
                     <i class="fas fa-lightbulb" style="font-size: 1.5rem; color: #d4af37;"></i>
                     <h4 style="color: #0a5c36; font-size: 1.1rem; font-weight: 600;">How to Enroll</h4>
                 </div>
-                <ol style="color: #064e32; font-size: 0.95rem; margin-left: 25px; line-height: 2; list-style: decimal;">
+                <ol style="color: #064e32; font-size: 1.1rem; margin-left: 25px; line-height: 2; list-style: decimal;">
                     <li>Get the access code from your teacher</li>
                     <li>Enter the code in the field above</li>
                     <li>Click "Join Class" to enroll</li>

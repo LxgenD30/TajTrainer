@@ -44,17 +44,17 @@
                 <h1 style="margin: 0 0 10px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; color: #0a5c36; font-weight: 700;">
                     {{ $student->user->name }}
                 </h1>
-                <p style="margin: 0 0 5px 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif;">
+                <p style="margin: 0 0 5px 0; font-size: 1.25rem; color: #666; font-family: 'Cairo', sans-serif;">
                     <i class="fas fa-envelope" style="color: #0a5c36; width: 20px;"></i> {{ $student->user->email }}
                 </p>
                 @if($student->phone_number)
-                <p style="margin: 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif;">
+                <p style="margin: 0; font-size: 1.25rem; color: #666; font-family: 'Cairo', sans-serif;">
                     <i class="fas fa-phone" style="color: #0a5c36; width: 20px;"></i> {{ $student->phone_number }}
                 </p>
                 @endif
             </div>
             <div style="padding: 15px 25px; background: rgba(26, 188, 156, 0.15); border-radius: 15px; border: 3px solid rgba(26, 188, 156, 0.3);">
-                <div style="font-size: 0.9rem; color: #666; font-family: 'Cairo', sans-serif; margin-bottom: 5px;">Skill Level</div>
+                <div style="font-size: 1.05rem; color: #666; font-family: 'Cairo', sans-serif; margin-bottom: 5px;">Skill Level</div>
                 <div style="font-size: 1.3rem; color: #1abc9c; font-weight: 700; font-family: 'El Messiri', serif;">
                     {{ $student->level ?? 'Beginner' }}
                 </div>
@@ -134,7 +134,7 @@
                 <h3 style="margin: 0 0 10px 0; font-size: 1.2rem; color: #0a5c36; font-weight: 700; font-family: 'El Messiri', serif;">
                     {{ $classroom->class_name }}
                 </h3>
-                <p style="margin: 0 0 10px 0; color: #666; font-family: 'Cairo', sans-serif; font-size: 0.9rem;">
+                <p style="margin: 0 0 10px 0; color: #666; font-family: 'Cairo', sans-serif; font-size: 1.05rem;">
                     {{ $classroom->description ?? 'No description' }}
                 </p>
                 <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #999; font-family: 'Cairo', sans-serif;">
@@ -157,10 +157,10 @@
             @foreach($submissions->take(5) as $submission)
             <div style="padding: 20px; background: rgba(10, 92, 54, 0.03); border-radius: 15px; border: 3px solid rgba(10, 92, 54, 0.1); display: flex; align-items: center; justify-content: space-between;">
                 <div style="flex: 1;">
-                    <h4 style="margin: 0 0 5px 0; font-size: 1.1rem; color: #1a1a1a; font-weight: 700; font-family: 'El Messiri', serif;">
+                    <h4 style="margin: 0 0 5px 0; font-size: 1.25rem; color: #1a1a1a; font-weight: 700; font-family: 'El Messiri', serif;">
                         {{ $submission->assignment->title ?? 'Assignment' }}
                     </h4>
-                    <p style="margin: 0; font-size: 0.9rem; color: #666; font-family: 'Cairo', sans-serif;">
+                    <p style="margin: 0; font-size: 1.05rem; color: #666; font-family: 'Cairo', sans-serif;">
                         <i class="fas fa-clock"></i> {{ $submission->created_at->format('M d, Y g:i A') }}
                     </p>
                 </div>
@@ -172,7 +172,7 @@
                 </div>
                 @else
                 <div style="padding: 10px 20px; background: rgba(158, 158, 158, 0.15); border-radius: 12px; border: 3px solid rgba(158, 158, 158, 0.3);">
-                    <div style="font-size: 0.9rem; color: #999; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                    <div style="font-size: 1.05rem; color: #999; font-weight: 600; font-family: 'Cairo', sans-serif;">
                         Pending
                     </div>
                 </div>

@@ -28,7 +28,7 @@
     <h1 style="font-size: 2.5rem; margin: 0 0 10px 0; font-weight: 700; color: white;">
         <i class="fas fa-clipboard-check"></i> {{ $student->name }}'s Submissions
     </h1>
-    <p style="font-size: 1.1rem; margin: 0; opacity: 0.95;">
+    <p style="font-size: 1.25rem; margin: 0; opacity: 0.95;">
         {{ $classroom->name }} • Review and grade student work
     </p>
     
@@ -46,7 +46,7 @@
     <div style="background: white; border-radius: 20px; padding: 80px 40px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 3px solid #e0e0e0;">
         <i class="fas fa-check-double" style="font-size: 5rem; color: rgba(10, 92, 54, 0.2); margin-bottom: 20px;"></i>
         <h3 style="color: #0a5c36; font-size: 1.8rem; margin-bottom: 10px;">No Submissions Yet</h3>
-        <p style="color: #666; font-size: 1.1rem; margin: 0;">{{ $student->name }} hasn't submitted any assignments yet.</p>
+        <p style="color: #666; font-size: 1.25rem; margin: 0;">{{ $student->name }} hasn't submitted any assignments yet.</p>
     </div>
 @else
     @php

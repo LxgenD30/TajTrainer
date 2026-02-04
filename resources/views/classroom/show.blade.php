@@ -55,7 +55,7 @@
             @if(auth()->user()->role_id != 3)
                 {{-- Student Back Button at top right aligned with title --}}
                 <a href="{{ route('student.classes') }}" 
-                    style="position: absolute; top: 0; right: 0; padding: 12px 25px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); z-index: 10;"
+                    style="position: absolute; top: 0; right: 0; padding: 12px 25px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); z-index: 10;"
                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
                     <i class="fas fa-arrow-left"></i> Back to My Classes
@@ -89,7 +89,7 @@
             <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; font-weight: 700; color: white; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); padding-right: 250px;">
                 <i class="fas fa-chalkboard-teacher"></i> {{ $classroom->class_name }}
             </h1>
-            <p style="margin: 0 0 30px 0; font-size: 1.1rem; opacity: 0.95; font-weight: 500; font-family: 'Cairo', sans-serif; line-height: 1.6; color: white;">
+            <p style="margin: 0 0 30px 0; font-size: 1.25rem; opacity: 0.95; font-weight: 500; font-family: 'Cairo', sans-serif; line-height: 1.6; color: white;">
                 {{ $classroom->description ?? 'Manage your classroom students and assignments' }}
             </p>
             
@@ -131,7 +131,7 @@
                             onmouseout="this.style.background='rgba(10, 92, 54, 0.05)'; this.style.borderColor='rgba(10, 92, 54, 0.1)'">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
+                                    <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.25rem;">
                                         {{ strtoupper(substr($student->name, 0, 1)) }}
                                     </div>
                                     <div>
@@ -157,7 +157,7 @@
                                 </div>
                             </div>
                             <a href="{{ route('teacher.student.submissions', ['classroom' => $classroom->id, 'student' => $student->id]) }}" 
-                                style="display: block; width: 100%; padding: 10px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                style="display: block; width: 100%; padding: 10px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: all 0.3s ease;"
                                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
                                 <i class="fas fa-clipboard-check"></i> View Submissions & Grade
@@ -168,8 +168,8 @@
             @else
                 <div style="text-align: center; padding: 50px 20px; color: #999;">
                     <div style="font-size: 3rem; margin-bottom: 15px;">👥</div>
-                    <p style="margin: 0; font-size: 1.1rem; color: #666;">No students enrolled yet</p>
-                    <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #999;">Share the access code to invite students</p>
+                    <p style="margin: 0; font-size: 1.25rem; color: #666;">No students enrolled yet</p>
+                    <p style="margin: 5px 0 0 0; font-size: 1.05rem; color: #999;">Share the access code to invite students</p>
                 </div>
             @endif
             </div>
@@ -190,7 +190,7 @@
                             onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.transform='translateX(5px)'"
                             onmouseout="this.style.background='rgba(10, 92, 54, 0.05)'; this.style.transform='translateX(0)'">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                                <h4 style="margin: 0; font-family: 'Cairo', sans-serif; font-size: 1.1rem; color: #1a1a1a;">
+                                <h4 style="margin: 0; font-family: 'Cairo', sans-serif; font-size: 1.25rem; color: #1a1a1a;">
                                     {{ $assignment->surah }} ({{ $assignment->start_verse }}{{ $assignment->end_verse ? '-' . $assignment->end_verse : '' }})
                                 </h4>
                                 <span style="padding: 5px 12px; background: rgba(212, 175, 55, 0.1); color: #d4af37; border-radius: 50px; font-size: 0.8rem; font-weight: 600;">
@@ -205,13 +205,13 @@
                                 <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}</span>
                             </div>
                             <div style="display: flex; gap: 10px;">
-                                <a href="{{ route('assignment.show', $assignment->assignment_id) }}" style="flex: 1; padding: 8px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                <a href="{{ route('assignment.show', $assignment->assignment_id) }}" style="flex: 1; padding: 8px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: all 0.3s ease;"
                                     onmouseover="this.style.background='#0a5c36'; this.style.color='white'"
                                     onmouseout="this.style.background='white'; this.style.color='#0a5c36'">
                                     View
                                 </a>
                                 @if(auth()->user()->role_id == 3)
-                                <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" style="flex: 1; padding: 8px; background: white; color: #ff9800; border: 2px solid #ff9800; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                                <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" style="flex: 1; padding: 8px; background: white; color: #ff9800; border: 2px solid #ff9800; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: all 0.3s ease;"
                                     onmouseover="this.style.background='#ff9800'; this.style.color='white'"
                                     onmouseout="this.style.background='white'; this.style.color='#ff9800'">
                                     Edit
@@ -224,8 +224,8 @@
             @else
                 <div style="text-align: center; padding: 50px 20px; color: #999;">
                     <div style="font-size: 3rem; margin-bottom: 15px;">📋</div>
-                    <p style="margin: 0; font-size: 1.1rem; color: #666;">No assignments yet</p>
-                    <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #999;">Create your first assignment to get started</p>
+                    <p style="margin: 0; font-size: 1.25rem; color: #666;">No assignments yet</p>
+                    <p style="margin: 5px 0 0 0; font-size: 1.05rem; color: #999;">Create your first assignment to get started</p>
                 </div>
             @endif
         </div>
