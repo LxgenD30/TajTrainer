@@ -308,25 +308,37 @@
 </style>
 
 <!-- Page Header -->
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; gap: 20px;">
     <div>
         <h1 style="margin-bottom: 5px;">📝 Create New Assignment</h1>
         <p style="margin: 0;">Assign work to students in {{ $classroom->class_name }}</p>
     </div>
+    
     <div style="display: flex; gap: 15px; align-items: center;">
-        <div>
-            <label style="display: block; color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 5px; font-weight: 600;">📅 Due Date & Time *</label>
-            <input type="datetime-local" name="due_date" value="{{ old('due_date') }}" required style="padding: 10px 15px; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; font-size: 1rem; background: rgba(255,255,255,0.15); color: white; backdrop-filter: blur(10px);">
+        <div style="background: #1a1a1a; padding: 15px 20px; border-radius: 15px; border: 2px solid #d4af37; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 15px;">
+            <label style="color: #d4af37; font-size: 0.95rem; font-weight: 700; white-space: nowrap; margin: 0;">
+                📅 Due Date & Time *
+            </label>
+            <input type="datetime-local" name="due_date" value="{{ old('due_date') }}" required 
+                style="padding: 8px 12px; border: 1px solid #333; border-radius: 8px; font-size: 0.95rem; background: #2a2a2a; color: white; outline: none;">
             @error('due_date')
-                <span style="color: #ffcccc; font-size: 0.85rem; display: block; margin-top: 3px;">{{ $message }}</span>
+                <span style="color: #ff4d4d; font-size: 0.8rem; position: absolute; bottom: -20px;">{{ $message }}</span>
             @enderror
         </div>
-        <a href="{{ route('classroom.show', $classroom->id) }}" style="padding: 12px 25px; background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.4); border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 1rem; transition: all 0.3s ease; backdrop-filter: blur(10px);" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-            Cancel
-        </a>
-        <button type="submit" style="padding: 12px 30px; background: #d4af37; color: #0a5c36; border: 2px solid #d4af37; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(212,175,55,0.3);" onmouseover="this.style.background='#c19d2f'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(212,175,55,0.4)'" onmouseout="this.style.background='#d4af37'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(212,175,55,0.3)'">
-            ✓ Create Assignment
-        </button>
+
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ route('classroom.show', $classroom->id) }}" 
+               style="padding: 12px 20px; background: #333; color: white; border: 2px solid #444; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease;" 
+               onmouseover="this.style.background='#444'" onmouseout="this.style.background='#333'">
+                Cancel
+            </a>
+            <button type="submit" 
+                style="padding: 12px 25px; background: #d4af37; color: #0a5c36; border: 2px solid #b38f2d; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" 
+                onmouseover="this.style.background='#f1c40f'; this.style.transform='translateY(-2px)'" 
+                onmouseout="this.style.background='#d4af37'; this.style.transform='translateY(0)'">
+                ✓ Create Assignment
+            </button>
+        </div>
     </div>
 </div>
 
