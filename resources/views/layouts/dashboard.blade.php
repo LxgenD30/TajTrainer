@@ -69,6 +69,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 30px;
         }
         
         .logo {
@@ -192,10 +193,10 @@
         
         /* Innovative Navigation - Inside Header */
         .main-nav {
+            flex: 1;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 10px;
-            margin-top: 15px;
             backdrop-filter: blur(10px);
         }
         
@@ -386,14 +387,14 @@
                         </form>
                     </div>
                 </div>
+                
+                <!-- Innovative Navigation Inside Header -->
+                <nav class="main-nav">
+                    <div class="nav-container">
+                        @yield('navigation')
+                    </div>
+                </nav>
             </div>
-            
-            <!-- Innovative Navigation Inside Header -->
-            <nav class="main-nav">
-                <div class="nav-container">
-                    @yield('navigation')
-                </div>
-            </nav>
         </div>
     </header>
 

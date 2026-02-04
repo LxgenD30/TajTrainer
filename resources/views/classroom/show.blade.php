@@ -32,6 +32,10 @@
             <div class="nav-icon"><i class="fas fa-chalkboard"></i></div>
             <div class="nav-label">My Classes</div>
         </a>
+        <a href="{{ route('student.progress') }}" class="nav-item">
+            <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="nav-label">Progress</div>
+        </a>
         <a href="{{ route('materials.index') }}" class="nav-item">
             <div class="nav-icon"><i class="fas fa-book-open"></i></div>
             <div class="nav-label">Materials</div>
