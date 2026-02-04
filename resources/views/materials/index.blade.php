@@ -178,13 +178,6 @@
         background: rgba(255,255,255,0.25);
     }
 </style>
-    <!-- Success Message -->
-    @if(session('success'))
-        <div style="background: #d4edda; border: 3px solid #28a745; color: #155724; padding: 15px 20px; border-radius: 15px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem;">
-            <i class="fas fa-check-circle" style="font-size: 1.5rem;"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
 
     <!-- Welcome Banner -->
     <div class="welcome-banner">

@@ -392,17 +392,18 @@
 </style>
 
 <div class="create-container">
-    <div style="margin-bottom: 20px;">
-        <a href="{{ route('materials.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Materials
-        </a>
-    </div>
-    
     <div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border: 3px solid #2a2a2a; border-radius: 15px; padding: 30px; margin-bottom: 20px; color: white;">
-        <h1 style="margin: 0 0 10px 0; font-family: 'El Messiri', sans-serif; font-size: 2rem; font-weight: 700;">
-            <i class="fas fa-plus-circle"></i> Create New Material
-        </h1>
-        <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">Add educational resources for students</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h1 style="margin: 0 0 10px 0; font-family: 'El Messiri', sans-serif; font-size: 2rem; font-weight: 700;">
+                    <i class="fas fa-plus-circle"></i> Create New Material
+                </h1>
+                <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">Add educational resources for students</p>
+            </div>
+            <a href="{{ route('materials.index') }}" style="padding: 12px 24px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); border-radius: 8px; color: white; text-decoration: none; font-weight: 700; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                <i class="fas fa-arrow-left"></i> Back to Materials
+            </a>
+        </div>
     </div>
     
     <!-- Online Search -->
@@ -670,19 +671,34 @@ function displayResults(results) {
     const resultsDiv = document.getElementById('searchResults');
     
     if (!results || results.length === 0) {
+        console.log('[SEARCH] No results found');
         resultsDiv.innerHTML = '<div style="padding: 20px; background: rgba(241, 196, 15, 0.2); border: 2px solid rgba(241, 196, 15, 0.5); border-radius: 8px; color: white; margin-top: 15px;"><i class="fas fa-info-circle"></i> No results found</div>';
         return;
     }
     
+    console.log('[DISPLAY] Rendering', results.length, 'results');
+    results.forEach((result, index) => {
+        console.log(`[RESULT ${index + 1}]:`, {
+            title: result.title,
+            url: result.url,
+            isPdf: result.is_pdf,
+            isVideo: result.video_id ? true : false,
+            contentPreview: result.content.substring(0, 50) + '...'
+        });
+    });
+    
     let html = '<div class="results-grid">';
     results.forEach((result, index) => {
         html += `
-            <div class="result-card" onclick="addFromSearch(${index})">
+            <div class="result-card">
                 ${result.is_pdf ? '<div style="background: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; display: inline-block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;"><i class="fas fa-file-pdf"></i> PDF</div>' : ''}
                 ${result.video_id ? '<div style="background: #ff0000; color: white; padding: 4px 8px; border-radius: 4px; display: inline-block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;"><i class="fab fa-youtube"></i> VIDEO</div>' : ''}
                 <h4>${escapeHtml(result.title)}</h4>
                 <p>${escapeHtml(result.content.substring(0, 100))}...</p>
-                ${result.is_pdf ? `<button type="button" onclick="event.stopPropagation(); downloadPDF('${result.download_url}', '${result.title}')" style="margin-top: 10px; padding: 6px 12px; background: #27ae60; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;"><i class="fas fa-download"></i> Download PDF</button>` : ''}
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <button type="button" onclick="openPreview(window.searchResults[${index}])" style="flex: 1; padding: 8px 12px; background: #3498db; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;"><i class="fas fa-eye"></i> Preview</button>
+                    <button type="button" onclick="addFromSearch(${index})" style="flex: 1; padding: 8px 12px; background: #27ae60; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;"><i class="fas fa-plus"></i> Add</button>
+                </div>
             </div>
         `;
     });
@@ -867,7 +883,13 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Add first item on load
-document.addEventListener('DOMContentLoaded', () => addMaterialItem());
+// Add first item on load with file type selected by default
+document.addEventListener('DOMContentLoaded', () => {
+    const itemId = addMaterialItem();
+    // Auto-select file type and show file upload field
+    document.getElementById(`type_file_${itemId}`).checked = true;
+    toggleItemFields(itemId, 'file');
+    console.log('[INIT] Item #1 created with file type selected by default');
+});
 </script>
 @endsection

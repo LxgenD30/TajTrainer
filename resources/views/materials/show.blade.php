@@ -156,13 +156,20 @@
                         </p>
                     @endif
                     
-                    <div style="margin-top: 15px;">
+                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                         @if($item->type === 'file')
                             <a href="{{ Storage::url($item->path) }}" 
                                download
                                style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1e8449;">
-                                <i class="fas fa-download"></i> Download File
+                                <i class="fas fa-download"></i> Download
                             </a>
+                            @if(str_ends_with(strtolower($item->path), '.pdf'))
+                                <a href="{{ Storage::url($item->path) }}" 
+                                   target="_blank"
+                                   style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1f5f8b;">
+                                    <i class="fas fa-eye"></i> View PDF
+                                </a>
+                            @endif
                         @elseif($item->type === 'youtube')
                             <a href="{{ $item->path }}" 
                                target="_blank"
