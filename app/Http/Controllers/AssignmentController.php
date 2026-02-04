@@ -119,9 +119,19 @@ class AssignmentController extends Controller
                 ->with(['student.user'])
                 ->orderBy('submitted_at', 'desc')
                 ->get();
+            
+            // Get all students enrolled in this classroom
+            $allStudents = $classroom->students()->with('user')->get();
+            $submittedStudentIds = $submissions->pluck('student_id')->toArray();
+            $notSubmittedStudents = $allStudents->filter(function($student) use ($submittedStudentIds) {
+                return !in_array($student->id, $submittedStudentIds);
+            });
+        } else {
+            $allStudents = collect();
+            $notSubmittedStudents = collect();
         }
 
-        return view('assignment.show', compact('assignment', 'classroom', 'submission', 'submissions'));
+        return view('assignment.show', compact('assignment', 'classroom', 'submission', 'submissions', 'allStudents', 'notSubmittedStudents'));
     }
 
     /**
