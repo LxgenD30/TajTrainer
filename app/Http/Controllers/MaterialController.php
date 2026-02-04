@@ -82,7 +82,7 @@ class MaterialController extends Controller
             ])->post('https://api.tavily.com/search', [
                 'query' => $finalQuery,
                 'search_depth' => 'basic',
-                'max_results' => 4,
+                'max_results' => 10,
                 'include_images' => $searchType === 'youtube',
                 'include_answer' => false,
                 'topic' => 'general',
@@ -272,7 +272,27 @@ class MaterialController extends Controller
                             }
                         }
                     } elseif ($itemData['type'] === 'url') {
-                        $item->path = $itemData['url'] ?? null;
+                        $urlPath = $itemData['url'] ?? null;
+                        
+                        // Check if URL is a PDF and download it
+                        if ($urlPath && str_ends_with(strtolower($urlPath), '.pdf')) {
+                            try {
+                                $downloadedPath = $this->downloadPDF($urlPath);
+                                if ($downloadedPath) {
+                                    // Switch to file type since we downloaded it
+                                    $item->type = 'file';
+                                    $item->path = $downloadedPath;
+                                } else {
+                                    // Keep as URL if download failed
+                                    $item->path = $urlPath;
+                                }
+                            } catch (\Exception $e) {
+                                Log::warning('PDF download failed: ' . $e->getMessage());
+                                $item->path = $urlPath;
+                            }
+                        } else {
+                            $item->path = $urlPath;
+                        }
                     }
 
                     if ($item->path) {
@@ -489,6 +509,51 @@ class MaterialController extends Controller
 
         // Default to Madd Rules if categorization fails
         return 'Madd Rules';
+    }
+
+    /**
+     * Download PDF from URL and save to storage
+     */
+    private function downloadPDF(string $url): ?string
+    {
+        try {
+            // Download PDF with timeout
+            $response = Http::withoutVerifying()
+                ->timeout(30)
+                ->get($url);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $content = $response->body();
+            
+            // Validate it's actually a PDF
+            if (substr($content, 0, 4) !== '%PDF') {
+                Log::warning('URL does not contain valid PDF content: ' . $url);
+                return null;
+            }
+
+            // Create directory if it doesn't exist
+            $destinationPath = storage_path('app/public/materials/pdfs');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            // Generate unique filename
+            $filename = time() . '_' . uniqid() . '.pdf';
+            $fullPath = $destinationPath . '/' . $filename;
+
+            // Save file
+            if (file_put_contents($fullPath, $content) !== false) {
+                return 'materials/pdfs/' . $filename;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('PDF download error: ' . $e->getMessage());
+            return null;
+        }
     }
 }
 
