@@ -107,7 +107,7 @@
     }
 
     .verse-arabic {
-        font-size: 3rem;
+        font-size: 2.5rem;
         text-align: center;
         direction: rtl;
         line-height: 2.2;
@@ -443,9 +443,16 @@
                     </button>
                 </div>
             </div>
+        </div>
 
-            <div id="analysisResults" style="display: none; margin-top: 20px;">
-                <!-- Analysis results will be displayed here -->
+        <!-- Analysis Results Card (3rd Column) -->
+        <div class="card">
+            <h3><i class="fas fa-chart-line"></i> Tajweed Analysis Results</h3>
+            <div id="analysisResults" style="min-height: 300px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 1.1rem;">
+                <div style="text-align: center;">
+                    <i class="fas fa-brain" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                    <p>Analysis results will appear here after recording</p>
+                </div>
             </div>
         </div>
     </div>
@@ -685,7 +692,12 @@
     function deleteRecording() {
         console.log('deleteRecording() called');
         document.getElementById('audioPlayback').style.display = 'none';
-        document.getElementById('analysisResults').style.display = 'none';
+        
+        // Reset analysis results to placeholder
+        var resultsDiv = document.getElementById('analysisResults');
+        resultsDiv.innerHTML = '<div style="text-align: center;"><i class="fas fa-brain" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i><p>Analysis results will appear here after recording</p></div>';
+        resultsDiv.style.display = 'flex';
+        
         document.getElementById('recordingTimer').textContent = '00:00';
         document.getElementById('recordingStatus').textContent = 'Ready to record';
         recordedBlob = null;
@@ -870,6 +882,9 @@
         
         resultsDiv.innerHTML = html;
         resultsDiv.style.display = 'block';
+        resultsDiv.style.minHeight = 'auto';
+        resultsDiv.style.alignItems = 'flex-start';
+        resultsDiv.style.justifyContent = 'flex-start';
         
         console.log('✓ Results displayed successfully');
         console.log('=== ANALYSIS PRESENTATION COMPLETE ===');
