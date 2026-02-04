@@ -34,20 +34,21 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: #1abc9c;
+        color: #0a5c36;
         text-decoration: none;
         font-weight: 700;
-        padding: 10px 15px;
-        background: rgba(26, 188, 156, 0.1);
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #d4af37, #f1c40f);
         border-radius: 10px;
         transition: all 0.3s ease;
         width: fit-content;
-        border: 2px solid #1abc9c;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
     }
     
     .back-link:hover {
-        background: rgba(26, 188, 156, 0.2);
-        transform: translateX(-5px);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(212, 175, 55, 0.4);
     }
     
     .assignment-header-card {
@@ -370,13 +371,13 @@
 <div class="container-grid">
     <!-- LEFT COLUMN - Assignment Info -->
     <div class="assignment-info-column">
-        <a href="{{ url()->previous() }}" class="back-link">
-            <i class="fas fa-arrow-left"></i>
-            Back to Classroom
-        </a>
-        
         <div class="assignment-header-card">
-            <h1>{{ $assignment->surah ? $assignment->surah . ' ' . $assignment->start_verse . '-' . ($assignment->end_verse ?? $assignment->start_verse) : 'Assignment' }}</h1>
+            <a href="{{ url()->previous() }}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to Classroom
+            </a>
+            
+            <h1 style="margin-top: 15px;">{{ $assignment->surah ? $assignment->surah . ' ' . $assignment->start_verse . '-' . ($assignment->end_verse ?? $assignment->start_verse) : 'Assignment' }}</h1>
             <div class="assignment-meta">
                 <div class="meta-item">
                     <i class="fas fa-calendar"></i>
