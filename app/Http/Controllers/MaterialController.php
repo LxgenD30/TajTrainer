@@ -580,9 +580,10 @@ class MaterialController extends Controller
      */
     public function show(Material $material)
     {
-        // Eager load items
-        $material->load('items');
-        return view('materials.show', compact('material'));
+        // Eager load items and teacher with user
+        $material->load(['items', 'teacher.user']);
+        $isStudent = auth()->check() && auth()->user()->role_id == 2;
+        return view('materials.show', compact('material', 'isStudent'));
     }
 
     /**

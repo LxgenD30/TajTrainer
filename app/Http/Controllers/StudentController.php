@@ -590,18 +590,33 @@ class StudentController extends Controller
 
     public function submitPractice(Request $request)
     {
-        \Log::info('=== Practice Submission Started ===');
-        \Log::info('Has recorded_audio: ' . ($request->has('recorded_audio') ? 'Yes' : 'No'));
-        \Log::info('Has audio_file: ' . ($request->hasFile('audio_file') ? 'Yes' : 'No'));
-        
-        $validated = $request->validate([
-            'audio_file' => 'nullable|file|max:10240',
-            'recorded_audio' => 'nullable|string',
-            'surah_number' => 'required|integer',
-            'ayah_number' => 'required|integer',
-            'expected_text' => 'required|string',
-            'reference_audio_url' => 'nullable|url',
-        ]);
+        try {
+            \Log::info('=== Practice Submission Started ===');
+            \Log::info('Has recorded_audio: ' . ($request->has('recorded_audio') ? 'Yes' : 'No'));
+            \Log::info('Has audio_file: ' . ($request->hasFile('audio_file') ? 'Yes' : 'No'));
+            
+            $validated = $request->validate([
+                'audio_file' => 'nullable|file|max:10240',
+                'recorded_audio' => 'nullable|string',
+                'surah_number' => 'required|integer',
+                'ayah_number' => 'required|integer',
+                'expected_text' => 'required|string',
+                'reference_audio_url' => 'nullable|url',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed: ' . json_encode($e->errors()));
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . json_encode($e->errors()),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Practice submission error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+            ], 500);
+        }
 
         try {
             $audioPath = null;

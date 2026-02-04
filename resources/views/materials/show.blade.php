@@ -307,15 +307,29 @@
             <div class="info-label"><i class="fas fa-user"></i> Uploaded By</div>
             <div class="info-value">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
-                        {{ strtoupper(substr(optional($material->user)->name ?? 'U', 0, 2)) }}
-                    </div>
-                    <div>
-                        <div style="font-weight: 600; color: #2a2a2a;">{{ optional($material->user)->name ?? 'Unknown' }}</div>
-                        <div style="font-size: 0.85rem; color: #999;">
-                            {{ optional($material->user)->role_id == 3 ? 'Teacher' : 'Student' }}
+                    @if($material->teacher && $material->teacher->user)
+                        @if($material->teacher->user->profile_picture)
+                            <img src="{{ Storage::url($material->teacher->user->profile_picture) }}" 
+                                 alt="{{ $material->teacher->user->name }}"
+                                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #0a5c36;">
+                        @else
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
+                                {{ strtoupper(substr($material->teacher->user->name, 0, 2)) }}
+                            </div>
+                        @endif
+                        <div>
+                            <div style="font-weight: 600; color: #2a2a2a;">{{ $material->teacher->user->name }}</div>
+                            <div style="font-size: 0.85rem; color: #999;">Teacher</div>
                         </div>
-                    </div>
+                    @else
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #999, #666); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
+                            U
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: #2a2a2a;">Unknown</div>
+                            <div style="font-size: 0.85rem; color: #999;">Teacher</div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
