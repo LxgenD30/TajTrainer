@@ -840,23 +840,30 @@ function addMaterialItem() {
             
             <div class="radio-group">
                 <div class="radio-option">
-                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="file" onchange="toggleItemFields(${itemId}, 'file')" required>
-                    <label for="type_file_${itemId}">Upload File</label>
+                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="file" onchange="toggleItemFields(${itemId}, 'images')" required>
+                    <label for="type_file_${itemId}">Images</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="type_document_${itemId}" name="items[${itemId}][type]" value="file" onchange="toggleItemFields(${itemId}, 'document')">
+                    <label for="type_document_${itemId}">Document</label>
                 </div>
                 <div class="radio-option">
                     <input type="radio" id="type_youtube_${itemId}" name="items[${itemId}][type]" value="youtube" onchange="toggleItemFields(${itemId}, 'youtube')">
                     <label for="type_youtube_${itemId}">YouTube</label>
                 </div>
-                <div class="radio-option">
-                    <input type="radio" id="type_url_${itemId}" name="items[${itemId}][type]" value="url" onchange="toggleItemFields(${itemId}, 'url')">
-                    <label for="type_url_${itemId}">Link</label>
+            </div>
+            
+            <div id="fields_images_${itemId}" class="hidden">
+                <div class="form-group">
+                    <label>Upload Images</label>
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
                 </div>
             </div>
             
-            <div id="fields_file_${itemId}" class="hidden">
+            <div id="fields_document_${itemId}" class="hidden">
                 <div class="form-group">
-                    <label>Upload File</label>
-                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx,.mp3,.mp4">
+                    <label>Upload Document</label>
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx">
                 </div>
             </div>
             
@@ -864,13 +871,6 @@ function addMaterialItem() {
                 <div class="form-group">
                     <label>YouTube Link</label>
                     <input type="url" name="items[${itemId}][youtube_link]" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
-                </div>
-            </div>
-            
-            <div id="fields_url_${itemId}" class="hidden">
-                <div class="form-group">
-                    <label>External URL</label>
-                    <input type="url" name="items[${itemId}][url]" class="form-control" placeholder="https://example.com/resource">
                 </div>
             </div>
             
@@ -893,7 +893,7 @@ function addMaterialItem() {
 
 // Toggle item fields
 function toggleItemFields(itemId, type) {
-    ['file', 'youtube', 'url'].forEach(t => {
+    ['images', 'document', 'youtube'].forEach(t => {
         const field = document.getElementById(`fields_${t}_${itemId}`);
         if (field) field.classList.toggle('hidden', t !== type);
     });
@@ -1090,7 +1090,11 @@ function addExistingItem(item) {
     
     const isFile = item.type === 'file';
     const isYoutube = item.type === 'youtube';
-    const isUrl = item.type === 'url';
+    
+    // Detect if it's an image or document
+    const fileExt = item.path ? item.path.split('.').pop().toLowerCase() : '';
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const isImage = imageExtensions.includes(fileExt);
     
     const fileDisplay = (isFile && item.path) ? `<p style="margin: 10px 0 0 0; padding: 10px; background: rgba(26,188,156,0.1); border-radius: 8px; color: #1abc9c; font-weight: 600;"><i class="fas fa-check-circle"></i> Current file: ${item.path.split('/').pop()}</p>` : '';
     
@@ -1107,48 +1111,50 @@ function addExistingItem(item) {
         
         <div class="radio-group">
             <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="file" id="file_${itemCounter}" ${isFile ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'file')" required>
-                <label for="file_${itemCounter}">File Upload</label>
+                <input type="radio" name="items[${itemCounter}][type]" value="file" id="images_${itemCounter}" ${isFile && isImage ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'images')" required>
+                <label for="images_${itemCounter}">Images</label>
             </div>
             <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="youtube" id="youtube_${itemCounter}" ${isYoutube ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'youtube')" required>
-                <label for="youtube_${itemCounter}">YouTube Video</label>
+                <input type="radio" name="items[${itemCounter}][type]" value="file" id="document_${itemCounter}" ${isFile && !isImage ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'document')">
+                <label for="document_${itemCounter}">Document</label>
             </div>
             <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="url" id="url_${itemCounter}" ${isUrl ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'url')" required>
-                <label for="url_${itemCounter}">External Link</label>
+                <input type="radio" name="items[${itemCounter}][type]" value="youtube" id="youtube_${itemCounter}" ${isYoutube ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'youtube')">
+                <label for="youtube_${itemCounter}">YouTube</label>
             </div>
         </div>
         
-        <div class="form-group">
-            <label>Item Title *</label>
-            <input type="text" name="items[${itemCounter}][title]" class="form-control" value="${escapeHtml(item.title)}" required>
-        </div>
-        
-        <div class="form-group">
-            <label>Item Description</label>
-            <textarea name="items[${itemCounter}][description]" class="form-control" rows="2">${escapeHtml(item.description)}</textarea>
-        </div>
-        
-        <div id="fields_file_${itemCounter}" class="${!isFile ? 'hidden' : ''}">
+        <div id="fields_images_${itemCounter}" class="${!(isFile && isImage) ? 'hidden' : ''}">
             <div class="form-group">
-                <label>File Upload ${item.path && isFile ? '(leave empty to keep current)' : ''}</label>
-                <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".pdf,.doc,.docx,.mp3,.mp4">
-                ${fileDisplay}
+                <label>Upload Images ${item.path && isFile && isImage ? '(leave empty to keep current)' : ''}</label>
+                <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
+                ${isFile && isImage ? fileDisplay : ''}
+            </div>
+        </div>
+        
+        <div id="fields_document_${itemCounter}" class="${!(isFile && !isImage) ? 'hidden' : ''}">
+            <div class="form-group">
+                <label>Upload Document ${item.path && isFile && !isImage ? '(leave empty to keep current)' : ''}</label>
+                <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".pdf,.doc,.docx">
+                ${isFile && !isImage ? fileDisplay : ''}
             </div>
         </div>
         
         <div id="fields_youtube_${itemCounter}" class="${!isYoutube ? 'hidden' : ''}">
             <div class="form-group">
-                <label>YouTube URL</label>
+                <label>YouTube Link</label>
                 <input type="url" name="items[${itemCounter}][youtube_link]" class="form-control" value="${isYoutube ? escapeHtml(item.path) : ''}" placeholder="https://www.youtube.com/watch?v=...">
             </div>
         </div>
         
-        <div id="fields_url_${itemCounter}" class="${!isUrl ? 'hidden' : ''}">
+        <div class="form-row">
             <div class="form-group">
-                <label>External URL</label>
-                <input type="url" name="items[${itemCounter}][url]" class="form-control" value="${isUrl ? escapeHtml(item.path) : ''}" placeholder="https://example.com/resource">
+                <label>Item Title (Optional)</label>
+                <input type="text" name="items[${itemCounter}][title]" class="form-control" value="${escapeHtml(item.title)}">
+            </div>
+            <div class="form-group">
+                <label>Item Description (Optional)</label>
+                <input type="text" name="items[${itemCounter}][description]" class="form-control" value="${escapeHtml(item.description)}">
             </div>
         </div>
     `;

@@ -401,20 +401,39 @@ class MaterialController extends Controller
                         }
                     }
 
-                    if ($item->path) {
+                    // Save item if it has a path OR if it's youtube type (path will be set)
+                    if ($item->path || $itemData['type'] === 'youtube') {
                         $item->save();
+                        Log::info('Material item saved', [
+                            'item_id' => $item->item_id,
+                            'type' => $item->type,
+                            'path' => $item->path,
+                            'material_id' => $item->material_id
+                        ]);
+                    } else {
+                        Log::warning('Material item not saved - no path', [
+                            'type' => $itemData['type'],
+                            'index' => $index
+                        ]);
                     }
                 }
             }
 
             DB::commit();
 
+            Log::info('Material created successfully', [
+                'material_id' => $material->material_id,
+                'items_count' => $material->items()->count()
+            ]);
+
             return redirect()->route('materials.index')->with('success', 'Material created successfully with ' . $material->items()->count() . ' item(s)!');
             
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Material creation failed: ' . $e->getMessage());
-            return back()->withInput()->withErrors(['error' => 'Failed to create material. Please try again.']);
+            Log::error('Material creation failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withInput()->withErrors(['error' => 'Failed to create material: ' . $e->getMessage()]);
         }
     }
 
@@ -433,6 +452,8 @@ class MaterialController extends Controller
      */
     public function edit(Material $material)
     {
+        // Eager load items
+        $material->load('items');
         return view('materials.edit', compact('material'));
     }
 
