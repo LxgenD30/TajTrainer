@@ -908,20 +908,20 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
             
             return {
                 'has_reference': True,
-                'reference_duration': round(self.duration_ref, 2),
-                'student_duration': round(self.duration, 2),
-                'overall_similarity': round(overall_similarity, 2),
-                'pronunciation_similarity': round(similarity_score, 2),
-                'pitch_similarity': round(pitch_similarity, 2),
-                'tempo_similarity': round(tempo_similarity, 2),
+                'reference_duration': round(float(self.duration_ref), 2),
+                'student_duration': round(float(self.duration), 2),
+                'overall_similarity': round(float(overall_similarity), 2),
+                'pronunciation_similarity': round(float(similarity_score), 2),
+                'pitch_similarity': round(float(pitch_similarity), 2),
+                'tempo_similarity': round(float(tempo_similarity), 2),
                 'grade': grade,
                 'feedback': feedback,
                 'details': {
-                    'dtw_distance': round(normalized_distance, 2),
-                    'student_avg_pitch': round(np.mean(pitch_student_valid), 1) if len(pitch_student_valid) > 0 else 0,
-                    'reference_avg_pitch': round(np.mean(pitch_reference_valid), 1) if len(pitch_reference_valid) > 0 else 0,
-                    'student_tempo': round(tempo_student, 1),
-                    'reference_tempo': round(tempo_reference, 1)
+                    'dtw_distance': round(float(normalized_distance), 2),
+                    'student_avg_pitch': round(float(np.mean(pitch_student_valid)), 1) if len(pitch_student_valid) > 0 else 0,
+                    'reference_avg_pitch': round(float(np.mean(pitch_reference_valid)), 1) if len(pitch_reference_valid) > 0 else 0,
+                    'student_tempo': round(float(tempo_student), 1),
+                    'reference_tempo': round(float(tempo_reference), 1)
                 }
             }
             
@@ -970,7 +970,7 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
             
             return {
                 'has_reference': True,
-                'overall_similarity': round(similarity_score, 2),
+                'overall_similarity': round(float(similarity_score), 2),
                 'grade': grade,
                 'feedback': feedback,
                 'note': 'Basic comparison (install fastdtw for detailed analysis)'
@@ -999,7 +999,7 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
         
         results = {
             'audio_file': self.audio_path,
-            'duration': round(self.duration, 2),
+            'duration': round(float(self.duration), 2),
             'whisper_transcription': whisper_transcription,
             'expected_text': self.expected_text,
             'rules_detected': {
