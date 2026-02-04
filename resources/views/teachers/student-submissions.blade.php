@@ -33,7 +33,7 @@
     </p>
     
     <!-- Back Button -->
-    <a href="{{ url('/teacher/classroom/' . $classroom->id) }}" 
+    <a href="{{ route('classroom.show', $classroom->id) }}" 
        style="position: absolute; top: 35px; right: 50px; background: white; padding: 12px 25px; border-radius: 12px; color: #0a5c36; text-decoration: none; font-weight: 700; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 3px solid #d4af37;"
        onmouseover="this.style.background='#d4af37'; this.style.color='white'; this.style.transform='translateY(-2px)'"
        onmouseout="this.style.background='white'; this.style.color='#0a5c36'; this.style.transform='translateY(0)'">
@@ -99,7 +99,7 @@
                                 @endif
                             </div>
                             
-                            <a href="{{ url('/teacher/submission/' . $submission->id . '/grade') }}"
+                            <a href="{{ route('teacher.submission.grade', $submission->id) }}"
                                style="display: block; width: 100%; padding: 16px 30px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 15px; text-decoration: none; font-weight: 700; font-size: 1.15rem; text-align: center; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(10, 92, 54, 0.3); border: none;"
                                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(10, 92, 54, 0.5)'"
                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(10, 92, 54, 0.3)'">
@@ -160,7 +160,7 @@
                                 @endif
                             </div>
                             
-                            <a href="{{ url('/teacher/submission/' . $submission->id . '/grade') }}"
+                            <a href="{{ route('teacher.submission.grade', $submission->id) }}"
                                style="display: block; width: 100%; padding: 16px 30px; background: white; color: #0a5c36; border: 3px solid #0a5c36; border-radius: 15px; text-decoration: none; font-weight: 700; font-size: 1.15rem; text-align: center; transition: all 0.3s ease;"
                                onmouseover="this.style.background='#0a5c36'; this.style.color='white'; this.style.transform='translateY(-3px)'"
                                onmouseout="this.style.background='white'; this.style.color='#0a5c36'; this.style.transform='translateY(0)'">
