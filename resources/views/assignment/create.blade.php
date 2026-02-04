@@ -823,5 +823,14 @@
         document.getElementById('ayahStart').addEventListener('input', debounce(fetchQuranVerse, 800));
         document.getElementById('ayahEnd').addEventListener('input', debounce(fetchQuranVerse, 800));
     });
+
+    // Form submission logging for debugging tajweed rules issue
+    document.querySelector('form')?.addEventListener('submit', function(e) {
+        const tajweedValue = document.querySelector('input[name="tajweed_rules"]:checked')?.value;
+        console.log('=== ASSIGNMENT CREATE FORM SUBMISSION ===');
+        console.log('Selected Tajweed Rule:', tajweedValue);
+        console.log('Tajweed Rule Length:', tajweedValue?.length);
+        console.log('Tajweed Rule Bytes:', tajweedValue ? [...tajweedValue].map(c => c.charCodeAt(0)) : []);
+    });
 </script>
 @endsection
