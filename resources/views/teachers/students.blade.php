@@ -102,7 +102,7 @@
                     <i class="fas fa-user-graduate"></i> My Students
                 </h1>
                 <p class="page-subtitle" style="margin: 0; font-family: 'Cairo', sans-serif;">
-                    {{ $students->count() }} student{{ $students->count() != 1 ? 's' : '' }} enrolled across {{ $classrooms->count() }} classroom{{ $classrooms->count() != 1 ? 's' : '' }}
+                    <span style="color: #d4af37; font-weight: 700;">{{ $students->count() }}</span> student{{ $students->count() != 1 ? 's' : '' }} enrolled across <span style="color: #d4af37; font-weight: 700;">{{ $classrooms->count() }}</span> classroom{{ $classrooms->count() != 1 ? 's' : '' }}
                 </p>
             </div>
             <div style="font-size: 3rem; opacity: 0.1;">👨‍🎓</div>

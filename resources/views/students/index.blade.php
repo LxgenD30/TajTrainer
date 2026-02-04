@@ -73,7 +73,7 @@
 
 <section class="welcome-banner">
     <div class="welcome-content">
-        <h1>Assalamu'alaikum, {{ $student->name }}! 👋</h1>
+        <h1>Assalamu'alaikum, <span style="color: #d4af37;">{{ $student->name }}</span>! 👋</h1>
         <p>Welcome back to your learning dashboard. Continue your journey in mastering Tajweed.</p>
     </div>
 </section>
