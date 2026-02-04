@@ -17,6 +17,7 @@ class Material extends Model
         'type',
         'url',
         'category',
+        'teacher_id',
     ];
 
     protected $casts = [
@@ -27,6 +28,14 @@ class Material extends Model
     protected $attributes = [
         'is_public' => true,
     ];
+
+    /**
+     * Get the teacher who created this material.
+     */
+    public function teacher()
+    {
+        return $this->belongsTo(Teacher::class, 'teacher_id', 'id');
+    }
 
     public function assignments()
     {

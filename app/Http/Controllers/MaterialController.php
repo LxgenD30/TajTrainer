@@ -178,14 +178,29 @@ class MaterialController extends Controller
                         $processed['is_pdf'] = true;
                         $processed['download_url'] = $result['url'];
                     } elseif ($searchType === 'youtube') {
-                        // Extract YouTube video ID
-                        if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', $result['url'] ?? '', $matches)) {
+                        // Filter out YouTube channels, playlists, and non-video pages
+                        $url = $result['url'] ?? '';
+                        
+                        // Skip if URL contains channel, user, playlist, or @username patterns
+                        if (preg_match('/(\/channel\/|\/user\/|\/c\/|\/playlist|\/\@[^\/]+$|\/\@[^\/]+\/videos|\/\@[^\/]+\/playlists|\/\@[^\/]+\/community|\/\@[^\/]+\/about)/', $url)) {
+                            Log::info('Skipping YouTube channel/playlist page', [
+                                'title' => $result['title'] ?? '',
+                                'url' => $url
+                            ]);
+                            continue;
+                        }
+                        
+                        // Extract YouTube video ID - only process if it's a valid video URL
+                        if (preg_match('/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([^"&?\/#\s]{11})/', $url, $matches)) {
                             $processed['video_id'] = $matches[1];
                             $processed['thumbnail'] = 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
                         } else {
-                            // If regex fails but we're searching YouTube, still mark as video
-                            $processed['video_id'] = 'unknown';
-                            $processed['is_youtube'] = true;
+                            // Not a valid video URL, skip it
+                            Log::info('Skipping non-video YouTube URL', [
+                                'title' => $result['title'] ?? '',
+                                'url' => $url
+                            ]);
+                            continue;
                         }
                     }
                     
@@ -385,6 +400,13 @@ class MaterialController extends Controller
             $material->description = $validated['description'] ?? null;
             $material->is_public = true;
             
+            // Set the creator - ensure user is a teacher
+            if (!auth()->user()->teacher) {
+                DB::rollBack();
+                return back()->withInput()->withErrors(['error' => 'Only teachers can create materials.']);
+            }
+            $material->teacher_id = auth()->user()->teacher->id;
+            
             // Category is now required - teacher must select manually
             $material->category = $validated['category'];
 
@@ -568,6 +590,11 @@ class MaterialController extends Controller
      */
     public function edit(Material $material)
     {
+        // Check if the current user is a teacher and is the owner
+        if (!auth()->user()->teacher || $material->teacher_id !== auth()->user()->teacher->id) {
+            abort(403, 'You are not authorized to edit this material.');
+        }
+        
         // Eager load items
         $material->load('items');
         return view('materials.edit', compact('material'));
@@ -578,6 +605,11 @@ class MaterialController extends Controller
      */
     public function update(Request $request, Material $material)
     {
+        // Check if the current user is a teacher and is the owner
+        if (!auth()->user()->teacher || $material->teacher_id !== auth()->user()->teacher->id) {
+            abort(403, 'You are not authorized to update this material.');
+        }
+        
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -782,6 +814,11 @@ class MaterialController extends Controller
      */
     public function destroy(Material $material)
     {
+        // Check if the current user is a teacher and is the owner
+        if (!auth()->user()->teacher || $material->teacher_id !== auth()->user()->teacher->id) {
+            abort(403, 'You are not authorized to delete this material.');
+        }
+        
         // Delete associated files
         if ($material->file_path) {
             Storage::disk('public')->delete($material->file_path);

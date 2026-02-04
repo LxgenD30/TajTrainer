@@ -437,7 +437,7 @@
                                onmouseout="this.style.transform='scale(1)'">
                                 <i class="fas fa-eye"></i> View
                             </a>
-                            @if(!$isStudent)
+                            @if(!$isStudent && auth()->user()->teacher && $material->teacher_id == auth()->user()->teacher->id)
                                 <a href="{{ route('materials.edit', $material->material_id) }}" 
                                    style="display: flex; align-items: center; justify-content: center; padding: 10px 15px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.95rem; font-family: 'Cairo', sans-serif; transition: all 0.3s ease;"
                                    onmouseover="this.style.background='rgba(212, 175, 55, 0.25)'"

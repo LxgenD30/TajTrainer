@@ -357,7 +357,7 @@
             </div>
         </div>
         
-        @if(!$isStudent)
+        @if(!$isStudent && auth()->user()->teacher && $material->teacher_id == auth()->user()->teacher->id)
             <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
                 <div class="info-label" style="margin-bottom: 15px;"><i class="fas fa-cog"></i> Actions</div>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
