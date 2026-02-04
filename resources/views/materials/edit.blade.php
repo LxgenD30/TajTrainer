@@ -1076,10 +1076,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Set public checkbox
-    const isPublic = {{ $material->is_public ? 'true' : 'false' }};
-    document.querySelector('[name="is_public"]').checked = isPublic;
-    
     // Load existing items
     @foreach($material->items as $item)
     addExistingItem({
