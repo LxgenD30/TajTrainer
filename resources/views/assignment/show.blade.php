@@ -421,7 +421,7 @@
                                 @foreach($submissions as $submission)
                                     <li style="padding: 12px 15px; margin-bottom: 8px; background: white; border-radius: 8px; border: 1px solid #27ae60; display: flex; align-items: center; gap: 10px;">
                                         <i class="fas fa-user-check" style="color: #27ae60; font-size: 1.1rem;"></i>
-                                        <span style="flex: 1; color: #333; font-size: 1.05rem;">{{ $submission->student->user->name ?? 'Unknown' }}</span>
+                                        <span style="flex: 1; color: #333; font-size: 1.05rem;">{{ $submission->student->name ?? 'Unknown' }}</span>
                                         @if($submission->score)
                                             <span style="color: #d4af37; font-weight: 600; font-size: 1rem;">{{ $submission->score->score }}/{{ $assignment->total_marks }}</span>
                                         @else
@@ -447,7 +447,7 @@
                                 @foreach($notSubmittedStudents as $student)
                                     <li style="padding: 12px 15px; margin-bottom: 8px; background: white; border-radius: 8px; border: 1px solid #e74c3c; display: flex; align-items: center; gap: 10px;">
                                         <i class="fas fa-user-times" style="color: #e74c3c; font-size: 1.1rem;"></i>
-                                        <span style="flex: 1; color: #333; font-size: 1.05rem;">{{ $student->user->name ?? 'Unknown' }}</span>
+                                        <span style="flex: 1; color: #333; font-size: 1.05rem;">{{ $student->name ?? 'Unknown' }}</span>
                                         <span style="color: #e74c3c; font-size: 0.9rem; font-weight: 600;">Pending</span>
                                     </li>
                                 @endforeach

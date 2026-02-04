@@ -116,12 +116,12 @@ class AssignmentController extends Controller
         // If teacher, load all submissions for this assignment
         if ($isTeacher) {
             $submissions = AssignmentSubmission::where('assignment_id', $assignment->assignment_id)
-                ->with(['student.user'])
+                ->with(['student'])
                 ->orderBy('submitted_at', 'desc')
                 ->get();
             
-            // Get all students enrolled in this classroom
-            $allStudents = $classroom->students()->with('user')->get();
+            // Get all students enrolled in this classroom (students() returns User models)
+            $allStudents = $classroom->students()->get();
             $submittedStudentIds = $submissions->pluck('student_id')->toArray();
             $notSubmittedStudents = $allStudents->filter(function($student) use ($submittedStudentIds) {
                 return !in_array($student->id, $submittedStudentIds);
