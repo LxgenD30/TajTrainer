@@ -182,6 +182,104 @@ class MaterialController extends Controller
     }
 
     /**
+     * Generate title and description using AI
+     */
+    public function generateInfo(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'context' => 'required|string'
+            ]);
+
+            $apiKey = config('services.openai.api_key');
+            if (!$apiKey) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'OpenAI API key not configured'
+                ], 500);
+            }
+
+            $context = $validated['context'];
+            
+            $response = Http::withoutVerifying()
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->timeout(20)
+                ->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-3.5-turbo',
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'You are an educational content specialist for Islamic studies. Generate a concise, professional title and description for a learning material collection. Return ONLY a JSON object with "title" and "description" fields. Title should be 3-8 words. Description should be 1-2 sentences explaining what students will learn.'
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $context
+                        ]
+                    ],
+                    'temperature' => 0.7,
+                    'max_tokens' => 200,
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $content = trim($data['choices'][0]['message']['content'] ?? '');
+                
+                Log::info('OpenAI Generate Info Response', [
+                    'input' => $context,
+                    'raw_response' => $content
+                ]);
+
+                // Try to parse JSON response
+                $generated = json_decode($content, true);
+                
+                if ($generated && isset($generated['title'])) {
+                    return response()->json([
+                        'success' => true,
+                        'title' => $generated['title'] ?? '',
+                        'description' => $generated['description'] ?? '',
+                        'message' => 'Information generated successfully'
+                    ]);
+                } else {
+                    Log::warning('OpenAI returned invalid format: ' . $content);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Could not parse AI response'
+                    ]);
+                }
+            } else {
+                $statusCode = $response->status();
+                $errorBody = $response->json();
+                $errorMessage = 'AI service error';
+                
+                // Check for specific OpenAI errors
+                if (isset($errorBody['error']['code'])) {
+                    $errorCode = $errorBody['error']['code'];
+                    if ($errorCode === 'insufficient_quota' || $statusCode === 429) {
+                        $errorMessage = 'OpenAI quota exceeded. Please contact administrator or try again later.';
+                    } elseif ($errorCode === 'invalid_api_key') {
+                        $errorMessage = 'OpenAI API key is invalid. Please contact administrator.';
+                    }
+                }
+                
+                Log::error('OpenAI API Error: ' . $statusCode . ' | Body: ' . $response->body());
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Generate Info Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred'
+            ], 500);
+        }
+    }
+
+    /**
      * Store a newly created material in storage.
      */
     public function store(Request $request)
@@ -478,14 +576,37 @@ class MaterialController extends Controller
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'You are an expert in Tajweed (Quranic recitation rules). Analyze the material and categorize it into EXACTLY ONE category: "Madd Rules", "Idgham Billa Ghunnah", or "Idgham Bi Ghunnah". 
+                            'content' => 'You are an expert in Tajweed (Quranic recitation rules). Analyze the material and categorize it into EXACTLY ONE category: "Madd Rules", "Idgham Billa Ghunnah", "Idgham Bi Ghunnah", or "Others". 
 
-Category Guidelines:
-- "Madd Rules": Materials about elongation/lengthening in recitation (Madd Tabi\'i, Madd Munfasil, Madd Muttasil, Madd Lazim, Madd Arid, prolongation)
-- "Idgham Billa Ghunnah": Materials about merging WITHOUT nasal sound (letters ل and ر, clear merging)
-- "Idgham Bi Ghunnah": Materials about merging WITH nasal sound (letters ي، ن، م، و, nasal merging, ghunnah/nasalization)
+IMPORTANT Category Guidelines:
 
-Respond with ONLY the category name, nothing else.'
+**"Idgham Bi Ghunnah"** - Select this if the content mentions:
+- Ghunnah (غنة)
+- Nasal sound / Nasalization
+- Letters: ي (Ya), ن (Noon), م (Meem), و (Waw) 
+- "With Ghunnah" / "Bi Ghunnah"
+- Merging WITH nasal sound
+- نون ساكنة followed by يَنْمُو letters
+
+**"Idgham Billa Ghunnah"** - Select this if the content mentions:
+- Letters: ل (Lam), ر (Ra)
+- "Without Ghunnah" / "Billa Ghunnah" 
+- Clear merging (no nasal sound)
+- Merging WITHOUT nasal sound
+
+**"Madd Rules"** - Select this if the content mentions:
+- Elongation / Lengthening / Stretching
+- Madd Tabi\'i, Madd Munfasil, Madd Muttasil, Madd Lazim, Madd Arid
+- Prolongation
+- Vowel extension
+- Duration (2, 4, 6 counts)
+
+**"Others"** - Select this if:
+- Content is NOT about Tajweed rules
+- General Islamic education, Quran translation, history, etc.
+- Does NOT fit any of the above three Tajweed categories
+
+Respond with ONLY the category name, nothing else. If Ghunnah or nasal sound is mentioned, it MUST be "Idgham Bi Ghunnah".'
                         ],
                         [
                             'role' => 'user',
@@ -507,7 +628,7 @@ Respond with ONLY the category name, nothing else.'
                 ]);
                 
                 // Validate category
-                $validCategories = ['Madd Rules', 'Idgham Billa Ghunnah', 'Idgham Bi Ghunnah'];
+                $validCategories = ['Madd Rules', 'Idgham Billa Ghunnah', 'Idgham Bi Ghunnah', 'Others'];
                 if (in_array($category, $validCategories)) {
                     Log::info('Category validated successfully: ' . $category);
                     return $category;
@@ -521,8 +642,8 @@ Respond with ONLY the category name, nothing else.'
             Log::error('OpenAI Categorization Exception: ' . $e->getMessage());
         }
 
-        // Default to Madd Rules if categorization fails
-        return 'Madd Rules';
+        // Default to Others if categorization fails (most generic option)
+        return 'Others';
     }
 
     /**

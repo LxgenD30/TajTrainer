@@ -442,7 +442,12 @@
         <div class="compact-grid">
             <!-- Left Column: Basic Info -->
             <div class="section-card">
-                <h2 class="section-header"><i class="fas fa-info-circle"></i> Basic Information</h2>
+                <h2 class="section-header">
+                    <i class="fas fa-info-circle"></i> Basic Information
+                    <button type="button" class="btn btn-secondary" onclick="generateBasicInfo()" style="margin-left: auto; padding: 8px 16px; font-size: 0.9rem;">
+                        <i class="fas fa-magic"></i> AI Generate
+                    </button>
+                </h2>
                 
                 <div class="form-group">
                     <label>Material Title *</label>
@@ -476,24 +481,28 @@
                     </button>
                 </h2>
                 
-                <div class="category-pills">
-                    <div class="category-pill">
-                        <input type="radio" name="category" id="cat1" value="Madd Rules" required>
-                        <label for="cat1" style="cursor: pointer; margin: 0;">Madd Rules</label>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('cat1').click()">
+                        <input type="radio" name="category" id="cat1" value="Madd Rules" required style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="cat1" style="cursor: pointer; margin: 0; font-weight: 500; flex: 1;">Madd Rules</label>
                     </div>
-                    <div class="category-pill">
-                        <input type="radio" name="category" id="cat2" value="Idgham Billa Ghunnah" required>
-                        <label for="cat2" style="cursor: pointer; margin: 0;">Idgham Billa Ghunnah</label>
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('cat2').click()">
+                        <input type="radio" name="category" id="cat2" value="Idgham Billa Ghunnah" required style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="cat2" style="cursor: pointer; margin: 0; font-weight: 500; flex: 1;">Idgham Billa Ghunnah</label>
                     </div>
-                    <div class="category-pill">
-                        <input type="radio" name="category" id="cat3" value="Idgham Bi Ghunnah" required>
-                        <label for="cat3" style="cursor: pointer; margin: 0;">Idgham Bi Ghunnah</label>
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('cat3').click()">
+                        <input type="radio" name="category" id="cat3" value="Idgham Bi Ghunnah" required style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="cat3" style="cursor: pointer; margin: 0; font-weight: 500; flex: 1;">Idgham Bi Ghunnah</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('cat4').click()">
+                        <input type="radio" name="category" id="cat4" value="Others" required style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="cat4" style="cursor: pointer; margin: 0; font-weight: 500; flex: 1;">Others</label>
                     </div>
                 </div>
                 
-                <div id="aiSuggestion" style="margin-top: 15px; padding: 15px; background: rgba(52, 152, 219, 0.1); border: 2px dashed #3498db; border-radius: 8px; display: none;">
-                    <strong style="color: #3498db;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong>
-                    <p id="suggestedCategory" style="margin: 5px 0 0 0; font-weight: 600;"></p>
+                <div id="aiSuggestion" style="margin-top: 15px; padding: 12px; background: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db; border-radius: 6px; display: none;">
+                    <strong style="color: #3498db; font-size: 0.9rem;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong>
+                    <p id="suggestedCategory" style="margin: 5px 0 0 0; font-weight: 600; color: #fff;"></p>
                 </div>
             </div>
         </div>
@@ -875,8 +884,9 @@ async function suggestCategory() {
         if (data.success && data.category) {
             const category = data.category;
             console.log('[AI] Suggested category:', category);
-            document.getElementById('suggestedCategory').textContent = category;
-            suggestionDiv.innerHTML = `<strong style="color: #3498db;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong><p style="margin: 5px 0 0 0; font-weight: 600;">${category}</p>`;
+            
+            // Update the suggestion div with new HTML including the category
+            suggestionDiv.innerHTML = `<strong style="color: #3498db;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong><p id="suggestedCategory" style="margin: 5px 0 0 0; font-weight: 600;">${category}</p>`;
             
             // Auto-select the suggested category radio button
             if (category === 'Madd Rules') {
@@ -893,7 +903,7 @@ async function suggestCategory() {
             showCustomAlert('AI suggested: ' + category, 'success');
         } else {
             console.warn('[AI] Could not determine category:', data);
-            suggestionDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Could not determine category';
+            suggestionDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Could not determine category. Please select manually.';
             showCustomAlert('Could not determine category', 'warning');
         }
     } catch (error) {
@@ -908,6 +918,62 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Generate basic information using AI
+async function generateBasicInfo() {
+    // Get items that have been added
+    const items = document.querySelectorAll('[data-item-id]');
+    
+    if (items.length === 0) {
+        showCustomAlert('Please add at least one item first (search results or manual upload)', 'warning');
+        return;
+    }
+    
+    // Collect information from items
+    let context = 'Based on these materials:\n';
+    items.forEach((item, index) => {
+        const title = item.querySelector('[name*="[title]"]')?.value || '';
+        const desc = item.querySelector('[name*="[description]"]')?.value || '';
+        if (title || desc) {
+            context += `${index + 1}. ${title}${desc ? ': ' + desc : ''}\n`;
+        }
+    });
+    
+    console.log('[AI] Generating basic info from context:', context);
+    
+    showCustomAlert('AI is generating title and description...', 'info');
+    
+    try {
+        const response = await fetch('{{ route("materials.generate-info") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ context })
+        });
+        
+        const data = await response.json();
+        console.log('[AI] Generated info:', data);
+        
+        if (data.success) {
+            if (data.title) {
+                document.querySelector('[name="title"]').value = data.title;
+                console.log('[AI] Title generated:', data.title);
+            }
+            if (data.description) {
+                document.querySelector('[name="description"]').value = data.description;
+                console.log('[AI] Description generated:', data.description);
+            }
+            showCustomAlert('Basic information generated successfully!', 'success');
+        } else {
+            showCustomAlert(data.message || 'Could not generate information', 'warning');
+        }
+    } catch (error) {
+        console.error('[AI] Error:', error);
+        showCustomAlert('Error generating information', 'error');
+    }
 }
 
 // Page ready - no auto-add items, teacher adds manually

@@ -145,6 +145,8 @@ Route::middleware('auth')->group(function () {
         ->name('materials.search');
     Route::post('/Materials/suggest-category', [App\Http\Controllers\MaterialController::class, 'suggestCategory'])
         ->name('materials.suggest-category');
+    Route::post('/Materials/generate-info', [App\Http\Controllers\MaterialController::class, 'generateInfo'])
+        ->name('materials.generate-info');
     Route::post('/Materials', [App\Http\Controllers\MaterialController::class, 'store'])
         ->name('materials.store');
     Route::get('/Materials/{material}', [App\Http\Controllers\MaterialController::class, 'show'])

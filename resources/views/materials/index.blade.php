@@ -231,6 +231,11 @@
                 <span>Idgham Bi Ghunnah</span>
                 <span class="filter-badge">{{ $categoryCounts['Idgham Bi Ghunnah'] }}</span>
             </a>
+            <a href="{{ route('materials.index', ['category' => 'Others']) }}" 
+               class="filter-btn {{ request('category') == 'Others' ? 'active' : '' }}">
+                <span>Others</span>
+                <span class="filter-badge">{{ $categoryCounts['Others'] ?? 0 }}</span>
+            </a>
         </div>
     </div>
 
