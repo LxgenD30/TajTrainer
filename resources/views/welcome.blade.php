@@ -1342,10 +1342,11 @@
             document.getElementById('registerModal').classList.add('show');
         @endif
         
-        // Demo player functionality with Quran Cloud API
+        // Demo player functionality with Quran Cloud API (api.alquran.cloud)
         let audioElement = document.getElementById('quranAudio');
         let isPlaying = false;
         let currentVerse = null;
+        let currentAudioUrl = null;
         const playBtn = document.getElementById('playBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -1358,57 +1359,71 @@
                 loadingStatus.textContent = 'Loading verse...';
                 loadingStatus.style.color = '#999';
                 
-                // Get random surah (1-114) and ayah
+                console.log('Loading random verse...');
+                
+                // Get random surah (1-114)
                 const randomSurah = Math.floor(Math.random() * 114) + 1;
+                console.log('Selected Surah:', randomSurah);
                 
                 // Fetch surah info to get valid ayah range
-                const surahInfoResponse = await fetch(`https://api.quran.com/api/v4/chapters/${randomSurah}`);
-                const surahInfo = await surahInfoResponse.json();
-                const maxAyah = surahInfo.chapter.verses_count;
+                const surahUrl = `https://api.alquran.cloud/v1/surah/${randomSurah}`;
+                const surahResponse = await fetch(surahUrl);
                 
-                const randomAyah = Math.floor(Math.random() * maxAyah) + 1;
-                
-                // Construct verse key for audio
-                const verseKey = `${randomSurah}:${randomAyah}`;
-                
-                // Fetch verse details with translation
-                const verseResponse = await fetch(`https://api.quran.com/api/v4/verses/by_key/${verseKey}?language=en&words=false&translations=131`);
-                const verseData = await verseResponse.json();
-                
-                currentVerse = verseData.verse;
-                
-                // Update UI
-                document.getElementById('verseTitle').textContent = `${surahInfo.chapter.name_simple} (${verseKey})`;
-                document.getElementById('verseArabic').textContent = currentVerse.text_uthmani;
-                
-                // Get translation
-                if (currentVerse.translations && currentVerse.translations.length > 0) {
-                    document.getElementById('verseTranslation').textContent = currentVerse.translations[0].text;
+                if (!surahResponse.ok) {
+                    throw new Error('Failed to fetch surah info');
                 }
                 
-                // Fetch audio recitations
-                const audioResponse = await fetch(`https://api.quran.com/api/v4/recitations/7/by_ayah/${verseKey}`);
-                const audioData = await audioResponse.json();
+                const surahData = await surahResponse.json();
                 
-                console.log('Audio data:', audioData);
+                if (surahData.code !== 200 || surahData.status !== 'OK') {
+                    throw new Error('Surah API returned error');
+                }
                 
-                // Set audio source - using direct CDN URL format
-                if (audioData.audio_files && audioData.audio_files.length > 0) {
-                    const audioUrl = audioData.audio_files[0].url;
-                    console.log('Setting audio URL:', audioUrl);
-                    audioElement.src = audioUrl;
+                const totalAyahs = surahData.data.numberOfAyahs;
+                const randomAyah = Math.floor(Math.random() * totalAyahs) + 1;
+                console.log('Selected Ayah:', randomAyah, 'of', totalAyahs);
+                
+                // Fetch verse with Arabic text, audio, and English translation
+                // editions: quran-uthmani (Arabic text), ar.alafasy (audio), en.sahih (English translation)
+                const ayahUrl = `https://api.alquran.cloud/v1/ayah/${randomSurah}:${randomAyah}/editions/quran-uthmani,ar.alafasy,en.sahih`;
+                const ayahResponse = await fetch(ayahUrl);
+                
+                if (!ayahResponse.ok) {
+                    throw new Error('Failed to fetch ayah');
+                }
+                
+                const ayahData = await ayahResponse.json();
+                
+                if (ayahData.code !== 200 || ayahData.status !== 'OK' || !ayahData.data) {
+                    throw new Error('Ayah API returned error');
+                }
+                
+                console.log('Ayah data received:', ayahData);
+                
+                // Extract data from response
+                const arabicText = ayahData.data[0].text; // Uthmani text
+                const audioData = ayahData.data[1]; // Alafasy audio
+                const translationText = ayahData.data[2].text; // English translation
+                
+                // Update UI
+                document.getElementById('verseTitle').textContent = `${audioData.surah.englishName} (${randomSurah}:${randomAyah})`;
+                document.getElementById('verseArabic').textContent = arabicText;
+                document.getElementById('verseTranslation').textContent = translationText;
+                
+                // Set audio source
+                if (audioData.audio) {
+                    currentAudioUrl = audioData.audio;
+                    audioElement.src = currentAudioUrl;
+                    console.log('Audio URL set:', currentAudioUrl);
                     loadingStatus.textContent = 'Audio ready! Click play or use controls below.';
                     loadingStatus.style.color = '#0a5c36';
                 } else {
-                    // Fallback: construct URL directly (Mishary Alafasy - recitation 7)
-                    const paddedSurah = String(randomSurah).padStart(3, '0');
-                    const paddedAyah = String(randomAyah).padStart(3, '0');
-                    const fallbackUrl = `https://verses.quran.com/Alafasy/mp3/${paddedSurah}${paddedAyah}.mp3`;
-                    console.log('Using fallback URL:', fallbackUrl);
-                    audioElement.src = fallbackUrl;
-                    loadingStatus.textContent = 'Audio ready! Click play or use controls below.';
-                    loadingStatus.style.color = '#0a5c36';
+                    console.warn('No audio available for this ayah');
+                    loadingStatus.textContent = 'Audio not available for this verse.';
+                    loadingStatus.style.color = '#e74c3c';
                 }
+                
+                console.log('Verse loaded successfully!');
                 
             } catch (error) {
                 console.error('Error loading verse:', error);
@@ -1417,7 +1432,9 @@
                 document.getElementById('verseTranslation').textContent = 'In the name of Allah, the Most Gracious, the Most Merciful';
                 
                 // Fallback audio - Al-Fatiha verse 1
-                audioElement.src = 'https://verses.quran.com/Alafasy/mp3/001001.mp3';
+                const fallbackUrl = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3';
+                audioElement.src = fallbackUrl;
+                currentAudioUrl = fallbackUrl;
                 loadingStatus.textContent = 'Error loading random verse. Showing Al-Fatiha.';
                 loadingStatus.style.color = '#e74c3c';
             }

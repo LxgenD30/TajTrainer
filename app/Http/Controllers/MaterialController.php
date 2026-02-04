@@ -112,14 +112,18 @@ class MaterialController extends Controller
                     ];
                     
                     if ($searchType === 'pdf') {
-                        // Check if URL is a direct PDF link
-                        $processed['is_pdf'] = str_ends_with(strtolower($result['url'] ?? ''), '.pdf');
-                        $processed['download_url'] = $processed['is_pdf'] ? $result['url'] : null;
+                        // Mark as PDF since we specifically searched for PDFs
+                        $processed['is_pdf'] = true;
+                        $processed['download_url'] = $result['url'];
                     } elseif ($searchType === 'youtube') {
                         // Extract YouTube video ID
                         if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', $result['url'] ?? '', $matches)) {
                             $processed['video_id'] = $matches[1];
                             $processed['thumbnail'] = 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
+                        } else {
+                            // If regex fails but we're searching YouTube, still mark as video
+                            $processed['video_id'] = 'unknown';
+                            $processed['is_youtube'] = true;
                         }
                     }
                     

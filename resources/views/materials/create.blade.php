@@ -654,7 +654,7 @@ function openPreview(result) {
     
     body.innerHTML = `
         ${result.is_pdf ? '<div style="background: #e74c3c; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; font-weight: 700; margin-bottom: 15px;"><i class="fas fa-file-pdf"></i> PDF Document</div>' : ''}
-        ${result.video_id ? '<div style="background: #ff0000; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; font-weight: 700; margin-bottom: 15px;"><i class="fab fa-youtube"></i> YouTube Video</div>' : ''}
+        ${result.video_id || result.is_youtube ? '<div style="background: #ff0000; color: white; padding: 8px 12px; border-radius: 6px; display: inline-block; font-weight: 700; margin-bottom: 15px;"><i class="fab fa-youtube"></i> YouTube Video</div>' : ''}
         
         <h3 style="margin: 15px 0 10px 0; color: #2a2a2a;">${escapeHtml(result.title)}</h3>
         
@@ -760,7 +760,7 @@ function displayResults(results) {
             title: result.title,
             url: result.url,
             isPdf: result.is_pdf,
-            isVideo: result.video_id ? true : false,
+            isVideo: result.video_id || result.is_youtube ? true : false,
             contentPreview: result.content.substring(0, 50) + '...'
         });
     });
@@ -770,7 +770,7 @@ function displayResults(results) {
         html += `
             <div class="result-card">
                 ${result.is_pdf ? '<div style="background: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; display: inline-block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;"><i class="fas fa-file-pdf"></i> PDF</div>' : ''}
-                ${result.video_id ? '<div style="background: #ff0000; color: white; padding: 4px 8px; border-radius: 4px; display: inline-block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;"><i class="fab fa-youtube"></i> VIDEO</div>' : ''}
+                ${result.video_id || result.is_youtube ? '<div style="background: #ff0000; color: white; padding: 4px 8px; border-radius: 4px; display: inline-block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;"><i class="fab fa-youtube"></i> VIDEO</div>' : ''}
                 <h4>${escapeHtml(result.title)}</h4>
                 <p>${escapeHtml(result.content.substring(0, 100))}...</p>
                 <div style="margin-top: 10px; display: flex; gap: 8px;">
@@ -795,7 +795,8 @@ function addFromSearch(index) {
     
     const itemId = addMaterialItem();
     
-    if (result.video_id) {
+    // Check if it's a YouTube video (either has video_id or is_youtube flag)
+    if (result.video_id || result.is_youtube) {
         console.log('[ADD] Type: YouTube video, ID:', result.video_id);
         document.getElementById(`type_youtube_${itemId}`).checked = true;
         toggleItemFields(itemId, 'youtube');
