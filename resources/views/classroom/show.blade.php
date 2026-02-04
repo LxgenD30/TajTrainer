@@ -98,34 +98,28 @@
                 {{-- Teacher Actions --}}
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <a href="{{ route('classroom.index') }}" 
-                        style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
-                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
-                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
-                        <i class="fas fa-arrow-left"></i> Back to Classes
+                        style="padding: 10px 20px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
+                        <i class="fas fa-arrow-left"></i> Back
                     </a>
+                    
                     <a href="{{ route('classroom.edit', $classroom->id) }}" 
-                        style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
-                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
-                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
-                        <i class="fas fa-edit"></i> Edit Classroom
-                    </a>
+                        style="padding: 10px 20px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>                   
+                    
                     <a href="{{ route('assignment.create', $classroom->id) }}" 
-                        style="padding: 12px 25px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;"
-                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
-                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
+                        style="padding: 10px 20px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
                         <i class="fas fa-plus"></i> New Assignment
                     </a>
+
                     <form action="{{ route('classroom.destroy', $classroom->id) }}" method="POST" style="display: inline;">
-                </form>
-                </div>
-                {{-- Student Actions --}}
-                <div style="position: absolute; top: 25px; right: 25px; z-index: 10;">
-                    <a href="{{ route('student.classes') }}" 
-                        style="padding: 10px 20px; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;"
-                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.6)'"
-                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.4)'">
-                        <i class="fas fa-arrow-left"></i> Back to My Classes
-                    </a>
+                    </form>
                 </div>
             @endif
         </div>
