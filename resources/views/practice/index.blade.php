@@ -742,7 +742,19 @@
         
         var resultsDiv = document.getElementById('analysisResults');
         var accuracyScore = analysis.accuracy_score || (analysis.overall_score && analysis.overall_score.score) || 0;
-        var feedback = analysis.feedback || (analysis.overall_score && analysis.overall_score.feedback) || 'Analysis complete';
+        
+        // Prioritize AI feedback over generic feedback
+        var feedback = 'Analysis complete';
+        var aiFeedback = null;
+        
+        if (analysis.python_analysis && analysis.python_analysis.ai_feedback) {
+            aiFeedback = analysis.python_analysis.ai_feedback;
+            feedback = aiFeedback.summary || feedback;
+        } else if (analysis.feedback) {
+            feedback = analysis.feedback;
+        } else if (analysis.overall_score && analysis.overall_score.feedback) {
+            feedback = analysis.overall_score.feedback;
+        }
         
         var html = '<div style="background: rgba(26, 188, 156, 0.05); padding: 20px; border-radius: 15px; border: 2px solid rgba(26, 188, 156, 0.2);">';
         
@@ -756,6 +768,41 @@
         html += '<p style="text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 20px;">';
         html += feedback;
         html += '</p>';
+        
+        // Display AI Feedback sections if available
+        if (aiFeedback) {
+            // Strengths
+            if (aiFeedback.strengths && aiFeedback.strengths.length > 0) {
+                html += '<div style="background: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">';
+                html += '<h5 style="color: #27ae60; margin-bottom: 10px;"><i class="fas fa-check-circle"></i> Strengths:</h5>';
+                html += '<ul style="margin: 0; padding-left: 20px;">';
+                aiFeedback.strengths.forEach(function(strength) {
+                    html += '<li style="color: #333; margin: 5px 0;">' + strength + '</li>';
+                });
+                html += '</ul></div>';
+            }
+            
+            // Improvements
+            if (aiFeedback.improvements && aiFeedback.improvements.length > 0) {
+                html += '<div style="background: rgba(231, 76, 60, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">';
+                html += '<h5 style="color: #e74c3c; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i> Areas for Improvement:</h5>';
+                aiFeedback.improvements.forEach(function(improvement) {
+                    html += '<div style="background: white; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #e74c3c;">';
+                    html += '<strong style="color: #e74c3c;">Issue:</strong> ' + improvement.issue + '<br>';
+                    html += '<strong style="color: #3498db;">Suggestion:</strong> ' + improvement.suggestion;
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+            
+            // Next Steps
+            if (aiFeedback.next_steps) {
+                html += '<div style="background: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">';
+                html += '<h5 style="color: #3498db; margin-bottom: 10px;"><i class="fas fa-forward"></i> Next Steps:</h5>';
+                html += '<p style="color: #333; margin: 0;">' + aiFeedback.next_steps + '</p>';
+                html += '</div>';
+            }
+        }
         
         // Transcribed Text (if available)
         if (analysis.python_analysis && analysis.python_analysis.whisper_transcription) {

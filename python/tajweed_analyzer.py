@@ -1033,7 +1033,7 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
             'madd_analysis': madd,
             'idgham_bila_ghunnah_analysis': idgham_bila,
             'idgham_bi_ghunnah_analysis': idgham_bi,
-            'overall_score': self.calculate_overall_score(madd, idgham_bila, idgham_bi),
+            'overall_score': self.calculate_overall_score(madd, idgham_bila, idgham_bi, whisper_transcription, reference_comparison),
             'reference_comparison': reference_comparison
         }
         
@@ -1045,10 +1045,11 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         
         return results
     
-    def calculate_overall_score(self, madd, idgham_bila, idgham_bi):
-        """Calculate overall Tajweed score based on applicable rules"""
+    def calculate_overall_score(self, madd, idgham_bila, idgham_bi, transcription=None, ref_comparison=None):
+        """Calculate overall Tajweed score based on applicable rules + pronunciation accuracy"""
         scores = []
         
+        # Add Tajweed rule scores
         if self.has_madd:
             scores.append(madd['percentage'])
         if self.has_idgham_bila:
@@ -1056,21 +1057,37 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         if self.has_idgham_bi:
             scores.append(idgham_bi['percentage'])
         
-        # If no rules apply, return 100
-        if not scores:
-            return {
-                'score': 100,
-                'grade': 'N/A',
-                'feedback': 'No Tajweed rules applicable to this verse'
-            }
+        # Calculate pronunciation accuracy from transcription
+        pronunciation_accuracy = 100.0
+        if transcription and self.expected_text:
+            from difflib import SequenceMatcher
+            pronunciation_accuracy = SequenceMatcher(None, transcription, self.expected_text).ratio() * 100
         
-        # Average of applicable rules
-        score = sum(scores) / len(scores)
+        # Get reference similarity if available
+        reference_similarity = 100.0
+        if ref_comparison and isinstance(ref_comparison, dict):
+            reference_similarity = ref_comparison.get('overall_similarity', 100.0)
+        
+        # Weight the scores:
+        # - Pronunciation accuracy: 40% (most important - saying the right words!)
+        # - Reference similarity: 30% (matching sheikh's pitch/rhythm)
+        # - Tajweed rules: 30% (elongation, Idgham correctness)
+        
+        if scores:
+            tajweed_score = sum(scores) / len(scores)
+        else:
+            tajweed_score = 100.0  # No specific rules to check
+        
+        # Weighted overall score
+        final_score = (pronunciation_accuracy * 0.4) + (reference_similarity * 0.3) + (tajweed_score * 0.3)
         
         return {
-            'score': round(score, 2),
-            'grade': self.get_grade(score),
-            'feedback': self.get_feedback(score)
+            'score': round(final_score, 2),
+            'pronunciation_accuracy': round(pronunciation_accuracy, 2),
+            'reference_similarity': round(reference_similarity, 2),
+            'tajweed_rules_score': round(tajweed_score, 2),
+            'grade': self.get_grade(final_score),
+            'feedback': self.get_feedback(final_score)
         }
     
     def get_grade(self, score):
