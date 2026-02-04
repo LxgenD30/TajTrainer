@@ -51,7 +51,7 @@ class MaterialController extends Controller
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])->post('https://api.tavily.com/search', [
-                'query' => $request->query . ' educational materials learning resources',
+                'query' => $request->input('query') . ' educational materials learning resources',
                 'search_depth' => 'basic',
                 'max_results' => 10,
                 'include_images' => true,
