@@ -1118,12 +1118,12 @@
                 
                 <button type="submit" class="submit-btn">Login</button>
                 
-                <div class="form-footer">
+<!--                 <div class="form-footer">
                     @if (Route::has('password.request'))
                         <a href="{{ route('password.request') }}">Forgot Password?</a> | 
                     @endif
                     <a href="#" id="switchToRegister">Register here</a>
-                </div>
+                </div> -->
             </form>
         </div>
     </div>
