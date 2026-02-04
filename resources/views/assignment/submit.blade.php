@@ -440,7 +440,7 @@
                 Submit Your Work
             </div>
             
-            <form id="submissionForm" action="{{ route('student.assignment.submit.store', $assignment->assignment_id) }}" method="POST" enctype="multipart/form-data">
+            <form id="submissionForm" action="{{ route('student.assignment.store', $assignment->assignment_id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 
                 @if($assignment->is_voice_submission)
