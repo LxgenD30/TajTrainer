@@ -118,7 +118,7 @@
     
     .stat-label {
         font-size: 0.85rem;
-        color: #999;
+        color: #666;
         font-family: 'Cairo', sans-serif;
         margin-bottom: 8px;
         text-transform: uppercase;
@@ -240,7 +240,7 @@
             <p style="margin: 0 0 10px 0; color: #333; font-family: 'Cairo', sans-serif; font-size: 1.05rem;">
                 {{ $classroom->description ?? 'No description' }}
             </p>
-            <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #999; font-family: 'Cairo', sans-serif;">
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #666; font-family: 'Cairo', sans-serif;">
                 <span><i class="fas fa-calendar"></i> Joined: {{ $classroom->pivot->date_joined ?? 'N/A' }}</span>
             </div>
         </a>
@@ -275,7 +275,7 @@
                 </div>
                 @else
                 <div style="padding: 10px 20px; background: rgba(158, 158, 158, 0.15); border-radius: 12px; border: 3px solid rgba(158, 158, 158, 0.3);">
-                    <div style="font-size: 1.05rem; color: #999; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                    <div style="font-size: 1.05rem; color: #666; font-weight: 600; font-family: 'Cairo', sans-serif;">
                         Pending
                     </div>
                 </div>
