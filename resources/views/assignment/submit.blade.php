@@ -9,10 +9,6 @@
 
 @section('content')
 <style>
-    body {
-        background: #f8f9fa;
-    }
-    
     .container-grid {
         display: grid;
         grid-template-columns: 1fr 500px;
@@ -444,6 +440,30 @@
                 @csrf
                 
                 @if($assignment->is_voice_submission)
+                <!-- Submission Method Choice -->
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; color: #0a5c36; font-weight: 700; margin-bottom: 15px; font-size: 1.05rem;">
+                        Choose Submission Method
+                    </label>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 15px; background: white; border: 2px solid #1abc9c; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;" onclick="showRecordingInterface()">
+                            <input type="radio" name="submission_method" value="record" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: #1abc9c;">
+                            <div>
+                                <div style="color: #0a5c36; font-weight: 700; font-size: 1rem;">🎤 Record Now</div>
+                                <div style="color: #666; font-size: 0.85rem;">Record your recitation directly in the browser</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 15px; background: white; border: 2px solid #1abc9c; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;" onclick="showUploadInterface()">
+                            <input type="radio" name="submission_method" value="upload" style="width: 18px; height: 18px; cursor: pointer; accent-color: #1abc9c;">
+                            <div>
+                                <div style="color: #0a5c36; font-weight: 700; font-size: 1rem;">📤 Upload File</div>
+                                <div style="color: #666; font-size: 0.85rem;">Upload a pre-recorded audio file</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
                 <!-- Recording Interface -->
                 <div class="recording-interface" id="recordingInterface">
                     <div class="recording-status">
@@ -472,10 +492,8 @@
                     <input type="hidden" name="transcription" id="transcriptionInput">
                 </div>
                 
-                <div style="text-align: center; margin: 15px 0; color: #999; font-weight: 600;">OR</div>
-                
                 <!-- Upload Interface -->
-                <div class="upload-interface">
+                <div class="upload-interface" id="uploadInterface" style="display: none;">
                     <div style="font-size: 2.5rem; margin-bottom: 12px;">📤</div>
                     <input type="file" name="audio_file" id="audioFileInput" class="file-input" accept="audio/*,video/webm,video/mp4" onchange="showFileName(this)">
                     <div class="upload-info">
@@ -617,12 +635,32 @@
         }
     }
 
+    function showRecordingInterface() {
+        document.getElementById('recordingInterface').style.display = 'block';
+        document.getElementById('uploadInterface').style.display = 'none';
+        document.getElementById('audioFileInput').value = '';
+        document.getElementById('selectedFileName').textContent = '';
+    }
+
+    function showUploadInterface() {
+        document.getElementById('recordingInterface').style.display = 'none';
+        document.getElementById('uploadInterface').style.display = 'block';
+        deleteRecording();
+    }
+
     document.getElementById('submissionForm')?.addEventListener('submit', function(e) {
         @if($assignment->is_voice_submission)
+        const submissionMethod = document.querySelector('input[name="submission_method"]:checked')?.value;
         const recordedAudio = document.getElementById('recordedAudio')?.value;
         const uploadedFile = document.getElementById('audioFileInput')?.files?.length > 0;
         
-        if (!recordedAudio && !uploadedFile) {
+        if (submissionMethod === 'record' && !recordedAudio) {
+            e.preventDefault();
+            alert('⚠️ Please record your audio before submitting.');
+            return false;
+        }
+        
+        if (submissionMethod === 'upload' && !uploadedFile) {
             e.preventDefault();
             alert('⚠️ Please either record your recitation or upload an audio file before submitting.');
             return false;
