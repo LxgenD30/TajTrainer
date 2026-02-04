@@ -503,6 +503,7 @@
             <input type="hidden" name="total_marks" value="100">
             <input type="hidden" name="is_voice_submission" value="1">
             <input type="hidden" id="surah_name_hidden" name="surah" required>
+            <input type="hidden" id="surah_number_hidden" name="surah_number" required>
             
             <div class="two-column-grid">
                 
@@ -863,9 +864,11 @@
         const selectedOption = select.options[select.selectedIndex];
         if (selectedOption && selectedOption.value) {
             document.getElementById('surah_name_hidden').value = selectedOption.getAttribute('data-name');
+            document.getElementById('surah_number_hidden').value = selectedOption.value;
             document.getElementById('verseRangeSection').style.display = 'block';
         } else {
             document.getElementById('surah_name_hidden').value = '';
+            document.getElementById('surah_number_hidden').value = '';
             document.getElementById('verseRangeSection').style.display = 'none';
         }
     }

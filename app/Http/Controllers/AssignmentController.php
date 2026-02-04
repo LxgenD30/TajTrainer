@@ -46,6 +46,7 @@ class AssignmentController extends Controller
             'class_id' => 'required|exists:classrooms,id',
             'material_id' => 'nullable|exists:materials,material_id',
             'surah' => 'required|string',
+            'surah_number' => 'required|integer|min:1|max:114',
             'start_verse' => 'required|integer|min:1',
             'end_verse' => 'nullable|integer|min:1',
             'due_date' => 'required|date|after:now',
@@ -62,8 +63,8 @@ class AssignmentController extends Controller
         }
 
         // Fetch expected recitation text and reference audio from Quran API
-        $expectedRecitation = $this->getQuranText($validated['surah'], $validated['start_verse'], $validated['end_verse']);
-        $referenceAudioUrl = $this->getReferenceAudioUrl($validated['surah'], $validated['start_verse'], $validated['end_verse']);
+        $expectedRecitation = $this->getQuranText($validated['surah_number'], $validated['start_verse'], $validated['end_verse']);
+        $referenceAudioUrl = $this->getReferenceAudioUrl($validated['surah_number'], $validated['start_verse'], $validated['end_verse']);
 
         Assignment::create([
             'material_id' => $validated['material_id'] ?? null,
@@ -160,6 +161,7 @@ class AssignmentController extends Controller
         $validated = $request->validate([
             'material_id' => 'nullable|exists:materials,material_id',
             'surah' => 'required|string',
+            'surah_number' => 'required|integer|min:1|max:114',
             'start_verse' => 'required|integer|min:1',
             'end_verse' => 'nullable|integer|min:1',
             'due_date' => 'required|date|after:now',
@@ -176,6 +178,10 @@ class AssignmentController extends Controller
             abort(403, 'Unauthorized access to this assignment.');
         }
 
+        // Fetch updated expected recitation text and reference audio from Quran API
+        $expectedRecitation = $this->getQuranText($validated['surah_number'], $validated['start_verse'], $validated['end_verse']);
+        $referenceAudioUrl = $this->getReferenceAudioUrl($validated['surah_number'], $validated['start_verse'], $validated['end_verse']);
+
         $assignment->update([
             'material_id' => $validated['material_id'] ?? null,
             'surah' => $validated['surah'],
@@ -186,6 +192,8 @@ class AssignmentController extends Controller
             'total_marks' => $validated['total_marks'],
             'is_voice_submission' => $validated['is_voice_submission'],
             'tajweed_rules' => [$validated['tajweed_rules']],
+            'expected_recitation' => $expectedRecitation,
+            'reference_audio_url' => $referenceAudioUrl,
         ]);
 
         return redirect()->route('assignment.show', $assignment->assignment_id)
@@ -219,9 +227,8 @@ class AssignmentController extends Controller
     /**
      * Get Quran text from API
      */
-    private function getQuranText($surahName, $startVerse, $endVerse)
+    private function getQuranText($surahNumber, $startVerse, $endVerse)
     {
-        $surahNumber = $this->getSurahNumber($surahName);
         $verses = [];
         
         for ($verse = $startVerse; $verse <= ($endVerse ?? $startVerse); $verse++) {
@@ -246,10 +253,8 @@ class AssignmentController extends Controller
     /**
      * Get reference audio URL from API
      */
-    private function getReferenceAudioUrl($surahName, $startVerse, $endVerse)
+    private function getReferenceAudioUrl($surahNumber, $startVerse, $endVerse)
     {
-        $surahNumber = $this->getSurahNumber($surahName);
-        
         // Get first verse audio URL (for now, just use first verse)
         // In future, could combine multiple verses
         $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$startVerse}/ar.alafasy";
