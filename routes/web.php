@@ -141,6 +141,8 @@ Route::middleware('auth')->group(function () {
         ->name('materials.index');
     Route::get('/Materials/create', [App\Http\Controllers\MaterialController::class, 'create'])
         ->name('materials.create');
+    Route::post('/Materials/search', [App\Http\Controllers\MaterialController::class, 'searchOnline'])
+        ->name('materials.search');
     Route::post('/Materials', [App\Http\Controllers\MaterialController::class, 'store'])
         ->name('materials.store');
     Route::get('/Materials/{material}', [App\Http\Controllers\MaterialController::class, 'show'])

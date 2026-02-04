@@ -47,4 +47,8 @@ return [
         'executable' => env('PYTHON_EXECUTABLE', 'python'),
     ],
 
+    'tavily' => [
+        'api_key' => env('TAVILY_API_KEY'),
+    ],
+
 ];

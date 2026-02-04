@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class MaterialController extends Controller
 {
@@ -27,6 +29,60 @@ class MaterialController extends Controller
     }
 
     /**
+     * Search for educational materials online using Tavily API.
+     */
+    public function searchOnline(Request $request)
+    {
+        $request->validate([
+            'query' => 'required|string|max:255',
+        ]);
+
+        $apiKey = config('services.tavily.api_key');
+        
+        if (!$apiKey) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tavily API key not configured. Please add TAVILY_API_KEY to your .env file.'
+            ], 500);
+        }
+
+        try {
+            $response = Http::withoutVerifying()->withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://api.tavily.com/search', [
+                'query' => $request->query . ' educational materials learning resources',
+                'search_depth' => 'basic',
+                'max_results' => 10,
+                'include_images' => true,
+                'include_answer' => false,
+                'topic' => 'general',
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return response()->json([
+                    'success' => true,
+                    'results' => $data['results'] ?? [],
+                    'images' => $data['images'] ?? [],
+                ]);
+            } else {
+                Log::error('Tavily API Error: ' . $response->body());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to search online resources. Please try again.'
+                ], $response->status());
+            }
+        } catch (\Exception $e) {
+            Log::error('Tavily Search Exception: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while searching. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
      * Store a newly created material in storage.
      */
     public function store(Request $request)
@@ -35,16 +91,17 @@ class MaterialController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'video_link' => 'nullable|url',
+            'url' => 'nullable|url',
             'file' => 'nullable|file|mimes:pdf,doc,docx,mp3,mp4|max:20480',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_public' => 'nullable|boolean',
         ]);
 
         $material = new Material();
         $material->title = $validated['title'];
         $material->description = $validated['description'] ?? null;
         $material->video_link = $validated['video_link'] ?? null;
-        $material->is_public = $request->has('is_public');
+        $material->url = $validated['url'] ?? null;
+        $material->is_public = true; // All materials are now public by default
 
         // Handle file upload
         if ($request->hasFile('file')) {

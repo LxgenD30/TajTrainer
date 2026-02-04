@@ -15,12 +15,16 @@ class Material extends Model
         'video_link',
         'thumbnail',
         'type',
-        'is_public',
+        'url',
     ];
 
     protected $casts = [
         'type' => 'string',
         'is_public' => 'boolean',
+    ];
+
+    protected $attributes = [
+        'is_public' => true,
     ];
 
     public function assignments()
