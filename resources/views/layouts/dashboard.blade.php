@@ -391,7 +391,15 @@
                 <!-- Innovative Navigation Inside Header -->
                 <nav class="main-nav">
                     <div class="nav-container">
-                        @yield('navigation')
+                        @hasSection('navigation')
+                            @yield('navigation')
+                        @else
+                            @if(Auth::user()->role_id == 3)
+                                @include('partials.teacher-nav')
+                            @else
+                                @include('partials.student-nav')
+                            @endif
+                        @endif
                     </div>
                 </nav>
             </div>
