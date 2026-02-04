@@ -51,26 +51,26 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
-        border: 2px solid transparent;
+        border: 3px solid #000000;
         white-space: nowrap;
     }
 
     .btn-back {
         background: rgba(255, 255, 255, 0.95); /* Slight transparency */
         color: #0a5c36;
-        border: none;
+        border: 3px solid #000000;
     }
 
     .btn-edit {
         background: #d4af37;
         color: #0a5c36;
-        border-color: #d4af37;
+        border: 3px solid #000000;
     }
 
     .btn-delete {
         background: #e74c3c;
         color: white;
-        border-color: #e74c3c;
+        border: 3px solid #000000;
         /* Matches button height for form submission */
         font-family: inherit;
     }
@@ -224,23 +224,23 @@
         @if(auth()->user()->role_id == 2)
             {{-- Student Status --}}
             @if(isset($submission))
-                <span class="btn" style="background: rgba(255, 255, 255, 0.2); color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); cursor: default;">
-                    <i class="fas fa-check-circle" style="color: #a3ffce;"></i> Completed
+                <span class="btn" style="background: #00d4ff; color: #000000; border: 3px solid #000000; cursor: default; font-weight: 700;">
+                    <i class="fas fa-check-circle" style="color: #006b00;"></i> Completed
                 </span>
             @else
-                <span class="btn" style="background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); cursor: default;">
-                    <i class="fas fa-clock" style="color: #ffd085;"></i> Pending
+                <span class="btn" style="background: #ffaa00; color: #000000; border: 3px solid #000000; cursor: default; font-weight: 700;">
+                    <i class="fas fa-clock" style="color: #8b4500;"></i> Pending
                 </span>
             @endif
         @else
             {{-- Teacher Status --}}
             @if($notSubmittedStudents->isEmpty())
-                <span class="btn" style="background: rgba(255, 255, 255, 0.2); color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); cursor: default;">
-                    <i class="fas fa-check-double" style="color: #a3ffce;"></i> All Submitted
+                <span class="btn" style="background: #00d4ff; color: #000000; border: 3px solid #000000; cursor: default; font-weight: 700;">
+                    <i class="fas fa-check-double" style="color: #006b00;"></i> All Submitted
                 </span>
             @else
-                <span class="btn" style="background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); cursor: default;">
-                    <i class="fas fa-tasks" style="color: #85d7ff;"></i> In Progress
+                <span class="btn" style="background: #ffaa00; color: #000000; border: 3px solid #000000; cursor: default; font-weight: 700;">
+                    <i class="fas fa-tasks" style="color: #8b4500;"></i> In Progress
                 </span>
             @endif
         @endif
