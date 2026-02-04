@@ -424,7 +424,7 @@
                 Focus on These Tajweed Rules
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                @foreach(json_decode($assignment->tajweed_rules) as $rule)
+                @foreach((array)$assignment->tajweed_rules as $rule)
                     <span class="rule-badge">{{ $rule }}</span>
                 @endforeach
             </div>
