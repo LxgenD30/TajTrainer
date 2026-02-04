@@ -35,19 +35,46 @@
     }
 
     .practice-header {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 25px;
+        padding: 40px;
+        margin-bottom: 30px;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
         text-align: center;
-        margin-bottom: 40px;
+    }
+    
+    .practice-header:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
     }
 
     .practice-header h1 {
         font-size: 2.5rem;
-        color: var(--primary-green);
+        color: #ffffff;
         margin-bottom: 10px;
+        font-weight: 700;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
 
     .practice-header p {
-        font-size: 1.2rem;
-        color: #666;
+        font-size: 1.1rem;
+        color: #ffffff;
+        opacity: 0.95;
+        line-height: 1.6;
+        position: relative;
+        z-index: 2;
     }
 
     .practice-grid {
@@ -821,14 +848,14 @@
         if (analysis.details) {
             html += '<div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid rgba(26, 188, 156, 0.2);">';
             html += '<h5 style="color: var(--primary-green); margin-bottom: 10px;"><i class="fas fa-list-check"></i> Detailed Breakdown:</h5>';
-            html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+            html += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">';
             
             for (var key in analysis.details) {
                 var label = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase() });
                 var value = Math.round(analysis.details[key]);
-                html += '<div style="background: rgba(255, 255, 255, 0.5); padding: 10px; border-radius: 8px;">';
-                html += '<div style="font-size: 0.9rem; color: #666;">' + label + '</div>';
-                html += '<div style="font-size: 1.3rem; font-weight: 600; color: var(--primary-green);">' + value + '%</div>';
+                html += '<div style="background: rgba(255, 255, 255, 0.5); padding: 15px; border-radius: 8px; text-align: center;">';
+                html += '<div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">' + label + '</div>';
+                html += '<div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-green);">' + value + '%</div>';
                 html += '</div>';
             }
             
