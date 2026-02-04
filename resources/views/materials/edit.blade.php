@@ -1013,8 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
         type: '{{ $item->type }}',
         title: `{{ addslashes($item->title ?? '') }}`,
         description: `{{ addslashes($item->description ?? '') }}`,
-        url: '{{ addslashes($item->url ?? '') }}',
-        file_path: '{{ addslashes($item->file_path ?? '') }}'
+        path: '{{ addslashes($item->path ?? '') }}'
     });
     @endforeach
     
@@ -1031,7 +1030,11 @@ function addExistingItem(item) {
     itemDiv.dataset.existingId = item.id;
     itemDiv.dataset.displayNumber = itemCounter;
     
-    const fileDisplay = item.file_path ? `<p style="margin: 10px 0 0 0; padding: 10px; background: rgba(26,188,156,0.1); border-radius: 8px; color: #1abc9c; font-weight: 600;"><i class="fas fa-check-circle"></i> Current file: ${item.file_path.split('/').pop()}</p>` : '';
+    const isFile = item.type === 'file';
+    const isYoutube = item.type === 'youtube';
+    const isUrl = item.type === 'url';
+    
+    const fileDisplay = (isFile && item.path) ? `<p style="margin: 10px 0 0 0; padding: 10px; background: rgba(26,188,156,0.1); border-radius: 8px; color: #1abc9c; font-weight: 600;"><i class="fas fa-check-circle"></i> Current file: ${item.path.split('/').pop()}</p>` : '';
     
     itemDiv.innerHTML = `
         <input type="hidden" name="items[${itemCounter}][id]" value="${item.id}">
@@ -1046,15 +1049,15 @@ function addExistingItem(item) {
         
         <div class="radio-group">
             <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="file" id="file_${itemCounter}" ${item.type === 'file' ? 'checked' : ''} required>
+                <input type="radio" name="items[${itemCounter}][type]" value="file" id="file_${itemCounter}" ${isFile ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'file')" required>
                 <label for="file_${itemCounter}">File Upload</label>
             </div>
             <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="youtube" id="youtube_${itemCounter}" ${item.type === 'youtube' ? 'checked' : ''} required>
+                <input type="radio" name="items[${itemCounter}][type]" value="youtube" id="youtube_${itemCounter}" ${isYoutube ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'youtube')" required>
                 <label for="youtube_${itemCounter}">YouTube Video</label>
             </div>
             <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="url" id="url_${itemCounter}" ${item.type === 'url' ? 'checked' : ''} required>
+                <input type="radio" name="items[${itemCounter}][type]" value="url" id="url_${itemCounter}" ${isUrl ? 'checked' : ''} onchange="toggleItemFields(${itemCounter}, 'url')" required>
                 <label for="url_${itemCounter}">External Link</label>
             </div>
         </div>
@@ -1069,15 +1072,26 @@ function addExistingItem(item) {
             <textarea name="items[${itemCounter}][description]" class="form-control" rows="2">${escapeHtml(item.description)}</textarea>
         </div>
         
-        <div class="form-group">
-            <label>File Upload ${item.file_path ? '(leave empty to keep current)' : ''}</label>
-            <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".pdf,.doc,.docx,.mp3,.mp4">
-            ${fileDisplay}
+        <div id="fields_file_${itemCounter}" class="${!isFile ? 'hidden' : ''}">
+            <div class="form-group">
+                <label>File Upload ${item.path && isFile ? '(leave empty to keep current)' : ''}</label>
+                <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".pdf,.doc,.docx,.mp3,.mp4">
+                ${fileDisplay}
+            </div>
         </div>
         
-        <div class="form-group">
-            <label>URL (YouTube or external)</label>
-            <input type="url" name="items[${itemCounter}][url]" class="form-control" value="${escapeHtml(item.url)}" placeholder="https://">
+        <div id="fields_youtube_${itemCounter}" class="${!isYoutube ? 'hidden' : ''}">
+            <div class="form-group">
+                <label>YouTube URL</label>
+                <input type="url" name="items[${itemCounter}][youtube_link]" class="form-control" value="${isYoutube ? escapeHtml(item.path) : ''}" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+        </div>
+        
+        <div id="fields_url_${itemCounter}" class="${!isUrl ? 'hidden' : ''}">
+            <div class="form-group">
+                <label>External URL</label>
+                <input type="url" name="items[${itemCounter}][url]" class="form-control" value="${isUrl ? escapeHtml(item.path) : ''}" placeholder="https://example.com/resource">
+            </div>
         </div>
     `;
     

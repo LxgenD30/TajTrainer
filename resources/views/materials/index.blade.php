@@ -139,43 +139,118 @@
     }
     
     .filter-btn {
-        padding: 12px 24px;
-        background: white;
-        border: 2px solid #2a2a2a;
-        border-radius: 25px;
+        padding: 14px 26px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border: 3px solid #2a2a2a;
+        border-radius: 30px;
         cursor: pointer;
         font-weight: 700;
         font-size: 1.05rem;
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         text-decoration: none;
         color: #2a2a2a;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .filter-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .filter-btn:hover::before {
+        left: 100%;
     }
     
     .filter-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         color: #2a2a2a;
     }
     
     .filter-btn.active {
-        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        background: linear-gradient(135deg, #0a5c36 0%, #1abc9c 100%);
         color: white;
         border-color: #2a2a2a;
+        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.3);
+    }
+    
+    .filter-btn .category-icon {
+        font-size: 1.2rem;
+        min-width: 24px;
+        text-align: center;
     }
     
     .filter-badge {
         background: rgba(0,0,0,0.15);
-        padding: 4px 10px;
-        border-radius: 12px;
+        padding: 5px 12px;
+        border-radius: 15px;
         font-size: 0.9rem;
         font-weight: 700;
+        min-width: 30px;
+        text-align: center;
     }
     
     .filter-btn.active .filter-badge {
-        background: rgba(255,255,255,0.25);
+        background: rgba(255,255,255,0.3);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .search-container {
+        margin-bottom: 20px;
+    }
+    
+    .search-bar {
+        position: relative;
+        max-width: 600px;
+    }
+    
+    .search-bar input {
+        width: 100%;
+        padding: 14px 50px 14px 20px;
+        border: 3px solid #2a2a2a;
+        border-radius: 30px;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        background: white;
+        font-family: 'Cairo', sans-serif;
+    }
+    
+    .search-bar input:focus {
+        outline: none;
+        border-color: #0a5c36;
+        box-shadow: 0 5px 15px rgba(10, 92, 54, 0.2);
+    }
+    
+    .search-bar button {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+    
+    .search-bar button:hover {
+        box-shadow: 0 4px 12px rgba(10, 92, 54, 0.3);
+        transform: translateY(-50%) scale(1.05);
     }
 </style>
 
@@ -206,33 +281,48 @@
 
     <!-- Category Filters -->
     <div class="category-filters">
+        <div class="search-container">
+            <form action="{{ route('materials.index') }}" method="GET" class="search-bar">
+                <input type="hidden" name="category" value="{{ request('category') }}">
+                <input type="text" name="search" placeholder="Search materials by title or description..." value="{{ request('search') }}">
+                <button type="submit">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </form>
+        </div>
+        
         <h3>
             <i class="fas fa-filter"></i>
             Filter by Category
         </h3>
         <div class="filter-buttons">
-            <a href="{{ route('materials.index') }}" 
+            <a href="{{ route('materials.index', array_filter(['search' => request('search')])) }}" 
                class="filter-btn {{ !request('category') ? 'active' : '' }}">
+                <span class="category-icon"><i class="fas fa-th-large"></i></span>
                 <span>All Materials</span>
                 <span class="filter-badge">{{ $categoryCounts['all'] }}</span>
             </a>
-            <a href="{{ route('materials.index', ['category' => 'Madd Rules']) }}" 
+            <a href="{{ route('materials.index', array_filter(['category' => 'Madd Rules', 'search' => request('search')])) }}" 
                class="filter-btn {{ request('category') == 'Madd Rules' ? 'active' : '' }}">
+                <span class="category-icon"><i class="fas fa-circle"></i></span>
                 <span>Madd Rules</span>
                 <span class="filter-badge">{{ $categoryCounts['Madd Rules'] }}</span>
             </a>
-            <a href="{{ route('materials.index', ['category' => 'Idgham Billa Ghunnah']) }}" 
+            <a href="{{ route('materials.index', array_filter(['category' => 'Idgham Billa Ghunnah', 'search' => request('search')])) }}" 
                class="filter-btn {{ request('category') == 'Idgham Billa Ghunnah' ? 'active' : '' }}">
+                <span class="category-icon"><i class="fas fa-wave-square"></i></span>
                 <span>Idgham Billa Ghunnah</span>
                 <span class="filter-badge">{{ $categoryCounts['Idgham Billa Ghunnah'] }}</span>
             </a>
-            <a href="{{ route('materials.index', ['category' => 'Idgham Bi Ghunnah']) }}" 
+            <a href="{{ route('materials.index', array_filter(['category' => 'Idgham Bi Ghunnah', 'search' => request('search')])) }}" 
                class="filter-btn {{ request('category') == 'Idgham Bi Ghunnah' ? 'active' : '' }}">
+                <span class="category-icon"><i class="fas fa-water"></i></span>
                 <span>Idgham Bi Ghunnah</span>
                 <span class="filter-badge">{{ $categoryCounts['Idgham Bi Ghunnah'] }}</span>
             </a>
-            <a href="{{ route('materials.index', ['category' => 'Others']) }}" 
+            <a href="{{ route('materials.index', array_filter(['category' => 'Others', 'search' => request('search')])) }}" 
                class="filter-btn {{ request('category') == 'Others' ? 'active' : '' }}">
+                <span class="category-icon"><i class="fas fa-ellipsis-h"></i></span>
                 <span>Others</span>
                 <span class="filter-badge">{{ $categoryCounts['Others'] ?? 0 }}</span>
             </a>

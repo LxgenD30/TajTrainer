@@ -19,6 +19,15 @@ class MaterialController extends Controller
     {
         $query = Material::with('items')->orderBy('created_at', 'desc');
         
+        // Search by title or description
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('title', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
         // Filter by category if provided
         if ($request->has('category') && !empty($request->category)) {
             $query->where('category', $request->category);
@@ -445,6 +454,7 @@ class MaterialController extends Controller
             'items.*.id' => 'nullable|integer', // Existing item ID
             'items.*.type' => 'required|in:file,youtube,url',
             'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,mp3,mp4|max:20480',
+            'items.*.youtube_link' => 'nullable|url',
             'items.*.url' => 'nullable|url',
             'items.*.title' => 'nullable|string|max:255',
             'items.*.description' => 'nullable|string',
@@ -539,7 +549,7 @@ class MaterialController extends Controller
                             }
                         }
                     } elseif ($itemData['type'] === 'youtube') {
-                        $item->path = $itemData['url'] ?? null;
+                        $item->path = $itemData['youtube_link'] ?? null;
                         
                         // Auto-extract thumbnail if not set
                         if (!$material->thumbnail && $item->path) {
