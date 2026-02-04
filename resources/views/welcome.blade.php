@@ -1122,8 +1122,21 @@
             <form method="POST" action="{{ route('register') }}">
                 @csrf
                 
+                <!-- Role Selection - At Top -->
                 <div class="form-group">
-                    <label for="registerName">Full Name</label>
+                    <label for="registerRole">I am a *</label>
+                    <select id="registerRole" name="role_id" required onchange="toggleWelcomeRoleFields()">
+                        <option value="">Select your role</option>
+                        <option value="2" {{ old('role_id') == '2' ? 'selected' : '' }}>Student</option>
+                        <option value="3" {{ old('role_id') == '3' ? 'selected' : '' }}>Teacher</option>
+                    </select>
+                    @error('role_id')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerName">Full Name *</label>
                     <input type="text" id="registerName" name="name" value="{{ old('name') }}" placeholder="Enter your full name" required autofocus>
                     @error('name')
                         <div class="error-message">{{ $message }}</div>
@@ -1131,15 +1144,53 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="registerEmail">Email Address</label>
+                    <label for="registerEmail">Email Address *</label>
                     <input type="email" id="registerEmail" name="email" value="{{ old('email') }}" placeholder="Enter your email" required>
                     @error('email')
                         <div class="error-message">{{ $message }}</div>
                     @enderror
                 </div>
+
+                <!-- Student-specific fields -->
+                <div class="form-group" id="welcome_student_level_field" style="display: none;">
+                    <label for="registerCurrentLevel">Current Level *</label>
+                    <select id="registerCurrentLevel" name="current_level">
+                        <option value="">Select your level</option>
+                        <option value="Beginner" {{ old('current_level') == 'Beginner' ? 'selected' : '' }}>Beginner</option>
+                        <option value="Intermediate" {{ old('current_level') == 'Intermediate' ? 'selected' : '' }}>Intermediate</option>
+                        <option value="Advanced" {{ old('current_level') == 'Advanced' ? 'selected' : '' }}>Advanced</option>
+                        <option value="Expert" {{ old('current_level') == 'Expert' ? 'selected' : '' }}>Expert</option>
+                    </select>
+                    @error('current_level')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <!-- Teacher-specific fields -->
+                <div class="form-group" id="welcome_teacher_title_field" style="display: none;">
+                    <label for="registerTitle">Title *</label>
+                    <select id="registerTitle" name="title">
+                        <option value="">Select your title</option>
+                        <option value="Ustaz" {{ old('title') == 'Ustaz' ? 'selected' : '' }}>Ustaz</option>
+                        <option value="Sheikh" {{ old('title') == 'Sheikh' ? 'selected' : '' }}>Sheikh</option>
+                        <option value="Ustazah" {{ old('title') == 'Ustazah' ? 'selected' : '' }}>Ustazah</option>
+                    </select>
+                    @error('title')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <!-- Phone Number for all users -->
+                <div class="form-group" id="welcome_phone_field" style="display: none;">
+                    <label for="registerPhone">Phone Number *</label>
+                    <input type="tel" id="registerPhone" name="phone" value="{{ old('phone') }}" placeholder="+60123456789">
+                    @error('phone')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+                </div>
                 
                 <div class="form-group">
-                    <label for="registerPassword">Password</label>
+                    <label for="registerPassword">Password *</label>
                     <input type="password" id="registerPassword" name="password" placeholder="Create a password" required>
                     @error('password')
                         <div class="error-message">{{ $message }}</div>
@@ -1147,26 +1198,8 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="registerPasswordConfirm">Confirm Password</label>
+                    <label for="registerPasswordConfirm">Confirm Password *</label>
                     <input type="password" id="registerPasswordConfirm" name="password_confirmation" placeholder="Confirm your password" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="registerRole">User Role</label>
-                    <select id="registerRole" name="role_id" required>
-                        <option value="">Select your role</option>
-                        @php
-                            $roles = \App\Models\Role::all();
-                        @endphp
-                        @foreach($roles as $role)
-                            <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
-                                {{ $role->user_type }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('role_id')
-                        <div class="error-message">{{ $message }}</div>
-                    @enderror
                 </div>
                 
                 <button type="submit" class="submit-btn">Create Account</button>
@@ -1360,6 +1393,47 @@
                 step.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
                 observer.observe(step);
             });
+        });
+
+        // Toggle role-specific fields in registration form
+        function toggleWelcomeRoleFields() {
+            const roleSelect = document.getElementById('registerRole');
+            const selectedRole = roleSelect.value;
+            
+            const studentLevelField = document.getElementById('welcome_student_level_field');
+            const teacherTitleField = document.getElementById('welcome_teacher_title_field');
+            const phoneField = document.getElementById('welcome_phone_field');
+            const currentLevelSelect = document.getElementById('registerCurrentLevel');
+            const titleSelect = document.getElementById('registerTitle');
+            const phoneInput = document.getElementById('registerPhone');
+            
+            // Hide all fields initially
+            studentLevelField.style.display = 'none';
+            teacherTitleField.style.display = 'none';
+            phoneField.style.display = 'none';
+            
+            // Remove required attribute from all
+            currentLevelSelect.removeAttribute('required');
+            titleSelect.removeAttribute('required');
+            phoneInput.removeAttribute('required');
+            
+            // Show and make required based on role
+            if (selectedRole === '2') { // Student
+                studentLevelField.style.display = 'block';
+                phoneField.style.display = 'block';
+                currentLevelSelect.setAttribute('required', 'required');
+                phoneInput.setAttribute('required', 'required');
+            } else if (selectedRole === '3') { // Teacher
+                teacherTitleField.style.display = 'block';
+                phoneField.style.display = 'block';
+                titleSelect.setAttribute('required', 'required');
+                phoneInput.setAttribute('required', 'required');
+            }
+        }
+
+        // Run on page load to handle old values
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleWelcomeRoleFields();
         });
     </script>
 </body>
