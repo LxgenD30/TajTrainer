@@ -45,6 +45,7 @@
         font-size: 2rem;
         margin-bottom: 8px;
         font-weight: 700;
+        color: #ffffff;
         text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
     
@@ -52,6 +53,7 @@
         font-size: 1.05rem;
         opacity: 0.95;
         margin: 0;
+        color: #ffffff;
     }
     
     .back-btn {
@@ -145,7 +147,7 @@
     .form-hint {
         display: block;
         font-size: 1.05rem;
-        color: #666;
+        color: #555;
         margin-top: 5px;
         font-weight: 600;
     }

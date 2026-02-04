@@ -44,12 +44,14 @@
         font-size: 2rem;
         font-weight: 800;
         margin-bottom: 5px;
+        color: #ffffff;
         text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
     
     .banner-subtitle {
         font-size: 1.05rem;
         opacity: 0.9;
+        color: #ffffff;
     }
     
     .back-to-profile {
@@ -110,7 +112,7 @@
     
     .form-label {
         display: block;
-        color: #666;
+        color: #2a2a2a;
         font-weight: 700;
         margin-bottom: 8px;
         font-size: 1.05rem;
@@ -142,7 +144,7 @@
     .form-hint {
         display: block;
         font-size: 1.05rem;
-        color: #666;
+        color: #555;
         margin-top: 5px;
         font-weight: 600;
     }
