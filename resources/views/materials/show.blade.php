@@ -73,6 +73,7 @@
     }
     
     .badge-file { background: #e74c3c; color: white; }
+    .badge-image { background: #3498db; color: white; }
     .badge-youtube { background: #ff0000; color: white; }
     .badge-url { background: #3498db; color: white; }
     

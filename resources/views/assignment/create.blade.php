@@ -83,7 +83,7 @@
     }
     
     .section-title.gold {
-        color: #000000;
+        color: #d4af37;
     }
     
     .section-desc {
@@ -174,8 +174,8 @@
     }
     
     .radio-option:hover {
-        border-color: #000000;
-        background: rgba(0, 0, 0, 0.04);
+        border-color: #d4af37;
+        background: rgba(212, 175, 55, 0.04);
         transform: translateX(3px);
     }
     
@@ -184,7 +184,7 @@
     }
     
     .radio-option input[type="radio"]:checked {
-        accent-color: #000000;
+        accent-color: #d4af37;
     }
     
     .radio-option input[type="radio"] {
@@ -200,7 +200,7 @@
     }
     
     .radio-title {
-        color: #000000;
+        color: #d4af37;
         font-weight: 700;
         font-size: 0.95rem;
         margin-bottom: 3px;
@@ -912,7 +912,6 @@
                             <div class="material-item-info">
                                 <span class="material-item-type ${typeClass}">${typeLabel}</span>
                                 <div style="color: #000000; font-weight: 600; font-size: 0.9rem;">${itemTitle}</div>
-                                ${item.description ? `<div style="color: #666; font-size: 0.8rem;">${item.description}</div>` : ''}
                             </div>
                             <button type="button" class="btn-view" onclick="viewMaterialItem(${material.material_id}, ${item.item_id}, '${item.type}')">
                                 <i class="fas fa-eye"></i> View
