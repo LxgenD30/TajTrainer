@@ -319,14 +319,36 @@
                             Verses {{ $assignment->start_verse }} - {{ $assignment->end_verse }} (Continuous Recitation)
                         </p>
                     @endif
-                    <audio controls {{ auth()->user()->role_id != 3 ? 'controlsList="nodownload"' : '' }} style="width: 100%; border-radius: 10px;">
-                        @if(str_starts_with($assignment->reference_audio_url, 'references/'))
-                            <source src="{{ Storage::url($assignment->reference_audio_url) }}" type="audio/mpeg">
-                        @else
-                            <source src="{{ $assignment->reference_audio_url }}" type="audio/mpeg">
-                        @endif
-                        Your browser does not support the audio element.
-                    </audio>
+                    @if(auth()->user()->role_id != 3)
+                        {{-- Student view: Protected audio player --}}
+                        <div oncontextmenu="return false;" style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">
+                            <audio 
+                                controls 
+                                controlsList="nodownload noremoteplayback" 
+                                oncontextmenu="return false;"
+                                style="width: 100%; border-radius: 10px; pointer-events: auto;">
+                                @if(str_starts_with($assignment->reference_audio_url, 'references/'))
+                                    <source src="{{ Storage::url($assignment->reference_audio_url) }}" type="audio/mpeg">
+                                @else
+                                    <source src="{{ $assignment->reference_audio_url }}" type="audio/mpeg">
+                                @endif
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #ff6b6b; margin-top: 8px; font-weight: 600;">
+                            <i class="fas fa-info-circle"></i> Audio download is restricted for students
+                        </p>
+                    @else
+                        {{-- Teacher view: Full audio controls --}}
+                        <audio controls style="width: 100%; border-radius: 10px;">
+                            @if(str_starts_with($assignment->reference_audio_url, 'references/'))
+                                <source src="{{ Storage::url($assignment->reference_audio_url) }}" type="audio/mpeg">
+                            @else
+                                <source src="{{ $assignment->reference_audio_url }}" type="audio/mpeg">
+                            @endif
+                            Your browser does not support the audio element.
+                        </audio>
+                    @endif
                 </div>
                 <p style="font-size: 0.9rem; color: #000000; margin-top: 10px; opacity: 0.7;">
                     Listen to the correct pronunciation before recording your own recitation.
