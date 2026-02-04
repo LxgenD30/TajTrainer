@@ -420,10 +420,10 @@
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
                                 <div style="flex: 1;">
                                     <h5 style="color: #0a5c36; font-size: 1.3rem; margin-bottom: 8px; font-weight: 700;">
-                                        <i class="fas fa-user-graduate"></i> {{ $submission->student->name ?? 'Unknown Student' }}
+                                        <i class="fas fa-user-graduate"></i> {{ $submission->student->user->name ?? 'Unknown Student' }}
                                     </h5>
                                     <p style="color: #666; font-size: 1.05rem; margin: 0;">
-                                        <i class="fas fa-envelope"></i> {{ $submission->student->email ?? 'N/A' }}
+                                        <i class="fas fa-envelope"></i> {{ $submission->student->user->email ?? 'N/A' }}
                                     </p>
                                 </div>
                                 <div style="text-align: right;">

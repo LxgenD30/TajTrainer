@@ -116,7 +116,7 @@ class AssignmentController extends Controller
         // If teacher, load all submissions for this assignment
         if ($isTeacher) {
             $submissions = AssignmentSubmission::where('assignment_id', $assignment->assignment_id)
-                ->with('student')
+                ->with(['student.user'])
                 ->orderBy('submitted_at', 'desc')
                 ->get();
         }
