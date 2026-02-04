@@ -852,7 +852,7 @@
             
             <!-- Tajweed Demo Player -->
             <div class="demo-player">
-                <div class="player-title" id="verseTitle">Loading Verse...</div>
+                <div class="player-title" id="verseTitle" style="font-size: 1.5rem; color: #000; font-weight: 700; margin-bottom: 15px;">Loading Verse...</div>
                 <div class="arabic-text" id="verseArabic" style="font-size: 1.8rem; margin: 20px 0; color: var(--primary-green); line-height: 2;">
                     <!-- Arabic text will be loaded here -->
                 </div>
@@ -872,10 +872,13 @@
                     <button class="player-btn" id="nextBtn" title="Next Verse">
                         <i class="fas fa-forward"></i>
                     </button>
+                    <button class="player-btn" id="volumeBtn" title="Volume">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
                 </div>
-                <audio id="quranAudio" controls preload="metadata" style="width: 100%; max-width: 500px; margin: 15px auto; display: block; border-radius: 25px;"></audio>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #666;" id="reciterInfo">Reciter: Mishary Rashid Alafasy</p>
-                <p style="margin-top: 5px; font-size: 0.85rem; color: #999;" id="loadingStatus">Loading audio...</p>
+                <audio id="quranAudio" preload="metadata" style="display: none;"></audio>
+                <input type="range" id="volumeSlider" min="0" max="100" value="100" style="width: 200px; margin: 10px auto; display: none;">
+                <p style="margin-top: 10px; font-size: 1.1rem; color: #000; font-weight: 600;" id="reciterInfo">Reciter: Mishary Rashid Alafasy</p>
             </div>
         </div>
         
@@ -1356,9 +1359,6 @@
         // Function to get a random verse from Quran
         async function loadRandomVerse() {
             try {
-                loadingStatus.textContent = 'Loading verse...';
-                loadingStatus.style.color = '#999';
-                
                 console.log('Loading random verse...');
                 
                 // Get random surah (1-114)
@@ -1417,8 +1417,6 @@
                 
                 audioElement.src = currentAudioUrl;
                 console.log('Audio URL set:', currentAudioUrl);
-                loadingStatus.textContent = 'Audio ready! Click play or use controls below.';
-                loadingStatus.style.color = '#0a5c36';
                 
                 console.log('Verse loaded successfully!');
                 
@@ -1432,8 +1430,7 @@
                 const fallbackUrl = 'https://everyayah.com/data/Alafasy_64kbps/001001.mp3';
                 audioElement.src = fallbackUrl;
                 currentAudioUrl = fallbackUrl;
-                loadingStatus.textContent = 'Error loading random verse. Showing Al-Fatiha.';
-                loadingStatus.style.color = '#e74c3c';
+                console.warn('Error loading verse, showing Al-Fatiha');
             }
         }
         
@@ -1442,15 +1439,10 @@
             if (audioElement.src) {
                 audioElement.play().catch(e => {
                     console.error('Play error:', e);
-                    loadingStatus.textContent = 'Error playing audio. Please try again.';
-                    loadingStatus.style.color = '#e74c3c';
                 });
                 isPlaying = true;
                 playBtn.style.display = 'none';
                 pauseBtn.style.display = 'inline-block';
-            } else {
-                loadingStatus.textContent = 'No audio loaded yet.';
-                loadingStatus.style.color = '#e74c3c';
             }
         });
         
@@ -1508,6 +1500,26 @@
             isPlaying = false;
             playBtn.style.display = 'inline-block';
             pauseBtn.style.display = 'none';
+        });
+        
+        // Volume button and slider
+        const volumeBtn = document.getElementById('volumeBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        
+        volumeBtn.addEventListener('click', function() {
+            volumeSlider.style.display = volumeSlider.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        volumeSlider.addEventListener('input', function() {
+            audioElement.volume = this.value / 100;
+            const icon = volumeBtn.querySelector('i');
+            if (this.value == 0) {
+                icon.className = 'fas fa-volume-mute';
+            } else if (this.value < 50) {
+                icon.className = 'fas fa-volume-down';
+            } else {
+                icon.className = 'fas fa-volume-up';
+            }
         });
         
         // Load initial verse when page loads

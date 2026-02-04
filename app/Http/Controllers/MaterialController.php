@@ -371,6 +371,26 @@ class MaterialController extends Controller
                                 $item->path = 'materials/' . $filename;
                             }
                         }
+                    } elseif ($itemData['type'] === 'file' && !empty($itemData['pdf_url'])) {
+                        // PDF from search result - download it
+                        try {
+                            $downloadedPath = $this->downloadPDF($itemData['pdf_url']);
+                            if ($downloadedPath) {
+                                $item->path = $downloadedPath;
+                                Log::info('PDF downloaded from search', [
+                                    'url' => $itemData['pdf_url'],
+                                    'path' => $downloadedPath
+                                ]);
+                            } else {
+                                Log::warning('PDF download failed, skipping item', [
+                                    'url' => $itemData['pdf_url']
+                                ]);
+                                continue; // Skip this item if download failed
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('PDF download error: ' . $e->getMessage());
+                            continue; // Skip this item
+                        }
                     } elseif ($itemData['type'] === 'youtube') {
                         $item->path = $itemData['youtube_link'] ?? null;
                         
@@ -570,6 +590,33 @@ class MaterialController extends Controller
                             if (move_uploaded_file($file->getPathname(), $fullPath)) {
                                 $item->path = 'materials/' . $filename;
                             }
+                        }
+                    } elseif ($itemData['type'] === 'file' && !empty($itemData['pdf_url'])) {
+                        // PDF from search result - download it
+                        try {
+                            $downloadedPath = $this->downloadPDF($itemData['pdf_url']);
+                            if ($downloadedPath) {
+                                // Delete old file if exists
+                                if ($item->path && !filter_var($item->path, FILTER_VALIDATE_URL)) {
+                                    $oldPath = storage_path('app/public/' . $item->path);
+                                    if (file_exists($oldPath)) {
+                                        unlink($oldPath);
+                                    }
+                                }
+                                $item->path = $downloadedPath;
+                                Log::info('PDF downloaded from search in update', [
+                                    'url' => $itemData['pdf_url'],
+                                    'path' => $downloadedPath
+                                ]);
+                            } else {
+                                Log::warning('PDF download failed in update, skipping item', [
+                                    'url' => $itemData['pdf_url']
+                                ]);
+                                continue;
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('PDF download error in update: ' . $e->getMessage());
+                            continue;
                         }
                     } elseif ($itemData['type'] === 'youtube') {
                         $item->path = $itemData['youtube_link'] ?? null;

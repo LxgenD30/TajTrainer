@@ -805,7 +805,21 @@ function addFromSearch(index) {
         console.log('[ADD] Type: PDF Document');
         document.getElementById(`type_document_${itemId}`).checked = true;
         toggleItemFields(itemId, 'document');
-        // Note: URL will be downloaded by backend when form is submitted
+        
+        // Add hidden field for PDF URL to be downloaded by backend
+        const documentField = document.getElementById(`fields_document_${itemId}`);
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = `items[${itemId}][pdf_url]`;
+        hiddenInput.value = result.url;
+        documentField.appendChild(hiddenInput);
+        
+        // Show indicator that PDF will be downloaded
+        const indicator = document.createElement('div');
+        indicator.style.cssText = 'margin-top: 10px; padding: 12px; background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 8px; color: #e74c3c; font-weight: 600;';
+        indicator.innerHTML = '<i class="fas fa-download"></i> PDF will be downloaded from search result';
+        documentField.appendChild(indicator);
+        
         console.log('[ADD] PDF will be auto-downloaded from:', result.url);
     } else {
         console.log('[ADD] Type: Document (general link)');
