@@ -475,8 +475,8 @@
         </div>
         
         <div class="header-actions">
-            <div style="display: flex; align-items: center; gap: 10px; background: rgba(41, 128, 185, 0.25); padding: 11px 15px; border-radius: 10px; border: 2px solid rgba(41, 128, 185, 0.4);">
-                <label style="color: #ffffff; font-size: 0.87rem; font-weight: 700; white-space: nowrap; margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+            <div style="display: flex; align-items: center; gap: 10px; background: #e67e22; padding: 11px 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(230, 126, 34, 0.4);">
+                <label style="color: #ffffff; font-size: 0.87rem; font-weight: 700; white-space: nowrap; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
                     📅 Due Date & Time *
                 </label>
                 <input type="datetime-local" id="dueDateInput" name="due_date_temp" value="{{ old('due_date', $assignment->due_date->format('Y-m-d\TH:i')) }}" required 
@@ -484,7 +484,7 @@
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-cancel" style="background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 2px solid rgba(231, 76, 60, 0.3);">
+                <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-cancel" style="background: #e74c3c; color: #ffffff; border: 2px solid #c0392b; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);">
                     Cancel
                 </a>
                 <button type="submit" form="assignmentForm" class="btn-submit">
