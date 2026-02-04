@@ -464,10 +464,20 @@ class MaterialController extends Controller
             if (!empty($validated['items']) && is_array($validated['items'])) {
                 Log::info('Processing material items', ['count' => count($validated['items'])]);
                 
+                // Log ALL files received
+                Log::info('All files in request', [
+                    'files' => $request->allFiles(),
+                    'has_items' => $request->hasFile('items'),
+                ]);
+                
                 foreach ($validated['items'] as $index => $itemData) {
                     Log::info('Processing item', [
                         'index' => $index,
                         'type' => $itemData['type'],
+                        'has_file' => $request->hasFile("items.{$index}.file"),
+                        'file_key_check' => "items.{$index}.file",
+                        'item_data_keys' => array_keys($itemData),
+                    ]);
                         'has_file' => $request->hasFile("items.{$index}.file"),
                         'has_pdf_url' => !empty($itemData['pdf_url']),
                         'pdf_url' => $itemData['pdf_url'] ?? null,
