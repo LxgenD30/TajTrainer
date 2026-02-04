@@ -76,21 +76,23 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: white;
-        color: #0a5c36;
+        background: linear-gradient(135deg, #d4af37, #f4d03f);
+        color: #2a2a2a;
         padding: 12px 24px;
         border-radius: 25px;
         text-decoration: none;
         font-weight: 700;
         font-size: 1rem;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+        border: 2px solid #2a2a2a;
     }
     
     .back-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-        color: #0a5c36;
+        box-shadow: 0 6px 16px rgba(212, 175, 55, 0.6);
+        background: linear-gradient(135deg, #f4d03f, #d4af37);
+        color: #2a2a2a;
     }
     
     .info-card {
@@ -137,9 +139,15 @@
 <div class="profile-banner">
     <div class="profile-header">
         <div style="display: flex; align-items: center; gap: 30px;">
-            <div class="profile-avatar">
-                {{ strtoupper(substr($student->user->name, 0, 1)) }}
-            </div>
+            @if($student->user->profile_picture)
+                <img src="{{ Storage::url($student->user->profile_picture) }}" 
+                     alt="{{ $student->user->name }}"
+                     style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255, 255, 255, 0.3); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);">
+            @else
+                <div class="profile-avatar">
+                    {{ strtoupper(substr($student->user->name, 0, 1)) }}
+                </div>
+            @endif
             <div class="profile-info">
                 <h1>{{ $student->user->name }}</h1>
                 <p><i class="fas fa-envelope"></i> {{ $student->user->email }}</p>
