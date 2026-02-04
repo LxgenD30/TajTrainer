@@ -213,6 +213,49 @@
         color: inherit;
     }
     
+    .category-selector {
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border: 3px solid #2a2a2a;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .category-selector::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .category-selector:hover::before {
+        left: 100%;
+    }
+    
+    .category-selector:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    
+    .category-selector:has(input:checked) {
+        background: linear-gradient(135deg, #0a5c36 0%, #1abc9c 100%);
+        color: white;
+        border-color: #0a5c36;
+        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.3);
+    }
+    
+    .category-selector:has(input:checked) label {
+        color: white;
+    }
+    
     .item-card {
         background: #f8f9fa;
         border: 2px solid #ddd;
@@ -481,22 +524,34 @@
                     </button>
                 </h2>
                 
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('cat1').click()">
-                        <input type="radio" name="category" id="cat1" value="Madd Rules" required style="width: 18px; height: 18px; cursor: pointer;">
-                        <label for="cat1" style="cursor: pointer; margin: 0; font-weight: 500; flex: 1;">Madd Rules</label>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div class="category-selector" onclick="document.getElementById('cat1').click()">
+                        <input type="radio" name="category" id="cat1" value="Madd Rules" required style="display: none;">
+                        <label for="cat1" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
+                            <i class="fas fa-circle" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
+                            <span style="font-weight: 700; flex: 1;">Madd Rules</span>
+                        </label>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('cat2').click()">
-                        <input type="radio" name="category" id="cat2" value="Idgham Billa Ghunnah" required style="width: 18px; height: 18px; cursor: pointer;">
-                        <label for="cat2" style="cursor: pointer; margin: 0; font-weight: 500; flex: 1;">Idgham Billa Ghunnah</label>
+                    <div class="category-selector" onclick="document.getElementById('cat2').click()">
+                        <input type="radio" name="category" id="cat2" value="Idgham Billa Ghunnah" required style="display: none;">
+                        <label for="cat2" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
+                            <i class="fas fa-wave-square" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
+                            <span style="font-weight: 700; flex: 1;">Idgham Billa Ghunnah</span>
+                        </label>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('cat3').click()">
-                        <input type="radio" name="category" id="cat3" value="Idgham Bi Ghunnah" required style="width: 18px; height: 18px; cursor: pointer;">
-                        <label for="cat3" style="cursor: pointer; margin: 0; font-weight: 500; flex: 1;">Idgham Bi Ghunnah</label>
+                    <div class="category-selector" onclick="document.getElementById('cat3').click()">
+                        <input type="radio" name="category" id="cat3" value="Idgham Bi Ghunnah" required style="display: none;">
+                        <label for="cat3" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
+                            <i class="fas fa-water" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
+                            <span style="font-weight: 700; flex: 1;">Idgham Bi Ghunnah</span>
+                        </label>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('cat4').click()">
-                        <input type="radio" name="category" id="cat4" value="Others" required style="width: 18px; height: 18px; cursor: pointer;">
-                        <label for="cat4" style="cursor: pointer; margin: 0; font-weight: 500; flex: 1;">Others</label>
+                    <div class="category-selector" onclick="document.getElementById('cat4').click()">
+                        <input type="radio" name="category" id="cat4" value="Others" required style="display: none;">
+                        <label for="cat4" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
+                            <i class="fas fa-ellipsis-h" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
+                            <span style="font-weight: 700; flex: 1;">Others</span>
+                        </label>
                     </div>
                 </div>
                 

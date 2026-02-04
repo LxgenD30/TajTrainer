@@ -206,51 +206,9 @@
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     
-    .search-container {
-        margin-bottom: 20px;
-    }
-    
-    .search-bar {
-        position: relative;
-        max-width: 600px;
-    }
-    
-    .search-bar input {
-        width: 100%;
-        padding: 14px 50px 14px 20px;
-        border: 3px solid #2a2a2a;
-        border-radius: 30px;
-        font-size: 1rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        background: white;
-        font-family: 'Cairo', sans-serif;
-    }
-    
-    .search-bar input:focus {
-        outline: none;
+    #materialSearch:focus {
         border-color: #0a5c36;
         box-shadow: 0 5px 15px rgba(10, 92, 54, 0.2);
-    }
-    
-    .search-bar button {
-        position: absolute;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 25px;
-        cursor: pointer;
-        font-weight: 700;
-        transition: all 0.3s ease;
-    }
-    
-    .search-bar button:hover {
-        box-shadow: 0 4px 12px rgba(10, 92, 54, 0.3);
-        transform: translateY(-50%) scale(1.05);
     }
 </style>
 
@@ -281,20 +239,23 @@
 
     <!-- Category Filters -->
     <div class="category-filters">
-        <div class="search-container">
-            <form action="{{ route('materials.index') }}" method="GET" class="search-bar">
-                <input type="hidden" name="category" value="{{ request('category') }}">
-                <input type="text" name="search" placeholder="Search materials by title or description..." value="{{ request('search') }}">
-                <button type="submit">
-                    <i class="fas fa-search"></i> Search
-                </button>
-            </form>
-        </div>
-        
         <h3>
             <i class="fas fa-filter"></i>
             Filter by Category
         </h3>
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
+            <div class="search-wrapper" style="position: relative; flex: 1; min-width: 300px; max-width: 500px;">
+                <i class="fas fa-search" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #0a5c36; z-index: 10;"></i>
+                <input 
+                    type="text" 
+                    id="materialSearch" 
+                    placeholder="Search materials..." 
+                    onkeyup="filterMaterials()"
+                    value="{{ request('search') }}"
+                    style="width: 100%; padding: 14px 20px 14px 50px; border: 3px solid #2a2a2a; border-radius: 30px; font-size: 1rem; font-weight: 600; background: white; font-family: 'Cairo', sans-serif; outline: none; transition: all 0.3s ease;"
+                >
+            </div>
+        </div>
         <div class="filter-buttons">
             <a href="{{ route('materials.index', array_filter(['search' => request('search')])) }}" 
                class="filter-btn {{ !request('category') ? 'active' : '' }}">
@@ -333,7 +294,11 @@
         <!-- Materials Container -->
         <div id="materialsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; margin-bottom: 30px;">
             @foreach($materials as $material)
-                <div class="material-card" style="background: white; border-radius: 20px; overflow: hidden; border: 3px solid #e0e0e0; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);"
+                <div class="material-card" 
+                     data-title="{{ strtolower($material->title) }}"
+                     data-description="{{ strtolower($material->description ?? '') }}"
+                     data-category="{{ strtolower($material->category ?? '') }}"
+                     style="background: white; border-radius: 20px; overflow: hidden; border: 3px solid #e0e0e0; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);"
                      onmouseover="this.style.borderColor='#0a5c36'; this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(10, 92, 54, 0.15)'"
                      onmouseout="this.style.borderColor='#e0e0e0'; this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 15px rgba(0, 0, 0, 0.05)'">
                     
@@ -602,6 +567,26 @@
         console.log('Saved view preference:', savedView);
         setView(savedView);
     });
+    
+    // Live search filter function
+    function filterMaterials() {
+        const searchInput = document.getElementById('materialSearch').value.toLowerCase().trim();
+        const cards = document.querySelectorAll('.material-card');
+        let visibleCount = 0;
+        
+        cards.forEach(card => {
+            const title = card.getAttribute('data-title') || '';
+            const description = card.getAttribute('data-description') || '';
+            const category = card.getAttribute('data-category') || '';
+            
+            if (title.includes(searchInput) || description.includes(searchInput) || category.includes(searchInput)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
     
     console.log('setView function defined:', typeof setView);
 </script>
