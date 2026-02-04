@@ -310,9 +310,9 @@
         @endif
         
         @if($assignment->expected_recitation)
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(0, 0, 0, 0.2);">
                 <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">📝 Expected Arabic Text:</div>
-                <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #d4af37; font-family: 'Amiri', serif;">
+                <div style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #d4af37; font-family: 'Amiri', serif;">
                     {{ $assignment->expected_recitation }}
                 </div>
             </div>
@@ -408,7 +408,6 @@
             </h4>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- Submitted Students -->
                 <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #27ae60; border-radius: 12px; padding: 20px;">
                     <h5 style="color: #27ae60; font-size: 1.2rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-check-circle"></i> Submitted ({{ $submissions->count() }})
@@ -434,7 +433,6 @@
                     </div>
                 </div>
 
-                <!-- Not Submitted Students -->
                 <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 12px; padding: 20px;">
                     <h5 style="color: #e74c3c; font-size: 1.2rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-exclamation-circle"></i> Due ({{ $notSubmittedStudents->count() }})
@@ -455,6 +453,12 @@
                         @endif
                     </div>
                 </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-back" style="font-size: 1.1rem; padding: 12px 25px;">
+                    ← Back to Classroom
+                </a>
             </div>
         </div>
     @elseif(auth()->user()->role_id == 2 && isset($submission))
@@ -538,14 +542,8 @@
             @endif
         </div>
     @endif
-    </div> <!-- End RIGHT COLUMN -->
+    </div>
     
-</div> <!-- End 2-column grid -->
+</div> 
 
-<!-- Back Button (centered below) -->
-<div style="text-align: center; margin-top: 30px;">
-    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-back" style="font-size: 1.25rem; padding: 14px 30px;">
-        ← Back to Classroom
-    </a>
-</div>
 @endsection
