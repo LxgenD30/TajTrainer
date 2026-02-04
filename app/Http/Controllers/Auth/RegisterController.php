@@ -87,12 +87,24 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        return Validator::make($data, [
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:role,id'],
-        ]);
+            'phone_number' => ['required', 'string', 'max:20'],
+        ];
+
+        // Add role-specific validation
+        if (isset($data['role_id'])) {
+            if ($data['role_id'] == 2) { // Student
+                $rules['current_level'] = ['required', 'string', 'in:Beginner,Intermediate,Advanced,Expert'];
+            } elseif ($data['role_id'] == 3) { // Teacher
+                $rules['title'] = ['required', 'string', 'in:Ustaz,Ustazah,Sheikh'];
+            }
+        }
+
+        return Validator::make($data, $rules);
     }
 
     /**
@@ -109,8 +121,8 @@ class RegisterController extends Controller
             'role_id' => $data['role_id'],
         ]);
 
-        // Create corresponding Student or Teacher record with name
-        $this->createRoleSpecificRecord($user, $data['role_id'], $data['name']);
+        // Create corresponding Student or Teacher record with name and role-specific data
+        $this->createRoleSpecificRecord($user, $data);
 
         return $user;
     }
@@ -119,28 +131,31 @@ class RegisterController extends Controller
      * Create role-specific records (Student or Teacher)
      *
      * @param  \App\Models\User  $user
-     * @param  int  $roleId
-     * @param  string  $name
+     * @param  array  $data
      * @return void
      */
-    protected function createRoleSpecificRecord($user, $roleId, $name)
+    protected function createRoleSpecificRecord($user, $data)
     {
+        $roleId = $data['role_id'];
+        
         switch ($roleId) {
             case 2: // Student
                 \App\Models\Student::create([
                     'id' => $user->id,
-                    'name' => $name,
+                    'name' => $data['name'],
                     'biodata' => null,
-                    'current_level' => 'Beginner',
+                    'current_level' => $data['current_level'] ?? 'Beginner',
+                    'phone_number' => $data['phone_number'],
                 ]);
                 break;
             
             case 3: // Teacher
                 \App\Models\Teacher::create([
                     'id' => $user->id,
-                    'name' => $name,
+                    'name' => $data['name'],
                     'biodata' => null,
-                    'title' => 'Teacher', // Default title
+                    'title' => $data['title'] ?? 'Teacher',
+                    'phone_number' => $data['phone_number'],
                 ]);
                 break;
         }

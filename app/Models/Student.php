@@ -15,6 +15,7 @@ class Student extends Model
         'name',
         'biodata',
         'current_level',
+        'phone_number',
     ];
 
     public function user()
