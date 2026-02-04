@@ -1137,7 +1137,7 @@ function addExistingItem(item) {
         <div id="fields_images_${itemCounter}" class="${!(isImage || (isFile && hasImageExt)) ? 'hidden' : ''}">
             <div class="form-group">
                 <label>Upload Images ${item.path && (isImage || hasImageExt) ? '(leave empty to keep current)' : ''}</label>
-                <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
+                <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*" ${!(isImage || (isFile && hasImageExt)) ? 'disabled' : ''}>
                 ${(isImage || (isFile && hasImageExt)) ? fileDisplay : ''}
             </div>
         </div>
@@ -1145,7 +1145,7 @@ function addExistingItem(item) {
         <div id="fields_document_${itemCounter}" class="${!(isFile && !hasImageExt && !isImage) ? 'hidden' : ''}">
             <div class="form-group">
                 <label>Upload Document ${item.path && isFile && !hasImageExt ? '(leave empty to keep current)' : ''}</label>
-                <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".pdf,.doc,.docx">
+                <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".pdf,.doc,.docx" ${!(isFile && !hasImageExt && !isImage) ? 'disabled' : ''}>
                 ${isFile && !hasImageExt && !isImage ? fileDisplay : ''}
             </div>
         </div>
