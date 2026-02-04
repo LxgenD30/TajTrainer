@@ -800,17 +800,26 @@ function addFromSearch(index) {
         document.getElementById(`type_youtube_${itemId}`).checked = true;
         toggleItemFields(itemId, 'youtube');
         document.querySelector(`[name="items[${itemId}][youtube_link]"]`).value = result.url;
+    } else if (result.is_pdf) {
+        console.log('[ADD] Type: PDF Document');
+        document.getElementById(`type_document_${itemId}`).checked = true;
+        toggleItemFields(itemId, 'document');
+        // Note: URL will be downloaded by backend when form is submitted
+        console.log('[ADD] PDF will be auto-downloaded from:', result.url);
     } else {
-        console.log('[ADD] Type: URL', result.is_pdf ? '(PDF will be auto-downloaded)' : '');
-        document.getElementById(`type_url_${itemId}`).checked = true;
-        toggleItemFields(itemId, 'url');
-        document.querySelector(`[name="items[${itemId}][url]"]`).value = result.url;
+        console.log('[ADD] Type: Document (general link)');
+        document.getElementById(`type_document_${itemId}`).checked = true;
+        toggleItemFields(itemId, 'document');
+        console.log('[ADD] Link:', result.url);
     }
     
     document.querySelector(`[name="items[${itemId}][title]"]`).value = result.title;
     document.querySelector(`[name="items[${itemId}][description]"]`).value = result.content.substring(0, 200);
     
-    showCustomAlert('Resource added to material', 'success');
+    showCustomAlert('Resource added to material items', 'success');
+    
+    // Update Generate Information button state
+    updateGenerateButtonState();
     
     // Scroll to the new item
     document.querySelector(`[data-item-id="${itemId}"]`).scrollIntoView({ behavior: 'smooth', block: 'center' });
