@@ -608,14 +608,6 @@
     </div>
     @endif
     
-    @if(session('error'))
-    <div class="error-alert">
-        <div class="error-title">
-            <span>⚠️</span> {{ session('error') }}
-        </div>
-    </div>
-    @endif
-    
     @if($assignment->is_voice_submission)
     <div class="content-card">
         @if($assignment->surah && $verses)

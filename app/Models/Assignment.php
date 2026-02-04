@@ -8,6 +8,14 @@ class Assignment extends Model
 {
     protected $primaryKey = 'assignment_id';
     
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        return 'assignment_id';
+    }
+    
     protected $fillable = [
         'material_id',
         'class_id',

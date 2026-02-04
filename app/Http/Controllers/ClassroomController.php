@@ -211,4 +211,28 @@ class ClassroomController extends Controller
 
         return redirect()->route('classroom.edit', $classroom->id)->with('success', $message);
     }
+    
+    /**
+     * Allow student to leave a classroom
+     */
+    public function leave(Classroom $classroom)
+    {
+        $user = Auth::user();
+        
+        // Ensure user is a student
+        if ($user->role_id != 2) {
+            abort(403, 'Only students can leave classrooms.');
+        }
+        
+        $student = \App\Models\Student::find($user->id);
+        
+        if (!$student || !$student->classrooms()->where('class_id', $classroom->id)->exists()) {
+            return redirect()->route('student.classes')->with('error', 'You are not enrolled in this classroom.');
+        }
+        
+        // Remove enrollment
+        $student->classrooms()->detach($classroom->id);
+        
+        return redirect()->route('student.classes')->with('success', 'You have successfully left the classroom.');
+    }
 }

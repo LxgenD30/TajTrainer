@@ -114,6 +114,8 @@ Route::middleware('auth')->group(function () {
         ->name('classroom.regenerate');
     Route::delete('/classes/{classroom}', [App\Http\Controllers\ClassroomController::class, 'destroy'])
         ->name('classroom.destroy');
+    Route::post('/classes/{classroom}/leave', [App\Http\Controllers\ClassroomController::class, 'leave'])
+        ->name('classroom.leave');
     
     // ===========================
     // ASSIGNMENT ROUTES

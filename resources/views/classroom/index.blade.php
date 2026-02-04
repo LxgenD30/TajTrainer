@@ -231,20 +231,6 @@
 </style>
 
 <div style="padding: 0;">
-    @if(session('success'))
-        <div class="alert-success">
-            <span style="font-size: 1.8rem;">✓</span>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert-error">
-            <span style="font-size: 1.8rem;">⚠</span>
-            <span>{{ session('error') }}</span>
-        </div>
-    @endif
-
     @if($errors->any())
         <div class="alert-error">
             <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -257,6 +243,31 @@
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
+            </div>
+        </div>
+    @endif
+
+    <!-- Search and Filter Controls -->
+    @if($student->classrooms->isNotEmpty())
+        <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <input 
+                    type="text" 
+                    id="classSearch" 
+                    placeholder="🔍 Search classes by name or teacher..."
+                    style="width: 100%; padding: 15px 20px; border: 2px solid #0a5c36; border-radius: 12px; font-size: 1rem; color: #064e32; background-color: #ffffff; box-shadow: 0 2px 8px rgba(10, 92, 54, 0.1); transition: all 0.3s ease;"
+                    onkeyup="filterClasses()"
+                >
+            </div>
+            <div>
+                <select 
+                    id="classSort" 
+                    style="padding: 15px 20px; border: 2px solid #0a5c36; border-radius: 12px; font-size: 1rem; color: #064e32; background-color: #ffffff; box-shadow: 0 2px 8px rgba(10, 92, 54, 0.1); cursor: pointer; min-width: 180px; transition: all 0.3s ease;"
+                    onchange="sortClasses()"
+                >
+                    <option value="newest">📅 Newest First</option>
+                    <option value="oldest">⏰ Oldest First</option>
+                </select>
             </div>
         </div>
     @endif
@@ -281,17 +292,25 @@
                     <p style="color: #666; font-size: 1.1rem; line-height: 1.6;">Use the access code from your teacher to enroll in your first class</p>
                 </div>
             @else
-                <div style="display: grid; gap: 20px;">
+                <div style="display: grid; gap: 20px;" id="classesContainer">
                     @foreach($student->classrooms as $classroom)
-                        <div class="class-card">
+                        <div class="class-card" data-classroom-name="{{ strtolower($classroom->class_name) }}" data-teacher-name="{{ strtolower($classroom->teacher->name ?? '') }}" data-enrolled-date="{{ $classroom->pivot->created_at ?? now() }}">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
                                 <div style="flex: 1;">
                                     <h3 style="color: #0a5c36; font-size: 1.4rem; margin-bottom: 12px; font-weight: 700;">{{ $classroom->class_name }}</h3>
                                     <p style="color: #666; margin-bottom: 15px; line-height: 1.6; font-size: 1rem;">{{ $classroom->description ?? 'No description available' }}</p>
                                 </div>
-                                <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-view-class">
-                                    View Class <i class="fas fa-arrow-right"></i>
-                                </a>
+                                <div style="display: flex; gap: 10px;">
+                                    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-view-class">
+                                        View Class <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                    <form method="POST" action="{{ route('classroom.leave', $classroom->id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to leave {{ $classroom->class_name }}? You will need a new access code to rejoin.');">
+                                        @csrf
+                                        <button type="submit" style="padding: 12px 24px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 1rem; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(231, 76, 60, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(231, 76, 60, 0.3)';">
+                                            <i class="fas fa-sign-out-alt"></i> Leave Class
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
 
                             <div style="display: flex; flex-wrap: wrap; gap: 12px; padding-top: 15px; border-top: 2px solid #f5f5dc;">
@@ -369,4 +388,96 @@
 
 <!-- Font Awesome (if not already included in layout) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script>
+function filterClasses() {
+    const searchInput = document.getElementById('classSearch').value.toLowerCase();
+    const classCards = document.querySelectorAll('.class-card');
+    let visibleCount = 0;
+    
+    classCards.forEach(card => {
+        const className = card.getAttribute('data-classroom-name') || '';
+        const teacherName = card.getAttribute('data-teacher-name') || '';
+        
+        if (className.includes(searchInput) || teacherName.includes(searchInput)) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Update count display
+    const countElement = document.querySelector('.section-header p');
+    if (countElement) {
+        const total = classCards.length;
+        if (visibleCount === total) {
+            countElement.textContent = `${total} ${total === 1 ? 'Class' : 'Classes'} Active`;
+        } else {
+            countElement.textContent = `${visibleCount} of ${total} ${total === 1 ? 'Class' : 'Classes'} (filtered)`;
+        }
+    }
+}
+
+function sortClasses() {
+    const sortValue = document.getElementById('classSort').value;
+    const container = document.getElementById('classesContainer');
+    const cards = Array.from(container.querySelectorAll('.class-card'));
+    
+    cards.sort((a, b) => {
+        const dateA = new Date(a.getAttribute('data-enrolled-date'));
+        const dateB = new Date(b.getAttribute('data-enrolled-date'));
+        
+        if (sortValue === 'newest') {
+            return dateB - dateA; // Newest first
+        } else {
+            return dateA - dateB; // Oldest first
+        }
+    });
+    
+    // Clear container and re-append sorted cards
+    container.innerHTML = '';
+    cards.forEach(card => container.appendChild(card));
+    
+    // Save preference to localStorage
+    localStorage.setItem('classSort', sortValue);
+}
+
+// Load sort preference on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedSort = localStorage.getItem('classSort');
+    if (savedSort) {
+        document.getElementById('classSort').value = savedSort;
+        sortClasses();
+    }
+    
+    // Add focus effect to search input
+    const searchInput = document.getElementById('classSearch');
+    if (searchInput) {
+        searchInput.addEventListener('focus', function() {
+            this.style.borderColor = '#d4af37';
+            this.style.boxShadow = '0 4px 12px rgba(212, 175, 55, 0.3)';
+        });
+        
+        searchInput.addEventListener('blur', function() {
+            this.style.borderColor = '#0a5c36';
+            this.style.boxShadow = '0 2px 8px rgba(10, 92, 54, 0.1)';
+        });
+    }
+    
+    // Add hover effect to sort dropdown
+    const sortSelect = document.getElementById('classSort');
+    if (sortSelect) {
+        sortSelect.addEventListener('focus', function() {
+            this.style.borderColor = '#d4af37';
+            this.style.boxShadow = '0 4px 12px rgba(212, 175, 55, 0.3)';
+        });
+        
+        sortSelect.addEventListener('blur', function() {
+            this.style.borderColor = '#0a5c36';
+            this.style.boxShadow = '0 2px 8px rgba(10, 92, 54, 0.1)';
+        });
+    }
+});
+</script>
 @endsection
