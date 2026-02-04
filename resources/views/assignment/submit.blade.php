@@ -81,6 +81,19 @@
         gap: 6px;
     }
     
+    .meta-item-highlight {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #d4af37, #f1c40f);
+        color: #0a5c36;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    }
+    
     .info-card {
         background: white;
         border-radius: 15px;
@@ -372,18 +385,20 @@
     <!-- LEFT COLUMN - Assignment Info -->
     <div class="assignment-info-column">
         <div class="assignment-header-card">
-            <a href="{{ url()->previous() }}" class="back-link">
-                <i class="fas fa-arrow-left"></i>
-                Back to Classroom
-            </a>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                <h1 style="margin: 0; flex: 1;">{{ $assignment->surah ? $assignment->surah . ' ' . $assignment->start_verse . '-' . ($assignment->end_verse ?? $assignment->start_verse) : 'Assignment' }}</h1>
+                <a href="{{ url()->previous() }}" class="back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Classroom
+                </a>
+            </div>
             
-            <h1 style="margin-top: 15px;">{{ $assignment->surah ? $assignment->surah . ' ' . $assignment->start_verse . '-' . ($assignment->end_verse ?? $assignment->start_verse) : 'Assignment' }}</h1>
             <div class="assignment-meta">
-                <div class="meta-item">
+                <div class="meta-item-highlight">
                     <i class="fas fa-calendar"></i>
                     Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y g:i A') }}
                 </div>
-                <div class="meta-item">
+                <div class="meta-item-highlight">
                     <i class="fas fa-star"></i>
                     {{ $assignment->total_marks }} Points
                 </div>

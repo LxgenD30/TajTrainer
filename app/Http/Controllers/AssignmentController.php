@@ -52,7 +52,7 @@ class AssignmentController extends Controller
             'instructions' => 'nullable|string',
             'total_marks' => 'required|integer|min:1',
             'is_voice_submission' => 'required|boolean',
-            'tajweed_rules' => 'required|string|in:Madd,Idgham Bi Ghunnah,Idgham Bila Ghunnah',
+            'tajweed_rules' => 'required|string|in:Madd,Idgham Bi Ghunnah,Idgham Billla Ghunnah',
         ]);
 
         // Verify classroom ownership
