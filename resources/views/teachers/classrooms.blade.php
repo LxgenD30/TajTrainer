@@ -409,40 +409,45 @@
         <h1><i class="fas fa-chalkboard-teacher"></i> My Classrooms</h1>
         <p>Create and manage virtual classrooms for your Tajweed students</p>
     </div>
-    <a href="{{ route('classroom.create') }}" class="btn-create">
-        <i class="fas fa-plus-circle"></i> Create New Class
-    </a>
+    
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        @if($classrooms->count() > 0)
+            <!-- Search and Filter Controls -->
+            <div class="filter-controls" style="margin-bottom: 0;">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input 
+                        type="text" 
+                        id="classroomSearch" 
+                        class="search-input"
+                        placeholder="Search classrooms..."
+                        onkeyup="filterClassrooms()"
+                    >
+                </div>
+                
+                <div class="filter-wrapper">
+                    <i class="fas fa-filter"></i>
+                    <select id="classroomSort" class="filter-select" onchange="sortClassrooms()">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="students">Most Students</option>
+                        <option value="assignments">Most Assignments</option>
+                    </select>
+                </div>
+                
+                <div style="color: white; font-weight: 600; font-size: 1.05rem;">
+                    <span id="classCount">{{ $classrooms->count() }}</span> {{ $classrooms->count() === 1 ? 'Classroom' : 'Classrooms' }}
+                </div>
+            </div>
+        @endif
+        
+        <a href="{{ route('classroom.create') }}" class="btn-create">
+            <i class="fas fa-plus-circle"></i> Create New Class
+        </a>
+    </div>
 </div>
 
-<!-- Search and Filter Controls -->
 @if($classrooms->count() > 0)
-    <div class="filter-controls">
-        <div class="search-wrapper">
-            <i class="fas fa-search"></i>
-            <input 
-                type="text" 
-                id="classroomSearch" 
-                class="search-input"
-                placeholder="Search classrooms..."
-                onkeyup="filterClassrooms()"
-            >
-        </div>
-        
-        <div class="filter-wrapper">
-            <i class="fas fa-filter"></i>
-            <select id="classroomSort" class="filter-select" onchange="sortClassrooms()">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="students">Most Students</option>
-                <option value="assignments">Most Assignments</option>
-            </select>
-        </div>
-        
-        <div style="margin-left: auto; color: #666; font-weight: 600; font-size: 1.05rem;">
-            <span id="classCount">{{ $classrooms->count() }}</span> {{ $classrooms->count() === 1 ? 'Classroom' : 'Classrooms' }}
-        </div>
-    </div>
-    
     <div class="classrooms-grid" id="classroomsContainer">
         @foreach($classrooms as $classroom)
             <div class="classroom-card" 
