@@ -916,22 +916,22 @@
                     material.items.forEach(item => {
                         let badgeClass = 'badge-file';
                         let icon = '📄';
-                        if (item.item_type === 'image') {
+                        if (item.type === 'image') {
                             badgeClass = 'badge-image';
                             icon = '🖼️';
-                        } else if (item.item_type === 'youtube') {
+                        } else if (item.type === 'youtube') {
                             badgeClass = 'badge-youtube';
                             icon = '🎥';
-                        } else if (item.item_type === 'url') {
+                        } else if (item.type === 'url') {
                             badgeClass = 'badge-url';
                             icon = '🔗';
                         }
                         
                         html += `<div class="material-item">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <span class="item-badge ${badgeClass}">${icon} ${item.item_type.toUpperCase()}</span>
+                                <span class="item-badge ${badgeClass}">${icon} ${item.type.toUpperCase()}</span>
                                 <span style="flex: 1; color: #000; font-weight: 500;">${item.title}</span>
-                                <button type="button" class="btn-view" onclick="viewMaterialItem(${material.material_id}, ${item.item_id}, '${item.item_type}')">
+                                <button type="button" class="btn-view" onclick="viewMaterialItem(${material.material_id}, ${item.item_id}, '${item.type}')">
                                     👁️ View
                                 </button>
                             </div>
@@ -945,6 +945,13 @@
                 
                 previewContent.innerHTML = html;
                 materialPreview.style.display = 'block';
+            }
+        });
+
+        // Trigger preview on page load if material is already selected
+        document.addEventListener('DOMContentLoaded', function() {
+            if (materialSelect.value) {
+                materialSelect.dispatchEvent(new Event('change'));
             }
         });
 
