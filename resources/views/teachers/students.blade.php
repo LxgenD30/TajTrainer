@@ -117,9 +117,15 @@
                     
                     <!-- Student Header -->
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f5f5f5;">
-                        <div class="student-avatar">
-                            {{ strtoupper(substr($student->user->name, 0, 1)) }}
-                        </div>
+                        @if($student->user->profile_picture)
+                            <img src="{{ Storage::url($student->user->profile_picture) }}" 
+                                 alt="{{ $student->user->name }}"
+                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; box-shadow: 0 5px 15px rgba(10, 92, 54, 0.3); border: 2px solid #2a2a2a;">
+                        @else
+                            <div class="student-avatar">
+                                {{ strtoupper(substr($student->user->name, 0, 1)) }}
+                            </div>
+                        @endif
                         <div style="flex: 1; min-width: 0;">
                             <h3 class="student-name" style="margin: 0 0 5px 0;">
                                 {{ $student->user->name }}
