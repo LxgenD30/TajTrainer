@@ -873,8 +873,9 @@
                         <i class="fas fa-forward"></i>
                     </button>
                 </div>
-                <audio id="quranAudio" style="display: none;"></audio>
-                <p style="margin-top: 15px; font-size: 0.9rem; color: #666;" id="reciterInfo">Reciter: Mishary Rashid Alafasy</p>
+                <audio id="quranAudio" controls preload="metadata" style="width: 100%; max-width: 500px; margin: 15px auto; display: block; border-radius: 25px;"></audio>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #666;" id="reciterInfo">Reciter: Mishary Rashid Alafasy</p>
+                <p style="margin-top: 5px; font-size: 0.85rem; color: #999;" id="loadingStatus">Loading audio...</p>
             </div>
         </div>
         
@@ -1349,10 +1350,14 @@
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
         const nextBtn = document.getElementById('nextBtn');
+        const loadingStatus = document.getElementById('loadingStatus');
         
         // Function to get a random verse from Quran
         async function loadRandomVerse() {
             try {
+                loadingStatus.textContent = 'Loading verse...';
+                loadingStatus.style.color = '#999';
+                
                 // Get random surah (1-114) and ayah
                 const randomSurah = Math.floor(Math.random() * 114) + 1;
                 
@@ -1363,14 +1368,17 @@
                 
                 const randomAyah = Math.floor(Math.random() * maxAyah) + 1;
                 
-                // Fetch verse details
-                const verseResponse = await fetch(`https://api.quran.com/api/v4/verses/by_key/${randomSurah}:${randomAyah}?language=en&words=false&translations=131&audio=7`);
+                // Construct verse key for audio
+                const verseKey = `${randomSurah}:${randomAyah}`;
+                
+                // Fetch verse details with translation
+                const verseResponse = await fetch(`https://api.quran.com/api/v4/verses/by_key/${verseKey}?language=en&words=false&translations=131`);
                 const verseData = await verseResponse.json();
                 
                 currentVerse = verseData.verse;
                 
                 // Update UI
-                document.getElementById('verseTitle').textContent = `${surahInfo.chapter.name_simple} (${randomSurah}:${randomAyah})`;
+                document.getElementById('verseTitle').textContent = `${surahInfo.chapter.name_simple} (${verseKey})`;
                 document.getElementById('verseArabic').textContent = currentVerse.text_uthmani;
                 
                 // Get translation
@@ -1378,26 +1386,57 @@
                     document.getElementById('verseTranslation').textContent = currentVerse.translations[0].text;
                 }
                 
-                // Set audio source (Mishary Rashid Alafasy - reciter 7)
-                if (currentVerse.audio && currentVerse.audio.url) {
-                    audioElement.src = currentVerse.audio.url;
+                // Fetch audio recitations
+                const audioResponse = await fetch(`https://api.quran.com/api/v4/recitations/7/by_ayah/${verseKey}`);
+                const audioData = await audioResponse.json();
+                
+                console.log('Audio data:', audioData);
+                
+                // Set audio source - using direct CDN URL format
+                if (audioData.audio_files && audioData.audio_files.length > 0) {
+                    const audioUrl = audioData.audio_files[0].url;
+                    console.log('Setting audio URL:', audioUrl);
+                    audioElement.src = audioUrl;
+                    loadingStatus.textContent = 'Audio ready! Click play or use controls below.';
+                    loadingStatus.style.color = '#0a5c36';
+                } else {
+                    // Fallback: construct URL directly (Mishary Alafasy - recitation 7)
+                    const paddedSurah = String(randomSurah).padStart(3, '0');
+                    const paddedAyah = String(randomAyah).padStart(3, '0');
+                    const fallbackUrl = `https://verses.quran.com/Alafasy/mp3/${paddedSurah}${paddedAyah}.mp3`;
+                    console.log('Using fallback URL:', fallbackUrl);
+                    audioElement.src = fallbackUrl;
+                    loadingStatus.textContent = 'Audio ready! Click play or use controls below.';
+                    loadingStatus.style.color = '#0a5c36';
                 }
                 
             } catch (error) {
                 console.error('Error loading verse:', error);
-                document.getElementById('verseTitle').textContent = 'Error loading verse';
+                document.getElementById('verseTitle').textContent = 'Al-Fatiha (1:1)';
                 document.getElementById('verseArabic').textContent = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ';
                 document.getElementById('verseTranslation').textContent = 'In the name of Allah, the Most Gracious, the Most Merciful';
+                
+                // Fallback audio - Al-Fatiha verse 1
+                audioElement.src = 'https://verses.quran.com/Alafasy/mp3/001001.mp3';
+                loadingStatus.textContent = 'Error loading random verse. Showing Al-Fatiha.';
+                loadingStatus.style.color = '#e74c3c';
             }
         }
         
         // Play button
         playBtn.addEventListener('click', function() {
             if (audioElement.src) {
-                audioElement.play();
+                audioElement.play().catch(e => {
+                    console.error('Play error:', e);
+                    loadingStatus.textContent = 'Error playing audio. Please try again.';
+                    loadingStatus.style.color = '#e74c3c';
+                });
                 isPlaying = true;
                 playBtn.style.display = 'none';
                 pauseBtn.style.display = 'inline-block';
+            } else {
+                loadingStatus.textContent = 'No audio loaded yet.';
+                loadingStatus.style.color = '#e74c3c';
             }
         });
         
@@ -1426,6 +1465,28 @@
             playBtn.style.display = 'inline-block';
             pauseBtn.style.display = 'none';
             loadRandomVerse();
+        });
+        
+        // Audio events
+        audioElement.addEventListener('play', function() {
+            playBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+        });
+        
+        audioElement.addEventListener('pause', function() {
+            playBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+        });
+        
+        // Audio events
+        audioElement.addEventListener('play', function() {
+            playBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+        });
+        
+        audioElement.addEventListener('pause', function() {
+            playBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
         });
         
         // Audio ended event
