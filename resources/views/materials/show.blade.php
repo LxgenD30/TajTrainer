@@ -76,6 +76,65 @@
     .badge-youtube { background: #ff0000; color: white; }
     .badge-url { background: #3498db; color: white; }
     
+    .image-preview {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin: 15px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 3px solid #e0e0e0;
+    }
+    
+    .image-preview:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.2);
+        border-color: #0a5c36;
+    }
+    
+    .image-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.95);
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .image-modal.active {
+        display: flex;
+    }
+    
+    .modal-content-img {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+    }
+    
+    .modal-close {
+        position: absolute;
+        top: 20px;
+        right: 40px;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10000;
+    }
+    
+    .modal-close:hover {
+        color: #f39c12;
+        transform: scale(1.1);
+    }
+    
     .info-row {
         padding: 15px 0;
         border-bottom: 1px solid #e0e0e0;
@@ -157,14 +216,42 @@
                         </p>
                     @endif
                     
+                    @if($item->type === 'file')
+                        @php
+                            $extension = strtolower(pathinfo($item->path, PATHINFO_EXTENSION));
+                            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                            $isImage = in_array($extension, $imageExtensions);
+                        @endphp
+                        
+                        @if($isImage)
+                            <img src="{{ Storage::url($item->path) }}" 
+                                 alt="{{ $item->title ?: 'Image' }}"
+                                 class="image-preview"
+                                 onclick="openImageModal('{{ Storage::url($item->path) }}')"
+                                 loading="lazy">
+                        @endif
+                    @endif
+                    
                     <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                         @if($item->type === 'file')
+                            @php
+                                $extension = strtolower(pathinfo($item->path, PATHINFO_EXTENSION));
+                                $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                                $isImage = in_array($extension, $imageExtensions);
+                            @endphp
+                            
                             <a href="{{ Storage::url($item->path) }}" 
                                download
                                style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1e8449;">
-                                <i class="fas fa-download"></i> Download
+                                <i class="fas fa-download"></i> Download {{ $isImage ? 'Image' : 'File' }}
                             </a>
-                            @if(str_ends_with(strtolower($item->path), '.pdf'))
+                            
+                            @if($isImage)
+                                <button onclick="openImageModal('{{ Storage::url($item->path) }}')"
+                                        style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border-radius: 8px; border: 2px solid #6c3483; font-weight: 700; cursor: pointer; transition: all 0.3s ease;">
+                                    <i class="fas fa-search-plus"></i> View Full Size
+                                </button>
+                            @elseif(str_ends_with(strtolower($item->path), '.pdf'))
                                 <a href="{{ Storage::url($item->path) }}" 
                                    target="_blank"
                                    style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1f5f8b;">
@@ -291,4 +378,33 @@
         @endif
     </div>
 </div>
+
+<!-- Image Preview Modal -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+    <span class="modal-close" onclick="closeImageModal()">&times;</span>
+    <img id="modalImage" class="modal-content-img" src="" alt="Full size image">
+</div>
+
+<script>
+function openImageModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modal.classList.add('active');
+    modalImg.src = imageUrl;
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeImageModal();
+    }
+});
+</script>
 @endsection
