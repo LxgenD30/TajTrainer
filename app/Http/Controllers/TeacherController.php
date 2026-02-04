@@ -67,14 +67,26 @@ class TeacherController extends Controller
             'email' => 'required|email|unique:users,email,' . $teacher->id,
             'phone' => 'nullable|string|max:20',
             'biodata' => 'nullable|string',
-            'title' => 'nullable|string|max:100',
+            'title' => 'required|string|in:Ustaz,Ustazah,Sheikh',
             'current_password' => 'nullable|required_with:new_password',
             'new_password' => 'nullable|min:8|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $user = $teacher->user;
         $user->email = $validated['email'];
         $user->phone = $validated['phone'] ?? null;
+
+        // Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            // Delete old profile picture if exists
+            if ($user->profile_picture && \Storage::disk('public')->exists($user->profile_picture)) {
+                \Storage::disk('public')->delete($user->profile_picture);
+            }
+            
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $user->profile_picture = $path;
+        }
 
         if ($request->filled('current_password')) {
             if (!Hash::check($request->current_password, $user->password)) {
@@ -88,7 +100,7 @@ class TeacherController extends Controller
         $teacher->update([
             'name' => $validated['name'],
             'biodata' => $validated['biodata'] ?? null,
-            'title' => $validated['title'] ?? null,
+            'title' => $validated['title'],
         ]);
 
         return redirect()->route('teachers.show', $teacher)->with('success', 'Profile updated successfully!');

@@ -9,6 +9,128 @@
 
 @section('content')
 <style>
+    /* ID Card Layout */
+    .profile-card-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .id-card {
+        background: linear-gradient(135deg, #0a5c36 0%, #1abc9c 100%);
+        border-radius: 25px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 60px rgba(10, 92, 54, 0.3);
+        border: 4px solid #fff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .id-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7z' fill='%23ffffff' fill-opacity='0.15' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.3;
+    }
+
+    .id-card-header {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        margin-bottom: 30px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .profile-picture-section {
+        position: relative;
+    }
+
+    .profile-picture-display {
+        width: 180px;
+        height: 180px;
+        border-radius: 20px;
+        object-fit: cover;
+        border: 5px solid #fff;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        color: #0a5c36;
+    }
+
+    .profile-picture-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+        border-radius: 0 0 15px 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .profile-picture-overlay:hover {
+        background: rgba(0, 0, 0, 0.9);
+    }
+
+    #profile_picture {
+        display: none;
+    }
+
+    .id-card-info {
+        flex: 1;
+        color: #fff;
+    }
+
+    .id-card-info h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        color: #fff;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .id-card-role {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        backdrop-filter: blur(10px);
+    }
+
+    .id-card-details {
+        display: flex;
+        gap: 30px;
+        margin-top: 15px;
+    }
+
+    .id-detail-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.05rem;
+    }
+
+    .id-detail-item i {
+        font-size: 1.3rem;
+        opacity: 0.9;
+    }
+
     .edit-profile-banner {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
         border-radius: 25px;
@@ -238,18 +360,48 @@
     }
 </style>
 
-<!-- Banner -->
-<div class="edit-profile-banner">
-    <div class="banner-content">
-        <h1 class="banner-title"><i class="fas fa-edit"></i> Edit Profile</h1>
-        <p class="banner-subtitle">Update your profile information</p>
-    </div>
-    <a href="{{ route('students.show', $student->id) }}" class="back-to-profile">
+<div class="profile-card-container">
+    <!-- Back Button -->
+    <a href="{{ route('students.show', $student->id) }}" style="background: rgba(10,92,54,0.1); color: #0a5c36; border: 2px solid #0a5c36; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease; margin-bottom: 20px;">
         <i class="fas fa-arrow-left"></i> Back to Profile
     </a>
-</div>
 
-<!-- Edit Form -->
+    <!-- ID Card Style Profile Display -->
+    <div class="id-card">
+        <div class="id-card-header">
+            <div class="profile-picture-section">
+                @if($student->user->profile_picture)
+                    <img src="{{ asset('storage/' . $student->user->profile_picture) }}" alt="Profile" class="profile-picture-display" id="profilePreview">
+                @else
+                    <div class="profile-picture-display" id="profilePreview">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                @endif
+                <label for="profile_picture" class="profile-picture-overlay">
+                    <i class="fas fa-camera"></i> Change Photo
+                </label>
+            </div>
+
+            <div class="id-card-info">
+                <h1>{{ $student->name }}</h1>
+                <div class="id-card-role">
+                    <i class="fas fa-user-graduate"></i> Student - {{ $student->current_level ?? 'Beginner' }}
+                </div>
+                <div class="id-card-details">
+                    <div class="id-detail-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ $student->user->email }}</span>
+                    </div>
+                    <div class="id-detail-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ $student->user->phone ?? 'Not set' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
 <div class="form-card">
     @if($errors->any())
         <div class="alert alert-error">
@@ -262,9 +414,11 @@
         </div>
     @endif
 
-    <form action="{{ route('students.update', $student->id) }}" method="POST">
+    <form action="{{ route('students.update', $student->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
+
+        <input type="file" id="profile_picture" name="profile_picture" accept="image/*">
 
         <!-- Personal Information Section -->
         <div class="form-section">
@@ -283,6 +437,12 @@
                 <input type="email" name="email" value="{{ old('email', $student->user->email) }}" 
                        class="form-control" required placeholder="your.email@example.com">
                 <small class="form-hint">This email will be used for login and notifications</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="text" name="phone" value="{{ old('phone', $student->user->phone) }}" 
+                       class="form-control" placeholder="+60123456789">
             </div>
         </div>
 
@@ -353,4 +513,24 @@
         </div>
     </form>
 </div>
+</div>
+
+<script>
+// Profile picture preview
+document.getElementById('profile_picture').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('profilePreview');
+            if (preview.tagName === 'IMG') {
+                preview.src = e.target.result;
+            } else {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px;">`;
+            }
+        }
+        reader.readAsDataURL(file);
+    }
+});
+</script>
 @endsection

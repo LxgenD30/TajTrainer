@@ -1005,7 +1005,9 @@ class StudentController extends Controller
             'biodata' => 'nullable|string',
             'current_level' => 'nullable|string|max:100',
             'email' => 'required|email|unique:users,email,' . $student->id,
+            'phone' => 'nullable|string|max:20',
             'password' => 'nullable|min:8|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Update student info
@@ -1015,9 +1017,21 @@ class StudentController extends Controller
             'current_level' => $validated['current_level'],
         ]);
 
-        // Update user email and password if provided
+        // Update user email, phone, and password if provided
         $user = $student->user;
         $user->email = $validated['email'];
+        $user->phone = $validated['phone'] ?? null;
+        
+        // Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            // Delete old profile picture if exists
+            if ($user->profile_picture && \Storage::disk('public')->exists($user->profile_picture)) {
+                \Storage::disk('public')->delete($user->profile_picture);
+            }
+            
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $user->profile_picture = $path;
+        }
         
         if (!empty($validated['password'])) {
             $user->password = bcrypt($validated['password']);
