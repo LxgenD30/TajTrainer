@@ -81,11 +81,14 @@ try {
     echo "───────────────────────────────────────────\n";
     
     if (\Schema::hasTable('assignments')) {
-        $assignmentColumns = ['surah', 'start_verse', 'end_verse', 'surah_number', 'expected_recitation', 'reference_audio_url'];
+        $assignmentColumns = ['surah', 'start_verse', 'end_verse', 'expected_recitation', 'reference_audio_url'];
         foreach ($assignmentColumns as $col) {
             $exists = \Schema::hasColumn('assignments', $col);
             check("Column: assignments.$col", $exists, "Column $col missing in assignments table");
         }
+        
+        // Note: surah_number is a form field only, not stored in database
+        // The surah name is stored, and surah_number is derived when needed
         
         // Check reference_audio_url column type
         try {
