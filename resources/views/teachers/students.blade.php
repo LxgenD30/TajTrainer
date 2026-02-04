@@ -64,7 +64,7 @@
     }
     .student-info-text {
         font-size: 1.05rem;
-        color: #666;
+        color: #333;
         font-weight: 600;
         font-family: 'Cairo', sans-serif;
     }
@@ -81,7 +81,7 @@
     }
     .empty-state-text {
         font-size: 1.2rem;
-        color: #666;
+        color: #555;
         font-weight: 600;
         font-family: 'Cairo', sans-serif;
     }
@@ -148,7 +148,7 @@
 
                     <!-- Classes -->
                     <div style="margin-bottom: 20px;">
-                        <p style="margin: 0 0 10px 0; font-size: 1.05rem; color: #999; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Cairo', sans-serif;">
+                        <p style="margin: 0 0 10px 0; font-size: 1.05rem; color: #666; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Cairo', sans-serif;">
                             Enrolled Classes
                         </p>
                         @if($student->classrooms->count() > 0)

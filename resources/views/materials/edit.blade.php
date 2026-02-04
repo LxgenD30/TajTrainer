@@ -329,7 +329,7 @@
     .result-card p {
         margin: 0;
         font-size: 0.9rem;
-        color: #666;
+        color: #333;
         line-height: 1.4;
     }
     
@@ -667,7 +667,7 @@ function openPreview(result) {
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #e0e0e0;">
             <strong style="color: #0a5c36;"><i class="fas fa-align-left"></i> Description:</strong>
-            <p style="margin: 5px 0 0 0; line-height: 1.6; color: #666;">${escapeHtml(result.content)}</p>
+            <p style="margin: 5px 0 0 0; line-height: 1.6; color: #333;">${escapeHtml(result.content)}</p>
         </div>
         
         ${result.is_pdf ? `<div style="background: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: 8px; border: 2px solid #27ae60; margin: 15px 0;"><i class="fas fa-download" style="color: #27ae60;"></i> <strong style="color: #27ae60;">PDF will be downloaded to server</strong></div>` : ''}
