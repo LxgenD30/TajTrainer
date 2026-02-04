@@ -865,14 +865,20 @@ function addMaterialItem() {
             <div id="fields_images_${itemId}" class="hidden">
                 <div class="form-group">
                     <label>Upload Images</label>
-                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*" onchange="handleFileUpload(${itemId}, 'images', this)">
+                    <div id="file_preview_images_${itemId}" class="file-preview" style="display: none; margin-top: 10px; padding: 12px; background: rgba(39, 174, 96, 0.1); border: 2px solid #27ae60; border-radius: 8px; color: #27ae60; font-weight: 600;">
+                        <i class="fas fa-check-circle"></i> <span class="file-name"></span>
+                    </div>
                 </div>
             </div>
             
             <div id="fields_document_${itemId}" class="hidden">
                 <div class="form-group">
                     <label>Upload Document</label>
-                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx">
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx" onchange="handleFileUpload(${itemId}, 'document', this)">
+                    <div id="file_preview_document_${itemId}" class="file-preview" style="display: none; margin-top: 10px; padding: 12px; background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 8px; color: #e74c3c; font-weight: 600;">
+                        <i class="fas fa-file-pdf"></i> <span class="file-name"></span>
+                    </div>
                 </div>
             </div>
             
@@ -910,6 +916,63 @@ function toggleItemFields(itemId, type) {
         const field = document.getElementById(`fields_${t}_${itemId}`);
         if (field) field.classList.toggle('hidden', t !== type);
     });
+}
+
+// Handle file upload preview
+function handleFileUpload(itemId, type, inputElement) {
+    const file = inputElement.files[0];
+    if (file) {
+        const previewDiv = document.getElementById(`file_preview_${type}_${itemId}`);
+        const fileNameSpan = previewDiv.querySelector('.file-name');
+        
+        // Get file size in readable format
+        const fileSize = (file.size / 1024).toFixed(2); // KB
+        const sizeText = fileSize > 1024 ? `${(fileSize / 1024).toFixed(2)} MB` : `${fileSize} KB`;
+        
+        // Determine file type icon and color
+        let icon = 'fa-file';
+        let backgroundColor = 'rgba(52, 152, 219, 0.1)';
+        let borderColor = '#3498db';
+        let textColor = '#3498db';
+        
+        if (type === 'document') {
+            if (file.name.toLowerCase().endsWith('.pdf')) {
+                icon = 'fa-file-pdf';
+                backgroundColor = 'rgba(231, 76, 60, 0.1)';
+                borderColor = '#e74c3c';
+                textColor = '#e74c3c';
+            } else if (file.name.toLowerCase().match(/\.(doc|docx)$/)) {
+                icon = 'fa-file-word';
+                backgroundColor = 'rgba(41, 128, 185, 0.1)';
+                borderColor = '#2980b9';
+                textColor = '#2980b9';
+            }
+        } else if (type === 'images') {
+            icon = 'fa-image';
+            backgroundColor = 'rgba(39, 174, 96, 0.1)';
+            borderColor = '#27ae60';
+            textColor = '#27ae60';
+        }
+        
+        // Update preview style
+        previewDiv.style.background = backgroundColor;
+        previewDiv.style.borderColor = borderColor;
+        previewDiv.style.color = textColor;
+        
+        // Update preview content
+        previewDiv.innerHTML = `
+            <i class="fas ${icon}" style="font-size: 1.2rem;"></i> 
+            <strong>${file.name}</strong> (${sizeText})
+            <div style="margin-top: 5px; font-size: 0.85rem; opacity: 0.8;">
+                <i class="fas fa-check-circle"></i> File ready to upload
+            </div>
+        `;
+        
+        previewDiv.style.display = 'block';
+        
+        console.log(`[FILE] ${type} selected:`, file.name, sizeText);
+        showCustomAlert(`${type === 'document' ? 'Document' : 'Image'} selected: ${file.name}`, 'success');
+    }
 }
 
 // Remove item
