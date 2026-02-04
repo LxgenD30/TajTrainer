@@ -332,9 +332,6 @@
 </style>
 
 <div class="profile-edit-container">
-    <a href="{{ route('teachers.show', $teacher) }}" class="back-btn">
-        <i class="fas fa-arrow-left"></i> Back to Profile
-    </a>
 
     @if($errors->any())
         <div class="alert-error">
