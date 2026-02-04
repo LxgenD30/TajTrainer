@@ -8,15 +8,72 @@
 @endsection
 
 @section('content')
-<div style="padding: 0; max-width: 1600px; margin: 0 auto;">
-    <div style="margin-bottom: 20px;">
-        <a href="{{ route('teacher.student.submissions', ['classroom' => $submission->assignment->class_id, 'student' => $submission->student_id]) }}" 
-            style="display: inline-flex; align-items: center; gap: 8px; color: #1abc9c; text-decoration: none; font-weight: 600; font-size: 1rem; transition: all 0.3s ease; padding: 10px 20px; background: rgba(26, 188, 156, 0.1); border-radius: 10px;" 
-            onmouseover="this.style.background='rgba(26, 188, 156, 0.2)'; this.style.transform='translateX(-5px)'" 
-            onmouseout="this.style.background='rgba(26, 188, 156, 0.1)'; this.style.transform='translateX(0)'">
-            <i class="fas fa-arrow-left"></i> Back to Student Submissions
-        </a>
+<style>
+    /* Welcome Banner */
+    .welcome-banner {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 25px;
+        padding: 40px;
+        margin-bottom: 30px;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .welcome-banner:before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
+    }
+    
+    .welcome-content { position: relative; z-index: 2; }
+    .welcome-content h1 { font-size: 2.2rem; margin-bottom: 10px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); }
+    .welcome-content p { font-size: 1.1rem; opacity: 0.95; line-height: 1.6; margin: 0; }
+    
+    .btn-back-gold {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #d4af37, #f4d03f);
+        color: #000000;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1rem;
+        border-radius: 12px;
+        border: 3px solid #2a2a2a;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .btn-back-gold:hover {
+        background: linear-gradient(135deg, #f4d03f, #d4af37);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+    }
+</style>
+
+<section class="welcome-banner">
+    <div class="welcome-content">
+        <h1>Grading Submission by <span style="color: #d4af37;">{{ $submission->student->name }}</span> 📝</h1>
+        <p>Evaluate and provide feedback on the student's Tajweed recitation</p>
     </div>
+    <a href="{{ route('teacher.student.submissions', ['classroom' => $submission->assignment->class_id, 'student' => $submission->student_id]) }}" 
+       class="btn-back-gold">
+        <i class="fas fa-arrow-left"></i> Back to Submissions
+    </a>
+</section>
+
+<div style="padding: 0; max-width: 1600px; margin: 0 auto;">
 
     <div style="display: grid; grid-template-columns: 320px 1fr 1fr 350px; gap: 25px; max-width: 1800px; margin: 0 auto;">
         <!-- Column 1: Grading Form (320px fixed width) -->
