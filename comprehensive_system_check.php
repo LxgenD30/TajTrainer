@@ -76,6 +76,31 @@ try {
         }
     }
     
+    // Check assignments table for new columns
+    echo "\n【 ASSIGNMENTS TABLE SCHEMA 】\n";
+    echo "───────────────────────────────────────────\n";
+    
+    if (\Schema::hasTable('assignments')) {
+        $assignmentColumns = ['surah', 'start_verse', 'end_verse', 'surah_number', 'expected_recitation', 'reference_audio_url'];
+        foreach ($assignmentColumns as $col) {
+            $exists = \Schema::hasColumn('assignments', $col);
+            check("Column: assignments.$col", $exists, "Column $col missing in assignments table");
+        }
+        
+        // Check reference_audio_url column type
+        try {
+            $columnType = \DB::select("SHOW COLUMNS FROM assignments WHERE Field = 'reference_audio_url'");
+            if (!empty($columnType)) {
+                $type = strtolower($columnType[0]->Type);
+                $isText = (strpos($type, 'text') !== false);
+                check('reference_audio_url is TEXT type', $isText, 
+                      "Column is $type - should be TEXT for JSON storage. Run migration: 2026_02_04_193303_change_reference_audio_url_to_text_in_assignments_table.php");
+            }
+        } catch (\Exception $e) {
+            warn('Column type check', $e->getMessage());
+        }
+    }
+    
 } catch (\Exception $e) {
     check('Database connection', false, $e->getMessage());
 }
@@ -87,6 +112,9 @@ echo "────────────────────────�
 $storagePaths = [
     storage_path('app/public/audio'),
     storage_path('app/public/materials'),
+    storage_path('app/public/references'),
+    storage_path('app/public/submissions'),
+    storage_path('app/temp_audio'),
     storage_path('logs'),
     storage_path('framework/cache'),
     storage_path('framework/sessions'),
@@ -106,6 +134,41 @@ foreach ($storagePaths as $path) {
 $publicStorage = public_path('storage');
 check('Public storage symlink', is_link($publicStorage) || is_dir($publicStorage), 
       'Run: php artisan storage:link');
+
+// ============ FFMPEG CHECKS ============
+echo "\n【 FFMPEG FOR AUDIO CONCATENATION 】\n";
+echo "───────────────────────────────────────────\n";
+
+// Check if ffmpeg is installed
+$isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+$ffmpegCmd = $isWindows ? 'where ffmpeg' : 'which ffmpeg';
+$ffmpegOutput = [];
+exec($ffmpegCmd . ' 2>&1', $ffmpegOutput, $ffmpegReturn);
+
+if ($ffmpegReturn === 0 && !empty($ffmpegOutput)) {
+    check('FFmpeg installed', true);
+    echo "   Path: " . trim($ffmpegOutput[0]) . "\n";
+    
+    // Check ffmpeg version
+    exec('ffmpeg -version 2>&1', $versionOutput, $versionReturn);
+    if ($versionReturn === 0 && isset($versionOutput[0])) {
+        echo "   Version: " . explode(' ', $versionOutput[0])[2] . "\n";
+    }
+} else {
+    check('FFmpeg installed', false, 'FFmpeg not found - required for multi-verse audio concatenation');
+}
+
+// Check if concatenated audio files exist
+$referencesPath = storage_path('app/public/references');
+if (is_dir($referencesPath)) {
+    $audioFiles = glob($referencesPath . '/*.mp3');
+    if (count($audioFiles) > 0) {
+        check('Concatenated audio files exist', true);
+        echo "   Found: " . count($audioFiles) . " reference audio files\n";
+    } else {
+        warn('No concatenated audio files', 'Create assignments with multiple verses to generate files');
+    }
+}
 
 // ============ API KEY CHECKS ============
 echo "\n【 EXTERNAL API CONFIGURATION 】\n";
@@ -315,8 +378,89 @@ try {
         check('Valid submission statuses', true);
     }
     
+    // Check for assignments with multi-verse but no concatenated audio
+    $multiVerseAssignments = \DB::table('assignments')
+        ->whereRaw('start_verse != end_verse OR end_verse IS NOT NULL')
+        ->count();
+    
+    if ($multiVerseAssignments > 0) {
+        echo "   Found $multiVerseAssignments multi-verse assignments\n";
+        
+        $missingConcatenated = \DB::table('assignments')
+            ->whereRaw('start_verse != end_verse OR end_verse IS NOT NULL')
+            ->where(function($query) {
+                $query->whereNull('reference_audio_url')
+                      ->orWhere('reference_audio_url', '=', '')
+                      ->orWhere('reference_audio_url', 'NOT LIKE', 'references/%');
+            })
+            ->count();
+        
+        if ($missingConcatenated > 0) {
+            warn('Multi-verse assignments without concatenated audio', 
+                 "$missingConcatenated assignments need audio regeneration");
+        } else {
+            check('All multi-verse assignments have concatenated audio', true);
+        }
+    }
+    
 } catch (\Exception $e) {
     warn('Data integrity checks', $e->getMessage());
+}
+
+// ============ FEATURE VERIFICATION ============
+echo "\n【 RECENT FEATURES VERIFICATION 】\n";
+echo "───────────────────────────────────────────\n";
+
+// Check if audio protection is implemented in view
+$assignmentShowPath = resource_path('views/assignment/show.blade.php');
+if (file_exists($assignmentShowPath)) {
+    $content = file_get_contents($assignmentShowPath);
+    $hasDownloadProtection = strpos($content, 'controlsList="nodownload') !== false;
+    $hasRoleCheck = strpos($content, 'role_id') !== false && strpos($content, 'nodownload') !== false;
+    
+    check('Audio download protection implemented', $hasDownloadProtection && $hasRoleCheck,
+          'Student audio download protection not found in assignment show view');
+} else {
+    warn('Assignment show view', 'File not found');
+}
+
+// Check if grade submission has welcome banner
+$gradeSubmissionPath = resource_path('views/teachers/grade-submission.blade.php');
+if (file_exists($gradeSubmissionPath)) {
+    $content = file_get_contents($gradeSubmissionPath);
+    $hasWelcomeBanner = strpos($content, 'welcome-banner') !== false;
+    $hasStudentName = strpos($content, '$submission->student->name') !== false;
+    
+    check('Grade submission welcome banner', $hasWelcomeBanner && $hasStudentName,
+          'Welcome banner with student name not found in grade submission page');
+} else {
+    warn('Grade submission view', 'File not found');
+}
+
+// Check if ProcessSubmissionAudio job handles concatenated audio
+$jobPath = app_path('Jobs/ProcessSubmissionAudio.php');
+if (file_exists($jobPath)) {
+    $content = file_get_contents($jobPath);
+    $handlesConcatenated = strpos($content, 'references/') !== false;
+    $hasReferenceAudioPath = strpos($content, 'referenceAudioPath') !== false;
+    
+    check('Job handles concatenated audio files', $handlesConcatenated && $hasReferenceAudioPath,
+          'ProcessSubmissionAudio job not updated for concatenated audio');
+} else {
+    warn('ProcessSubmissionAudio job', 'File not found');
+}
+
+// Check AssignmentController has concatenation method
+$controllerPath = app_path('Http/Controllers/AssignmentController.php');
+if (file_exists($controllerPath)) {
+    $content = file_get_contents($controllerPath);
+    $hasConcatenateMethod = strpos($content, 'concatenateAudioFiles') !== false;
+    $usesFfmpeg = strpos($content, 'ffmpeg') !== false;
+    
+    check('Audio concatenation implemented', $hasConcatenateMethod && $usesFfmpeg,
+          'Audio concatenation method not found in AssignmentController');
+} else {
+    warn('AssignmentController', 'File not found');
 }
 
 // ============ FINAL SUMMARY ============
