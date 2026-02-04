@@ -863,7 +863,7 @@ function addMaterialItem() {
             
             <div class="radio-group">
                 <div class="radio-option">
-                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="image" onchange="toggleItemFields(${itemId}, 'images')" required>
+                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="image" onchange="toggleItemFields(${itemId}, 'images')" checked required>
                     <label for="type_file_${itemId}">Images</label>
                 </div>
                 <div class="radio-option">
@@ -876,7 +876,7 @@ function addMaterialItem() {
                 </div>
             </div>
             
-            <div id="fields_images_${itemId}" class="hidden">
+            <div id="fields_images_${itemId}" class="">
                 <div class="form-group">
                     <label>Upload Images</label>
                     <input type="file" name="items[${itemId}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*" onchange="handleFileUpload(${itemId}, 'images', this)">

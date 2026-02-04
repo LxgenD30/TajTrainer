@@ -199,6 +199,8 @@
                     <span class="resource-type-badge badge-{{ $item->type }}">
                         @if($item->type === 'file')
                             <i class="fas fa-file"></i> FILE
+                        @elseif($item->type === 'image')
+                            <i class="fas fa-image"></i> IMAGE
                         @elseif($item->type === 'youtube')
                             <i class="fab fa-youtube"></i> YOUTUBE
                         @else
@@ -255,11 +257,11 @@
                     @endif
                     
                     <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                        @if($item->type === 'file')
+                        @if($item->type === 'file' || $item->type === 'image')
                             @php
                                 $extension = strtolower(pathinfo($item->path, PATHINFO_EXTENSION));
                                 $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                                $isImage = in_array($extension, $imageExtensions);
+                                $isImage = $item->type === 'image' || in_array($extension, $imageExtensions);
                             @endphp
                             
                             @if($isImage)
