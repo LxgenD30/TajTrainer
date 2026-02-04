@@ -667,35 +667,58 @@ class TajweedAnalyzer:
             # Initialize OpenAI client with proper API key
             client = OpenAI(api_key=api_key)
             
+            # Get transcription accuracy
+            transcription = analysis_results.get('whisper_transcription', '')
+            expected = analysis_results.get('expected_text', '')
+            
+            # Calculate text similarity
+            from difflib import SequenceMatcher
+            text_accuracy = SequenceMatcher(None, transcription, expected).ratio() * 100 if transcription and expected else 0
+            
+            # Get reference comparison if available
+            ref_comparison = analysis_results.get('reference_comparison', {})
+            ref_similarity = ref_comparison.get('overall_similarity', 0) if ref_comparison else 0
+            
             # Prepare analysis summary for GPT
-            prompt = f"""You are an expert Quran Tajweed teacher. Analyze this student's recitation and provide constructive feedback.
+            prompt = f"""You are an expert Quran Tajweed teacher. Analyze this student's recitation and provide constructive, accurate feedback.
 
-Expected Quranic Text: {self.expected_text}
+CRITICAL: Base your feedback on ALL metrics below, especially pronunciation accuracy.
 
-Analysis Results:
-- Madd (Elongation): {analysis_results['madd_analysis']['percentage']}% correct
-  - Issues: {len(analysis_results['madd_analysis']['issues'])} found
-  
-- Idgham Bila Ghunnah: {analysis_results['idgham_bila_ghunnah_analysis']['percentage']}% correct
-  - Issues: {len(analysis_results['idgham_bila_ghunnah_analysis']['issues'])} found
-  
-- Idgham Bi Ghunnah: {analysis_results['idgham_bi_ghunnah_analysis']['percentage']}% correct
-  - Issues: {len(analysis_results['idgham_bi_ghunnah_analysis']['issues'])} found
+Expected Quranic Text: {expected}
+Student's Transcription: {transcription}
+Pronunciation Accuracy: {text_accuracy:.1f}%
+
+Reference Audio Comparison:
+- Overall Similarity: {ref_similarity:.1f}%
+- Pitch Match: {ref_comparison.get('pitch_similarity', 0):.1f}%
+- Tempo Match: {ref_comparison.get('tempo_similarity', 0):.1f}%
+
+Tajweed Rules Analysis:
+- Madd (Elongation): {analysis_results['madd_analysis']['percentage']}% correct ({len(analysis_results['madd_analysis']['issues'])} issues)
+- Idgham Bila Ghunnah: {analysis_results['idgham_bila_ghunnah_analysis']['percentage']}% correct ({len(analysis_results['idgham_bila_ghunnah_analysis']['issues'])} issues)
+- Idgham Bi Ghunnah: {analysis_results['idgham_bi_ghunnah_analysis']['percentage']}% correct ({len(analysis_results['idgham_bi_ghunnah_analysis']['issues'])} issues)
 
 Overall Score: {analysis_results['overall_score']['score']}%
 
+IMPORTANT GUIDELINES:
+- If pronunciation accuracy < 70%, flag MAJOR pronunciation/articulation errors
+- If reference similarity < 50%, mention pitch/rhythm issues
+- If Tajweed scores are low, explain WHICH rules need work and WHY
+- Be specific about what letters/sounds are mispronounced
+- If transcription doesn't match expected text, identify the incorrect words
+
 Provide feedback in this EXACT JSON format:
 {{
-  "summary": "Brief 2-3 sentence overview of performance",
-  "strengths": ["strength 1", "strength 2"],
+  "summary": "Brief 2-3 sentence overview highlighting main issues or strengths",
+  "strengths": ["strength 1 (only if accuracy > 70%)", "strength 2"],
   "improvements": [
-    {{"issue": "specific problem", "suggestion": "how to fix it"}},
+    {{"issue": "specific pronunciation/Tajweed problem", "suggestion": "how to fix it with practice tips"}},
     {{"issue": "specific problem", "suggestion": "how to fix it"}}
   ],
-  "next_steps": "Specific practice recommendation (1-2 sentences)"
+  "next_steps": "Specific practice recommendation focusing on weakest area"
 }}
 
-Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
+Be honest, specific, and constructive. Students need ACCURATE feedback to improve."""
 
             # Use GPT-4 for better quality feedback (can switch to gpt-3.5-turbo for cost savings)
             response = client.chat.completions.create(
