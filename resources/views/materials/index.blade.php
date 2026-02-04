@@ -139,22 +139,23 @@
     }
     
     .filter-btn {
-        padding: 14px 26px;
+        padding: 10px 16px;
         background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
         border: 3px solid #2a2a2a;
-        border-radius: 30px;
+        border-radius: 25px;
         cursor: pointer;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 0.9rem;
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
         text-decoration: none;
         color: #2a2a2a;
         box-shadow: 0 4px 10px rgba(0,0,0,0.08);
         position: relative;
         overflow: hidden;
+        white-space: nowrap;
     }
     
     .filter-btn::before {
@@ -186,18 +187,18 @@
     }
     
     .filter-btn .category-icon {
-        font-size: 1.2rem;
-        min-width: 24px;
+        font-size: 1rem;
+        min-width: 20px;
         text-align: center;
     }
     
     .filter-badge {
         background: rgba(0,0,0,0.15);
-        padding: 5px 12px;
-        border-radius: 15px;
-        font-size: 0.9rem;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
         font-weight: 700;
-        min-width: 30px;
+        min-width: 24px;
         text-align: center;
     }
     
@@ -243,20 +244,19 @@
             <i class="fas fa-filter"></i>
             Filter by Category
         </h3>
-        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
-            <div class="search-wrapper" style="position: relative; flex: 1; min-width: 300px; max-width: 500px;">
-                <i class="fas fa-search" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #0a5c36; z-index: 10;"></i>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div class="search-wrapper" style="position: relative; flex: 0 0 auto; min-width: 250px;">
+                <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #0a5c36; z-index: 10; font-size: 0.9rem;"></i>
                 <input 
                     type="text" 
                     id="materialSearch" 
                     placeholder="Search materials..." 
                     onkeyup="filterMaterials()"
                     value="{{ request('search') }}"
-                    style="width: 100%; padding: 14px 20px 14px 50px; border: 3px solid #2a2a2a; border-radius: 30px; font-size: 1rem; font-weight: 600; background: white; font-family: 'Cairo', sans-serif; outline: none; transition: all 0.3s ease;"
+                    style="width: 100%; padding: 10px 15px 10px 40px; border: 3px solid #2a2a2a; border-radius: 25px; font-size: 0.9rem; font-weight: 600; background: white; font-family: 'Cairo', sans-serif; outline: none; transition: all 0.3s ease;"
                 >
             </div>
-        </div>
-        <div class="filter-buttons">
+            <div class="filter-buttons" style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1;">
             <a href="{{ route('materials.index', array_filter(['search' => request('search')])) }}" 
                class="filter-btn {{ !request('category') ? 'active' : '' }}">
                 <span class="category-icon"><i class="fas fa-th-large"></i></span>
@@ -287,6 +287,7 @@
                 <span>Others</span>
                 <span class="filter-badge">{{ $categoryCounts['Others'] ?? 0 }}</span>
             </a>
+            </div>
         </div>
     </div>
 
