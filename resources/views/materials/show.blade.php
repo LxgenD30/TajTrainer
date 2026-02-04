@@ -224,11 +224,14 @@
                         @endphp
                         
                         @if($isImage)
-                            <img src="{{ Storage::url($item->path) }}" 
-                                 alt="{{ $item->title ?: 'Image' }}"
-                                 class="image-preview"
-                                 onclick="openImageModal('{{ Storage::url($item->path) }}')"
-                                 loading="lazy">
+                            <!-- Image Thumbnail Preview -->
+                            <div style="margin: 15px 0;">
+                                <img src="{{ Storage::url($item->path) }}" 
+                                     alt="{{ $item->title ?: 'Image' }}"
+                                     class="image-preview"
+                                     onclick="openImageModal('{{ Storage::url($item->path) }}')"
+                                     loading="lazy">
+                            </div>
                         @endif
                     @endif
                     
@@ -240,23 +243,42 @@
                                 $isImage = in_array($extension, $imageExtensions);
                             @endphp
                             
-                            <a href="{{ Storage::url($item->path) }}" 
-                               download
-                               style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1e8449;">
-                                <i class="fas fa-download"></i> Download {{ $isImage ? 'Image' : 'File' }}
-                            </a>
-                            
                             @if($isImage)
+                                <!-- Preview Button for Images -->
                                 <button onclick="openImageModal('{{ Storage::url($item->path) }}')"
-                                        style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border-radius: 8px; border: 2px solid #6c3483; font-weight: 700; cursor: pointer; transition: all 0.3s ease;">
-                                    <i class="fas fa-search-plus"></i> View Full Size
+                                        style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border-radius: 10px; border: 2px solid #6c3483; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);"
+                                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(155, 89, 182, 0.4)';"
+                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(155, 89, 182, 0.3)';">
+                                    <i class="fas fa-search-plus"></i> Preview Image
                                 </button>
-                            @elseif(str_ends_with(strtolower($item->path), '.pdf'))
+                                
+                                <!-- Download Button for Images -->
                                 <a href="{{ Storage::url($item->path) }}" 
-                                   target="_blank"
-                                   style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1f5f8b;">
-                                    <i class="fas fa-eye"></i> View PDF
+                                   download
+                                   style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 10px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1e8449; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(39, 174, 96, 0.4)';"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(39, 174, 96, 0.3)';">
+                                    <i class="fas fa-download"></i> Download Image
                                 </a>
+                            @else
+                                <!-- Download Button for Files -->
+                                <a href="{{ Storage::url($item->path) }}" 
+                                   download
+                                   style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 10px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1e8449; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(39, 174, 96, 0.4)';"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(39, 174, 96, 0.3)';">
+                                    <i class="fas fa-download"></i> Download File
+                                </a>
+                                
+                                @if(str_ends_with(strtolower($item->path), '.pdf'))
+                                    <a href="{{ Storage::url($item->path) }}" 
+                                       target="_blank"
+                                       style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 10px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1f5f8b; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);"
+                                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(52, 152, 219, 0.4)';"
+                                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(52, 152, 219, 0.3)';">
+                                        <i class="fas fa-eye"></i> View PDF
+                                    </a>
+                                @endif
                             @endif
                         @elseif($item->type === 'youtube')
                             <a href="{{ $item->path }}" 
