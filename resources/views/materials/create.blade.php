@@ -514,9 +514,12 @@ let itemCounter = 0;
 
 // Search online resources using Tavily API
 async function searchOnline() {
+    console.log('[SEARCH] Starting search...');
     const query = document.getElementById('searchQuery').value.trim();
+    console.log('[SEARCH] Query:', query);
     
     if (!query) {
+        console.log('[SEARCH] Empty query');
         showMessage('Please enter a search query', 'warning');
         return;
     }
@@ -527,8 +530,10 @@ async function searchOnline() {
     resultsDiv.classList.remove('active');
     resultsDiv.innerHTML = '';
     spinner.classList.add('active');
+    console.log('[SEARCH] Spinner activated');
 
     try {
+        console.log('[SEARCH] Fetching from:', '{{ route("materials.search") }}');
         const response = await fetch('{{ route("materials.search") }}', {
             method: 'POST',
             headers: {
@@ -538,18 +543,22 @@ async function searchOnline() {
             body: JSON.stringify({ query: query })
         });
 
+        console.log('[SEARCH] Response status:', response.status);
         const data = await response.json();
+        console.log('[SEARCH] Response data:', data);
         spinner.classList.remove('active');
 
         if (data.success && data.results.length > 0) {
+            console.log('[SEARCH] Displaying', data.results.length, 'results');
             displayResults(data.results);
         } else {
+            console.log('[SEARCH] No results found');
             resultsDiv.innerHTML = '<p style="color: white;">No results found. Try different keywords.</p>';
             resultsDiv.classList.add('active');
         }
     } catch (error) {
         spinner.classList.remove('active');
-        console.error('Search error:', error);
+        console.error('[SEARCH] Error:', error);
         showMessage('Search failed. Please try again.', 'danger');
     }
 }
@@ -618,14 +627,18 @@ function previewResult(index) {
 
 // AI Suggest Category
 async function suggestCategory() {
+    console.log('[AI] Starting AI category suggestion...');
     const title = document.getElementById('title').value.trim();
     const description = document.getElementById('description').value.trim();
+    console.log('[AI] Title:', title);
+    console.log('[AI] Description:', description);
     const suggestBtn = document.getElementById('suggestBtn');
     const categorySelect = document.getElementById('category');
     const categoryHint = document.getElementById('categoryHint');
     const categoryHintText = document.getElementById('categoryHintText');
     
     if (!title) {
+        console.log('[AI] No title provided');
         alert('Please enter a material title first');
         return;
     }
@@ -633,13 +646,14 @@ async function suggestCategory() {
     suggestBtn.disabled = true;
     suggestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
     categoryHint.style.display = 'none';
+    console.log('[AI] Sending request...');
     
     try {
-        // Create a hidden form to POST to a suggestion endpoint
         const formData = new FormData();
         formData.append('title', title);
         formData.append('description', description);
         
+        console.log('[AI] Fetching from:', '{{ route("materials.suggest-category") }}');
         const response = await fetch('{{ route("materials.suggest-category") }}', {
             method: 'POST',
             headers: {
@@ -648,14 +662,18 @@ async function suggestCategory() {
             body: formData
         });
         
+        console.log('[AI] Response status:', response.status);
         const data = await response.json();
+        console.log('[AI] Response data:', data);
         
         if (data.success && data.category) {
+            console.log('[AI] Category suggested:', data.category);
             categorySelect.value = data.category;
-            categoryHintText.textContent = `AI suggests: "${data.category}" - ${data.reason || 'Based on content analysis'}`;
+            categoryHintText.textContent = `AI suggests: "${data.category}" - ${data.message || 'Based on content analysis'}`;
             categoryHint.style.display = 'block';
             showMessage(`AI suggests: ${data.category}`, 'success');
         } else {
+            console.log('[AI] No category suggestion');
             categoryHintText.textContent = 'AI could not determine category. Please select manually.';
             categoryHint.style.background = '#fff3cd';
             categoryHint.style.borderColor = '#ffc107';
@@ -663,7 +681,7 @@ async function suggestCategory() {
             categoryHint.style.display = 'block';
         }
     } catch (error) {
-        console.error('Category suggestion error:', error);
+        console.error('[AI] Error:', error);
         alert('Failed to get AI suggestion. Please select category manually.');
     } finally {
         suggestBtn.disabled = false;
@@ -673,10 +691,13 @@ async function suggestCategory() {
 
 // Add search result as a material item
 function addResultAsItem(index) {
+    console.log('[ADD_ITEM] Adding result #' + index + ' as item');
     const result = window.searchResults[index];
+    console.log('[ADD_ITEM] Result:', result);
     
     // Add new item
     const itemId = addMaterialItem();
+    console.log('[ADD_ITEM] Created item #' + itemId);
     
     // Fill in the details
     setTimeout(() => {
