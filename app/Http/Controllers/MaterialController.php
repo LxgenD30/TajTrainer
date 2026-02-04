@@ -296,15 +296,14 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category' => 'required|in:Madd Rules,Idgham Billa Ghunnah,Idgham Bi Ghunnah',
+            'category' => 'required|in:Madd Rules,Idgham Billa Ghunnah,Idgham Bi Ghunnah,Others',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             
             // Multiple items support
             'items' => 'nullable|array',
-            'items.*.type' => 'required|in:file,youtube,url',
+            'items.*.type' => 'required|in:file,youtube',
             'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:20480',
             'items.*.youtube_link' => 'nullable|url',
-            'items.*.url' => 'nullable|url',
             'items.*.title' => 'nullable|string|max:255',
             'items.*.description' => 'nullable|string',
         ]);
@@ -452,10 +451,9 @@ class MaterialController extends Controller
             // Multiple items support
             'items' => 'nullable|array',
             'items.*.id' => 'nullable|integer', // Existing item ID
-            'items.*.type' => 'required|in:file,youtube,url',
+            'items.*.type' => 'required|in:file,youtube',
             'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:20480',
             'items.*.youtube_link' => 'nullable|url',
-            'items.*.url' => 'nullable|url',
             'items.*.title' => 'nullable|string|max:255',
             'items.*.description' => 'nullable|string',
         ]);

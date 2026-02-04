@@ -850,10 +850,6 @@ function addMaterialItem() {
                     <input type="radio" id="type_youtube_${itemId}" name="items[${itemId}][type]" value="youtube" onchange="toggleItemFields(${itemId}, 'youtube')">
                     <label for="type_youtube_${itemId}">YouTube</label>
                 </div>
-                <div class="radio-option">
-                    <input type="radio" id="type_url_${itemId}" name="items[${itemId}][type]" value="url" onchange="toggleItemFields(${itemId}, 'url')">
-                    <label for="type_url_${itemId}">External URL</label>
-                </div>
             </div>
             
             <div id="fields_images_${itemId}" class="hidden">
@@ -874,13 +870,6 @@ function addMaterialItem() {
                 <div class="form-group">
                     <label>YouTube Link</label>
                     <input type="url" name="items[${itemId}][youtube_link]" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
-                </div>
-            </div>
-            
-            <div id="fields_url_${itemId}" class="hidden">
-                <div class="form-group">
-                    <label>Extracted Search</label>
-                    <input type="url" name="items[${itemId}][url]" class="form-control" placeholder="https://example.com/resource">
                 </div>
             </div>
             
@@ -907,7 +896,7 @@ function addMaterialItem() {
 
 // Toggle item fields
 function toggleItemFields(itemId, type) {
-    ['images', 'document', 'youtube', 'url'].forEach(t => {
+    ['images', 'document', 'youtube'].forEach(t => {
         const field = document.getElementById(`fields_${t}_${itemId}`);
         if (field) field.classList.toggle('hidden', t !== type);
     });
