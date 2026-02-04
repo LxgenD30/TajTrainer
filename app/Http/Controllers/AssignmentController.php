@@ -287,7 +287,6 @@ class AssignmentController extends Controller
             return json_encode($audioUrls);
         }
     }
-    }
 
     /**
      * Get Surah number from name
