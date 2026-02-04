@@ -4,33 +4,10 @@
 @section('user-role', 'Student • Edit Profile')
 
 @section('navigation')
-    <a href="{{ route('student.dashboard') }}" class="nav-item">
-        <i class="fas fa-home nav-icon"></i>
-        <span class="nav-label">Dashboard</span>
-    </a>
-    
-    <a href="{{ route('student.classes') }}" class="nav-item">
-        <i class="fas fa-users nav-icon"></i>
-        <span class="nav-label">My Classes</span>
-    </a>
-    
-    <a href="{{ route('student.practice') }}" class="nav-item">
-        <i class="fas fa-microphone-alt nav-icon"></i>
-        <span class="nav-label">Practice</span>
-    </a>
-    
-    <a href="{{ route('student.progress') }}" class="nav-item">
-        <i class="fas fa-chart-line nav-icon"></i>
-        <span class="nav-label">My Progress</span>
-    </a>
-    
-    <a href="{{ route('student.materials') }}" class="nav-item">
-        <i class="fas fa-book-open nav-icon"></i>
-        <span class="nav-label">Materials</span>
-    </a>
+    @include('partials.student-nav')
 @endsection
 
-@section('extra-styles')
+@section('content')
 <style>
     .edit-profile-banner {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
@@ -64,23 +41,22 @@
     }
     
     .banner-title {
-        font-size: 1.8rem;
-        font-weight: 700;
+        font-size: 2rem;
+        font-weight: 800;
         margin-bottom: 5px;
         text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
     
     .banner-subtitle {
-        font-size: 0.95rem;
+        font-size: 1.05rem;
         opacity: 0.9;
     }
     
     .back-to-profile {
         background: white;
-        border: 2px solid rgba(255, 255, 255, 0.3);
         color: #0a5c36;
         padding: 12px 24px;
-        border-radius: 25px;
+        border-radius: 12px;
         text-decoration: none;
         font-weight: 700;
         transition: all 0.3s ease;
@@ -89,12 +65,12 @@
         gap: 8px;
         position: relative;
         z-index: 2;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
     
     .back-to-profile:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         color: #0a5c36;
     }
     
@@ -107,17 +83,17 @@
     }
     
     .form-section {
-        background: linear-gradient(135deg, rgba(10, 92, 54, 0.03), rgba(26, 188, 156, 0.03));
+        background: #f9f9f9;
         padding: 25px;
-        border-radius: 15px;
-        border: 2px solid rgba(10, 92, 54, 0.1);
+        border-radius: 12px;
+        border: 2px solid #2a2a2a;
         margin-bottom: 25px;
     }
     
     .section-title {
-        font-size: 1.2rem;
-        color: #0a5c36;
-        font-weight: 700;
+        font-size: 1.6rem;
+        color: #000;
+        font-weight: 800;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
@@ -134,21 +110,21 @@
     
     .form-label {
         display: block;
-        color: #0a5c36;
-        font-weight: 600;
+        color: #666;
+        font-weight: 700;
         margin-bottom: 8px;
-        font-size: 0.95rem;
+        font-size: 1.05rem;
     }
     
     .form-control {
         width: 100%;
         padding: 12px 15px;
         background: white;
-        color: #333;
-        border: 2px solid rgba(10, 92, 54, 0.2);
+        color: #000;
+        border: 2px solid #2a2a2a;
         border-radius: 10px;
         font-family: 'Cairo', sans-serif;
-        font-size: 1rem;
+        font-size: 1.05rem;
         transition: all 0.3s ease;
     }
     
@@ -165,10 +141,10 @@
     
     .form-hint {
         display: block;
-        font-size: 0.85rem;
+        font-size: 1.05rem;
         color: #666;
         margin-top: 5px;
-        font-style: italic;
+        font-weight: 600;
     }
     
     .form-grid {
@@ -189,17 +165,17 @@
         justify-content: flex-end;
         margin-top: 30px;
         padding-top: 25px;
-        border-top: 2px solid rgba(10, 92, 54, 0.1);
+        border-top: 2px solid #2a2a2a;
     }
     
     .btn-primary {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
         color: white;
         border: none;
-        padding: 12px 30px;
+        padding: 14px 32px;
         border-radius: 12px;
-        font-weight: 600;
-        font-size: 1rem;
+        font-weight: 700;
+        font-size: 1.05rem;
         cursor: pointer;
         transition: all 0.3s ease;
         display: inline-flex;
@@ -209,17 +185,17 @@
     
     .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(10, 92, 54, 0.3);
+        box-shadow: 0 6px 12px rgba(10, 92, 54, 0.3);
     }
     
     .btn-secondary {
         background: white;
-        color: #0a5c36;
-        border: 2px solid #0a5c36;
-        padding: 10px 30px;
+        color: #000;
+        border: 2px solid #2a2a2a;
+        padding: 12px 30px;
         border-radius: 12px;
-        font-weight: 600;
-        font-size: 1rem;
+        font-weight: 700;
+        font-size: 1.05rem;
         text-decoration: none;
         transition: all 0.3s ease;
         display: inline-flex;
@@ -228,8 +204,8 @@
     }
     
     .btn-secondary:hover {
-        background: #0a5c36;
-        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
     }
     
     .alert {
@@ -259,9 +235,17 @@
         margin: 5px 0;
     }
 </style>
-@endsection
 
-@section('content')
+<!-- Banner -->
+<div class="edit-profile-banner">
+    <div class="banner-content">
+        <h1 class="banner-title"><i class="fas fa-edit"></i> Edit Profile</h1>
+        <p class="banner-subtitle">Update your profile information</p>
+    </div>
+    <a href="{{ route('students.show', $student->id) }}" class="back-to-profile">
+        <i class="fas fa-arrow-left"></i> Back to Profile
+    </a>
+</div>
 
 <!-- Edit Form -->
 <div class="form-card">

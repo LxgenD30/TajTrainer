@@ -4,30 +4,7 @@
 @section('user-role', 'Student • Profile')
 
 @section('navigation')
-    <a href="{{ route('student.dashboard') }}" class="nav-item">
-        <i class="fas fa-home nav-icon"></i>
-        <span class="nav-label">Dashboard</span>
-    </a>
-    
-    <a href="{{ route('student.classes') }}" class="nav-item">
-        <i class="fas fa-users nav-icon"></i>
-        <span class="nav-label">My Classes</span>
-    </a>
-    
-    <a href="{{ route('student.practice') }}" class="nav-item">
-        <i class="fas fa-microphone-alt nav-icon"></i>
-        <span class="nav-label">Practice</span>
-    </a>
-    
-    <a href="{{ route('student.progress') }}" class="nav-item">
-        <i class="fas fa-chart-line nav-icon"></i>
-        <span class="nav-label">My Progress</span>
-    </a>
-    
-    <a href="{{ route('student.materials') }}" class="nav-item">
-        <i class="fas fa-book-open nav-icon"></i>
-        <span class="nav-label">Materials</span>
-    </a>
+    @include('partials.student-nav')
 @endsection
 
 @section('content')
@@ -302,16 +279,6 @@
         opacity: 0.5;
         display: block;
     }
-</style>
-        transition: all 0.3s ease;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-    }
-    
-    .edit-profile-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        border-color: rgba(255, 255, 255, 0.5);
-        transform: translateY(-2px);
-    }
     
     .info-grid {
         display: grid;
@@ -329,10 +296,10 @@
     }
     
     .info-card h3 {
-        color: #0a5c36;
-        font-weight: 700;
+        color: #000;
+        font-weight: 800;
         margin-bottom: 20px;
-        font-size: 1.3rem;
+        font-size: 1.6rem;
         display: flex;
         align-items: center;
         gap: 10px;
@@ -342,120 +309,14 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 12px;
-        background: rgba(10, 92, 54, 0.05);
-        border-radius: 10px;
-        margin-bottom: 10px;
+        padding: 15px;
+        background: #f9f9f9;
+        border-radius: 12px;
+        border: 2px solid #2a2a2a;
+        margin-bottom: 12px;
     }
     
     .info-icon {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.1rem;
-    }
-    
-    .info-content {
-        flex: 1;
-    }
-    
-    .info-label {
-        font-size: 0.85rem;
-        color: #666;
-        margin-bottom: 3px;
-    }
-    
-    .info-value {
-        font-weight: 600;
-        color: #0a5c36;
-        font-size: 1rem;
-    }
-    
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        text-align: center;
-        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
-        border: 3px solid #2a2a2a;
-        transition: all 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.15);
-    }
-    
-    .stat-icon {
-        font-size: 2.5rem;
-        margin-bottom: 15px;
-    }
-    
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #0a5c36;
-        line-height: 1;
-        margin-bottom: 5px;
-    }
-    
-    .stat-label {
-        color: #666;
-        font-size: 0.95rem;
-        font-weight: 600;
-    }
-    
-    .section-card {
-        background: white;
-        border-radius: 15px;
-        padding: 30px;
-        margin-bottom: 25px;
-        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
-        border: 3px solid #2a2a2a;
-    }
-    
-    .section-title {
-        font-size: 1.5rem;
-        color: #0a5c36;
-        font-weight: 700;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .class-item {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 15px;
-        background: rgba(10, 92, 54, 0.05);
-        border-radius: 12px;
-        border-left: 4px solid #0a5c36;
-        margin-bottom: 12px;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        color: inherit;
-    }
-    
-    .class-item:hover {
-        background: rgba(10, 92, 54, 0.1);
-        transform: translateX(5px);
-    }
-    
-    .class-icon {
         width: 50px;
         height: 50px;
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
@@ -463,37 +324,26 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
         color: white;
+        font-size: 1.5rem;
+        border: 2px solid #2a2a2a;
     }
     
-    .class-details {
+    .info-content {
         flex: 1;
     }
     
-    .class-details h4 {
-        color: #0a5c36;
-        font-weight: 700;
-        margin-bottom: 5px;
+    .info-label {
         font-size: 1.05rem;
-    }
-    
-    .class-details p {
         color: #666;
-        font-size: 0.85rem;
-        margin: 0;
+        margin-bottom: 3px;
+        font-weight: 600;
     }
     
-    .empty-state {
-        text-align: center;
-        padding: 40px;
-        color: #999;
-    }
-    
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        opacity: 0.3;
+    .info-value {
+        font-weight: 700;
+        color: #000;
+        font-size: 1.2rem;
     }
 </style>
 
