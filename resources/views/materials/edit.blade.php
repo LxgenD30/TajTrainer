@@ -26,13 +26,13 @@
         background: rgba(255, 255, 255, 0.95);
         border: 3px solid #2a2a2a;
         border-radius: 15px;
-        padding: 25px;
+        padding: 25px 15px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
     .section-header {
         font-family: 'El Messiri', sans-serif;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         font-weight: 700;
         color: #0a5c36;
         margin: 0 0 20px 0;
@@ -113,6 +113,20 @@
     .search-type-btn.active {
         background: rgba(255,255,255,0.3);
         border-color: white;
+    }
+    
+    .search-type-btn[onclick*="pdf"].active {
+        background: linear-gradient(135deg, #f1c40f, #f39c12);
+        border-color: #d68910;
+        color: #0a5c36;
+        box-shadow: 0 4px 10px rgba(241, 196, 15, 0.4);
+    }
+    
+    .search-type-btn[onclick*="youtube"].active {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        border-color: #a93226;
+        color: white;
+        box-shadow: 0 4px 10px rgba(231, 76, 60, 0.4);
     }
     
     .search-flex {
@@ -588,7 +602,7 @@
         <!-- Submit -->
         <div style="display: flex; justify-content: flex-end; gap: 15px;">
             <a href="{{ route('materials.index') }}" class="btn btn-secondary">
-                <i class="fas fa-times"></i> Back to Material
+                <i class="fas fa-times"></i> Cancel
             </a>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Update Material
