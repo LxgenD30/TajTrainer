@@ -275,37 +275,35 @@
     <div class="classes-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px;">
         <!-- My Enrolled Classes Section -->
         <div class="modern-card">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 20px 25px; border-radius: 15px; border: 2px solid #2a2a2a; margin-bottom: 30px;">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f5f5dc; padding-bottom: 20px; margin-bottom: 25px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <div class="icon-badge" style="width: 50px; height: 50px; font-size: 1.5rem; margin: 0;">
+                    <div class="icon-badge">
                         <i class="fas fa-school" style="color: #d4af37;"></i>
                     </div>
                     <div>
-                        <h2 style="color: #d4af37; font-size: 1.5rem; margin: 0; font-weight: 700;">My Enrolled Classes</h2>
-                        <p id="classCountLabel" style="color: #888; font-size: 0.9rem; margin: 0;">{{ $student->classrooms->count() }} Active</p>
+                        <h2 style="color: #0a5c36; font-size: 1.8rem; margin: 0; font-weight: 700;">My Enrolled Classes</h2>
+                        <p id="classCountLabel" style="color: #666; font-size: 1rem; margin: 0;">{{ $student->classrooms->count() }} Active</p>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="display: flex; gap: 10px; align-items: center;">
                     <div style="position: relative;">
-                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #d4af37; font-size: 0.9rem;"></i>
+                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #d4af37; z-index: 10;"></i>
                         <input 
                             type="text" 
                             id="classSearch" 
-                            placeholder="Search classes..." 
+                            placeholder="Search..." 
                             onkeyup="filterClasses()"
-                            style="padding: 10px 15px 10px 40px; background: #2a2a2a; border: 1px solid #444; border-radius: 10px; color: white; font-size: 0.9rem; width: 220px; outline: none; transition: all 0.3s ease;"
-                            onfocus="this.style.borderColor='#d4af37'; this.style.boxShadow='0 0 10px rgba(212,175,55,0.2)'"
-                            onblur="this.style.borderColor='#444'; this.style.boxShadow='none'"
+                            style="padding: 12px 15px 12px 40px; background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 12px; color: white; font-size: 0.95rem; width: 200px; outline: none; transition: all 0.3s ease;"
                         >
                     </div>
 
                     <div style="position: relative;">
-                        <i class="fas fa-sort-amount-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #d4af37; font-size: 0.9rem; pointer-events: none;"></i>
+                        <i class="fas fa-filter" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #d4af37; z-index: 10; pointer-events: none;"></i>
                         <select 
                             id="classSort" 
                             onchange="sortClasses()"
-                            style="padding: 10px 15px 10px 40px; background: #2a2a2a; border: 1px solid #444; border-radius: 10px; color: white; font-size: 0.9rem; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; min-width: 150px;"
+                            style="padding: 12px 15px 12px 40px; background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 12px; color: white; font-size: 0.95rem; cursor: pointer; appearance: none; -webkit-appearance: none; min-width: 160px; outline: none;"
                         >
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -420,32 +418,38 @@
 
 <script>
 function filterClasses() {
-    const searchInput = document.getElementById('classSearch').value.toLowerCase();
-    const classCards = document.querySelectorAll('.class-card');
+    // 1. Get the search value
+    const searchInput = document.getElementById('classSearch').value.toLowerCase().trim();
+    
+    // 2. Select all cards specifically inside the classesContainer
+    const container = document.getElementById('classesContainer');
+    if (!container) return;
+    
+    const classCards = container.querySelectorAll('.class-card');
     let visibleCount = 0;
     
     classCards.forEach(card => {
+        // Use getAttribute or search the text content directly for better reliability
         const className = card.getAttribute('data-classroom-name') || '';
         const teacherName = card.getAttribute('data-teacher-name') || '';
         
         if (className.includes(searchInput) || teacherName.includes(searchInput)) {
-            card.style.display = '';
+            card.style.display = 'block'; // Or '' to restore original
             visibleCount++;
         } else {
             card.style.display = 'none';
         }
     });
     
-    // Update the label inside our new Dark Header
-    const countElement = document.getElementById('classCountLabel');
-    if (countElement) {
-        const total = classCards.length;
-        if (searchInput === '') {
-            countElement.textContent = `${total} Active`;
-            countElement.style.color = '#888';
+    // 3. Update the count label
+    const countLabel = document.getElementById('classCountLabel');
+    if (countLabel) {
+        if (searchInput === "") {
+            countLabel.textContent = `${classCards.length} Active`;
+            countLabel.style.color = "#666";
         } else {
-            countElement.textContent = `Showing ${visibleCount} of ${total}`;
-            countElement.style.color = '#d4af37'; // Highlight when filtering
+            countLabel.textContent = `Found ${visibleCount} matches`;
+            countLabel.style.color = "#d4af37";
         }
     }
 }
@@ -453,25 +457,20 @@ function filterClasses() {
 function sortClasses() {
     const sortValue = document.getElementById('classSort').value;
     const container = document.getElementById('classesContainer');
+    if (!container) return;
+
     const cards = Array.from(container.querySelectorAll('.class-card'));
     
     cards.sort((a, b) => {
         const dateA = new Date(a.getAttribute('data-enrolled-date'));
         const dateB = new Date(b.getAttribute('data-enrolled-date'));
         
-        if (sortValue === 'newest') {
-            return dateB - dateA; // Newest first
-        } else {
-            return dateA - dateB; // Oldest first
-        }
+        return sortValue === 'newest' ? dateB - dateA : dateA - dateB;
     });
     
-    // Clear container and re-append sorted cards
+    // Re-append to DOM
     container.innerHTML = '';
     cards.forEach(card => container.appendChild(card));
-    
-    // Save preference to localStorage
-    localStorage.setItem('classSort', sortValue);
 }
 
 // Load sort preference on page load
