@@ -247,7 +247,8 @@ class AssignmentController extends Controller
             }
         }
         
-        return implode("\n", $verses);
+        // Join verses with Arabic verse separator ۝
+        return implode(" ۝ ", $verses);
     }
 
     /**

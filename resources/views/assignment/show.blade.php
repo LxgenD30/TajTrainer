@@ -304,8 +304,8 @@
         @if($assignment->expected_recitation)
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(0, 0, 0, 0.2);">
                 <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">📝 Expected Arabic Text:</div>
-                <div style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #000000; font-family: 'Amiri', serif;">
-                    {{ $assignment->expected_recitation }}
+                <div style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #000000; font-family: 'Amiri', serif; line-height: 2.5; white-space: pre-wrap;">
+                    {!! nl2br(e($assignment->expected_recitation)) !!}
                 </div>
             </div>
         @endif
