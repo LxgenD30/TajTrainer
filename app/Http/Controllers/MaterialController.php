@@ -79,8 +79,8 @@ class MaterialController extends Controller
         try {
             // Build search query and domain filters based on type
             if ($searchType === 'youtube') {
-                // Add Tajweed/Islamic keywords to ensure relevant results
-                $enhancedQuery = $searchQuery . ' (tajweed OR Quran OR Quranic OR Islamic OR recitation OR "Arabic pronunciation" OR "Quran reading")';
+                // Add Islamic context to ensure relevant results, but prioritize user's search
+                $enhancedQuery = $searchQuery . ' (Islam OR Islamic OR Muslim OR Quran OR Quranic)';
                 
                 $searchParams = [
                     'query' => $enhancedQuery,
@@ -131,14 +131,21 @@ class MaterialController extends Controller
                 $data = $response->json();
                 $results = $data['results'] ?? [];
                 
-                // Islamic/Tajweed keywords for content filtering
+                // Islamic keywords for content filtering (broader scope)
                 $islamicKeywords = [
-                    'tajweed', 'quran', 'quranic', 'islamic', 'islam', 'recitation', 
-                    'surah', 'ayah', 'verse', 'arabic', 'prophet', 'muhammad',
+                    // Core Islamic terms
+                    'tajweed', 'quran', 'quranic', 'islamic', 'islam', 'muslim', 'recitation',
+                    'surah', 'ayah', 'verse', 'chapter', 'arabic', 'prophet', 'muhammad',
+                    // Tajweed specific
                     'idgham', 'ghunnah', 'madd', 'qalqalah', 'ikhfa', 'iqlab',
                     'izhar', 'noon sakinah', 'tanween', 'makhraj', 'makharij',
                     'tilawah', 'tarteel', 'mujawwad', 'hafs', 'warsh', 'qira',
-                    'muslim', 'mosque', 'prayer', 'salah', 'allah'
+                    // Quranic terms
+                    'al-fatiha', 'al-baqarah', 'al-kahf', 'yaseen', 'rahman',
+                    'juz', 'hizb', 'ruku', 'sajdah', 'bismillah', 'alhamdulillah',
+                    // General Islamic
+                    'mosque', 'prayer', 'salah', 'allah', 'quran reading', 'quran learning',
+                    'islamic studies', 'arabic learning', 'qari', 'sheikh', 'imam'
                 ];
                 
                 // Process results based on type
@@ -453,6 +460,14 @@ class MaterialController extends Controller
                     // Handle different item types
                     if ($itemData['type'] === 'file' && $request->hasFile("items.{$index}.file")) {
                         $file = $request->file("items.{$index}.file");
+                        Log::info('Processing file upload', [
+                            'item_index' => $index,
+                            'filename' => $file->getClientOriginalName(),
+                            'extension' => $file->getClientOriginalExtension(),
+                            'mime_type' => $file->getMimeType(),
+                            'size' => $file->getSize(),
+                        ]);
+                        
                         if ($file->getError() === UPLOAD_ERR_OK && $file->isValid() && $file->getSize() > 0) {
                             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                             $destinationPath = storage_path('app/public/materials');
@@ -465,7 +480,22 @@ class MaterialController extends Controller
                             
                             if (move_uploaded_file($file->getPathname(), $fullPath)) {
                                 $item->path = 'materials/' . $filename;
+                                Log::info('File saved successfully', [
+                                    'path' => $item->path,
+                                    'full_path' => $fullPath,
+                                ]);
+                            } else {
+                                Log::error('Failed to move uploaded file', [
+                                    'temp_path' => $file->getPathname(),
+                                    'destination' => $fullPath,
+                                ]);
                             }
+                        } else {
+                            Log::error('File validation failed', [
+                                'error' => $file->getError(),
+                                'is_valid' => $file->isValid(),
+                                'size' => $file->getSize(),
+                            ]);
                         }
                     } elseif ($itemData['type'] === 'file' && !empty($itemData['pdf_url'])) {
                         // PDF from search result - try to download it
