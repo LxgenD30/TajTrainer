@@ -1,14 +1,5 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Edit Material')
-@section('user-role', 'Teacher • Edit Material')
-
-@section('navigation')
-    @include('partials.teacher-nav')
-@endsection
-
-@extends('layouts.dashboard')
-
 @section('content')
 <style>
     .create-container {
@@ -405,11 +396,11 @@
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
             <div>
                 <h1 style="margin: 0 0 10px 0; font-family: 'El Messiri', sans-serif; font-size: 2rem; font-weight: 700;">
-                    <i class="fas fa-plus-circle"></i> Edit Material
+                    <i class="fas fa-plus-circle"></i> Create New Material
                 </h1>
                 <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">Add educational resources for students</p>
             </div>
-            <a href="{{ route('materials.show', $material->material_id) }}" style="padding: 12px 24px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); border-radius: 8px; color: white; text-decoration: none; font-weight: 700; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+            <a href="{{ route('materials.index') }}" style="padding: 12px 24px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); border-radius: 8px; color: white; text-decoration: none; font-weight: 700; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                 <i class="fas fa-arrow-left"></i> Back to Materials
             </a>
         </div>
@@ -445,9 +436,8 @@
     </div>
     
     <!-- Material Form -->
-    <form action="{{ route('materials.update', $material->material_id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('materials.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
-            @method('PUT')
         
         <div class="compact-grid">
             <!-- Left Column: Basic Info -->
@@ -532,10 +522,10 @@
         <!-- Submit -->
         <div style="display: flex; justify-content: flex-end; gap: 15px;">
             <a href="{{ route('materials.index') }}" class="btn btn-secondary">
-                <i class="fas fa-times"></i> Back to Material
+                <i class="fas fa-times"></i> Cancel
             </a>
             <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Update Material
+                <i class="fas fa-save"></i> Create Material
             </button>
         </div>
     </form>
@@ -986,105 +976,9 @@ async function generateBasicInfo() {
     }
 }
 
-// Page ready - load existing material data
+// Page ready - no auto-add items, teacher adds manually
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('[INIT] Edit materials page loaded.');
-    
-    // Set basic information
-    document.querySelector('[name="title"]').value = `{{ addslashes($material->title ?? '') }}`;
-    document.querySelector('[name="description"]').value = `{{ addslashes($material->description ?? '') }}`;
-    
-    // Set category
-    const category = '{{ $material->category ?? "" }}';
-    if (category) {
-        const catInput = document.querySelector(`input[name="category"][value="${category}"]`);
-        if (catInput) {
-            catInput.checked = true;
-            console.log('[INIT] Category set to:', category);
-        }
-    }
-    
-    // Set public checkbox
-    const isPublic = {{ $material->is_public ? 'true' : 'false' }};
-    document.querySelector('[name="is_public"]').checked = isPublic;
-    
-    // Load existing items
-    @foreach($material->items as $item)
-    addExistingItem({
-        id: {{ $item->item_id }},
-        type: '{{ $item->type }}',
-        title: `{{ addslashes($item->title ?? '') }}`,
-        description: `{{ addslashes($item->description ?? '') }}`,
-        url: '{{ addslashes($item->url ?? '') }}',
-        file_path: '{{ addslashes($item->file_path ?? '') }}'
-    });
-    @endforeach
-    
-    console.log('[INIT] Loaded {{ $material->items->count() }} existing items');
+    console.log('[INIT] Create materials page loaded. Teacher can add items manually.');
 });
-
-// Add existing item to form
-function addExistingItem(item) {
-    itemCounter++;
-    const container = document.getElementById('materialItemsContainer');
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'item-card';
-    itemDiv.dataset.itemId = itemCounter;
-    itemDiv.dataset.existingId = item.id;
-    itemDiv.dataset.displayNumber = itemCounter;
-    
-    const fileDisplay = item.file_path ? `<p style="margin: 10px 0 0 0; padding: 10px; background: rgba(26,188,156,0.1); border-radius: 8px; color: #1abc9c; font-weight: 600;"><i class="fas fa-check-circle"></i> Current file: ${item.file_path.split('/').pop()}</p>` : '';
-    
-    itemDiv.innerHTML = `
-        <input type="hidden" name="items[${itemCounter}][id]" value="${item.id}">
-        <div class="item-header">
-            <h3 style="margin: 0; font-weight: 700; color: #0a5c36;">
-                <i class="fas fa-layer-group"></i> <span class="item-number">Item #${itemCounter}</span>
-            </h3>
-            <button type="button" class="remove-btn" onclick="removeItem(${itemCounter})">
-                <i class="fas fa-trash"></i> Remove
-            </button>
-        </div>
-        
-        <div class="radio-group">
-            <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="file" id="file_${itemCounter}" ${item.type === 'file' ? 'checked' : ''} required>
-                <label for="file_${itemCounter}">File Upload</label>
-            </div>
-            <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="youtube" id="youtube_${itemCounter}" ${item.type === 'youtube' ? 'checked' : ''} required>
-                <label for="youtube_${itemCounter}">YouTube Video</label>
-            </div>
-            <div class="radio-option">
-                <input type="radio" name="items[${itemCounter}][type]" value="url" id="url_${itemCounter}" ${item.type === 'url' ? 'checked' : ''} required>
-                <label for="url_${itemCounter}">External Link</label>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label>Item Title *</label>
-            <input type="text" name="items[${itemCounter}][title]" class="form-control" value="${escapeHtml(item.title)}" required>
-        </div>
-        
-        <div class="form-group">
-            <label>Item Description</label>
-            <textarea name="items[${itemCounter}][description]" class="form-control" rows="2">${escapeHtml(item.description)}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label>File Upload ${item.file_path ? '(leave empty to keep current)' : ''}</label>
-            <input type="file" name="items[${itemCounter}][file]" class="form-control" accept=".pdf,.doc,.docx,.mp3,.mp4">
-            ${fileDisplay}
-        </div>
-        
-        <div class="form-group">
-            <label>URL (YouTube or external)</label>
-            <input type="url" name="items[${itemCounter}][url]" class="form-control" value="${escapeHtml(item.url)}" placeholder="https://">
-        </div>
-    `;
-    
-    container.appendChild(itemDiv);
-}
-
 </script>
 @endsection

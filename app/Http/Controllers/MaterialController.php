@@ -436,81 +436,173 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'video_link' => 'nullable|url',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,mp3,mp4|max:20480',
+            'category' => 'required|in:Madd Rules,Idgham Billa Ghunnah,Idgham Bi Ghunnah,Others',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_public' => 'nullable|boolean',
+            
+            // Multiple items support
+            'items' => 'nullable|array',
+            'items.*.id' => 'nullable|integer', // Existing item ID
+            'items.*.type' => 'required|in:file,youtube,url',
+            'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,mp3,mp4|max:20480',
+            'items.*.url' => 'nullable|url',
+            'items.*.title' => 'nullable|string|max:255',
+            'items.*.description' => 'nullable|string',
         ]);
 
-        $material->title = $validated['title'];
-        $material->description = $validated['description'] ?? null;
-        $material->video_link = $validated['video_link'] ?? null;
-        $material->is_public = $request->has('is_public');
+        DB::beginTransaction();
+        
+        try {
+            // Update basic material info
+            $material->title = $validated['title'];
+            $material->description = $validated['description'] ?? null;
+            $material->category = $validated['category'];
+            $material->is_public = $request->has('is_public');
 
-        // Handle file upload and delete old file
-        if ($request->hasFile('file') && $request->file('file')->getError() === UPLOAD_ERR_OK) {
-            $file = $request->file('file');
-            if ($file->isValid() && $file->getSize() > 0) {
-                // Delete old file if exists
-                if ($material->file_path) {
-                    $oldPath = storage_path('app/public/' . $material->file_path);
+            // Handle thumbnail upload
+            if ($request->hasFile('thumbnail')) {
+                $thumbnail = $request->file('thumbnail');
+                if ($thumbnail->getError() === UPLOAD_ERR_OK && $thumbnail->isValid() && $thumbnail->getSize() > 0) {
+                    // Delete old thumbnail if exists and not a URL
+                    if ($material->thumbnail && !filter_var($material->thumbnail, FILTER_VALIDATE_URL)) {
+                        $oldPath = storage_path('app/public/' . $material->thumbnail);
+                        if (file_exists($oldPath)) {
+                            unlink($oldPath);
+                        }
+                    }
+                    
+                    $filename = time() . '_' . uniqid() . '.' . $thumbnail->getClientOriginalExtension();
+                    $destinationPath = storage_path('app/public/thumbnails');
+                    
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+                    
+                    $fullPath = $destinationPath . '/' . $filename;
+                    
+                    if (move_uploaded_file($thumbnail->getPathname(), $fullPath)) {
+                        $material->thumbnail = 'thumbnails/' . $filename;
+                    }
+                }
+            }
+
+            $material->save();
+
+            // Track which existing items are being kept
+            $keptItemIds = [];
+
+            // Process material items
+            if (!empty($validated['items']) && is_array($validated['items'])) {
+                foreach ($validated['items'] as $index => $itemData) {
+                    // Check if this is an update to existing item
+                    if (!empty($itemData['id'])) {
+                        $item = MaterialItem::find($itemData['id']);
+                        if ($item && $item->material_id == $material->material_id) {
+                            $keptItemIds[] = $item->item_id;
+                        } else {
+                            $item = new MaterialItem();
+                            $item->material_id = $material->material_id;
+                        }
+                    } else {
+                        // New item
+                        $item = new MaterialItem();
+                        $item->material_id = $material->material_id;
+                    }
+
+                    $item->type = $itemData['type'];
+                    $item->title = $itemData['title'] ?? null;
+                    $item->description = $itemData['description'] ?? null;
+
+                    // Handle different item types
+                    if ($itemData['type'] === 'file' && $request->hasFile("items.{$index}.file")) {
+                        $file = $request->file("items.{$index}.file");
+                        if ($file->getError() === UPLOAD_ERR_OK && $file->isValid() && $file->getSize() > 0) {
+                            // Delete old file if exists
+                            if ($item->path && !filter_var($item->path, FILTER_VALIDATE_URL)) {
+                                $oldPath = storage_path('app/public/' . $item->path);
+                                if (file_exists($oldPath)) {
+                                    unlink($oldPath);
+                                }
+                            }
+                            
+                            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                            $destinationPath = storage_path('app/public/materials');
+                            
+                            if (!file_exists($destinationPath)) {
+                                mkdir($destinationPath, 0755, true);
+                            }
+                            
+                            $fullPath = $destinationPath . '/' . $filename;
+                            
+                            if (move_uploaded_file($file->getPathname(), $fullPath)) {
+                                $item->path = 'materials/' . $filename;
+                            }
+                        }
+                    } elseif ($itemData['type'] === 'youtube') {
+                        $item->path = $itemData['url'] ?? null;
+                        
+                        // Auto-extract thumbnail if not set
+                        if (!$material->thumbnail && $item->path) {
+                            if (preg_match('/(?:youtube\\.com\\/(?:[^\\/]+\\/.+\\/|(?:v|e(?:mbed)?)\\/|.*[?&]v=)|youtu\\.be\\/)([^"&?\\/ ]{11})/', $item->path, $matches)) {
+                                $material->thumbnail = 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
+                                $material->save();
+                            }
+                        }
+                    } elseif ($itemData['type'] === 'url') {
+                        $urlPath = $itemData['url'] ?? null;
+                        
+                        // Check if URL is a PDF and download it
+                        if ($urlPath && str_ends_with(strtolower($urlPath), '.pdf')) {
+                            try {
+                                $downloadedPath = $this->downloadPDF($urlPath);
+                                if ($downloadedPath) {
+                                    // Switch to file type since we downloaded it
+                                    $item->type = 'file';
+                                    $item->path = $downloadedPath;
+                                } else {
+                                    // Keep as URL if download failed
+                                    $item->path = $urlPath;
+                                }
+                            } catch (\Exception $e) {
+                                Log::warning('PDF download failed: ' . $e->getMessage());
+                                $item->path = $urlPath;
+                            }
+                        } else {
+                            $item->path = $urlPath;
+                        }
+                    }
+
+                    if ($item->path || $item->type === 'file') {
+                        $item->save();
+                        if (!in_array($item->item_id, $keptItemIds)) {
+                            $keptItemIds[] = $item->item_id;
+                        }
+                    }
+                }
+            }
+
+            // Delete items that were removed
+            $removedItems = $material->items()->whereNotIn('item_id', $keptItemIds)->get();
+            foreach ($removedItems as $removedItem) {
+                // Delete associated file if exists
+                if ($removedItem->path && !filter_var($removedItem->path, FILTER_VALIDATE_URL)) {
+                    $oldPath = storage_path('app/public/' . $removedItem->path);
                     if (file_exists($oldPath)) {
                         unlink($oldPath);
                     }
                 }
-                
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $destinationPath = storage_path('app/public/materials');
-                
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-                
-                $fullPath = $destinationPath . '/' . $filename;
-                
-                if (move_uploaded_file($file->getPathname(), $fullPath)) {
-                    $material->file_path = 'materials/' . $filename;
-                }
+                $removedItem->delete();
             }
+
+            DB::commit();
+
+            return redirect()->route('materials.show', $material->material_id)->with('success', 'Material updated successfully!');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Material update failed: ' . $e->getMessage());
+            return back()->withInput()->withErrors(['error' => 'Failed to update material. Please try again.']);
         }
-
-        // Handle thumbnail upload and delete old thumbnail
-        if ($request->hasFile('thumbnail') && $request->file('thumbnail')->getError() === UPLOAD_ERR_OK) {
-            $thumbnail = $request->file('thumbnail');
-            if ($thumbnail->isValid() && $thumbnail->getSize() > 0) {
-                // Delete old thumbnail if exists
-                if ($material->thumbnail) {
-                    $oldPath = storage_path('app/public/' . $material->thumbnail);
-                    if (file_exists($oldPath)) {
-                        unlink($oldPath);
-                    }
-                }
-                
-                $filename = time() . '_' . uniqid() . '.' . $thumbnail->getClientOriginalExtension();
-                $destinationPath = storage_path('app/public/thumbnails');
-                
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-                
-                $fullPath = $destinationPath . '/' . $filename;
-                
-                if (move_uploaded_file($thumbnail->getPathname(), $fullPath)) {
-                    $material->thumbnail = 'thumbnails/' . $filename;
-                }
-            }
-        }
-
-        // Auto-extract YouTube thumbnail if video link provided but no custom thumbnail uploaded
-        if ($material->video_link && !$request->hasFile('thumbnail')) {
-            if (preg_match('/(?:youtube\\.com\\/(?:[^\\/]+\\/.+\\/|(?:v|e(?:mbed)?)\\/|.*[?&]v=)|youtu\\.be\\/)([^"&?\\/ ]{11})/', $material->video_link, $matches)) {
-                $material->thumbnail = 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
-            }
-        }
-
-        $material->save();
-
-        return redirect()->route('materials.show', $material->material_id)->with('success', 'Material updated successfully!');
     }
 
     /**

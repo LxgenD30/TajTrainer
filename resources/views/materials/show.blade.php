@@ -104,24 +104,25 @@
     }
 </style>
 
-<div style="margin-bottom: 20px;">
+<div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border: 3px solid #2a2a2a; border-radius: 15px; padding: 25px; margin-bottom: 30px; color: white; display: flex; align-items: center; justify-content: space-between;">
+    <div>
+        <h1 style="margin: 0; font-family: 'El Messiri', sans-serif; font-size: 2.2rem; font-weight: 700; color: white;">
+            <i class="fas fa-book-open"></i> {{ $material->title }}
+        </h1>
+        @if($material->category)
+            <div style="margin-top: 10px;">
+                <span style="background: rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 20px; font-size: 0.95rem; font-weight: 600;">
+                    <i class="fas fa-tag"></i> {{ $material->category }}
+                </span>
+            </div>
+        @endif
+    </div>
     <a href="{{ route('materials.index') }}" 
-        style="display: inline-flex; align-items: center; gap: 10px; color: #1a1a1a; text-decoration: none; font-family: 'El Messiri', sans-serif; font-weight: 600; font-size: 1rem; padding: 8px 16px; border-radius: 50px; background: rgba(255, 255, 255, 0.9); border: 3px solid #2a2a2a; transition: all 0.3s ease;">
+        style="display: inline-flex; align-items: center; gap: 8px; color: white; text-decoration: none; font-family: 'El Messiri', sans-serif; font-weight: 700; font-size: 1rem; padding: 12px 24px; border-radius: 50px; background: rgba(255, 255, 255, 0.15); border: 2px solid white; transition: all 0.3s ease;"
+        onmouseover="this.style.background='white'; this.style.color='#0a5c36'"
+        onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'; this.style.color='white'">
         <i class="fas fa-arrow-left"></i> Back to Materials
     </a>
-</div>
-
-<div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border: 3px solid #2a2a2a; border-radius: 15px; padding: 25px; margin-bottom: 30px; color: white;">
-    <h1 style="margin: 0; font-family: 'El Messiri', sans-serif; font-size: 2.2rem; font-weight: 700;">
-        <i class="fas fa-book-open"></i> {{ $material->title }}
-    </h1>
-    @if($material->category)
-        <div style="margin-top: 10px;">
-            <span style="background: rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 20px; font-size: 0.95rem; font-weight: 600;">
-                <i class="fas fa-tag"></i> {{ $material->category }}
-            </span>
-        </div>
-    @endif
 </div>
 
 <div class="material-container">
