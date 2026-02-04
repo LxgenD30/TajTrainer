@@ -100,7 +100,7 @@
     
     .classrooms-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
         gap: 25px;
     }
     
@@ -156,8 +156,14 @@
         color: #666;
         font-size: 1.05rem;
         font-weight: 600;
-        line-height: 1.5;
+        line-height: 1.6;
         margin: 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
     
     .access-code-section {
@@ -327,9 +333,58 @@
         margin-bottom: 30px;
     }
     
+    .filter-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    
+    .search-input, .filter-select {
+        padding: 12px 15px;
+        background: #1a1a1a;
+        border: 2px solid #2a2a2a;
+        border-radius: 12px;
+        color: white;
+        font-size: 0.95rem;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input {
+        padding-left: 40px;
+        width: 250px;
+    }
+    
+    .filter-select {
+        padding-left: 40px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        min-width: 180px;
+    }
+    
+    .search-wrapper, .filter-wrapper {
+        position: relative;
+    }
+    
+    .search-wrapper i, .filter-wrapper i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #d4af37;
+        pointer-events: none;
+    }
+    
     @media (max-width: 768px) {
         .classrooms-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .search-input, .filter-select {
+            width: 100%;
         }
         
         .welcome-banner {
@@ -359,11 +414,43 @@
     </a>
 </div>
 
-<!-- Classrooms Grid -->
+<!-- Search and Filter Controls -->
 @if($classrooms->count() > 0)
-    <div class="classrooms-grid">
+    <div class="filter-controls">
+        <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input 
+                type="text" 
+                id="classroomSearch" 
+                class="search-input"
+                placeholder="Search classrooms..."
+                onkeyup="filterClassrooms()"
+            >
+        </div>
+        
+        <div class="filter-wrapper">
+            <i class="fas fa-filter"></i>
+            <select id="classroomSort" class="filter-select" onchange="sortClassrooms()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="students">Most Students</option>
+                <option value="assignments">Most Assignments</option>
+            </select>
+        </div>
+        
+        <div style="margin-left: auto; color: #666; font-weight: 600; font-size: 1.05rem;">
+            <span id="classCount">{{ $classrooms->count() }}</span> {{ $classrooms->count() === 1 ? 'Classroom' : 'Classrooms' }}
+        </div>
+    </div>
+    
+    <div class="classrooms-grid" id="classroomsContainer">
         @foreach($classrooms as $classroom)
-            <div class="classroom-card">
+            <div class="classroom-card" 
+                 data-name="{{ strtolower($classroom->class_name) }}"
+                 data-description="{{ strtolower($classroom->description ?? '') }}"
+                 data-created="{{ $classroom->created_at }}"
+                 data-students="{{ $classroom->students_count ?? 0 }}"
+                 data-assignments="{{ $classroom->assignments_count ?? 0 }}">
                 <div class="classroom-header">
                     <div class="classroom-icon">
                         <i class="fas fa-book-quran"></i>
@@ -453,6 +540,47 @@
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');
         }
+    }
+    
+    function filterClassrooms() {
+        const searchInput = document.getElementById('classroomSearch').value.toLowerCase();
+        const cards = document.querySelectorAll('.classroom-card');
+        let visibleCount = 0;
+        
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const description = card.getAttribute('data-description');
+            
+            if (name.includes(searchInput) || description.includes(searchInput)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('classCount').textContent = visibleCount;
+    }
+    
+    function sortClassrooms() {
+        const sortValue = document.getElementById('classroomSort').value;
+        const container = document.getElementById('classroomsContainer');
+        const cards = Array.from(document.querySelectorAll('.classroom-card'));
+        
+        cards.sort((a, b) => {
+            switch(sortValue) {
+                case 'newest':
+                    return new Date(b.getAttribute('data-created')) - new Date(a.getAttribute('data-created'));
+                case 'oldest':
+                    return new Date(a.getAttribute('data-created')) - new Date(b.getAttribute('data-created'));
+                case 'students':
+                    return parseInt(b.getAttribute('data-students')) - parseInt(a.getAttribute('data-students'));
+                case 'assignments':
+                    return parseInt(b.getAttribute('data-assignments')) - parseInt(a.getAttribute('data-assignments'));
+            }
+        });
+        
+        cards.forEach(card => container.appendChild(card));
     }
 </script>
 @endsection

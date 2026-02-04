@@ -35,8 +35,9 @@
     .modern-card {
         background: #ffffff;
         border-radius: 15px;
-        padding: 30px;
-        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
         transition: all 0.3s ease;
     }
     
@@ -74,28 +75,29 @@
         display: flex;
         align-items: center;
         gap: 15px;
-        margin-bottom: 25px;
-        padding-bottom: 20px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
         border-bottom: 3px solid #f5f5dc;
     }
     
     .icon-badge {
-        width: 60px;
-        height: 60px;
+        width: 50px;
+        height: 50px;
         background: linear-gradient(135deg, #0a5c36, #2e8b57);
-        border-radius: 15px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
-        box-shadow: 0 5px 20px rgba(10, 92, 54, 0.3);
+        font-size: 1.5rem;
+        border: 2px solid #2a2a2a;
+        flex-shrink: 0;
     }
     
     .class-card {
-        background: #ffffff;
+        background: #f9f9f9;
         border: 2px solid #2a2a2a;
         border-radius: 12px;
-        padding: 25px;
+        padding: 20px;
         transition: all 0.3s ease;
         cursor: pointer;
         position: relative;
@@ -115,9 +117,9 @@
     }
     
     .class-card:hover {
-        border-color: #0a5c36;
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.3);
+        background: #fff;
+        transform: translateX(5px);
+        box-shadow: 5px 5px 0 #2a2a2a;
     }
     
     .class-card:hover::before {
@@ -201,14 +203,26 @@
     
     .empty-state {
         text-align: center;
-        padding: 80px 40px;
-        color: #999;
+        padding: 60px 40px;
+        color: #666;
     }
     
     .empty-state-icon {
-        font-size: 5rem;
-        margin-bottom: 20px;
-        opacity: 0.3;
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+        color: #000;
+        font-size: 1.6rem;
+        margin-bottom: 10px;
+        font-weight: 800;
+    }
+    
+    .empty-state p {
+        font-size: 1.1rem;
+        font-weight: 600;
     }
     
     .stat-badge {
@@ -216,11 +230,12 @@
         align-items: center;
         gap: 8px;
         padding: 8px 15px;
-        background: linear-gradient(135deg, #f5f5dc, #e8dcc4);
+        background: rgba(10, 92, 54, 0.1);
+        border: 2px solid #2a2a2a;
         border-radius: 50px;
         color: #064e32;
-        font-size: 0.9rem;
-        font-weight: 500;
+        font-size: 1.05rem;
+        font-weight: 700;
     }
     
     @media (max-width: 968px) {
@@ -256,8 +271,8 @@
                         <i class="fas fa-school" style="color: #d4af37;"></i>
                     </div>
                     <div>
-                        <h2 style="color: #0a5c36; font-size: 1.8rem; margin: 0; font-weight: 700;">My Enrolled Classes</h2>
-                        <p id="classCountLabel" style="color: #666; font-size: 1rem; margin: 0;">{{ $student->classrooms->count() }} Active</p>
+                        <h2 style="color: #000; font-size: 1.6rem; margin: 0; font-weight: 800;">My Enrolled Classes</h2>
+                        <p id="classCountLabel" style="color: #666; font-size: 1.05rem; margin: 0; font-weight: 600;">{{ $student->classrooms->count() }} Active</p>
                     </div>
                 </div>
 
@@ -297,10 +312,10 @@
                 <div style="display: grid; gap: 20px;" id="classesContainer">
                     @foreach($student->classrooms as $classroom)
                         <div class="class-card" data-classroom-name="{{ strtolower($classroom->class_name) }}" data-teacher-name="{{ strtolower($classroom->teacher->name ?? '') }}" data-enrolled-date="{{ $classroom->pivot->created_at ?? now() }}">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
                                 <div style="flex: 1;">
-                                    <h3 style="color: #0a5c36; font-size: 1.4rem; margin-bottom: 12px; font-weight: 700;">{{ $classroom->class_name }}</h3>
-                                    <p style="color: #666; margin-bottom: 15px; line-height: 1.6; font-size: 1.15rem;">{{ $classroom->description ?? 'No description available' }}</p>
+                                    <h3 style="color: #000; font-size: 1.2rem; margin-bottom: 10px; font-weight: 800;">{{ $classroom->class_name }}</h3>
+                                    <p style="color: #666; margin-bottom: 12px; line-height: 1.5; font-size: 1.05rem; font-weight: 600;">{{ $classroom->description ?? 'No description available' }}</p>
                                 </div>
                                 <div style="display: flex; gap: 10px;">
                                     <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-view-class">
@@ -342,8 +357,8 @@
                     <i class="fas fa-plus-circle" style="color: #d4af37;"></i>
                 </div>
                 <div>
-                    <h2 style="color: #0a5c36; font-size: 1.5rem; margin-bottom: 5px; font-weight: 700;">Enroll in Class</h2>
-                    <p style="color: #666; font-size: 1rem;">Enter access code</p>
+                    <h2 style="color: #000; font-size: 1.6rem; margin-bottom: 5px; font-weight: 800;">Enroll in Class</h2>
+                    <p style="color: #666; font-size: 1.05rem; font-weight: 600;">Enter access code</p>
                 </div>
             </div>
 
