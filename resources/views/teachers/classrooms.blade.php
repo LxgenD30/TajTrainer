@@ -106,6 +106,7 @@
     
     .classroom-card {
         background: white;
+        border: 2px solid #000000;
         border-radius: 15px;
         padding: 30px;
         box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);

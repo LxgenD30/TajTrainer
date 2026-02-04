@@ -343,34 +343,40 @@
                 </div>
                 <div>
                     <h2 style="color: #0a5c36; font-size: 1.5rem; margin-bottom: 5px; font-weight: 700;">Enroll in Class</h2>
-                    <p style="color: #666; font-size: 0.95rem;">Enter access code</p>
+                    <p style="color: #666; font-size: 1rem;">Enter access code</p>
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('student.enroll') }}">
-                @csrf
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; color: #0a5c36; font-weight: 600; margin-bottom: 12px; font-size: 1rem;">
-                        Access Code <span style="color: #e74c3c;">*</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        name="access_code" 
-                        value="{{ old('access_code') }}"
-                        placeholder="XXXXXX"
-                        required
-                        maxlength="6"
-                        class="enroll-form-input"
-                    >
-                    <p style="color: #999; font-size: 1.05rem; margin-top: 10px; line-height: 1.5;">
-                        <i class="fas fa-info-circle" style="color: #d4af37;"></i> Ask your teacher for the 6-digit access code
-                    </p>
-                </div>
+            <div style="background: white; border: 3px solid #000000; border-radius: 20px; padding: 30px; box-shadow: 8px 8px 0px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                
+                <form method="POST" action="{{ route('student.enroll') }}">
+                    @csrf
+                    <div style="margin-bottom: 25px;">
+                        <label style="display: block; color: #0a5c36; font-weight: 700; margin-bottom: 12px; font-size: 1.1rem; font-family: 'Cairo', sans-serif;">
+                            Access Code <span style="color: #e74c3c;">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="access_code" 
+                            value="{{ old('access_code') }}"
+                            placeholder="XXXXXX"
+                            required
+                            maxlength="6"
+                            style="width: 100%; padding: 15px 20px; border: 3px solid #e0e0e0; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 3px; transition: all 0.3s ease;"
+                            onfocus="this.style.borderColor='#0a5c36'; this.style.outline='none';"
+                            onblur="this.style.borderColor='#e0e0e0';"
+                        >
+                        <p style="color: #666; font-size: 0.95rem; margin-top: 12px; line-height: 1.5; font-family: 'Cairo', sans-serif;">
+                            <i class="fas fa-info-circle" style="color: #d4af37;"></i> Ask your teacher for the unique 6-digit access code to enter the classroom.
+                        </p>
+                    </div>
 
-                <button type="submit" class="btn-enroll">
-                    <i class="fas fa-graduation-cap"></i> Join Class
-                </button>
-            </form>
+                    <button type="submit" class="btn-enroll" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;">
+                        <i class="fas fa-graduation-cap"></i> Join Class
+                    </button>
+                </form>
+
+            </div>
 
             <div class="info-box">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">

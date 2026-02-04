@@ -116,8 +116,7 @@
     <div style="display: grid; grid-template-columns: {{ auth()->user()->role_id == 3 ? '1fr 1fr' : '1fr' }}; gap: 30px; margin-bottom: 30px;">
         <!-- Students Section (Teachers Only) -->
         @if(auth()->user()->role_id == 3)
-            <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                <div style="background: white; border-radius: 20px; padding: 30px; border: 2px solid #000000; box-shadow: 8px 8px 0px rgba(0,0,0,0.05);">                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
                     <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
                         <i class="fas fa-users"></i> Students ({{ $classroom->students->count() }})
                     </h3>
@@ -176,8 +175,7 @@
         @endif
 
         <!-- Assignments Section -->
-        <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+            <div style="background: white; border-radius: 20px; padding: 30px; border: 2px solid #000000; box-shadow: 8px 8px 0px rgba(0,0,0,0.05);">            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
                 <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
                     <i class="fas fa-tasks"></i> Assignments ({{ $assignments->count() }})
                 </h3>
