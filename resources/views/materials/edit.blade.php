@@ -7,8 +7,6 @@
     @include('partials.teacher-nav')
 @endsection
 
-@extends('layouts.dashboard')
-
 @section('content')
 <style>
     .create-container {
