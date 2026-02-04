@@ -264,7 +264,6 @@
                 <i class="fas fa-inbox"></i>
                 <p style="color:#000; font-weight:600;">No classes enrolled yet.</p>
             </div>
-        @endif
     </div>
 
     <div class="section-card">
@@ -292,8 +291,7 @@
                 <i class="fas fa-graduation-cap"></i>
                 <p style="color:#000; font-weight:600;">No grades available yet.</p>
             </div>
-        @endif
     </div>
 </div>
-@endif
 @endsection
+
