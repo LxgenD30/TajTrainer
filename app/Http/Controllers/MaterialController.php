@@ -477,8 +477,6 @@ class MaterialController extends Controller
                         'has_file' => $request->hasFile("items.{$index}.file"),
                         'file_key_check' => "items.{$index}.file",
                         'item_data_keys' => array_keys($itemData),
-                    ]);
-                        'has_file' => $request->hasFile("items.{$index}.file"),
                         'has_pdf_url' => !empty($itemData['pdf_url']),
                         'pdf_url' => $itemData['pdf_url'] ?? null,
                     ]);
