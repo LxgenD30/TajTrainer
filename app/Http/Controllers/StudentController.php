@@ -427,6 +427,11 @@ class StudentController extends Controller
                 return redirect()->route('classroom.show', $assignment->class_id)
                     ->with('warning', 'Assignment submitted but analysis failed. Teacher will grade manually.');
             }
+        } else {
+            // No audio file - text submission only
+            \Log::info('✓ Text submission saved successfully (no audio)');
+            return redirect()->route('classroom.show', $assignment->class_id)
+                ->with('success', 'Assignment submitted successfully!');
         }
             
         } catch (\Exception $e) {
