@@ -443,6 +443,11 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Detailed Breakdown (in 2nd column) -->
+            <div id="detailedBreakdown" style="display: none; margin-top: 25px;">
+                <!-- Breakdown will be displayed here -->
+            </div>
         </div>
 
         <!-- Analysis Results Card (3rd Column) -->
@@ -692,6 +697,7 @@
     function deleteRecording() {
         console.log('deleteRecording() called');
         document.getElementById('audioPlayback').style.display = 'none';
+        document.getElementById('detailedBreakdown').style.display = 'none';
         
         // Reset analysis results to placeholder
         var resultsDiv = document.getElementById('analysisResults');
@@ -784,6 +790,7 @@
         console.log('displayAnalysisResults() called with:', analysis);
         
         var resultsDiv = document.getElementById('analysisResults');
+        var breakdownDiv = document.getElementById('detailedBreakdown');
         var accuracyScore = analysis.accuracy_score || (analysis.overall_score && analysis.overall_score.score) || 0;
         
         // Prioritize AI feedback over generic feedback
@@ -799,6 +806,40 @@
             feedback = analysis.overall_score.feedback;
         }
         
+        // Build detailed breakdown HTML for 2nd column
+        var breakdownHtml = '';
+        if (analysis.details) {
+            breakdownHtml += '<h4 style="color: var(--primary-green); margin-bottom: 15px; font-size: 1.3rem; font-weight: 700;"><i class="fas fa-list-check"></i> Detailed Breakdown</h4>';
+            breakdownHtml += '<div style="display: grid; grid-template-columns: 1fr; gap: 15px;">';
+            
+            for (var key in analysis.details) {
+                var label = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase() });
+                var value = Math.round(analysis.details[key]);
+                breakdownHtml += '<div style="background: rgba(26, 188, 156, 0.1); padding: 20px; border-radius: 10px; text-align: center; border: 2px solid rgba(26, 188, 156, 0.2);">';
+                breakdownHtml += '<div style="font-size: 1.1rem; color: #666; margin-bottom: 8px; font-weight: 600;">' + label + '</div>';
+                breakdownHtml += '<div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-green);">' + value + '%</div>';
+                breakdownHtml += '</div>';
+            }
+            
+            breakdownHtml += '</div>';
+        }
+        
+        // Add transcribed text to breakdown column
+        if (analysis.python_analysis && analysis.python_analysis.whisper_transcription) {
+            var transcription = analysis.python_analysis.whisper_transcription;
+            transcription = transcription.replace(/<\|[^|]+\|>/g, '').trim();
+            if (transcription) {
+                breakdownHtml += '<div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 10px; margin-top: 20px; direction: rtl; border: 2px solid rgba(212, 175, 55, 0.3);">';
+                breakdownHtml += '<h5 style="color: #d4af37; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-microphone"></i> Your Recitation (Transcribed):</h5>';
+                breakdownHtml += '<p style="font-size: 2rem; color: #333; text-align: center; line-height: 1.8;">' + transcription + '</p>';
+                breakdownHtml += '</div>';
+            }
+        }
+        
+        breakdownDiv.innerHTML = breakdownHtml;
+        breakdownDiv.style.display = 'block';
+        
+        // Build AI analysis HTML for 3rd column
         var html = '<div style="background: rgba(26, 188, 156, 0.05); padding: 25px; border-radius: 15px; border: 2px solid rgba(26, 188, 156, 0.2);">';
         
         // Overall Score
@@ -845,37 +886,6 @@
                 html += '<p style="color: #333; margin: 0; font-size: 1.05rem; line-height: 1.7;">' + aiFeedback.next_steps + '</p>';
                 html += '</div>';
             }
-        }
-        
-        // Transcribed Text (if available)
-        if (analysis.python_analysis && analysis.python_analysis.whisper_transcription) {
-            var transcription = analysis.python_analysis.whisper_transcription;
-            // Remove special tokens like <|ar|><|transcribe|><|notimestamps|>
-            transcription = transcription.replace(/<\|[^|]+\|>/g, '').trim();
-            if (transcription) {
-                html += '<div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0; direction: rtl;">';
-                html += '<h5 style="color: #d4af37; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-microphone"></i> Your Recitation (Transcribed):</h5>';
-                html += '<p style="font-size: 2rem; color: #333; text-align: center; line-height: 1.8;">' + transcription + '</p>';
-                html += '</div>';
-            }
-        }
-        
-        // Detailed Breakdown (if available)
-        if (analysis.details) {
-            html += '<div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid rgba(26, 188, 156, 0.2);">';
-            html += '<h5 style="color: var(--primary-green); margin-bottom: 15px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-list-check"></i> Detailed Breakdown:</h5>';
-            html += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">';
-            
-            for (var key in analysis.details) {
-                var label = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase() });
-                var value = Math.round(analysis.details[key]);
-                html += '<div style="background: rgba(255, 255, 255, 0.5); padding: 20px; border-radius: 8px; text-align: center;">';
-                html += '<div style="font-size: 1rem; color: #666; margin-bottom: 8px; font-weight: 600;">' + label + '</div>';
-                html += '<div style="font-size: 2rem; font-weight: 700; color: var(--primary-green);">' + value + '%</div>';
-                html += '</div>';
-            }
-            
-            html += '</div></div>';
         }
         
         html += '</div>';
