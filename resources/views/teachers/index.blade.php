@@ -161,24 +161,24 @@
     }
     
     .stat-label {
-        color: #666;
-        font-size: 0.95rem;
-        font-weight: 600;
+        color: #333;
+        font-size: 1.05rem;
+        font-weight: 700;
     }
     
     .section-card {
         background: white;
         border-radius: 15px;
-        padding: 30px;
+        padding: 25px;
         margin-bottom: 25px;
         box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
         border: 3px solid #2a2a2a;
     }
     
     .section-title {
-        font-size: 1.5rem;
-        color: #0a5c36;
-        font-weight: 700;
+        font-size: 1.6rem;
+        color: #000 !important;
+        font-weight: 800;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
@@ -190,16 +190,17 @@
         flex-direction: column;
         gap: 10px;
         padding: 15px;
-        background: rgba(10, 92, 54, 0.05);
+        background: #f9f9f9;
         border-radius: 12px;
-        border-left: 4px solid #0a5c36;
+        border: 2px solid #2a2a2a;
         margin-bottom: 12px;
         transition: all 0.3s ease;
     }
     
     .submission-item:hover {
-        background: rgba(10, 92, 54, 0.1);
+        background: #fff;
         transform: translateX(3px);
+        box-shadow: 3px 3px 0 #2a2a2a;
     }
     
     .submission-header {
@@ -209,16 +210,17 @@
     }
     
     .submission-icon {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        border-radius: 10px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
+        font-size: 1.5rem;
         color: white;
         flex-shrink: 0;
+        border: 2px solid #2a2a2a;
     }
     
     .submission-details {
@@ -227,18 +229,19 @@
     }
     
     .submission-details h4 {
-        color: #0a5c36;
-        font-weight: 700;
+        color: #000 !important;
+        font-weight: 800;
         margin-bottom: 3px;
-        font-size: 0.95rem;
+        font-size: 1.05rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
     
     .submission-details p {
-        color: #666;
-        font-size: 0.75rem;
+        color: #222;
+        font-size: 1.05rem;
+        font-weight: 600;
         margin: 0;
         white-space: nowrap;
         overflow: hidden;
@@ -304,23 +307,30 @@
     }
     
     .action-btn i {
-        font-size: 2.5rem;
+        font-size: 2rem;
         color: #0a5c36;
         margin-bottom: 15px;
     }
     
     .action-btn h4 {
-        color: #0a5c36;
-        font-weight: 700;
+        color: #000;
+        font-weight: 800;
         margin-bottom: 5px;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
     }
     
     .action-btn p {
         color: #666;
-        font-size: 0.85rem;
+        font-size: 1.05rem;
+        font-weight: 600;
         margin: 0;
     }
+    
+    .empty-state { text-align: center; padding: 40px; color: #000; font-weight: 700; font-size: 1.1rem; }
+    .empty-state i { font-size: 3rem; margin-bottom: 15px; display: block; opacity: 0.5; }
+    
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+    .info-box { background: rgba(10, 92, 54, 0.05); padding: 15px; border-radius: 10px; border: 2px solid #2a2a2a; text-align: center; font-size: 1.05rem; font-weight: 600; }
 </style>
 
 <!-- Dashboard Layout -->
@@ -392,36 +402,36 @@
             <h2 class="section-title">
                 <i class="fas fa-brain"></i> AI-Powered Tajweed Analysis System
             </h2>
-            <p style="font-size: 1.05rem; line-height: 1.8; color: #555;">
+            <p style="font-size: 1.05rem; line-height: 1.8; color: #555; font-weight: 600;">
                 TajTrainer uses advanced AI technology to analyze student recitations for Tajweed accuracy. Our system detects:
             </p>
             <div class="info-grid">
                 <div class="info-box">
-                    <strong>Makharij</strong>
+                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Makharij</strong>
                     Pronunciation points
                 </div>
                 <div class="info-box">
-                    <strong>Ghunnah</strong>
+                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Ghunnah</strong>
                     Nasal sounds
                 </div>
                 <div class="info-box">
-                    <strong>Idgham</strong>
+                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Idgham</strong>
                     Letter merging
                 </div>
                 <div class="info-box">
-                    <strong>Qalqalah</strong>
+                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Qalqalah</strong>
                     Echo sound
                 </div>
                 <div class="info-box">
-                    <strong>Madd</strong>
+                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Madd</strong>
                     Elongation rules
                 </div>
                 <div class="info-box">
-                    <strong>Ikhfa</strong>
+                    <strong style="display: block; margin-bottom: 5px; color: #0a5c36;">Ikhfa</strong>
                     Concealment
                 </div>
             </div>
-            <p style="margin-top: 20px; font-size: 0.95rem; color: #777; font-style: italic;">
+            <p style="margin-top: 20px; font-size: 1.05rem; color: #666; font-style: italic; font-weight: 600;">
                 All submissions are automatically analyzed, providing detailed feedback to help students perfect their recitation.
             </p>
         </div>
@@ -430,7 +440,7 @@
     <!-- Sidebar - Grading Queue -->
     <div class="sidebar">
         <div class="grading-queue-card">
-            <h2 class="section-title" style="font-size: 1.3rem; margin-bottom: 15px;">
+            <h2 class="section-title" style="font-size: 1.6rem; margin-bottom: 15px;">
                 <i class="fas fa-clipboard-list"></i> Grading Queue
             </h2>
             

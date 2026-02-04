@@ -35,7 +35,7 @@
     .modern-card {
         background: #ffffff;
         border-radius: 15px;
-        padding: 30px;
+        padding: 25px;
         box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
         transition: all 0.3s ease;
         border: 3px solid #2a2a2a;
@@ -51,15 +51,15 @@
     }
     
     .section-title {
-        font-size: 1.8rem;
-        color: #0a5c36;
-        font-weight: 700;
+        font-size: 1.6rem;
+        color: #000 !important;
+        font-weight: 800;
         font-family: 'El Messiri', serif;
     }
 
     .card-description {
         color: #444; 
-        font-size: 1.25rem;
+        font-size: 1.2rem;
         margin: 0;
         font-family: 'Cairo', sans-serif;
     }
@@ -74,7 +74,7 @@
     .stat-card {
         background: linear-gradient(135deg, #0a5c36, #2e8b57);
         border-radius: 15px;
-        padding: 30px;
+        padding: 25px;
         color: white;
         text-align: center;
         border: 3px solid #2a2a2a;
@@ -88,8 +88,8 @@
     }
     
     .stat-label {
-        font-size: 1.3rem;
-        font-weight: 600;
+        font-size: 1.05rem;
+        font-weight: 700;
         opacity: 0.95;
         font-family: 'Cairo', sans-serif;
     }
@@ -114,7 +114,7 @@
     }
     
     .weakness-name {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         font-weight: 700;
         color: #e74c3c;
     }
@@ -125,7 +125,7 @@
         padding: 8px 18px;
         border-radius: 20px;
         font-weight: bold;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
     }
 
     .trend-value {
@@ -134,17 +134,18 @@
     }
 
     .trend-label {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         color: #444;
         font-weight: 600;
     }
 
     .icon-badge {
-        width: 60px; height: 60px;
+        width: 50px; height: 50px;
         background: linear-gradient(135deg, #0a5c36, #2e8b57);
-        border-radius: 15px;
+        border-radius: 12px;
         display: flex; align-items: center; justify-content: center;
-        font-size: 2rem; color: white;
+        font-size: 1.5rem; color: white;
+        border: 2px solid #2a2a2a;
     }
     .icon-badge.purple { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
     .icon-badge.red { background: linear-gradient(135deg, #e74c3c, #c0392b); }

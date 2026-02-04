@@ -48,6 +48,29 @@
 @endsection
 
 @section('content')
+    <style>
+    /* High Contrast Card Styles */
+    .class-item-card {
+        display: flex; align-items: center; gap: 15px; padding: 15px; 
+        background: #f9f9f9; border-radius: 12px; border: 2px solid #2a2a2a; 
+        margin-bottom: 12px; transition: all 0.3s ease; text-decoration: none; color: inherit;
+    }
+    .class-item-card:hover { background: #fff; transform: translateX(5px); box-shadow: 5px 5px 0 #2a2a2a; }
+
+    .class-icon-card { 
+        width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); 
+        border-radius: 12px; display: flex; align-items: center; justify-content: center; 
+        font-size: 1.5rem; color: white; border: 2px solid #2a2a2a;
+    }
+
+    .class-details-card { flex: 1; }
+    .class-details-card h4 { color: #000 !important; font-weight: 800; margin-bottom: 5px; font-size: 1.2rem; }
+    .class-details-card p { color: #222 !important; font-size: 1.05rem; font-weight: 600; margin: 0; }
+    
+    .section-card-title { font-size: 1.6rem; color: #000 !important; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .empty-state { text-align: center; padding: 40px; color: #000; font-weight: 700; font-size: 1.1rem; }
+    .empty-state i { font-size: 3rem; margin-bottom: 15px; display: block; opacity: 0.5; }
+    </style>
     <!-- Classroom Header Banner (Like Student Welcome Banner) -->
     <div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 25px; padding: 40px; margin-bottom: 30px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25); border: 3px solid #2a2a2a;">
         <div style="content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E\"); opacity: 0.4;"></div>
@@ -116,8 +139,8 @@
     <div style="display: grid; grid-template-columns: {{ auth()->user()->role_id == 3 ? '1fr 1fr' : '1fr' }}; gap: 30px; margin-bottom: 30px;">
         <!-- Students Section (Teachers Only) -->
         @if(auth()->user()->role_id == 3)
-                <div style="background: white; border-radius: 20px; padding: 30px; border: 2px solid #000000; box-shadow: 8px 8px 0px rgba(0,0,0,0.05);">                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
-                    <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
+                <div style="background: white; border-radius: 15px; padding: 25px; border: 3px solid #2a2a2a; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                    <h3 class="section-card-title" style="margin: 0; font-family: 'El Messiri', serif; color: #000;">
                         <i class="fas fa-users"></i> Students ({{ $classroom->students->count() }})
                     </h3>
                 </div>
@@ -175,8 +198,8 @@
         @endif
 
         <!-- Assignments Section -->
-            <div style="background: white; border-radius: 20px; padding: 30px; border: 2px solid #000000; box-shadow: 8px 8px 0px rgba(0,0,0,0.05);">            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
-                <h3 style="margin: 0; font-family: 'El Messiri', serif; font-size: 1.5rem; color: #1a1a1a;">
+            <div style="background: white; border-radius: 15px; padding: 25px; border: 3px solid #2a2a2a; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                <h3 class="section-card-title" style="margin: 0; font-family: 'El Messiri', serif; color: #000;">
                     <i class="fas fa-tasks"></i> Assignments ({{ $assignments->count() }})
                 </h3>
             </div>
@@ -184,32 +207,31 @@
             @if($assignments->count() > 0)
                 <div style="display: flex; flex-direction: column; gap: 15px;">
                     @foreach($assignments as $assignment)
-                        <div style="background: rgba(10, 92, 54, 0.05); border-left: 4px solid #0a5c36; border-radius: 12px; padding: 20px; transition: all 0.3s ease;"
-                            onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.transform='translateX(5px)'"
-                            onmouseout="this.style.background='rgba(10, 92, 54, 0.05)'; this.style.transform='translateX(0)'">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                                <h4 style="margin: 0; font-family: 'Cairo', sans-serif; font-size: 1.25rem; color: #1a1a1a;">
-                                    {{ $assignment->surah }} ({{ $assignment->start_verse }}{{ $assignment->end_verse ? '-' . $assignment->end_verse : '' }})
-                                </h4>
-                                <span style="padding: 5px 12px; background: rgba(212, 175, 55, 0.1); color: #d4af37; border-radius: 50px; font-size: 0.8rem; font-weight: 600;">
-                                    {{ $assignment->total_marks }} pts
-                                </span>
+                        <div class="class-item-card" style="border-left: 4px solid #0a5c36;">
+                            <div class="class-icon-card">
+                                <i class="fas fa-file-alt"></i>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 15px; font-size: 0.85rem; color: #666; margin-bottom: 15px;">
-                                <span><i class="far fa-calendar"></i> Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y') }}</span>
-                                @php
-                                    $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->assignment_id)->count();
-                                @endphp
-                                <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}</span>
+                            <div class="class-details-card">
+                                <h4 style="margin: 0 0 8px 0;">{{ $assignment->surah }} ({{ $assignment->start_verse }}{{ $assignment->end_verse ? '-' . $assignment->end_verse : '' }})</h4>
+                                <p style="display: flex; align-items: center; gap: 15px; font-size: 1.05rem;">
+                                    <span><i class="far fa-calendar"></i> Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y') }}</span>
+                                    @php
+                                        $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->assignment_id)->count();
+                                    @endphp
+                                    <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}</span>
+                                </p>
                             </div>
-                            <div style="display: flex; gap: 10px;">
-                                <a href="{{ route('assignment.show', $assignment->assignment_id) }}" style="flex: 1; padding: 8px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: all 0.3s ease;"
+                            <span style="padding: 8px 16px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 12px; font-size: 1.05rem; font-weight: 700; white-space: nowrap;">
+                                {{ $assignment->total_marks }} pts
+                            </span>
+                            <div style="display: flex; gap: 10px; margin-left: auto;">
+                                <a href="{{ route('assignment.show', $assignment->assignment_id) }}" style="padding: 10px 20px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 700; font-size: 1.05rem; transition: all 0.3s ease;"
                                     onmouseover="this.style.background='#0a5c36'; this.style.color='white'"
                                     onmouseout="this.style.background='white'; this.style.color='#0a5c36'">
                                     View
                                 </a>
                                 @if(auth()->user()->role_id == 3)
-                                <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" style="flex: 1; padding: 8px; background: white; color: #ff9800; border: 2px solid #ff9800; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: all 0.3s ease;"
+                                <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" style="padding: 10px 20px; background: white; color: #ff9800; border: 2px solid #ff9800; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 700; font-size: 1.05rem; transition: all 0.3s ease;"
                                     onmouseover="this.style.background='#ff9800'; this.style.color='white'"
                                     onmouseout="this.style.background='white'; this.style.color='#ff9800'">
                                     Edit
@@ -220,10 +242,10 @@
                     @endforeach
                 </div>
             @else
-                <div style="text-align: center; padding: 50px 20px; color: #999;">
-                    <div style="font-size: 3rem; margin-bottom: 15px;">📋</div>
-                    <p style="margin: 0; font-size: 1.25rem; color: #666;">No assignments yet</p>
-                    <p style="margin: 5px 0 0 0; font-size: 1.05rem; color: #999;">Create your first assignment to get started</p>
+                <div class="empty-state">
+                    <i class="fas fa-clipboard"></i>
+                    <p style="margin: 0; font-size: 1.1rem;">No assignments yet</p>
+                    <p style="margin: 5px 0 0 0; font-size: 1.05rem; color: #666; font-weight: 600;">Create your first assignment to get started</p>
                 </div>
             @endif
         </div>

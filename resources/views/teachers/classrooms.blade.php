@@ -62,7 +62,7 @@
     }
     
     .welcome-content h1 {
-        font-size: 2.2rem;
+        font-size: 2rem;
         margin-bottom: 8px;
         font-weight: 700;
         color: #ffffff;
@@ -108,7 +108,7 @@
         background: white;
         border: 2px solid #000000;
         border-radius: 15px;
-        padding: 30px;
+        padding: 25px;
         box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
         border: 3px solid #2a2a2a;
         transition: all 0.3s ease;
@@ -127,16 +127,17 @@
     }
     
     .classroom-icon {
-        width: 60px;
-        height: 60px;
+        width: 50px;
+        height: 50px;
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        border-radius: 15px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         color: white;
         flex-shrink: 0;
+        border: 2px solid #2a2a2a;
     }
     
     .classroom-info {
@@ -145,31 +146,32 @@
     }
     
     .classroom-title {
-        color: #0a5c36;
-        font-size: 1.4rem;
+        color: #000;
+        font-size: 1.2rem;
         margin: 0 0 8px 0;
-        font-weight: 700;
+        font-weight: 800;
     }
     
     .classroom-description {
         color: #666;
-        font-size: 0.9rem;
+        font-size: 1.05rem;
+        font-weight: 600;
         line-height: 1.5;
         margin: 0;
     }
     
     .access-code-section {
         background: rgba(212, 175, 55, 0.1);
-        border-left: 4px solid #d4af37;
+        border: 2px solid #2a2a2a;
         padding: 15px;
         border-radius: 10px;
         margin: 15px 0;
     }
     
     .access-code-label {
-        font-size: 0.75rem;
+        font-size: 1.05rem;
         color: #666;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 8px;
@@ -186,7 +188,7 @@
     
     .code-value {
         font-family: 'Courier New', monospace;
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: #d4af37;
         letter-spacing: 4px;
@@ -200,7 +202,7 @@
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s ease;
-        font-size: 0.85rem;
+        font-size: 1.05rem;
     }
     
     .toggle-code-btn:hover {
@@ -223,16 +225,16 @@
     }
     
     .stat-box-label {
-        font-size: 0.7rem;
+        font-size: 1.05rem;
         color: #666;
         text-transform: uppercase;
         margin-bottom: 5px;
-        font-weight: 600;
+        font-weight: 700;
     }
     
     .stat-box-value {
-        font-size: 1.6rem;
-        font-weight: 700;
+        font-size: 1.5rem;
+        font-weight: 800;
         color: #0a5c36;
     }
     
@@ -258,8 +260,8 @@
         padding: 12px;
         border-radius: 25px;
         text-decoration: none;
-        font-weight: 600;
-        font-size: 0.9rem;
+        font-weight: 700;
+        font-size: 1.05rem;
         transition: all 0.3s ease;
     }
     
@@ -312,15 +314,16 @@
     }
     
     .empty-state h3 {
-        color: #0a5c36;
-        font-size: 1.8rem;
+        color: #000;
+        font-size: 1.6rem;
         margin-bottom: 10px;
-        font-weight: 700;
+        font-weight: 800;
     }
     
     .empty-state p {
         color: #666;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
+        font-weight: 700;
         margin-bottom: 30px;
     }
     
