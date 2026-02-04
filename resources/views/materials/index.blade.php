@@ -68,7 +68,7 @@
     }
     
     .btn-create {
-        background: white;
+        background: linear-gradient(135deg, #d4af37, #f1c40f);
         color: #0a5c36;
         padding: 12px 24px;
         border-radius: 25px;
@@ -78,13 +78,14 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 2px solid #b38f2d;
+        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
         transition: all 0.3s ease;
     }
     
     .btn-create:hover {
         transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 12px 30px rgba(212, 175, 55, 0.4);
     }
     
     .view-toggle-btn {
