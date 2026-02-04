@@ -79,42 +79,44 @@
 
     .practice-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 25px;
         margin-bottom: 30px;
     }
 
-    @media (max-width: 992px) {
+    @media (max-width: 1200px) {
         .practice-grid { grid-template-columns: 1fr; }
     }
 
     .card {
         background: white;
         border-radius: 20px;
-        padding: 30px;
+        padding: 35px;
         box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
         border: 2px solid rgba(10, 92, 54, 0.1);
     }
 
     .card h3 {
         color: var(--primary-green);
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+        font-size: 1.5rem;
+        font-weight: 700;
     }
 
     .verse-arabic {
-        font-size: 2.5rem;
+        font-size: 3rem;
         text-align: center;
         direction: rtl;
-        line-height: 2;
+        line-height: 2.2;
         color: var(--primary-green);
         margin: 30px 0;
-        padding: 20px;
+        padding: 25px;
         background: rgba(10, 92, 54, 0.05);
         border-radius: 15px;
-        min-height: 100px;
+        min-height: 120px;
     }
 
     .verse-info {
@@ -129,38 +131,39 @@
     }
 
     .verse-info-label {
-        font-size: 0.9rem;
+        font-size: 1rem;
         color: #666;
         margin-bottom: 5px;
+        font-weight: 500;
     }
 
     .verse-info-value {
-        font-size: 1.2rem;
-        font-weight: 600;
+        font-size: 1.4rem;
+        font-weight: 700;
         color: var(--primary-green);
     }
 
     .verse-translation {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         color: #333;
-        line-height: 1.8;
-        padding: 20px;
+        line-height: 1.9;
+        padding: 25px;
         background: rgba(212, 175, 55, 0.05);
         border-radius: 10px;
         border-left: 4px solid var(--gold);
     }
 
     .btn {
-        padding: 12px 25px;
+        padding: 15px 30px;
         border-radius: 25px;
         border: none;
-        font-size: 1rem;
+        font-size: 1.1rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
     }
 
     .btn-primary {
@@ -216,21 +219,22 @@
     .recording-status {
         text-align: center;
         margin: 20px 0;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         color: #666;
+        font-weight: 500;
     }
 
     .recording-status.active {
         color: #e74c3c;
-        font-weight: 600;
+        font-weight: 700;
     }
 
     .recording-timer {
-        font-size: 2rem;
+        font-size: 2.5rem;
         font-weight: 700;
         color: var(--primary-green);
         text-align: center;
-        margin: 10px 0;
+        margin: 15px 0;
     }
 
     .audio-player {
@@ -783,16 +787,16 @@
             feedback = analysis.overall_score.feedback;
         }
         
-        var html = '<div style="background: rgba(26, 188, 156, 0.05); padding: 20px; border-radius: 15px; border: 2px solid rgba(26, 188, 156, 0.2);">';
+        var html = '<div style="background: rgba(26, 188, 156, 0.05); padding: 25px; border-radius: 15px; border: 2px solid rgba(26, 188, 156, 0.2);">';
         
         // Overall Score
-        html += '<h4 style="color: var(--primary-green); margin-bottom: 15px;">';
+        html += '<h4 style="color: var(--primary-green); margin-bottom: 20px; font-size: 1.4rem; font-weight: 700;">';
         html += '<i class="fas fa-chart-line"></i> Tajweed Analysis Results';
         html += '</h4>';
-        html += '<div style="font-size: 3rem; font-weight: 700; color: var(--primary-green); text-align: center; margin: 20px 0;">';
+        html += '<div style="font-size: 3.5rem; font-weight: 700; color: var(--primary-green); text-align: center; margin: 25px 0;">';
         html += accuracyScore + '%';
         html += '</div>';
-        html += '<p style="text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 20px;">';
+        html += '<p style="text-align: center; color: #333; font-size: 1.15rem; margin-bottom: 25px; line-height: 1.6;">';
         html += feedback;
         html += '</p>';
         
@@ -800,9 +804,9 @@
         if (aiFeedback) {
             // Strengths
             if (aiFeedback.strengths && aiFeedback.strengths.length > 0) {
-                html += '<div style="background: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">';
-                html += '<h5 style="color: #27ae60; margin-bottom: 10px;"><i class="fas fa-check-circle"></i> Strengths:</h5>';
-                html += '<ul style="margin: 0; padding-left: 20px;">';
+                html += '<div style="background: rgba(39, 174, 96, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">';
+                html += '<h5 style="color: #27ae60; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-check-circle"></i> Strengths:</h5>';
+                html += '<ul style="margin: 0; padding-left: 25px; font-size: 1.05rem; line-height: 1.8;">';
                 aiFeedback.strengths.forEach(function(strength) {
                     html += '<li style="color: #333; margin: 5px 0;">' + strength + '</li>';
                 });
@@ -811,12 +815,12 @@
             
             // Improvements
             if (aiFeedback.improvements && aiFeedback.improvements.length > 0) {
-                html += '<div style="background: rgba(231, 76, 60, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">';
-                html += '<h5 style="color: #e74c3c; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i> Areas for Improvement:</h5>';
+                html += '<div style="background: rgba(231, 76, 60, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">';
+                html += '<h5 style="color: #e74c3c; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> Areas for Improvement:</h5>';
                 aiFeedback.improvements.forEach(function(improvement) {
-                    html += '<div style="background: white; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #e74c3c;">';
-                    html += '<strong style="color: #e74c3c;">Issue:</strong> ' + improvement.issue + '<br>';
-                    html += '<strong style="color: #3498db;">Suggestion:</strong> ' + improvement.suggestion;
+                    html += '<div style="background: white; padding: 15px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #e74c3c;">';
+                    html += '<strong style="color: #e74c3c; font-size: 1.05rem;">Issue:</strong> <span style="font-size: 1.05rem;">' + improvement.issue + '</span><br><br>';
+                    html += '<strong style="color: #3498db; font-size: 1.05rem;">Suggestion:</strong> <span style="font-size: 1.05rem;">' + improvement.suggestion + '</span>';
                     html += '</div>';
                 });
                 html += '</div>';
@@ -824,9 +828,9 @@
             
             // Next Steps
             if (aiFeedback.next_steps) {
-                html += '<div style="background: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">';
-                html += '<h5 style="color: #3498db; margin-bottom: 10px;"><i class="fas fa-forward"></i> Next Steps:</h5>';
-                html += '<p style="color: #333; margin: 0;">' + aiFeedback.next_steps + '</p>';
+                html += '<div style="background: rgba(52, 152, 219, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">';
+                html += '<h5 style="color: #3498db; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-forward"></i> Next Steps:</h5>';
+                html += '<p style="color: #333; margin: 0; font-size: 1.05rem; line-height: 1.7;">' + aiFeedback.next_steps + '</p>';
                 html += '</div>';
             }
         }
@@ -837,25 +841,25 @@
             // Remove special tokens like <|ar|><|transcribe|><|notimestamps|>
             transcription = transcription.replace(/<\|[^|]+\|>/g, '').trim();
             if (transcription) {
-                html += '<div style="background: rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0; direction: rtl;">';
-                html += '<h5 style="color: #d4af37; margin-bottom: 10px;"><i class="fas fa-microphone"></i> Your Recitation (Transcribed):</h5>';
-                html += '<p style="font-size: 1.5rem; color: #333; text-align: center;">' + transcription + '</p>';
+                html += '<div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0; direction: rtl;">';
+                html += '<h5 style="color: #d4af37; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-microphone"></i> Your Recitation (Transcribed):</h5>';
+                html += '<p style="font-size: 2rem; color: #333; text-align: center; line-height: 1.8;">' + transcription + '</p>';
                 html += '</div>';
             }
         }
         
         // Detailed Breakdown (if available)
         if (analysis.details) {
-            html += '<div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid rgba(26, 188, 156, 0.2);">';
-            html += '<h5 style="color: var(--primary-green); margin-bottom: 10px;"><i class="fas fa-list-check"></i> Detailed Breakdown:</h5>';
+            html += '<div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid rgba(26, 188, 156, 0.2);">';
+            html += '<h5 style="color: var(--primary-green); margin-bottom: 15px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-list-check"></i> Detailed Breakdown:</h5>';
             html += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">';
             
             for (var key in analysis.details) {
                 var label = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase() });
                 var value = Math.round(analysis.details[key]);
-                html += '<div style="background: rgba(255, 255, 255, 0.5); padding: 15px; border-radius: 8px; text-align: center;">';
-                html += '<div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">' + label + '</div>';
-                html += '<div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-green);">' + value + '%</div>';
+                html += '<div style="background: rgba(255, 255, 255, 0.5); padding: 20px; border-radius: 8px; text-align: center;">';
+                html += '<div style="font-size: 1rem; color: #666; margin-bottom: 8px; font-weight: 600;">' + label + '</div>';
+                html += '<div style="font-size: 2rem; font-weight: 700; color: var(--primary-green);">' + value + '%</div>';
                 html += '</div>';
             }
             
