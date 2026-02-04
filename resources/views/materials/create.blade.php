@@ -504,8 +504,8 @@
             <div class="section-card">
                 <h2 class="section-header">
                     <i class="fas fa-info-circle"></i> Basic Information
-                    <button type="button" class="btn btn-secondary" onclick="generateBasicInfo()" style="margin-left: auto; padding: 8px 16px; font-size: 0.9rem;">
-                        <i class="fas fa-magic"></i> AI Generate
+                    <button type="button" id="generateInfoBtn" class="btn btn-secondary" onclick="generateBasicInfo()" style="margin-left: auto; padding: 8px 16px; font-size: 0.9rem;" disabled>
+                        <i class="fas fa-magic"></i> Generate Information
                     </button>
                 </h2>
                 
@@ -848,14 +848,14 @@ function addMaterialItem() {
                 </div>
                 <div class="radio-option">
                     <input type="radio" id="type_url_${itemId}" name="items[${itemId}][type]" value="url" onchange="toggleItemFields(${itemId}, 'url')">
-                    <label for="type_url_${itemId}">Link</label>
+                    <label for="type_url_${itemId}">External Sources</label>
                 </div>
             </div>
             
             <div id="fields_file_${itemId}" class="hidden">
                 <div class="form-group">
                     <label>Upload File</label>
-                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx,.mp3,.mp4">
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx,.mp3,.mp4,.jpg,.jpeg,.png,.gif,.webp,image/*">
                 </div>
             </div>
             
@@ -868,7 +868,7 @@ function addMaterialItem() {
             
             <div id="fields_url_${itemId}" class="hidden">
                 <div class="form-group">
-                    <label>External URL</label>
+                    <label>Extracted Search</label>
                     <input type="url" name="items[${itemId}][url]" class="form-control" placeholder="https://example.com/resource">
                 </div>
             </div>
@@ -887,6 +887,10 @@ function addMaterialItem() {
     `;
     
     container.insertAdjacentHTML('beforeend', html);
+    
+    // Update Generate Information button state
+    updateGenerateButtonState();
+    
     return itemId;
 }
 
@@ -914,6 +918,9 @@ function removeItem(itemId) {
         
         console.log('[ITEM] Renumbered', remainingItems.length, 'remaining items');
         showCustomAlert('Item removed and list renumbered', 'info');
+        
+        // Update Generate Information button state
+        updateGenerateButtonState();
     }
 }
 
@@ -985,13 +992,33 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Check if materials exist and update Generate Information button state
+function updateGenerateButtonState() {
+    const items = document.querySelectorAll('[data-item-id]');
+    const generateBtn = document.getElementById('generateInfoBtn');
+    
+    if (generateBtn) {
+        if (items.length === 0) {
+            generateBtn.disabled = true;
+            generateBtn.style.opacity = '0.5';
+            generateBtn.style.cursor = 'not-allowed';
+            generateBtn.title = 'Please add at least one material item first';
+        } else {
+            generateBtn.disabled = false;
+            generateBtn.style.opacity = '1';
+            generateBtn.style.cursor = 'pointer';
+            generateBtn.title = 'Generate title and description based on added materials';
+        }
+    }
+}
+
 // Generate basic information using AI
 async function generateBasicInfo() {
     // Get items that have been added
     const items = document.querySelectorAll('[data-item-id]');
     
     if (items.length === 0) {
-        showCustomAlert('Please add at least one item first (search results or manual upload)', 'warning');
+        showCustomAlert('Please add at least one material item first', 'warning');
         return;
     }
     
@@ -1044,6 +1071,7 @@ async function generateBasicInfo() {
 // Page ready - no auto-add items, teacher adds manually
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[INIT] Create materials page loaded. Teacher can add items manually.');
+    updateGenerateButtonState();
 });
 </script>
 @endsection
