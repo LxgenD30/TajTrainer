@@ -31,8 +31,8 @@ class AssignmentController extends Controller
             abort(403, 'Unauthorized access to this classroom.');
         }
 
-        // Get all available materials
-        $materials = Material::orderBy('created_at', 'desc')->get();
+        // Get all available materials with their items
+        $materials = Material::with('items')->orderBy('created_at', 'desc')->get();
 
         return view('assignment.create', compact('classroom', 'materials'));
     }

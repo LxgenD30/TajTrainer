@@ -66,7 +66,21 @@ class MaterialController extends Controller
             'Others' => (clone $baseQuery)->where('category', 'Others')->count(),
         ];
         
-        return view('materials.index', compact('materials', 'isStudent', 'categoryCounts'));
+        // Count owned materials separately
+        $ownedCount = 0;
+        if (auth()->check() && auth()->user()->teacher) {
+            $ownedQuery = Material::where('teacher_id', auth()->user()->teacher->id);
+            if ($request->has('search') && !empty($request->search)) {
+                $searchTerm = $request->search;
+                $ownedQuery->where(function($q) use ($searchTerm) {
+                    $q->where('title', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('description', 'like', '%' . $searchTerm . '%');
+                });
+            }
+            $ownedCount = $ownedQuery->count();
+        }
+        
+        return view('materials.index', compact('materials', 'isStudent', 'categoryCounts', 'ownedCount'));
     }
 
     /**

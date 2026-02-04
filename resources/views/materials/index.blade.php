@@ -263,9 +263,9 @@
             @if(!$isStudent)
                 <a href="{{ route('materials.index', array_filter(['category' => request('category'), 'search' => request('search'), 'owned' => request('owned') == '1' ? null : '1'])) }}" 
                    class="filter-btn {{ request('owned') == '1' ? 'active' : '' }}">
-                    <span class="category-icon"><i class="fas fa-user-check"></i></span>
+                    <span class="category-icon"><i class="fas {{ request('owned') == '1' ? 'fa-check-circle' : 'fa-user-check' }}"></i></span>
                     <span>My Materials</span>
-                    <span class="filter-badge">{{ request('owned') == '1' ? $categoryCounts['all'] : 0 }}</span>
+                    <span class="filter-badge">{{ $ownedCount ?? 0 }}</span>
                 </a>
             @endif
             <a href="{{ route('materials.index', array_filter(['search' => request('search'), 'owned' => request('owned')])) }}" 

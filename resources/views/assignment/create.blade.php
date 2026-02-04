@@ -55,25 +55,25 @@
         background: linear-gradient(135deg, rgba(10, 92, 54, 0.02), rgba(26, 188, 156, 0.02));
         padding: 20px;
         border-radius: 12px;
-        border: 2px solid rgba(10, 92, 54, 0.15);
+        border: 3px solid #000000;
         transition: all 0.3s ease;
     }
     
     .form-section:hover {
-        border-color: rgba(10, 92, 54, 0.3);
+        border-color: #000000;
     }
     
     .form-section.gold {
         background: linear-gradient(135deg, rgba(212, 175, 55, 0.03), rgba(241, 196, 15, 0.03));
-        border-color: rgba(212, 175, 55, 0.2);
+        border: 3px solid #000000;
     }
     
     .form-section.gold:hover {
-        border-color: rgba(212, 175, 55, 0.4);
+        border-color: #000000;
     }
     
     .section-title {
-        color: #0a5c36;
+        color: #000000;
         font-size: 1.15rem;
         font-weight: 700;
         margin-bottom: 8px;
@@ -83,11 +83,11 @@
     }
     
     .section-title.gold {
-        color: #d4af37;
+        color: #000000;
     }
     
     .section-desc {
-        color: #777;
+        color: #000000;
         font-size: 0.87rem;
         margin-bottom: 15px;
         line-height: 1.5;
@@ -95,7 +95,7 @@
     
     .form-label {
         display: block;
-        color: #0a5c36;
+        color: #000000;
         font-weight: 600;
         margin-bottom: 8px;
         font-size: 0.95rem;
@@ -105,8 +105,8 @@
         width: 100%;
         padding: 11px 14px;
         background: white;
-        color: #333;
-        border: 2px solid rgba(10, 92, 54, 0.3);
+        color: #000000;
+        border: 3px solid #000000;
         border-radius: 8px;
         font-family: 'Cairo', sans-serif;
         font-size: 0.95rem;
@@ -169,22 +169,22 @@
         background: white;
         padding: 13px;
         border-radius: 10px;
-        border: 2px solid rgba(212, 175, 55, 0.3);
+        border: 3px solid #000000;
         transition: all 0.3s ease;
     }
     
     .radio-option:hover {
-        border-color: #d4af37;
-        background: rgba(212, 175, 55, 0.04);
+        border-color: #000000;
+        background: rgba(0, 0, 0, 0.04);
         transform: translateX(3px);
     }
     
     .radio-option input[type="radio"]:checked + .radio-label {
-        color: #0a5c36;
+        color: #000000;
     }
     
     .radio-option input[type="radio"]:checked {
-        accent-color: #d4af37;
+        accent-color: #000000;
     }
     
     .radio-option input[type="radio"] {
@@ -200,14 +200,14 @@
     }
     
     .radio-title {
-        color: #d4af37;
+        color: #000000;
         font-weight: 700;
         font-size: 0.95rem;
         margin-bottom: 3px;
     }
     
     .radio-desc {
-        color: #666;
+        color: #000000;
         font-size: 0.82rem;
         line-height: 1.4;
     }
@@ -359,6 +359,110 @@
         font-weight: 700;
         margin-bottom: 10px;
         font-size: 0.9rem;
+    }
+    
+    .material-item {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        border: 2px solid #000000;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .material-item-info {
+        flex: 1;
+    }
+    
+    .material-item-type {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .type-image {
+        background: rgba(52, 152, 219, 0.2);
+        color: #3498db;
+    }
+    
+    .type-file {
+        background: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+    }
+    
+    .type-youtube {
+        background: rgba(255, 0, 0, 0.2);
+        color: #ff0000;
+    }
+    
+    .type-url {
+        background: rgba(52, 152, 219, 0.2);
+        color: #3498db;
+    }
+    
+    .btn-view {
+        padding: 6px 14px;
+        background: #000000;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view:hover {
+        background: #333333;
+        transform: translateY(-2px);
+    }
+    
+    .view-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .view-modal.active {
+        display: flex;
+    }
+    
+    .view-modal-content {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        border: 3px solid #000000;
+    }
+    
+    .view-modal-close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #000000;
+        color: white;
+        border: none;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        font-weight: 700;
     }
 </style>
 
@@ -784,27 +888,43 @@
         
         if (material) {
             let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
-            html += `<p style="margin: 0; color: #0a5c36; font-weight: 600; font-size: 0.95rem;">${material.title}</p>`;
+            html += `<p style="margin: 0; color: #000000; font-weight: 600; font-size: 0.95rem;">${material.title}</p>`;
             
             if (material.category) {
-                html += `<span style="display: inline-block; background: rgba(212, 175, 55, 0.2); color: #d4af37; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; width: fit-content; font-weight: 600;">${material.category}</span>`;
+                html += `<span style="display: inline-block; background: rgba(0, 0, 0, 0.1); color: #000000; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; width: fit-content; font-weight: 600;">${material.category}</span>`;
             }
             
-            if (material.content) {
-                html += `<p style="margin: 0; color: #666; font-size: 0.85rem; line-height: 1.5;">${material.content.substring(0, 150)}${material.content.length > 150 ? '...' : ''}</p>`;
+            if (material.description) {
+                html += `<p style="margin: 0; color: #000000; font-size: 0.85rem; line-height: 1.5;">${material.description.substring(0, 150)}${material.description.length > 150 ? '...' : ''}</p>`;
             }
             
-            html += '<div style="display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap;">';
-            
-            if (material.file_path) {
-                html += '<span style="color: #1abc9c; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">📄 PDF Available</span>';
+            // Show attached files
+            if (material.items && material.items.length > 0) {
+                html += '<div style="margin-top: 12px;"><p style="font-weight: 600; color: #000000; margin-bottom: 8px;">📎 Attached Files:</p>';
+                
+                material.items.forEach((item, index) => {
+                    let typeClass = 'type-' + item.type;
+                    let typeLabel = item.type.toUpperCase();
+                    let itemTitle = item.title || `Item ${index + 1}`;
+                    
+                    html += `
+                        <div class="material-item">
+                            <div class="material-item-info">
+                                <span class="material-item-type ${typeClass}">${typeLabel}</span>
+                                <div style="color: #000000; font-weight: 600; font-size: 0.9rem;">${itemTitle}</div>
+                                ${item.description ? `<div style="color: #666; font-size: 0.8rem;">${item.description}</div>` : ''}
+                            </div>
+                            <button type="button" class="btn-view" onclick="viewMaterialItem(${material.material_id}, ${item.item_id}, '${item.type}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
             }
             
-            if (material.video_link) {
-                html += '<span style="color: #1abc9c; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">🎥 Video Available</span>';
-            }
-            
-            html += '</div></div>';
+            html += '</div>';
             
             previewContent.innerHTML = html;
             materialPreview.style.display = 'block';
@@ -832,5 +952,67 @@
         console.log('Tajweed Rule Length:', tajweedValue?.length);
         console.log('Tajweed Rule Bytes:', tajweedValue ? [...tajweedValue].map(c => c.charCodeAt(0)) : []);
     });
+    
+    // View material item in modal
+    function viewMaterialItem(materialId, itemId, itemType) {
+        const material = materialsData.find(m => m.material_id == materialId);
+        if (!material) return;
+        
+        const item = material.items.find(i => i.item_id == itemId);
+        if (!item) return;
+        
+        const modal = document.getElementById('viewModal');
+        const modalBody = document.getElementById('viewModalBody');
+        
+        let content = '';
+        
+        if (itemType === 'image' || itemType === 'file') {
+            const path = item.path;
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(path.split('.').pop().toLowerCase());
+            
+            if (isImage) {
+                content = `<img src="/storage/${path}" style="max-width: 100%; border-radius: 10px; border: 2px solid #000000;" alt="${item.title || 'Image'}">`;
+            } else {
+                content = `<iframe src="/storage/${path}" style="width: 100%; height: 600px; border: 2px solid #000000; border-radius: 10px;"></iframe>`;
+            }
+        } else if (itemType === 'youtube') {
+            const videoId = extractYoutubeId(item.path || item.youtube_link);
+            if (videoId) {
+                content = `<iframe width="100%" height="500" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 10px; border: 2px solid #000000;"></iframe>`;
+            }
+        } else if (itemType === 'url') {
+            content = `<iframe src="${item.path}" style="width: 100%; height: 600px; border: 2px solid #000000; border-radius: 10px;"></iframe>`;
+        }
+        
+        if (item.title) {
+            content = `<h3 style="color: #000000; margin-bottom: 15px;">${item.title}</h3>` + content;
+        }
+        
+        if (item.description) {
+            content += `<p style="color: #000000; margin-top: 15px; font-size: 0.9rem;">${item.description}</p>`;
+        }
+        
+        modalBody.innerHTML = content;
+        modal.classList.add('active');
+    }
+    
+    function closeViewModal() {
+        document.getElementById('viewModal').classList.remove('active');
+    }
+    
+    function extractYoutubeId(url) {
+        if (!url) return null;
+        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        return match ? match[1] : null;
+    }
 </script>
+
+<!-- View Modal -->
+<div id="viewModal" class="view-modal">
+    <div class="view-modal-content">
+        <button class="view-modal-close" onclick="closeViewModal()">&times;</button>
+        <div id="viewModalBody"></div>
+    </div>
+</div>
+
 @endsection
