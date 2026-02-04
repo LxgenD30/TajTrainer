@@ -247,31 +247,6 @@
         </div>
     @endif
 
-    <!-- Search and Filter Controls -->
-    @if($student->classrooms->isNotEmpty())
-        <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 300px;">
-                <input 
-                    type="text" 
-                    id="classSearch" 
-                    placeholder="🔍 Search classes by name or teacher..."
-                    style="width: 100%; padding: 15px 20px; border: 2px solid #0a5c36; border-radius: 12px; font-size: 1rem; color: #064e32; background-color: #ffffff; box-shadow: 0 2px 8px rgba(10, 92, 54, 0.1); transition: all 0.3s ease;"
-                    onkeyup="filterClasses()"
-                >
-            </div>
-            <div>
-                <select 
-                    id="classSort" 
-                    style="padding: 15px 20px; border: 2px solid #0a5c36; border-radius: 12px; font-size: 1rem; color: #064e32; background-color: #ffffff; box-shadow: 0 2px 8px rgba(10, 92, 54, 0.1); cursor: pointer; min-width: 180px; transition: all 0.3s ease;"
-                    onchange="sortClasses()"
-                >
-                    <option value="newest">📅 Newest First</option>
-                    <option value="oldest">⏰ Oldest First</option>
-                </select>
-            </div>
-        </div>
-    @endif
-
     <div class="classes-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px;">
         <!-- My Enrolled Classes Section -->
         <div class="modern-card">
