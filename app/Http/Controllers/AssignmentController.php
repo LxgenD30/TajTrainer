@@ -252,13 +252,13 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Get reference audio URLs from API for verse range
+     * Get reference audio - downloads and concatenates multiple verses into one audio file
      */
     private function getReferenceAudioUrl($surahNumber, $startVerse, $endVerse)
     {
         $audioUrls = [];
         
-        // Fetch audio for each verse in the range
+        // Fetch audio URLs for each verse in the range
         for ($verse = $startVerse; $verse <= ($endVerse ?? $startVerse); $verse++) {
             $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/ar.alafasy";
             
@@ -267,10 +267,7 @@ class AssignmentController extends Controller
                 if ($response !== false) {
                     $data = json_decode($response, true);
                     if ($data['code'] == 200 && isset($data['data']['audio'])) {
-                        $audioUrls[] = [
-                            'verse' => $verse,
-                            'url' => $data['data']['audio']
-                        ];
+                        $audioUrls[] = $data['data']['audio'];
                     }
                 }
             } catch (\Exception $e) {
@@ -278,13 +275,88 @@ class AssignmentController extends Controller
             }
         }
         
-        // Return JSON string if multiple verses, single URL if one verse
         if (count($audioUrls) === 0) {
             return null;
-        } elseif (count($audioUrls) === 1) {
-            return $audioUrls[0]['url'];
-        } else {
-            return json_encode($audioUrls);
+        }
+        
+        // If single verse, just return the URL directly
+        if (count($audioUrls) === 1) {
+            return $audioUrls[0];
+        }
+        
+        // Multiple verses: download, concatenate with ffmpeg, and save
+        return $this->concatenateAudioFiles($audioUrls, $surahNumber, $startVerse, $endVerse);
+    }
+    
+    /**
+     * Download audio files, concatenate them using ffmpeg, and save as single file
+     */
+    private function concatenateAudioFiles($audioUrls, $surahNumber, $startVerse, $endVerse)
+    {
+        try {
+            // Create temporary directory for downloads
+            $tempDir = storage_path('app/temp_audio');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            
+            // Create references directory
+            $referencesDir = storage_path('app/public/references');
+            if (!file_exists($referencesDir)) {
+                mkdir($referencesDir, 0755, true);
+            }
+            
+            $tempFiles = [];
+            
+            // Download each verse audio
+            foreach ($audioUrls as $index => $url) {
+                $tempFile = $tempDir . '/verse_' . $index . '.mp3';
+                $audioContent = @file_get_contents($url);
+                if ($audioContent !== false) {
+                    file_put_contents($tempFile, $audioContent);
+                    $tempFiles[] = $tempFile;
+                }
+            }
+            
+            if (empty($tempFiles)) {
+                \Log::error("Failed to download any audio files for concatenation");
+                return null;
+            }
+            
+            // Generate output filename
+            $outputFilename = "surah_{$surahNumber}_verses_{$startVerse}_{$endVerse}_" . time() . ".mp3";
+            $outputPath = $referencesDir . '/' . $outputFilename;
+            
+            // Create concat file list for ffmpeg
+            $concatListFile = $tempDir . '/concat_list.txt';
+            $concatList = '';
+            foreach ($tempFiles as $file) {
+                $concatList .= "file '" . $file . "'\n";
+            }
+            file_put_contents($concatListFile, $concatList);
+            
+            // Run ffmpeg to concatenate
+            $command = "ffmpeg -f concat -safe 0 -i " . escapeshellarg($concatListFile) . " -c copy " . escapeshellarg($outputPath) . " 2>&1";
+            $output = shell_exec($command);
+            
+            // Clean up temp files
+            foreach ($tempFiles as $file) {
+                @unlink($file);
+            }
+            @unlink($concatListFile);
+            
+            // Check if output file was created
+            if (file_exists($outputPath)) {
+                \Log::info("Successfully concatenated audio: " . $outputFilename);
+                return 'references/' . $outputFilename;
+            } else {
+                \Log::error("ffmpeg concatenation failed", ['output' => $output]);
+                return null;
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error("Error concatenating audio files: " . $e->getMessage());
+            return null;
         }
     }
 

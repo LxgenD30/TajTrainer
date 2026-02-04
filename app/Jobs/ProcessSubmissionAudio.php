@@ -50,7 +50,8 @@ class ProcessSubmissionAudio implements ShouldQueue
                         '', // No pre-transcription needed, Python does it
                         $assignment->surah,
                         $assignment->start_verse,
-                        $assignment->end_verse
+                        $assignment->end_verse,
+                        $assignment->reference_audio_url // Pass stored reference audio path
                     );
                     
                     // Extract transcription from Python output
@@ -253,17 +254,17 @@ class ProcessSubmissionAudio implements ShouldQueue
         throw new \Exception('Transcription timeout after 5 minutes');
     }
     
-    private function analyzeTajweed($audioPath, $transcription, $surah, $startVerse, $endVerse)
+    private function analyzeTajweed($audioPath, $transcription, $surah, $startVerse, $endVerse, $referenceAudioPath = null)
     {
         // Get expected Quranic text
         $expectedText = $this->getQuranText($surah, $startVerse, $endVerse);
         $tajweedText = $this->getTajweedFormattedText($surah, $startVerse, $endVerse);
-        $referenceAudio = $this->getReferenceAudio($surah, $startVerse, $endVerse);
         
         Log::info('Expected text: ' . substr($expectedText, 0, 50) . '...');
+        Log::info('Reference audio path: ' . ($referenceAudioPath ?? 'NONE'));
         
         // Call Python analyzer (it will do Whisper transcription internally)
-        $result = $this->callPythonAnalyzer($audioPath, $expectedText, $referenceAudio);
+        $result = $this->callPythonAnalyzer($audioPath, $expectedText, $referenceAudioPath);
         
         // Add additional data
         $result['expected_text'] = $expectedText;
@@ -284,19 +285,25 @@ class ProcessSubmissionAudio implements ShouldQueue
         return $result;
     }
     
-    private function callPythonAnalyzer($audioPath, $expectedText, $referenceAudio)
+    private function callPythonAnalyzer($audioPath, $expectedText, $referenceAudioPath)
     {
         $fullPath = storage_path('app/public/' . $audioPath);
         $pythonScript = base_path('python/tajweed_analyzer.py');
         $pythonExecutable = $this->getPythonCommand();
         
-        // Download reference audio
-        $referenceUrl = $referenceAudio[0]['url'] ?? null;
+        // Get reference audio path
         $referencePath = null;
-        
-        if ($referenceUrl) {
-            $referencePath = $this->downloadReferenceAudio($referenceUrl);
-            Log::info('Reference audio downloaded: ' . $referencePath);
+        if ($referenceAudioPath) {
+            // If it's a storage path (starts with 'references/'), convert to full path
+            if (str_starts_with($referenceAudioPath, 'references/')) {
+                $referencePath = storage_path('app/public/' . $referenceAudioPath);
+                Log::info('Using stored reference audio: ' . $referencePath);
+            } 
+            // If it's a URL (old data), download it
+            elseif (str_starts_with($referenceAudioPath, 'http')) {
+                $referencePath = $this->downloadReferenceAudio($referenceAudioPath);
+                Log::info('Downloaded reference audio from URL: ' . $referencePath);
+            }
         }
         
         // Build command with OpenAI API key in environment
