@@ -111,6 +111,72 @@
         background: #f9f9f9;
         transform: translateY(-2px);
     }
+    
+    /* Category Filters */
+    .category-filters {
+        background: white;
+        border: 3px solid #2a2a2a;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    
+    .category-filters h3 {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #2a2a2a;
+        margin: 0 0 20px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .filter-buttons {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 12px 24px;
+        background: white;
+        border: 2px solid #2a2a2a;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 1.05rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: #2a2a2a;
+    }
+    
+    .filter-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        color: #2a2a2a;
+    }
+    
+    .filter-btn.active {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        border-color: #2a2a2a;
+    }
+    
+    .filter-badge {
+        background: rgba(0,0,0,0.15);
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .filter-btn.active .filter-badge {
+        background: rgba(255,255,255,0.25);
+    }
 </style>
     <!-- Success Message -->
     @if(session('success'))
@@ -142,6 +208,36 @@
                     </a>
                 @endif
             </div>
+        </div>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="category-filters">
+        <h3>
+            <i class="fas fa-filter"></i>
+            Filter by Category
+        </h3>
+        <div class="filter-buttons">
+            <a href="{{ route('materials.index') }}" 
+               class="filter-btn {{ !request('category') ? 'active' : '' }}">
+                <span>All Materials</span>
+                <span class="filter-badge">{{ $categoryCounts['all'] }}</span>
+            </a>
+            <a href="{{ route('materials.index', ['category' => 'Madd Rules']) }}" 
+               class="filter-btn {{ request('category') == 'Madd Rules' ? 'active' : '' }}">
+                <span>Madd Rules</span>
+                <span class="filter-badge">{{ $categoryCounts['Madd Rules'] }}</span>
+            </a>
+            <a href="{{ route('materials.index', ['category' => 'Idgham Billa Ghunnah']) }}" 
+               class="filter-btn {{ request('category') == 'Idgham Billa Ghunnah' ? 'active' : '' }}">
+                <span>Idgham Billa Ghunnah</span>
+                <span class="filter-badge">{{ $categoryCounts['Idgham Billa Ghunnah'] }}</span>
+            </a>
+            <a href="{{ route('materials.index', ['category' => 'Idgham Bi Ghunnah']) }}" 
+               class="filter-btn {{ request('category') == 'Idgham Bi Ghunnah' ? 'active' : '' }}">
+                <span>Idgham Bi Ghunnah</span>
+                <span class="filter-badge">{{ $categoryCounts['Idgham Bi Ghunnah'] }}</span>
+            </a>
         </div>
     </div>
 
@@ -226,9 +322,23 @@
 
                     <!-- Content -->
                     <div class="material-content" style="padding: 20px;">
+                        <!-- Category Badge -->
+                        @if($material->category)
+                            <div style="display: inline-block; padding: 6px 14px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px;">
+                                <i class="fas fa-tag"></i> {{ $material->category }}
+                            </div>
+                        @endif
+                        
                         <h3 style="margin: 0 0 10px 0; font-size: 1.3rem; color: #1a1a1a; font-weight: 700; font-family: 'El Messiri', serif; line-height: 1.4;">
                             {{ $material->title }}
                         </h3>
+                        
+                        <!-- Item Count -->
+                        @if($material->items && $material->items->count() > 0)
+                            <div style="display: inline-block; padding: 4px 10px; background: rgba(142, 68, 173, 0.15); color: #8e44ad; border-radius: 12px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px;">
+                                <i class="fas fa-layer-group"></i> {{ $material->items->count() }} item{{ $material->items->count() != 1 ? 's' : '' }}
+                            </div>
+                        @endif
                         <p style="margin: 0 0 15px 0; font-size: 0.95rem; color: #666; font-family: 'Cairo', sans-serif; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                             {{ $material->description ?? 'No description available' }}
                         </p>

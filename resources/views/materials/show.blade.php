@@ -42,6 +42,14 @@
                 <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; color: #0a5c36; font-weight: 700; line-height: 1.2;">
                     {{ $material->title }}
                 </h1>
+                
+                <!-- Category Badge -->
+                @if($material->category)
+                    <div style="display: inline-block; padding: 8px 18px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 25px; font-size: 1rem; font-weight: 700; margin-bottom: 15px;">
+                        <i class="fas fa-tag"></i> {{ $material->category }}
+                    </div>
+                @endif
+                
                 <p style="margin: 0 0 20px 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif; line-height: 1.6;">
                     {{ $material->description ?? 'No description available' }}
                 </p>
@@ -54,6 +62,11 @@
                     @if($material->is_public)
                         <span style="padding: 6px 15px; background: rgba(26, 188, 156, 0.15); color: #1abc9c; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
                             <i class="fas fa-globe"></i> Public
+                        </span>
+                    @endif
+                    @if($material->items && $material->items->count() > 0)
+                        <span style="padding: 6px 15px; background: rgba(142, 68, 173, 0.15); color: #8e44ad; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                            <i class="fas fa-layer-group"></i> {{ $material->items->count() }} item{{ $material->items->count() != 1 ? 's' : '' }}
                         </span>
                     @endif
                     <span style="padding: 6px 15px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
@@ -93,6 +106,100 @@
             @endif
         </div>
     </div>
+
+    <!-- Material Items Section -->
+    @if($material->items && $material->items->count() > 0)
+        <div style="background: white; border-radius: 20px; padding: 30px; margin-bottom: 30px; border: 3px solid #2a2a2a; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <h2 style="margin: 0 0 20px 0; font-size: 1.8rem; color: #2a2a2a; font-weight: 800; font-family: 'El Messiri', serif; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-layer-group"></i>
+                Material Resources ({{ $material->items->count() }})
+            </h2>
+            
+            <div style="display: grid; gap: 15px;">
+                @foreach($material->items as $item)
+                    <div style="background: #f9f9f9; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; transition: all 0.3s ease;"
+                         onmouseover="this.style.borderColor='#3498db'; this.style.transform='translateX(5px)'"
+                         onmouseout="this.style.borderColor='#e0e0e0'; this.style.transform='translateX(0)'">
+                        <div style="display: flex; align-items: start; gap: 20px;">
+                            <!-- Item Icon -->
+                            <div style="flex-shrink: 0; width: 50px; height: 50px; background: linear-gradient(135deg, #3498db, #2980b9); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                                @if($item->type === 'file')
+                                    <i class="fas fa-file-alt"></i>
+                                @elseif($item->type === 'youtube')
+                                    <i class="fas fa-youtube"></i>
+                                @else
+                                    <i class="fas fa-link"></i>
+                                @endif
+                            </div>
+                            
+                            <!-- Item Details -->
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 8px 0; font-size: 1.2rem; color: #2a2a2a; font-weight: 700;">
+                                    @if($item->title)
+                                        {{ $item->title }}
+                                    @else
+                                        @if($item->type === 'file')
+                                            File Resource
+                                        @elseif($item->type === 'youtube')
+                                            YouTube Video
+                                        @else
+                                            External Link
+                                        @endif
+                                    @endif
+                                </h3>
+                                
+                                @if($item->description)
+                                    <p style="margin: 0 0 12px 0; color: #666; font-size: 0.95rem; line-height: 1.5;">
+                                        {{ $item->description }}
+                                    </p>
+                                @endif
+                                
+                                <!-- Item Type Badge -->
+                                <div style="display: inline-block; padding: 4px 12px; background: rgba(52, 152, 219, 0.15); color: #3498db; border-radius: 12px; font-size: 0.85rem; font-weight: 600; margin-bottom: 12px;">
+                                    @if($item->type === 'file')
+                                        <i class="fas fa-paperclip"></i> File Upload
+                                    @elseif($item->type === 'youtube')
+                                        <i class="fas fa-play-circle"></i> YouTube Video
+                                    @else
+                                        <i class="fas fa-external-link-alt"></i> External Resource
+                                    @endif
+                                </div>
+                                
+                                <!-- Action Button -->
+                                @if($item->path)
+                                    @if($item->type === 'file')
+                                        <a href="{{ asset('storage/' . $item->path) }}" 
+                                           target="_blank"
+                                           style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; border: 2px solid #1e8449; transition: all 0.3s ease;"
+                                           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(39, 174, 96, 0.3)'"
+                                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                    @elseif($item->type === 'youtube')
+                                        <a href="{{ $item->path }}" 
+                                           target="_blank"
+                                           style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; border: 2px solid #a93226; transition: all 0.3s ease;"
+                                           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(231, 76, 60, 0.3)'"
+                                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                            <i class="fas fa-play"></i> Watch Video
+                                        </a>
+                                    @else
+                                        <a href="{{ $item->path }}" 
+                                           target="_blank"
+                                           style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; border: 2px solid #7d3c98; transition: all 0.3s ease;"
+                                           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(155, 89, 182, 0.3)'"
+                                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                            <i class="fas fa-external-link-alt"></i> Open Resource
+                                        </a>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 25px;">
         <!-- Main Content -->

@@ -16,6 +16,7 @@ class Material extends Model
         'thumbnail',
         'type',
         'url',
+        'category',
     ];
 
     protected $casts = [
@@ -30,5 +31,13 @@ class Material extends Model
     public function assignments()
     {
         return $this->hasMany(Assignment::class, 'material_id', 'material_id');
+    }
+
+    /**
+     * Get all items (files, links, videos) for this material.
+     */
+    public function items()
+    {
+        return $this->hasMany(MaterialItem::class, 'material_id', 'material_id');
     }
 }

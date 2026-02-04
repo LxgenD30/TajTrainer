@@ -3,21 +3,39 @@
 namespace App\Http\Controllers;
 
 use App\Models\Material;
+use App\Models\MaterialItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class MaterialController extends Controller
 {
     /**
      * Display a listing of materials.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $materials = Material::orderBy('created_at', 'desc')->paginate(12);
+        $query = Material::with('items')->orderBy('created_at', 'desc');
+        
+        // Filter by category if provided
+        if ($request->has('category') && !empty($request->category)) {
+            $query->where('category', $request->category);
+        }
+        
+        $materials = $query->paginate(12);
         $isStudent = auth()->check() && auth()->user()->role_id == 2;
-        return view('materials.index', compact('materials', 'isStudent'));
+        
+        // Get category counts for filter badges
+        $categoryCounts = [
+            'all' => Material::count(),
+            'Madd Rules' => Material::where('category', 'Madd Rules')->count(),
+            'Idgham Billa Ghunnah' => Material::where('category', 'Idgham Billa Ghunnah')->count(),
+            'Idgham Bi Ghunnah' => Material::where('category', 'Idgham Bi Ghunnah')->count(),
+        ];
+        
+        return view('materials.index', compact('materials', 'isStudent', 'categoryCounts'));
     }
 
     /**
@@ -90,67 +108,111 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'video_link' => 'nullable|url',
-            'url' => 'nullable|url',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,mp3,mp4|max:20480',
+            'category' => 'nullable|in:Madd Rules,Idgham Billa Ghunnah,Idgham Bi Ghunnah',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            
+            // Multiple items support
+            'items' => 'nullable|array',
+            'items.*.type' => 'required|in:file,youtube,url',
+            'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,mp3,mp4|max:20480',
+            'items.*.youtube_link' => 'nullable|url',
+            'items.*.url' => 'nullable|url',
+            'items.*.title' => 'nullable|string|max:255',
+            'items.*.description' => 'nullable|string',
         ]);
 
-        $material = new Material();
-        $material->title = $validated['title'];
-        $material->description = $validated['description'] ?? null;
-        $material->video_link = $validated['video_link'] ?? null;
-        $material->url = $validated['url'] ?? null;
-        $material->is_public = true; // All materials are now public by default
+        DB::beginTransaction();
+        
+        try {
+            // Create the main material
+            $material = new Material();
+            $material->title = $validated['title'];
+            $material->description = $validated['description'] ?? null;
+            $material->is_public = true;
+            
+            // Auto-categorize if not provided
+            if (!empty($validated['category'])) {
+                $material->category = $validated['category'];
+            } else {
+                $material->category = $this->categorizeMaterial($validated['title'], $validated['description']);
+            }
 
-        // Handle file upload
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            if ($file->getError() === UPLOAD_ERR_OK && $file->isValid() && $file->getSize() > 0) {
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $destinationPath = storage_path('app/public/materials');
-                
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-                
-                $fullPath = $destinationPath . '/' . $filename;
-                
-                if (move_uploaded_file($file->getPathname(), $fullPath)) {
-                    $material->file_path = 'materials/' . $filename;
+            // Handle thumbnail upload
+            if ($request->hasFile('thumbnail')) {
+                $thumbnail = $request->file('thumbnail');
+                if ($thumbnail->getError() === UPLOAD_ERR_OK && $thumbnail->isValid() && $thumbnail->getSize() > 0) {
+                    $filename = time() . '_' . uniqid() . '.' . $thumbnail->getClientOriginalExtension();
+                    $destinationPath = storage_path('app/public/thumbnails');
+                    
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+                    
+                    $fullPath = $destinationPath . '/' . $filename;
+                    
+                    if (move_uploaded_file($thumbnail->getPathname(), $fullPath)) {
+                        $material->thumbnail = 'thumbnails/' . $filename;
+                    }
                 }
             }
-        }
 
-        // Handle thumbnail upload
-        if ($request->hasFile('thumbnail')) {
-            $thumbnail = $request->file('thumbnail');
-            if ($thumbnail->getError() === UPLOAD_ERR_OK && $thumbnail->isValid() && $thumbnail->getSize() > 0) {
-                $filename = time() . '_' . uniqid() . '.' . $thumbnail->getClientOriginalExtension();
-                $destinationPath = storage_path('app/public/thumbnails');
-                
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-                
-                $fullPath = $destinationPath . '/' . $filename;
-                
-                if (move_uploaded_file($thumbnail->getPathname(), $fullPath)) {
-                    $material->thumbnail = 'thumbnails/' . $filename;
+            $material->save();
+
+            // Process material items
+            if (!empty($validated['items']) && is_array($validated['items'])) {
+                foreach ($validated['items'] as $index => $itemData) {
+                    $item = new MaterialItem();
+                    $item->material_id = $material->material_id;
+                    $item->type = $itemData['type'];
+                    $item->title = $itemData['title'] ?? null;
+                    $item->description = $itemData['description'] ?? null;
+
+                    // Handle different item types
+                    if ($itemData['type'] === 'file' && $request->hasFile("items.{$index}.file")) {
+                        $file = $request->file("items.{$index}.file");
+                        if ($file->getError() === UPLOAD_ERR_OK && $file->isValid() && $file->getSize() > 0) {
+                            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                            $destinationPath = storage_path('app/public/materials');
+                            
+                            if (!file_exists($destinationPath)) {
+                                mkdir($destinationPath, 0755, true);
+                            }
+                            
+                            $fullPath = $destinationPath . '/' . $filename;
+                            
+                            if (move_uploaded_file($file->getPathname(), $fullPath)) {
+                                $item->path = 'materials/' . $filename;
+                            }
+                        }
+                    } elseif ($itemData['type'] === 'youtube') {
+                        $item->path = $itemData['youtube_link'] ?? null;
+                        
+                        // Auto-extract thumbnail if not set
+                        if (!$material->thumbnail && $item->path) {
+                            if (preg_match('/(?:youtube\\.com\\/(?:[^\\/]+\\/.+\\/|(?:v|e(?:mbed)?)\\/|.*[?&]v=)|youtu\\.be\\/)([^"&?\\/ ]{11})/', $item->path, $matches)) {
+                                $material->thumbnail = 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
+                                $material->save();
+                            }
+                        }
+                    } elseif ($itemData['type'] === 'url') {
+                        $item->path = $itemData['url'] ?? null;
+                    }
+
+                    if ($item->path) {
+                        $item->save();
+                    }
                 }
             }
+
+            DB::commit();
+
+            return redirect()->route('materials.index')->with('success', 'Material created successfully with ' . $material->items()->count() . ' item(s)!');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Material creation failed: ' . $e->getMessage());
+            return back()->withInput()->withErrors(['error' => 'Failed to create material. Please try again.']);
         }
-
-        // Auto-extract YouTube thumbnail if video link provided but no thumbnail uploaded
-        if (!$material->thumbnail && $material->video_link) {
-            if (preg_match('/(?:youtube\\.com\\/(?:[^\\/]+\\/.+\\/|(?:v|e(?:mbed)?)\\/|.*[?&]v=)|youtu\\.be\\/)([^"&?\\/ ]{11})/', $material->video_link, $matches)) {
-                $material->thumbnail = 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
-            }
-        }
-
-        $material->save();
-
-        return redirect()->route('materials.index')->with('success', 'Material created successfully!');
     }
 
     /**
@@ -158,6 +220,8 @@ class MaterialController extends Controller
      */
     public function show(Material $material)
     {
+        // Eager load items
+        $material->load('items');
         return view('materials.show', compact('material'));
     }
 
@@ -286,6 +350,68 @@ class MaterialController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Auto-categorize material using OpenAI API based on title and description.
+     */
+    private function categorizeMaterial($title, $description = null)
+    {
+        $apiKey = config('services.openai.api_key');
+        
+        if (!$apiKey) {
+            Log::warning('OpenAI API key not configured for auto-categorization');
+            return 'Madd Rules'; // Default category
+        }
+
+        try {
+            $content = "Title: $title";
+            if ($description) {
+                $content .= "\nDescription: $description";
+            }
+
+            $response = Http::withoutVerifying()
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->timeout(15)
+                ->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-3.5-turbo',
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'You are an expert in Tajweed (Quranic recitation rules). Analyze the given material and categorize it into exactly ONE of these categories: "Madd Rules", "Idgham Billa Ghunnah", or "Idgham Bi Ghunnah". Respond with ONLY the category name, nothing else.'
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $content
+                        ]
+                    ],
+                    'temperature' => 0.3,
+                    'max_tokens' => 50,
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $category = trim($data['choices'][0]['message']['content'] ?? '');
+                
+                // Validate category
+                $validCategories = ['Madd Rules', 'Idgham Billa Ghunnah', 'Idgham Bi Ghunnah'];
+                if (in_array($category, $validCategories)) {
+                    return $category;
+                }
+                
+                Log::warning('OpenAI returned invalid category: ' . $category);
+            } else {
+                Log::error('OpenAI API Error: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('OpenAI Categorization Exception: ' . $e->getMessage());
+        }
+
+        // Default to Madd Rules if categorization fails
+        return 'Madd Rules';
     }
 }
 
