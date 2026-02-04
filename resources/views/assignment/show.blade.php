@@ -321,20 +321,48 @@
                 @endphp
                 
                 @if($audioUrls && count($audioUrls) > 0)
-                    @foreach($audioUrls as $audio)
-                        <div style="margin-bottom: 15px;">
-                            @if(count($audioUrls) > 1)
-                                <p style="font-size: 0.9rem; color: #000000; margin-bottom: 5px; font-weight: 600;">Verse {{ $audio['verse'] }}:</p>
-                            @endif
-                            <audio controls style="width: 100%; border-radius: 10px;">
-                                <source src="{{ $audio['url'] }}" type="audio/mpeg">
-                                Your browser does not support the audio element.
-                            </audio>
-                        </div>
-                    @endforeach
+                    <div style="margin-bottom: 15px;">
+                        @if(count($audioUrls) > 1)
+                            <p id="currentVerse" style="font-size: 0.9rem; color: #000000; margin-bottom: 5px; font-weight: 600;">
+                                Playing Verse {{ $audioUrls[0]['verse'] }} of {{ $audioUrls[count($audioUrls)-1]['verse'] }}
+                            </p>
+                        @endif
+                        <audio id="referenceAudio" controls style="width: 100%; border-radius: 10px;">
+                            <source src="{{ $audioUrls[0]['url'] }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
                     <p style="font-size: 0.9rem; color: #000000; margin-top: 10px; opacity: 0.7;">
                         Listen to the correct pronunciation before recording your own recitation.
                     </p>
+                    
+                    @if(count($audioUrls) > 1)
+                        <script>
+                            // Playlist for sequential verse playback
+                            const playlist = @json($audioUrls);
+                            let currentTrack = 0;
+                            const audio = document.getElementById('referenceAudio');
+                            const verseLabel = document.getElementById('currentVerse');
+                            
+                            // Auto-play next verse when current one ends
+                            audio.addEventListener('ended', function() {
+                                currentTrack++;
+                                if (currentTrack < playlist.length) {
+                                    audio.src = playlist[currentTrack].url;
+                                    if (verseLabel) {
+                                        verseLabel.textContent = 'Playing Verse ' + playlist[currentTrack].verse + ' of ' + playlist[playlist.length - 1].verse;
+                                    }
+                                    audio.play();
+                                } else {
+                                    // Playlist finished
+                                    currentTrack = 0;
+                                    if (verseLabel) {
+                                        verseLabel.textContent = 'Completed - Playing Verse ' + playlist[0].verse + ' of ' + playlist[playlist.length - 1].verse;
+                                    }
+                                }
+                            });
+                        </script>
+                    @endif
                 @endif
             </div>
         @endif
