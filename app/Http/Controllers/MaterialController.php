@@ -487,8 +487,8 @@ class MaterialController extends Controller
                     $item->title = $itemData['title'] ?? null;
                     $item->description = $itemData['description'] ?? null;
 
-                    // Handle different item types
-                    if ($itemData['type'] === 'file' && $request->hasFile("items.{$index}.file")) {
+                    // Handle different item types (both 'image' and 'file' use file uploads)
+                    if (($itemData['type'] === 'file' || $itemData['type'] === 'image') && $request->hasFile("items.{$index}.file")) {
                         $file = $request->file("items.{$index}.file");
                         Log::info('Processing file upload', [
                             'item_index' => $index,
