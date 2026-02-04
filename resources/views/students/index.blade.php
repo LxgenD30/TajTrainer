@@ -4,30 +4,7 @@
 @section('user-role', 'Student • Learning Portal')
 
 @section('navigation')
-    <a href="{{ route('student.dashboard') }}" class="nav-item active">
-        <i class="fas fa-home nav-icon"></i>
-        <span class="nav-label">Dashboard</span>
-    </a>
-    
-    <a href="{{ route('student.classes') }}" class="nav-item">
-        <i class="fas fa-users nav-icon"></i>
-        <span class="nav-label">My Classes</span>
-    </a>
-    
-    <a href="{{ route('student.practice') }}" class="nav-item">
-        <i class="fas fa-microphone-alt nav-icon"></i>
-        <span class="nav-label">Practice</span>
-    </a>
-    
-    <a href="{{ route('student.progress') }}" class="nav-item">
-        <i class="fas fa-chart-line nav-icon"></i>
-        <span class="nav-label">My Progress</span>
-    </a>
-    
-    <a href="{{ route('student.materials') }}" class="nav-item">
-        <i class="fas fa-book-open nav-icon"></i>
-        <span class="nav-label">Materials</span>
-    </a>
+    @include('partials.student-nav')
 @endsection
 
 @section('content')

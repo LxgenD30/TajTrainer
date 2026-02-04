@@ -4,26 +4,7 @@
 @section('user-role', 'Student • Practice Mode')
 
 @section('navigation')
-    <a href="{{ route('student.dashboard') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-home"></i></div>
-        <div class="nav-label">Dashboard</div>
-    </a>
-    <a href="{{ route('student.classes') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-users"></i></div>
-        <div class="nav-label">My Classes</div>
-    </a>
-    <a href="{{ route('student.practice') }}" class="nav-item active">
-        <div class="nav-icon"><i class="fas fa-microphone-alt"></i></div>
-        <div class="nav-label">Practice</div>
-    </a>
-    <a href="{{ route('student.progress') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
-        <div class="nav-label">My Progress</div>
-    </a>
-    <a href="{{ route('student.materials') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
-        <div class="nav-label">Materials</div>
-    </a>
+    @include('partials.student-nav')
 @endsection
 
 @section('extra-styles')

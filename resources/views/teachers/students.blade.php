@@ -4,22 +4,7 @@
 @section('user-role', 'Teacher • Student Management')
 
 @section('navigation')
-    <a href="{{ route('home') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-home"></i></div>
-        <div class="nav-label">Dashboard</div>
-    </a>
-    <a href="{{ route('classroom.index') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-        <div class="nav-label">My Classes</div>
-    </a>
-    <a href="{{ route('students.list') }}" class="nav-item active">
-        <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
-        <div class="nav-label">My Students</div>
-    </a>
-    <a href="{{ route('materials.index') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
-        <div class="nav-label">Materials</div>
-    </a>
+    @include('partials.teacher-nav')
 @endsection
 
 @section('content')

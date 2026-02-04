@@ -4,29 +4,10 @@
 @section('user-role', (auth()->user()->role_id == 3 ? 'Teacher' : 'Student') . ' • Assignment Details')
 
 @section('navigation')
-    <a href="{{ route('home') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-home"></i></div>
-        <div class="nav-label">Dashboard</div>
-    </a>
-    <a href="{{ route('classroom.index') }}" class="nav-item active">
-        <div class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-        <div class="nav-label">My Classes</div>
-    </a>
     @if(auth()->user()->role_id == 3)
-    <a href="{{ route('students.list') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
-        <div class="nav-label">My Students</div>
-    </a>
-    @endif
-    <a href="{{ route('materials.index') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
-        <div class="nav-label">Materials</div>
-    </a>
-    @if(auth()->user()->role_id == 2)
-    <a href="{{ route('student.practice') }}" class="nav-item">
-        <div class="nav-icon"><i class="fas fa-microphone"></i></div>
-        <div class="nav-label">Practice</div>
-    </a>
+        @include('partials.teacher-nav')
+    @else
+        @include('partials.student-nav')
     @endif
 @endsection
 

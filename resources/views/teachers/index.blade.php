@@ -4,25 +4,7 @@
 @section('user-role', 'Teacher • ' . $stats['total_classes'] . ' Classes')
 
 @section('navigation')
-    <a href="{{ route('home') }}" class="nav-item active">
-        <i class="fas fa-home nav-icon"></i>
-        <span class="nav-label">Dashboard</span>
-    </a>
-    
-    <a href="{{ route('classroom.index') }}" class="nav-item">
-        <i class="fas fa-chalkboard-teacher nav-icon"></i>
-        <span class="nav-label">My Classes</span>
-    </a>
-    
-    <a href="{{ route('students.list') }}" class="nav-item">
-        <i class="fas fa-user-graduate nav-icon"></i>
-        <span class="nav-label">My Students</span>
-    </a>
-    
-    <a href="{{ route('materials.index') }}" class="nav-item">
-        <i class="fas fa-book-open nav-icon"></i>
-        <span class="nav-label">Materials</span>
-    </a>
+    @include('partials.teacher-nav')
 @endsection
 
 @section('content')
