@@ -61,6 +61,7 @@
         color: #0a5c36;
         border: 4px solid rgba(255, 255, 255, 0.3);
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        object-fit: cover;
     }
     
     .profile-info h1 {
@@ -356,9 +357,13 @@
 <section class="profile-banner">
     <div class="profile-header">
         <div class="profile-info-left">
-            <div class="profile-avatar">
-                {{ substr($teacher->name, 0, 1) }}
-            </div>
+            @if($teacher->user->profile_picture)
+                <img src="{{ asset('storage/' . $teacher->user->profile_picture) }}" alt="Profile Picture" class="profile-avatar">
+            @else
+                <div class="profile-avatar">
+                    {{ substr($teacher->name, 0, 1) }}
+                </div>
+            @endif
             
             <div class="profile-info">
                 <h1>{{ $teacher->name }}</h1>

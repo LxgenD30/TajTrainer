@@ -350,10 +350,12 @@
 <!-- Profile Banner -->
 <section class="profile-banner">
     <div class="profile-header">
-        @if($student->profile_picture)
-            <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="Profile Picture" class="profile-avatar">
+        @if($student->user->profile_picture)
+            <img src="{{ asset('storage/' . $student->user->profile_picture) }}" alt="Profile Picture" class="profile-avatar">
         @else
-            <img src="{{ asset('images/default-avatar.png') }}" alt="Default Avatar" class="profile-avatar">
+            <div class="profile-avatar" style="background: linear-gradient(135deg, #ffd700, #ffed4e); display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 800; color: #0a5c36;">
+                {{ substr($student->name, 0, 1) }}
+            </div>
         @endif
         
         <div class="profile-info">
