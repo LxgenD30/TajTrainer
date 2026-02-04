@@ -451,16 +451,27 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="category">Category</label>
-                    <select id="category" name="category" class="form-control">
-                        <option value="">Auto-detect using AI</option>
-                        <option value="Madd Rules">Madd Rules</option>
-                        <option value="Idgham Billa Ghunnah">Idgham Billa Ghunnah</option>
-                        <option value="Idgham Bi Ghunnah">Idgham Bi Ghunnah</option>
-                    </select>
+                    <label for="category">Category *</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="category" name="category" class="form-control" required style="flex: 1;">
+                            <option value="">-- Select Category --</option>
+                            <option value="Madd Rules">Madd Rules</option>
+                            <option value="Idgham Billa Ghunnah">Idgham Billa Ghunnah</option>
+                            <option value="Idgham Bi Ghunnah">Idgham Bi Ghunnah</option>
+                        </select>
+                        <button type="button" 
+                                onclick="suggestCategory()" 
+                                id="suggestBtn"
+                                style="padding: 12px 20px; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border: 2px solid #2a2a2a; border-radius: 8px; font-weight: 700; cursor: pointer; white-space: nowrap;">
+                            <i class="fas fa-magic"></i> AI Suggest
+                        </button>
+                    </div>
                     <small style="color: #666; display: block; margin-top: 5px;">
-                        Leave as "Auto-detect" to let AI categorize this material based on title and description
+                        Required - Click "AI Suggest" to let AI recommend a category based on title and description
                     </small>
+                    <div id="categoryHint" style="display: none; margin-top: 10px; padding: 10px; background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; color: #1976d2; font-weight: 600;">
+                        <i class="fas fa-lightbulb"></i> <span id="categoryHintText"></span>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -550,10 +561,16 @@ function displayResults(results) {
     
     results.forEach((result, index) => {
         html += `
-            <div class="result-card" onclick="addResultAsItem(${index})">
+            <div class="result-card" onclick="previewResult(${index})">
                 <h3>${escapeHtml(result.title)}</h3>
                 <div class="url">${escapeHtml(result.url)}</div>
                 <div class="content">${escapeHtml(result.content.substring(0, 150))}...</div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                    <button onclick="event.stopPropagation(); addResultAsItem(${index})" 
+                            style="padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                        + Add as Item
+                    </button>
+                </div>
             </div>
         `;
     });
@@ -564,6 +581,94 @@ function displayResults(results) {
     
     // Store results for later use
     window.searchResults = results;
+}
+
+// Preview search result
+function previewResult(index) {
+    const result = window.searchResults[index];
+    const preview = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;" onclick="this.remove()">
+            <div style="background: white; border-radius: 12px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 30px;" onclick="event.stopPropagation()">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: #2a2a2a; font-size: 1.8rem; font-weight: 800;">${escapeHtml(result.title)}</h2>
+                    <button onclick="this.closest('[style*=fixed]').remove()" style="padding: 8px 16px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">Close</button>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong>URL:</strong> <a href="${escapeHtml(result.url)}" target="_blank" style="color: #3498db; word-break: break-all;">${escapeHtml(result.url)}</a>
+                </div>
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 2px solid #e0e0e0; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.2rem; color: #2a2a2a;">Content Preview:</h3>
+                    <p style="color: #666; line-height: 1.8; margin: 0;">${escapeHtml(result.content)}</p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="addResultAsItem(${index}); this.closest('[style*=fixed]').remove();" 
+                            style="padding: 12px 24px; background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border: 2px solid #1e8449; border-radius: 8px; font-weight: 700; cursor: pointer;">
+                        <i class="fas fa-plus"></i> Add as Item
+                    </button>
+                    <button onclick="window.open('${escapeHtml(result.url)}', '_blank')" 
+                            style="padding: 12px 24px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: 2px solid #1f5f8b; border-radius: 8px; font-weight: 700; cursor: pointer;">
+                        <i class="fas fa-external-link-alt"></i> Open in New Tab
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', preview);
+}
+
+// AI Suggest Category
+async function suggestCategory() {
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const suggestBtn = document.getElementById('suggestBtn');
+    const categorySelect = document.getElementById('category');
+    const categoryHint = document.getElementById('categoryHint');
+    const categoryHintText = document.getElementById('categoryHintText');
+    
+    if (!title) {
+        alert('Please enter a material title first');
+        return;
+    }
+    
+    suggestBtn.disabled = true;
+    suggestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+    categoryHint.style.display = 'none';
+    
+    try {
+        // Create a hidden form to POST to a suggestion endpoint
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+        
+        const response = await fetch('{{ route("materials.suggest-category") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.category) {
+            categorySelect.value = data.category;
+            categoryHintText.textContent = `AI suggests: "${data.category}" - ${data.reason || 'Based on content analysis'}`;
+            categoryHint.style.display = 'block';
+            showMessage(`AI suggests: ${data.category}`, 'success');
+        } else {
+            categoryHintText.textContent = 'AI could not determine category. Please select manually.';
+            categoryHint.style.background = '#fff3cd';
+            categoryHint.style.borderColor = '#ffc107';
+            categoryHint.style.color = '#856404';
+            categoryHint.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Category suggestion error:', error);
+        alert('Failed to get AI suggestion. Please select category manually.');
+    } finally {
+        suggestBtn.disabled = false;
+        suggestBtn.innerHTML = '<i class="fas fa-magic"></i> AI Suggest';
+    }
 }
 
 // Add search result as a material item

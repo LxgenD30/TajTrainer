@@ -71,7 +71,7 @@ class MaterialController extends Controller
             ])->post('https://api.tavily.com/search', [
                 'query' => $request->input('query') . ' educational materials learning resources',
                 'search_depth' => 'basic',
-                'max_results' => 10,
+                'max_results' => 4,
                 'include_images' => true,
                 'include_answer' => false,
                 'topic' => 'general',
@@ -101,6 +101,45 @@ class MaterialController extends Controller
     }
 
     /**
+     * Suggest a category for a material using AI
+     */
+    public function suggestCategory(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string',
+                'description' => 'nullable|string'
+            ]);
+
+            $text = $validated['title'];
+            if (!empty($validated['description'])) {
+                $text .= ' ' . $validated['description'];
+            }
+
+            $category = $this->categorizeMaterial($text);
+
+            if ($category) {
+                return response()->json([
+                    'success' => true,
+                    'category' => $category,
+                    'message' => 'AI suggested category based on content analysis'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to determine category. Please select manually.'
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Category Suggestion Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred. Please select category manually.'
+            ], 500);
+        }
+    }
+
+    /**
      * Store a newly created material in storage.
      */
     public function store(Request $request)
@@ -108,7 +147,7 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category' => 'nullable|in:Madd Rules,Idgham Billa Ghunnah,Idgham Bi Ghunnah',
+            'category' => 'required|in:Madd Rules,Idgham Billa Ghunnah,Idgham Bi Ghunnah',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             
             // Multiple items support
@@ -130,12 +169,8 @@ class MaterialController extends Controller
             $material->description = $validated['description'] ?? null;
             $material->is_public = true;
             
-            // Auto-categorize if not provided
-            if (!empty($validated['category'])) {
-                $material->category = $validated['category'];
-            } else {
-                $material->category = $this->categorizeMaterial($validated['title'], $validated['description']);
-            }
+            // Category is now required - teacher must select manually
+            $material->category = $validated['category'];
 
             // Handle thumbnail upload
             if ($request->hasFile('thumbnail')) {
