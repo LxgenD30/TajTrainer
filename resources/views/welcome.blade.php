@@ -852,19 +852,29 @@
             
             <!-- Tajweed Demo Player -->
             <div class="demo-player">
-                <div class="player-title">Listen to Perfect Tajweed</div>
+                <div class="player-title" id="verseTitle">Loading Verse...</div>
+                <div class="arabic-text" id="verseArabic" style="font-size: 1.8rem; margin: 20px 0; color: var(--primary-green); line-height: 2;">
+                    <!-- Arabic text will be loaded here -->
+                </div>
+                <div id="verseTranslation" style="margin: 15px 0; font-size: 1rem; color: #666; font-style: italic;">
+                    <!-- Translation will be loaded here -->
+                </div>
                 <div class="player-controls">
-                    <button class="player-btn" id="playBtn">
+                    <button class="player-btn" id="playBtn" title="Play">
                         <i class="fas fa-play"></i>
                     </button>
-                    <button class="player-btn" id="pauseBtn">
+                    <button class="player-btn" id="pauseBtn" title="Pause" style="display: none;">
                         <i class="fas fa-pause"></i>
                     </button>
-                    <button class="player-btn" id="stopBtn">
+                    <button class="player-btn" id="stopBtn" title="Stop">
                         <i class="fas fa-stop"></i>
                     </button>
+                    <button class="player-btn" id="nextBtn" title="Next Verse">
+                        <i class="fas fa-forward"></i>
+                    </button>
                 </div>
-                <p style="margin-top: 15px; font-size: 0.9rem; color: #666;">Example: Surah Al-Fatiha with proper Makharij</p>
+                <audio id="quranAudio" style="display: none;"></audio>
+                <p style="margin-top: 15px; font-size: 0.9rem; color: #666;" id="reciterInfo">Reciter: Mishary Rashid Alafasy</p>
             </div>
         </div>
         
@@ -1331,27 +1341,103 @@
             document.getElementById('registerModal').classList.add('show');
         @endif
         
-        // Demo player functionality
+        // Demo player functionality with Quran Cloud API
+        let audioElement = document.getElementById('quranAudio');
         let isPlaying = false;
+        let currentVerse = null;
         const playBtn = document.getElementById('playBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const nextBtn = document.getElementById('nextBtn');
         
+        // Function to get a random verse from Quran
+        async function loadRandomVerse() {
+            try {
+                // Get random surah (1-114) and ayah
+                const randomSurah = Math.floor(Math.random() * 114) + 1;
+                
+                // Fetch surah info to get valid ayah range
+                const surahInfoResponse = await fetch(`https://api.quran.com/api/v4/chapters/${randomSurah}`);
+                const surahInfo = await surahInfoResponse.json();
+                const maxAyah = surahInfo.chapter.verses_count;
+                
+                const randomAyah = Math.floor(Math.random() * maxAyah) + 1;
+                
+                // Fetch verse details
+                const verseResponse = await fetch(`https://api.quran.com/api/v4/verses/by_key/${randomSurah}:${randomAyah}?language=en&words=false&translations=131&audio=7`);
+                const verseData = await verseResponse.json();
+                
+                currentVerse = verseData.verse;
+                
+                // Update UI
+                document.getElementById('verseTitle').textContent = `${surahInfo.chapter.name_simple} (${randomSurah}:${randomAyah})`;
+                document.getElementById('verseArabic').textContent = currentVerse.text_uthmani;
+                
+                // Get translation
+                if (currentVerse.translations && currentVerse.translations.length > 0) {
+                    document.getElementById('verseTranslation').textContent = currentVerse.translations[0].text;
+                }
+                
+                // Set audio source (Mishary Rashid Alafasy - reciter 7)
+                if (currentVerse.audio && currentVerse.audio.url) {
+                    audioElement.src = currentVerse.audio.url;
+                }
+                
+            } catch (error) {
+                console.error('Error loading verse:', error);
+                document.getElementById('verseTitle').textContent = 'Error loading verse';
+                document.getElementById('verseArabic').textContent = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ';
+                document.getElementById('verseTranslation').textContent = 'In the name of Allah, the Most Gracious, the Most Merciful';
+            }
+        }
+        
+        // Play button
         playBtn.addEventListener('click', function() {
-            isPlaying = true;
-            playBtn.innerHTML = '<i class="fas fa-play"></i>';
-            alert('Audio playback started: Example of proper Tajweed recitation');
-        });
-        
-        pauseBtn.addEventListener('click', function() {
-            if (isPlaying) {
-                alert('Audio playback paused');
+            if (audioElement.src) {
+                audioElement.play();
+                isPlaying = true;
+                playBtn.style.display = 'none';
+                pauseBtn.style.display = 'inline-block';
             }
         });
         
-        stopBtn.addEventListener('click', function() {
+        // Pause button
+        pauseBtn.addEventListener('click', function() {
+            audioElement.pause();
             isPlaying = false;
-            alert('Audio playback stopped');
+            playBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+        });
+        
+        // Stop button
+        stopBtn.addEventListener('click', function() {
+            audioElement.pause();
+            audioElement.currentTime = 0;
+            isPlaying = false;
+            playBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+        });
+        
+        // Next button - load new random verse
+        nextBtn.addEventListener('click', function() {
+            audioElement.pause();
+            audioElement.currentTime = 0;
+            isPlaying = false;
+            playBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            loadRandomVerse();
+        });
+        
+        // Audio ended event
+        audioElement.addEventListener('ended', function() {
+            isPlaying = false;
+            playBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+        });
+        
+        // Load initial verse when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRandomVerse();
         });
         
         // Add scroll animation to feature cards

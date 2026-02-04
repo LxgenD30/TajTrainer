@@ -14,10 +14,25 @@ if ($materials->count() > 0) {
         echo "Items: {$material->items->count()}\n";
         
         foreach ($material->items as $item) {
-            echo "  - Item #{$item->item_id}: {$item->type} => {$item->path}\n";
+            $ext = pathinfo($item->path, PATHINFO_EXTENSION);
+            echo "  - Item #{$item->item_id}: {$item->type} => {$item->path} (ext: {$ext})\n";
         }
         echo "---\n\n";
     }
 } else {
     echo "No materials found\n";
 }
+
+// Check if any images exist
+echo "\n=== Image Files Check ===\n";
+$imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+$allItems = App\Models\MaterialItem::where('type', 'file')->get();
+$imageCount = 0;
+foreach ($allItems as $item) {
+    $ext = strtolower(pathinfo($item->path, PATHINFO_EXTENSION));
+    if (in_array($ext, $imageExtensions)) {
+        $imageCount++;
+        echo "Found image: {$item->path}\n";
+    }
+}
+echo "Total images found: {$imageCount}\n";
