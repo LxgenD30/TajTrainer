@@ -226,29 +226,27 @@
                     <div class="icon-badge red"><i class="fas fa-exclamation-circle"></i></div>
                     <h3 class="section-title">Focus Areas</h3>
                 </div>
-        @if(count($topWeaknesses) > 0)
-                @foreach($topWeaknesses as $weakness)
-                    <div style="background: #fffafa; border: 2px solid #ffebeb; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span class="weakness-name">{{ $weakness->rule_name }}</span>
-                            <span class="weakness-count">{{ $weakness->error_count }}</span>
+                
+                @if(count($topWeaknesses) > 0)
+                    @foreach($topWeaknesses as $weakness)
+                        <div style="background: #fffafa; border: 2px solid #ffebeb; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span class="weakness-name">{{ $weakness->rule_name }}</span>
+                                <span class="weakness-count">{{ $weakness->error_count }}</span>
+                            </div>
+                            <div style="font-size: 1.1rem; color: #666; font-weight: 500;">
+                                Type: {{ ucfirst($weakness->error_type) }}
+                            </div>
                         </div>
-                        <div style="font-size: 1.1rem; color: #666; font-weight: 500;">
-                            Type: {{ ucfirst($weakness->error_type) }}
-                        </div>
+                    @endforeach
+                @else
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <i class="fas fa-smile-beam" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <p style="font-size: 1.2rem;">No significant weaknesses detected!<br>Keep up the excellent work!</p>
                     </div>
-                @endforeach
-        @else
-            </div>
+                @endif
+             </div>
         </div>
-            <div style="text-align: center; padding: 40px; color: #999;">
-                <i class="fas fa-smile-beam" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
-                <p>No significant weaknesses detected!<br>Keep up the excellent work!</p>
-            </div>
-        @endif
-    </div>
-    
-</div>
 
 <!-- Recurring Errors -->
 @if(count($recurringErrors) > 0)
