@@ -93,19 +93,21 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: transparent;
-        color: #1abc9c;
-        border: 2px solid #1abc9c;
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        border: 2px solid #c0392b;
         padding: 12px 25px;
         border-radius: 25px;
         text-decoration: none;
         font-weight: 600;
         transition: all 0.3s ease;
-        margin-top: 30px;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
     }
     
     .btn-back:hover {
-        background: rgba(26, 188, 156, 0.1);
+        background: linear-gradient(135deg, #c0392b, #a93226);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
     }
     
     .detail-card {
@@ -398,7 +400,97 @@
     
     <!-- Your Submission -->
     <div class="detail-card">
-    @if(auth()->user()->role_id == 2 && isset($submission))
+    @if(auth()->user()->role_id == 3)
+        <!-- Teacher View: All Student Submissions -->
+        <div class="detail-section">
+            <h4 class="section-title" style="font-size: 1.4rem;">
+                <span>📋</span> Student Submissions ({{ $submissions->count() }})
+            </h4>
+            
+            @if($submissions->isEmpty())
+                <div style="text-align: center; padding: 60px 30px; background: rgba(149, 165, 166, 0.1); border-radius: 10px; border: 2px solid #95a5a6;">
+                    <div style="font-size: 5rem; margin-bottom: 20px; opacity: 0.4;">📝</div>
+                    <h4 style="color: #7f8c8d; font-size: 1.3rem; margin-bottom: 15px;">No Submissions Yet</h4>
+                    <p style="color: #95a5a6; font-size: 1rem; line-height: 1.6;">Waiting for students to submit their assignments.</p>
+                </div>
+            @else
+                <div style="display: grid; gap: 20px;">
+                    @foreach($submissions as $submission)
+                        <div style="background: white; border-radius: 12px; padding: 25px; border: 2px solid #0a5c36; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                                <div style="flex: 1;">
+                                    <h5 style="color: #0a5c36; font-size: 1.3rem; margin-bottom: 8px; font-weight: 700;">
+                                        <i class="fas fa-user-graduate"></i> {{ $submission->student->name ?? 'Unknown Student' }}
+                                    </h5>
+                                    <p style="color: #666; font-size: 1.05rem; margin: 0;">
+                                        <i class="fas fa-envelope"></i> {{ $submission->student->email ?? 'N/A' }}
+                                    </p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="margin-bottom: 8px;">
+                                        <span style="display: inline-block; padding: 6px 15px; background: rgba(46, 204, 113, 0.15); border: 2px solid #27ae60; border-radius: 15px; color: #27ae60; font-size: 1rem; font-weight: 600;">
+                                            {{ ucfirst($submission->status ?? 'pending') }}
+                                        </span>
+                                    </div>
+                                    @if($submission->score)
+                                        <div style="color: #d4af37; font-size: 1.2rem; font-weight: 700;">
+                                            <i class="fas fa-star"></i> {{ $submission->score->score ?? 'Not graded' }}/{{ $assignment->total_marks }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; padding: 15px; background: rgba(10, 92, 54, 0.05); border-radius: 8px;">
+                                <div>
+                                    <div style="color: #666; font-size: 0.95rem; margin-bottom: 5px;">📅 Submitted At</div>
+                                    <div style="color: #0a5c36; font-size: 1.1rem; font-weight: 600;">
+                                        {{ $submission->submitted_at ? $submission->submitted_at->format('M d, Y h:i A') : 'Processing...' }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="color: #666; font-size: 0.95rem; margin-bottom: 5px;">⏱️ Time Status</div>
+                                    <div style="color: {{ $submission->submitted_at && $submission->submitted_at->lte($assignment->due_date) ? '#27ae60' : '#e74c3c' }}; font-size: 1.1rem; font-weight: 600;">
+                                        {{ $submission->submitted_at && $submission->submitted_at->lte($assignment->due_date) ? 'On Time' : 'Late' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if($submission->audio_file_path)
+                                <div style="margin-bottom: 20px;">
+                                    <div style="color: #666; font-size: 1rem; margin-bottom: 10px; font-weight: 600;">🎤 Audio Recording</div>
+                                    <audio controls style="width: 100%; border-radius: 8px; background: rgba(10, 92, 54, 0.05);">
+                                        <source src="{{ Storage::url($submission->audio_file_path) }}" type="audio/mpeg">
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                </div>
+                            @endif
+
+                            @if($submission->transcription)
+                                <div style="margin-bottom: 20px;">
+                                    <div style="color: #666; font-size: 1rem; margin-bottom: 10px; font-weight: 600;">📝 Transcription</div>
+                                    <div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 8px; border: 2px solid #d4af37;">
+                                        <p style="font-size: 1.3rem; font-family: 'Amiri', serif; direction: rtl; text-align: right; color: #333; line-height: 2; margin: 0;">
+                                            {{ $submission->transcription }}
+                                        </p>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <a href="{{ route('teacher.grade.submission', ['submission' => $submission->id]) }}" 
+                                   style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(10, 92, 54, 0.3);"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 92, 54, 0.4)';"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 92, 54, 0.3)';">
+                                    <i class="fas fa-check-circle"></i> Grade Submission
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    @elseif(auth()->user()->role_id == 2 && isset($submission))
+        <!-- Student View: Their Own Submission -->
         <div class="detail-section" style="background: rgba(46, 204, 113, 0.1); border-color: #27ae60;">
             <h4 class="section-title" style="color: #27ae60; font-size: 1.4rem;">
                 <span>✅</span> Your Submission

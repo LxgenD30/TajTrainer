@@ -104,14 +104,24 @@ class AssignmentController extends Controller
         
         // If student, check if they have a submission
         $submission = null;
+        $submissions = collect();
+        
         if ($isEnrolledStudent) {
             $submission = AssignmentSubmission::where('assignment_id', $assignment->assignment_id)
                 ->where('student_id', Auth::id())
                 ->first();
             // Note: Score is loaded via custom accessor getScoreAttribute() - no need to eager load
         }
+        
+        // If teacher, load all submissions for this assignment
+        if ($isTeacher) {
+            $submissions = AssignmentSubmission::where('assignment_id', $assignment->assignment_id)
+                ->with('student')
+                ->orderBy('submitted_at', 'desc')
+                ->get();
+        }
 
-        return view('assignment.show', compact('assignment', 'classroom', 'submission'));
+        return view('assignment.show', compact('assignment', 'classroom', 'submission', 'submissions'));
     }
 
     /**
