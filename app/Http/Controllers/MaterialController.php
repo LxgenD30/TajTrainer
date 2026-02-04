@@ -28,6 +28,11 @@ class MaterialController extends Controller
             });
         }
         
+        // Filter by owned materials
+        if ($request->has('owned') && $request->owned == '1' && auth()->user()->teacher) {
+            $query->where('teacher_id', auth()->user()->teacher->id);
+        }
+        
         // Filter by category if provided
         if ($request->has('category') && !empty($request->category)) {
             $query->where('category', $request->category);
@@ -36,7 +41,7 @@ class MaterialController extends Controller
         $materials = $query->paginate(12);
         $isStudent = auth()->check() && auth()->user()->role_id == 2;
         
-        // Get category counts for filter badges (respecting search filter)
+        // Get category counts for filter badges (respecting search and owned filters)
         $baseQuery = Material::query();
         
         // Apply search filter to counts if present
@@ -46,6 +51,11 @@ class MaterialController extends Controller
                 $q->where('title', 'like', '%' . $searchTerm . '%')
                   ->orWhere('description', 'like', '%' . $searchTerm . '%');
             });
+        }
+        
+        // Apply owned filter to counts if present
+        if ($request->has('owned') && $request->owned == '1' && auth()->user()->teacher) {
+            $baseQuery->where('teacher_id', auth()->user()->teacher->id);
         }
         
         $categoryCounts = [

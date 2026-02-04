@@ -260,31 +260,40 @@
                 >
             </div>
             <div class="filter-buttons" style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1;">
-            <a href="{{ route('materials.index', array_filter(['search' => request('search')])) }}" 
+            @if(!$isStudent)
+                <label style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: {{ request('owned') == '1' ? 'linear-gradient(135deg, #d4af37, #f4d03f)' : 'rgba(212, 175, 55, 0.1)' }}; color: {{ request('owned') == '1' ? '#2a2a2a' : '#d4af37' }}; border: 2px solid #d4af37; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;">
+                    <input type="checkbox" 
+                           onchange="window.location.href='{{ route('materials.index', array_filter(['category' => request('category'), 'search' => request('search'), 'owned' => request('owned') == '1' ? null : '1'])) }}'" 
+                           {{ request('owned') == '1' ? 'checked' : '' }}
+                           style="width: 18px; height: 18px; cursor: pointer;">
+                    <i class="fas fa-user-check"></i> My Materials Only
+                </label>
+            @endif
+            <a href="{{ route('materials.index', array_filter(['search' => request('search'), 'owned' => request('owned')])) }}" 
                class="filter-btn {{ !request('category') ? 'active' : '' }}">
                 <span class="category-icon"><i class="fas fa-th-large"></i></span>
                 <span>All Materials</span>
                 <span class="filter-badge">{{ $categoryCounts['all'] }}</span>
             </a>
-            <a href="{{ route('materials.index', array_filter(['category' => 'Madd Rules', 'search' => request('search')])) }}" 
+            <a href="{{ route('materials.index', array_filter(['category' => 'Madd Rules', 'search' => request('search'), 'owned' => request('owned')])) }}" 
                class="filter-btn {{ request('category') == 'Madd Rules' ? 'active' : '' }}">
                 <span class="category-icon"><i class="fas fa-circle"></i></span>
                 <span>Madd Rules</span>
                 <span class="filter-badge">{{ $categoryCounts['Madd Rules'] }}</span>
             </a>
-            <a href="{{ route('materials.index', array_filter(['category' => 'Idgham Billa Ghunnah', 'search' => request('search')])) }}" 
+            <a href="{{ route('materials.index', array_filter(['category' => 'Idgham Billa Ghunnah', 'search' => request('search'), 'owned' => request('owned')])) }}" 
                class="filter-btn {{ request('category') == 'Idgham Billa Ghunnah' ? 'active' : '' }}">
                 <span class="category-icon"><i class="fas fa-wave-square"></i></span>
                 <span>Idgham Billa Ghunnah</span>
                 <span class="filter-badge">{{ $categoryCounts['Idgham Billa Ghunnah'] }}</span>
             </a>
-            <a href="{{ route('materials.index', array_filter(['category' => 'Idgham Bi Ghunnah', 'search' => request('search')])) }}" 
+            <a href="{{ route('materials.index', array_filter(['category' => 'Idgham Bi Ghunnah', 'search' => request('search'), 'owned' => request('owned')])) }}" 
                class="filter-btn {{ request('category') == 'Idgham Bi Ghunnah' ? 'active' : '' }}">
                 <span class="category-icon"><i class="fas fa-water"></i></span>
                 <span>Idgham Bi Ghunnah</span>
                 <span class="filter-badge">{{ $categoryCounts['Idgham Bi Ghunnah'] }}</span>
             </a>
-            <a href="{{ route('materials.index', array_filter(['category' => 'Others', 'search' => request('search')])) }}" 
+            <a href="{{ route('materials.index', array_filter(['category' => 'Others', 'search' => request('search'), 'owned' => request('owned')])) }}" 
                class="filter-btn {{ request('category') == 'Others' ? 'active' : '' }}">
                 <span class="category-icon"><i class="fas fa-ellipsis-h"></i></span>
                 <span>Others</span>

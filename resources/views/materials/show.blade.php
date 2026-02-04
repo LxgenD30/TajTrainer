@@ -221,6 +221,16 @@
                             $extension = strtolower(pathinfo($item->path, PATHINFO_EXTENSION));
                             $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
                             $isImage = in_array($extension, $imageExtensions);
+                            
+                            // Debug logging
+                            \Log::info('Material Item Display Debug', [
+                                'item_id' => $item->item_id,
+                                'type' => $item->type,
+                                'path' => $item->path,
+                                'extension' => $extension,
+                                'isImage' => $isImage,
+                                'storage_url' => Storage::url($item->path),
+                            ]);
                         @endphp
                         
                         @if($isImage)
@@ -230,7 +240,15 @@
                                      alt="{{ $item->title ?: 'Image' }}"
                                      class="image-preview"
                                      onclick="openImageModal('{{ Storage::url($item->path) }}')"
-                                     loading="lazy">
+                                     loading="lazy"
+                                     onerror="console.error('Failed to load image:', '{{ Storage::url($item->path) }}')">
+                            </div>
+                        @else
+                            <!-- Debug: Show it's a document -->
+                            <div style="padding: 10px; background: #f0f0f0; border-radius: 5px; margin: 10px 0;">
+                                <small style="color: #666;">
+                                    <i class="fas fa-file"></i> Document file: {{ $extension }}
+                                </small>
                             </div>
                         @endif
                     @endif
