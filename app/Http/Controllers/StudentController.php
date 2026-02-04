@@ -14,17 +14,27 @@ class StudentController extends Controller
 {
     public function index()
     {
-        $student = Student::with(['classrooms.teacher', 'classrooms.assignments', 'scores', 'user'])
+        $student = Student::with(['classrooms.teacher', 'classrooms.assignments', 'scores', 'user', 'submissions'])
             ->findOrFail(Auth::id());
         
         // Calculate statistics
         $enrolledClassesCount = $student->classrooms->count();
-        $completedAssignments = $student->scores->count();
-        $averageScore = $student->scores->avg('score') ?? 0;
         
-        // Calculate pending assignments (assignments in enrolled classes that haven't been graded yet)
-        $totalAssignments = $student->classrooms->flatMap->assignments->count();
-        $pendingAssignments = $totalAssignments - $completedAssignments;
+        // Get all assignments from enrolled classes
+        $allAssignmentIds = $student->classrooms->flatMap->assignments->pluck('assignment_id')->unique();
+        $totalAssignments = $allAssignmentIds->count();
+        
+        // Count completed/submitted assignments (from current enrolled classes only)
+        $submittedAssignmentIds = $student->submissions->pluck('assignment_id')->unique();
+        $completedAssignments = $submittedAssignmentIds->intersect($allAssignmentIds)->count();
+        
+        // Calculate pending assignments
+        $pendingAssignments = max(0, $totalAssignments - $completedAssignments);
+        
+        // Calculate average score from enrolled classes only
+        $averageScore = $student->scores()
+            ->whereIn('assignment_id', $allAssignmentIds)
+            ->avg('score') ?? 0;
         
         return view('students.index', compact('student', 'enrolledClassesCount', 'completedAssignments', 'averageScore', 'pendingAssignments'));
     }
