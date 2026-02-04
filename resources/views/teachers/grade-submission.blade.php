@@ -550,6 +550,13 @@
                     </div>
                 @endif
             </div>
+            @else
+            <!-- No Tajweed Analysis - Placeholder -->
+            <div style="background: rgba(149, 165, 166, 0.1); border: 2px dashed #95a5a6; border-radius: 12px; padding: 40px; text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.4;">📊</div>
+                <h4 style="color: #7f8c8d; font-size: 1.1rem; margin-bottom: 10px;">No AI Feedback</h4>
+                <p style="color: #95a5a6; font-size: 0.9rem; margin: 0;">Analysis not yet available</p>
+            </div>
             @endif
         </div> <!-- End Column 4: AI Teaching Assistant -->
     </div> <!-- Close 4-column grid -->

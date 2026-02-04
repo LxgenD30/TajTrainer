@@ -383,18 +383,24 @@
             </div>
         </div>
     </div>
-
-    <!-- Instructions -->
-    <div style="margin-top: 30px;">
-        <div class="info-label" style="margin-bottom: 10px; font-size: 1.1rem; font-weight: 600; color: #0a5c36;">📋 Instructions</div>
-        <div class="instructions-box">
-            <p class="instructions-text" style="font-size: 1rem;">{{ $assignment->instructions }}</p>
-        </div>
-    </div>
     </div> <!-- End LEFT COLUMN -->
     
-    <!-- RIGHT COLUMN: Your Submission -->
-    <!-- RIGHT COLUMN: Your Submission -->
+    <!-- RIGHT COLUMN: Instructions + Your Submission -->
+    <div style="display: flex; flex-direction: column; gap: 30px;">
+    
+    <!-- Instructions -->
+    <div class="detail-card">
+        <div class="detail-section">
+            <h4 class="section-title" style="font-size: 1.4rem;">
+                <span>📋</span> Instructions
+            </h4>
+            <div class="instructions-box">
+                <p class="instructions-text" style="font-size: 1rem; line-height: 1.8;">{{ $assignment->instructions }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Your Submission -->
     <div class="detail-card">
     @if(auth()->user()->role_id == 2 && isset($submission))
         <div class="detail-section" style="background: rgba(46, 204, 113, 0.1); border-color: #27ae60;">

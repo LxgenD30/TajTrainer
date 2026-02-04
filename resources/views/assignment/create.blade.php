@@ -308,9 +308,26 @@
 </style>
 
 <!-- Page Header -->
-<div class="page-header">
-    <h1>📝 Create New Assignment</h1>
-    <p>Assign work to students in {{ $classroom->class_name }}</p>
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="margin-bottom: 5px;">📝 Create New Assignment</h1>
+        <p style="margin: 0;">Assign work to students in {{ $classroom->class_name }}</p>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <div>
+            <label style="display: block; color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 5px; font-weight: 600;">📅 Due Date & Time *</label>
+            <input type="datetime-local" name="due_date" value="{{ old('due_date') }}" required style="padding: 10px 15px; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; font-size: 1rem; background: rgba(255,255,255,0.15); color: white; backdrop-filter: blur(10px);">
+            @error('due_date')
+                <span style="color: #ffcccc; font-size: 0.85rem; display: block; margin-top: 3px;">{{ $message }}</span>
+            @enderror
+        </div>
+        <a href="{{ route('classroom.show', $classroom->id) }}" style="padding: 12px 25px; background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.4); border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 1rem; transition: all 0.3s ease; backdrop-filter: blur(10px);" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+            Cancel
+        </a>
+        <button type="submit" style="padding: 12px 30px; background: #d4af37; color: #0a5c36; border: 2px solid #d4af37; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(212,175,55,0.3);" onmouseover="this.style.background='#c19d2f'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(212,175,55,0.4)'" onmouseout="this.style.background='#d4af37'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(212,175,55,0.3)'">
+            ✓ Create Assignment
+        </button>
+    </div>
 </div>
 
 <!-- Form Card -->
@@ -320,17 +337,17 @@
         <input type="hidden" name="class_id" value="{{ $classroom->id }}">
 
         <!-- 2-Column Grid Layout -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
             
             <!-- LEFT COLUMN: Reference Materials + Tajweed Rules -->
-            <div style="display: flex; flex-direction: column; gap: 30px;">
+            <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 25px;">
         <!-- Reference Material Section -->
-        <div class="form-section">
-            <h4 class="section-title" style="font-size: 1.4rem;">
-                <span>📚</span> Select Reference Material
+        <div class="form-section" style="margin-bottom: 0;">
+            <h4 class="section-title" style="font-size: 1.3rem;">
+                <span>📚</span> Reference Material
             </h4>
-            <p class="section-desc" style="font-size: 1rem;">
-                Choose from existing materials to help students with this assignment (optional)
+            <p class="section-desc" style="font-size: 0.95rem; margin-bottom: 15px;">
+                Choose from existing materials (optional)
             </p>
             
             <div>
@@ -367,36 +384,36 @@
         </div>
 
         <!-- Tajweed Rules Section -->
-        <div class="form-section gold">
-            <h4 class="section-title gold" style="font-size: 1.4rem;">
+        <div class="form-section gold" style="margin-bottom: 0;">
+            <h4 class="section-title gold" style="font-size: 1.3rem;">
                 <span>✨</span> Tajweed Rules to Focus On *
             </h4>
-            <p class="section-desc" style="font-size: 1rem;">
-                Select the specific Tajweed rules that students should focus on during recitation
+            <p class="section-desc" style="font-size: 0.95rem; margin-bottom: 15px;">
+                Select the specific Tajweed rules
             </p>
             
             <div class="radio-group" style="grid-template-columns: 1fr;">
-                <label class="radio-option" style="padding: 20px;">
+                <label class="radio-option" style="padding: 15px;">
                     <input type="radio" name="tajweed_rules" value="Madd" {{ old('tajweed_rules', 'Madd') == 'Madd' ? 'checked' : '' }} required>
                     <div class="radio-label">
-                        <div class="radio-title" style="font-size: 1.05rem;">1. Madd (Elongation)</div>
-                        <div class="radio-desc" style="font-size: 0.95rem;">Proper lengthening of vowels (ا و ي)</div>
+                        <div class="radio-title" style="font-size: 1rem;">1. Madd (Elongation)</div>
+                        <div class="radio-desc" style="font-size: 0.85rem;">Proper lengthening of vowels (ا و ي)</div>
                     </div>
                 </label>
                 
-                <label class="radio-option" style="padding: 20px;">
+                <label class="radio-option" style="padding: 15px;">
                     <input type="radio" name="tajweed_rules" value="Idgham Bi Ghunnah" {{ old('tajweed_rules') == 'Idgham Bi Ghunnah' ? 'checked' : '' }} required>
                     <div class="radio-label">
-                        <div class="radio-title" style="font-size: 1.05rem;">2. Idgham Bi Ghunnah</div>
-                        <div class="radio-desc" style="font-size: 0.95rem;">Merging WITH nasalization (و م ن ي)</div>
+                        <div class="radio-title" style="font-size: 1rem;">2. Idgham Bi Ghunnah</div>
+                        <div class="radio-desc" style="font-size: 0.85rem;">Merging WITH nasalization (و م ن ي)</div>
                     </div>
                 </label>
                 
-                <label class="radio-option" style="padding: 20px;">
+                <label class="radio-option" style="padding: 15px;">
                     <input type="radio" name="tajweed_rules" value="Idgham Bila Ghunnah" {{ old('tajweed_rules') == 'Idgham Bila Ghunnah' ? 'checked' : '' }} required>
                     <div class="radio-label">
-                        <div class="radio-title" style="font-size: 1.05rem;">3. Idgham Bila Ghunnah</div>
-                        <div class="radio-desc" style="font-size: 0.95rem;">Merging WITHOUT nasalization (ر ل)</div>
+                        <div class="radio-title" style="font-size: 1rem;">3. Idgham Bila Ghunnah</div>
+                        <div class="radio-desc" style="font-size: 0.85rem;">Merging WITHOUT nasalization (ر ل)</div>
                     </div>
                 </label>
             </div>
@@ -407,14 +424,14 @@
             </div> <!-- End LEFT COLUMN -->
             
             <!-- RIGHT COLUMN: Quran Verse Selection + Instructions -->
-            <div style="display: flex; flex-direction: column; gap: 30px;">
+            <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 25px;">
         <!-- Quran Verse Selection -->
-        <div class="form-section gold">
-            <h4 class="section-title gold" style="font-size: 1.4rem;">
-                <span>📖</span> Assign Quran Verse for Recitation
+        <div class="form-section gold" style="margin-bottom: 0;">
+            <h4 class="section-title gold" style="font-size: 1.3rem;">
+                <span>📖</span> Assign Quran Verse *
             </h4>
-            <p class="section-desc" style="font-size: 1rem;">
-                Select the surah and verse range that students must recite
+            <p class="section-desc" style="font-size: 0.95rem; margin-bottom: 15px;">
+                Select surah and verse range
             </p>
             
             <div class="verse-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
@@ -455,11 +472,11 @@
         </div>
 
         <!-- Instructions -->
-        <div class="form-section">
-            <h4 class="section-title" style="font-size: 1.4rem; margin-bottom: 15px;">
+        <div class="form-section" style="margin-bottom: 0;">
+            <h4 class="section-title" style="font-size: 1.3rem; margin-bottom: 15px;">
                 <span>📋</span> Instructions for Students *
             </h4>
-            <textarea name="instructions" rows="10" required class="form-textarea" style="font-size: 1rem;" placeholder="Provide clear instructions for the assignment...">{{ old('instructions') }}</textarea>
+            <textarea name="instructions" rows="12" required class="form-textarea" style="font-size: 1rem; min-height: 240px;" placeholder="Provide clear instructions for the assignment...">{{ old('instructions') }}</textarea>
             @error('instructions')
                 <span class="error-text">{{ $message }}</span>
             @enderror
@@ -468,40 +485,8 @@
             
         </div> <!-- End 2-column grid -->
 
-        <!-- Due Date & Submit (centered at bottom) -->
-        <div style="background: rgba(10, 92, 54, 0.05); padding: 30px; border-radius: 15px; border: 2px solid #0a5c36; margin-bottom: 20px;">
-            <div style="max-width: 600px; margin: 0 auto;">
-        <div>
-            <label class="form-label" style="font-size: 1.1rem; text-align: center; display: block; margin-bottom: 15px;">📅 Due Date & Time *</label>
-            <input type="datetime-local" name="due_date" value="{{ old('due_date') }}" required class="form-input" style="text-align: center; font-size: 1.05rem;">
-            @error('due_date')
-                <span class="error-text" style="display: block; text-align: center;">{{ $message }}</span>
-            @enderror
-            
-            <input type="hidden" name="total_marks" value="100">
-            <input type="hidden" name="is_voice_submission" value="1">
-            
-            <div class="info-box" style="margin-top: 20px;">
-                <div class="info-title" style="font-size: 1rem;">📋 Assignment Details:</div>
-                <div class="info-content" style="font-size: 1rem;">
-                    • Total Marks: <strong style="color: #d4af37;">100 points</strong> (fixed)<br>
-                    • Submission Type: <strong style="color: #d4af37;">Voice Recording Only</strong><br>
-                    • Auto-graded with Tajweed analysis
-                </div>
-            </div>
-        </div>
-            </div>
-        </div>
-
-        <!-- Buttons -->
-        <div class="button-group" style="justify-content: center;">
-            <a href="{{ route('classroom.show', $classroom->id) }}" class="btn btn-secondary" style="font-size: 1.05rem; padding: 14px 35px;">
-                Cancel
-            </a>
-            <button type="submit" class="btn btn-primary" style="font-size: 1.05rem; padding: 14px 35px;">
-                Create Assignment
-            </button>
-        </div>
+        <input type="hidden" name="total_marks" value="100">
+        <input type="hidden" name="is_voice_submission" value="1">
     </form>
 </div>
 

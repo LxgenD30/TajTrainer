@@ -379,7 +379,7 @@
             {{ $classroom->name }} • Review and grade student work
         </p>
     </div>
-    <a href="{{ route('classroom.show', $classroom) }}" style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.25); padding: 12px 25px; border-radius: 15px; color: white; text-decoration: none; font-weight: 600; border: 2px solid rgba(255,255,255,0.3); transition: all 0.3s ease; backdrop-filter: blur(10px);" onmouseover="this.style.background='rgba(255,255,255,0.35)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'; this.style.transform='translateY(0)'">
+    <a href="{{ route('classroom.show', $classroom->id) }}" style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.25); padding: 12px 25px; border-radius: 15px; color: white; text-decoration: none; font-weight: 600; border: 2px solid rgba(255,255,255,0.3); transition: all 0.3s ease; backdrop-filter: blur(10px);" onmouseover="this.style.background='rgba(255,255,255,0.35)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'; this.style.transform='translateY(0)'">
         <i class="fas fa-arrow-left"></i> Back to Class
     </a>
 </div>
