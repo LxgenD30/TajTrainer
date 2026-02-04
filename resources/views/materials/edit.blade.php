@@ -863,7 +863,7 @@ function addMaterialItem() {
             <div id="fields_document_${itemId}" class="hidden">
                 <div class="form-group">
                     <label>Upload Document</label>
-                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx">
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx" disabled>
                 </div>
             </div>
             
@@ -895,7 +895,16 @@ function addMaterialItem() {
 function toggleItemFields(itemId, type) {
     ['images', 'document', 'youtube'].forEach(t => {
         const field = document.getElementById(`fields_${t}_${itemId}`);
-        if (field) field.classList.toggle('hidden', t !== type);
+        if (field) {
+            const isActive = t === type;
+            field.classList.toggle('hidden', !isActive);
+            
+            // Disable file inputs in hidden fields to prevent conflicts
+            const fileInput = field.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.disabled = !isActive;
+            }
+        }
     });
 }
 

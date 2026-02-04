@@ -889,7 +889,7 @@ function addMaterialItem() {
             <div id="fields_document_${itemId}" class="hidden">
                 <div class="form-group">
                     <label>Upload Document</label>
-                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx" onchange="handleFileUpload(${itemId}, 'document', this)">
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx" onchange="handleFileUpload(${itemId}, 'document', this)" disabled>
                     <div id="file_preview_document_${itemId}" class="file-preview" style="display: none; margin-top: 10px; padding: 12px; background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 8px; color: #e74c3c; font-weight: 600;">
                         <i class="fas fa-file-pdf"></i> <span class="file-name"></span>
                     </div>
@@ -928,7 +928,16 @@ function addMaterialItem() {
 function toggleItemFields(itemId, type) {
     ['images', 'document', 'youtube'].forEach(t => {
         const field = document.getElementById(`fields_${t}_${itemId}`);
-        if (field) field.classList.toggle('hidden', t !== type);
+        if (field) {
+            const isActive = t === type;
+            field.classList.toggle('hidden', !isActive);
+            
+            // Disable file inputs in hidden fields to prevent conflicts
+            const fileInput = field.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.disabled = !isActive;
+            }
+        }
     });
 }
 
