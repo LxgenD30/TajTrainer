@@ -319,7 +319,7 @@
                             Verses {{ $assignment->start_verse }} - {{ $assignment->end_verse }} (Continuous Recitation)
                         </p>
                     @endif
-                    <audio controls style="width: 100%; border-radius: 10px;">
+                    <audio controls {{ auth()->user()->role_id != 3 ? 'controlsList="nodownload"' : '' }} style="width: 100%; border-radius: 10px;">
                         @if(str_starts_with($assignment->reference_audio_url, 'references/'))
                             <source src="{{ Storage::url($assignment->reference_audio_url) }}" type="audio/mpeg">
                         @else
