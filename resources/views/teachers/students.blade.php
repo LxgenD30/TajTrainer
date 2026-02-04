@@ -134,8 +134,8 @@
                     <div style="margin-bottom: 20px;">
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-id-card" style="color: #0a5c36; width: 20px; font-size: 1.05rem;"></i>
-                                <span class="student-info-text">ID: {{ $student->id }}</span>
+                                <i class="fas fa-phone" style="color: #0a5c36; width: 20px; font-size: 1.05rem;"></i>
+                                <span class="student-info-text">{{ $student->user->phone ?? 'No phone number' }}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-layer-group" style="color: #0a5c36; width: 20px; font-size: 1.05rem;"></i>
