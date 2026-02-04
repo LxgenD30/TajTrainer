@@ -77,25 +77,49 @@ class MaterialController extends Controller
         }
 
         try {
-            // Build search query based on type
+            // Build search query and domain filters based on type
             if ($searchType === 'youtube') {
-                $finalQuery = $searchQuery . ' site:youtube.com';
+                $searchParams = [
+                    'query' => $searchQuery,
+                    'search_depth' => 'basic',
+                    'max_results' => 10,
+                    'include_images' => true,
+                    'include_answer' => false,
+                    'topic' => 'general',
+                    'include_domains' => ['youtube.com', 'youtu.be'],
+                ];
             } else {
-                // Filter for educational institutions and PDF files
-                $finalQuery = $searchQuery . ' (site:.edu OR site:.ac.uk OR site:.gov OR site:scholar.google.com) filetype:pdf';
+                // PDF search - only educational institutions and Google Scholar
+                $searchParams = [
+                    'query' => $searchQuery . ' filetype:pdf',
+                    'search_depth' => 'advanced',
+                    'max_results' => 10,
+                    'include_images' => false,
+                    'include_answer' => false,
+                    'topic' => 'general',
+                    'include_domains' => [
+                        'scholar.google.com',
+                        '*.edu',
+                        '*.ac.uk',
+                        '*.gov',
+                        'researchgate.net',
+                        'academia.edu',
+                        'arxiv.org',
+                        'jstor.org',
+                        'sciencedirect.com',
+                        'springer.com',
+                        'wiley.com',
+                        'tandfonline.com',
+                        'cambridge.org',
+                        'oxford.ac.uk',
+                    ],
+                ];
             }
 
             $response = Http::withoutVerifying()->withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
-            ])->post('https://api.tavily.com/search', [
-                'query' => $finalQuery,
-                'search_depth' => 'basic',
-                'max_results' => 10,
-                'include_images' => $searchType === 'youtube',
-                'include_answer' => false,
-                'topic' => 'general',
-            ]);
+            ])->post('https://api.tavily.com/search', $searchParams);
 
             if ($response->successful()) {
                 $data = $response->json();
