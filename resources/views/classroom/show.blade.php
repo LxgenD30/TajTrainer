@@ -116,7 +116,8 @@
                         <i class="fas fa-plus"></i> New Assignment
                     </a>
                     <form action="{{ route('classroom.destroy', $classroom->id) }}" method="POST" style="display: inline;">
-              lse
+                </form>
+                </div>
                 {{-- Student Actions --}}
                 <div style="position: absolute; top: 25px; right: 25px; z-index: 10;">
                     <a href="{{ route('student.classes') }}" 
