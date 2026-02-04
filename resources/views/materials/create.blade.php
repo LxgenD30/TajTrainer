@@ -839,8 +839,12 @@ function addMaterialItem() {
             
             <div class="radio-group">
                 <div class="radio-option">
-                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="file" onchange="toggleItemFields(${itemId}, 'file')" required>
-                    <label for="type_file_${itemId}">Upload File</label>
+                    <input type="radio" id="type_file_${itemId}" name="items[${itemId}][type]" value="file" onchange="toggleItemFields(${itemId}, 'images')" required>
+                    <label for="type_file_${itemId}">Images</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="type_document_${itemId}" name="items[${itemId}][type]" value="file" onchange="toggleItemFields(${itemId}, 'document')">
+                    <label for="type_document_${itemId}">Document</label>
                 </div>
                 <div class="radio-option">
                     <input type="radio" id="type_youtube_${itemId}" name="items[${itemId}][type]" value="youtube" onchange="toggleItemFields(${itemId}, 'youtube')">
@@ -848,14 +852,21 @@ function addMaterialItem() {
                 </div>
                 <div class="radio-option">
                     <input type="radio" id="type_url_${itemId}" name="items[${itemId}][type]" value="url" onchange="toggleItemFields(${itemId}, 'url')">
-                    <label for="type_url_${itemId}">External Sources</label>
+                    <label for="type_url_${itemId}">External URL</label>
                 </div>
             </div>
             
-            <div id="fields_file_${itemId}" class="hidden">
+            <div id="fields_images_${itemId}" class="hidden">
                 <div class="form-group">
-                    <label>Upload File</label>
-                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx,.mp3,.mp4,.jpg,.jpeg,.png,.gif,.webp,image/*">
+                    <label>Upload Images</label>
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
+                </div>
+            </div>
+            
+            <div id="fields_document_${itemId}" class="hidden">
+                <div class="form-group">
+                    <label>Upload Document</label>
+                    <input type="file" name="items[${itemId}][file]" class="form-control" accept=".pdf,.doc,.docx">
                 </div>
             </div>
             
@@ -896,7 +907,7 @@ function addMaterialItem() {
 
 // Toggle item fields
 function toggleItemFields(itemId, type) {
-    ['file', 'youtube', 'url'].forEach(t => {
+    ['images', 'document', 'youtube', 'url'].forEach(t => {
         const field = document.getElementById(`fields_${t}_${itemId}`);
         if (field) field.classList.toggle('hidden', t !== type);
     });

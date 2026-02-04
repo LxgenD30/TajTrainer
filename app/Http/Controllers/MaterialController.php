@@ -302,7 +302,7 @@ class MaterialController extends Controller
             // Multiple items support
             'items' => 'nullable|array',
             'items.*.type' => 'required|in:file,youtube,url',
-            'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,mp3,mp4|max:20480',
+            'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:20480',
             'items.*.youtube_link' => 'nullable|url',
             'items.*.url' => 'nullable|url',
             'items.*.title' => 'nullable|string|max:255',
@@ -453,7 +453,7 @@ class MaterialController extends Controller
             'items' => 'nullable|array',
             'items.*.id' => 'nullable|integer', // Existing item ID
             'items.*.type' => 'required|in:file,youtube,url',
-            'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,mp3,mp4|max:20480',
+            'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:20480',
             'items.*.youtube_link' => 'nullable|url',
             'items.*.url' => 'nullable|url',
             'items.*.title' => 'nullable|string|max:255',
