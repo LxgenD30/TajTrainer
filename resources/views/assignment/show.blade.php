@@ -310,7 +310,7 @@
         </div>
         
         @if($assignment->tajweed_rules && count($assignment->tajweed_rules) > 0)
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(0, 0, 0, 0.2);">
                 <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">✨ Focus on Tajweed Rules:</div>
                 <div class="rules-container">
                     @foreach($assignment->tajweed_rules as $rule)

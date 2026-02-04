@@ -114,73 +114,80 @@
         font-weight: 600;
     }
     
+    .dashboard-lower-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+
+    /* Target smaller screens: Stack columns on mobile */
+    @media (max-width: 992px) {
+        .dashboard-lower-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
     .section-card {
         background: white;
         border-radius: 15px;
-        padding: 30px;
-        margin-bottom: 25px;
-        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        padding: 25px;
+        height: 100%; /* Ensures both boxes match height */
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         border: 3px solid #2a2a2a;
     }
-    
+
+    /* High Contrast Typography */
     .section-title {
-        font-size: 1.5rem;
-        color: #0a5c36;
-        font-weight: 700;
+        font-size: 1.6rem; /* Bigger title */
+        color: #000000 !important; /* Pure black */
+        font-weight: 800;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
-    
+
+    .class-details-card h4 {
+        color: #000000 !important; /* Pure black */
+        font-weight: 700;
+        margin-bottom: 4px;
+        font-size: 1.2rem; /* Increased from 1.05rem */
+    }
+
+    .class-details-card p {
+        color: #222222 !important; /* Darker grey/black for readability */
+        font-size: 1rem; /* Increased from 0.85rem */
+        font-weight: 500;
+    }
+
+    .score-value {
+        font-size: 2rem; /* Large score */
+        font-weight: 800;
+    }
+
+    /* Item Card Adjustments */
     .class-item-card {
         display: flex;
         align-items: center;
         gap: 15px;
-        padding: 15px;
-        background: rgba(10, 92, 54, 0.05);
+        padding: 18px;
+        background: #f9f9f9;
         border-radius: 12px;
-        border-left: 4px solid #0a5c36;
-        margin-bottom: 12px;
-        transition: all 0.3s ease;
+        border: 2px solid #eeeeee;
+        border-left: 6px solid #0a5c36;
+        margin-bottom: 15px;
         text-decoration: none;
         color: inherit;
+        transition: all 0.2s ease;
     }
-    
+
     .class-item-card:hover {
-        background: rgba(10, 92, 54, 0.1);
+        border-color: #0a5c36;
+        background: #ffffff;
         transform: translateX(5px);
     }
-    
-    .class-icon-card {
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        color: white;
-    }
-    
-    .class-details-card {
-        flex: 1;
-    }
-    
-    .class-details-card h4 {
-        color: #0a5c36;
-        font-weight: 700;
-        margin-bottom: 5px;
-        font-size: 1.05rem;
-    }
-    
-    .class-details-card p {
-        color: #666;
-        font-size: 0.85rem;
-        margin: 0;
-    }
-    
+
     .empty-state {
         text-align: center;
         padding: 40px;
@@ -219,7 +226,7 @@
     <div class="stat-card">
         <div class="stat-icon">✅</div>
         <div class="stat-value">{{ $completedAssignments }}</div>
-        <div class="stat-label">Completed</div>
+        <div class="stat-label">Assignments Completed</div>
     </div>
     
     <div class="stat-card">
@@ -230,72 +237,63 @@
 </div>
 
 <!-- My Classes Section -->
-<div class="section-card">
-    <h2 class="section-title">
-        <i class="fas fa-users"></i> My Enrolled Classes
-    </h2>
-    
-    @if($student->classrooms->count() > 0)
-        @foreach($student->classrooms->sortByDesc('pivot.date_joined')->take(3) as $classroom)
-            <a href="{{ route('classroom.show', $classroom->id) }}" class="class-item-card">
-                <div class="class-icon-card">
-                    <i class="fas fa-book-quran"></i>
-                </div>
-                <div class="class-details-card">
-                    <h4>{{ $classroom->class_name }}</h4>
-                    <p>
-                        <i class="fas fa-user"></i> {{ $classroom->teacher->name }} • 
-                        <i class="fas fa-tasks"></i> {{ $classroom->assignments->count() }} {{ Str::plural('Assignment', $classroom->assignments->count()) }}
-                    </p>
-                </div>
-                <i class="fas fa-arrow-right" style="color: #0a5c36; font-size: 1.2rem;"></i>
-            </a>
-        @endforeach
+<div class="dashboard-lower-grid">
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-users"></i> My Classes
+        </h2>
         
-        @if($student->classrooms->count() > 3)
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="{{ route('student.classes') }}" style="display: inline-flex; align-items: center; gap: 8px; background: #0a5c36; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: 600;">
-                    View All Classes <i class="fas fa-arrow-right"></i>
+        @if($student->classrooms->count() > 0)
+            @foreach($student->classrooms->sortByDesc('pivot.date_joined')->take(4) as $classroom)
+                <a href="{{ route('classroom.show', $classroom->id) }}" class="class-item-card">
+                    <div class="class-details-card">
+                        <h4>{{ $classroom->class_name }}</h4>
+                        <p>
+                            <i class="fas fa-user-tie"></i> {{ $classroom->teacher->name }}
+                        </p>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: #000; opacity: 0.3;"></i>
                 </a>
+            @endforeach
+            
+            <a href="{{ route('student.classes') }}" style="display: block; text-align: center; color: #000; font-weight: 700; text-decoration: underline; margin-top: 10px; font-size: 1rem;">
+                View All Classes
+            </a>
+        @else
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p style="color:#000; font-weight:600;">No classes enrolled yet.</p>
             </div>
         @endif
-    @else
-        <div class="empty-state">
-            <i class="fas fa-inbox"></i>
-            <p>You haven't enrolled in any classes yet.</p>
-            <a href="{{ route('student.classes') }}" style="display: inline-flex; align-items: center; gap: 8px; background: #0a5c36; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: 600; margin-top: 10px;">
-                <i class="fas fa-plus-circle"></i> Browse Classes
-            </a>
-        </div>
-    @endif
-</div>
+    </div>
 
-<!-- Recent Grades Section -->
-@if($student->scores->count() > 0)
-<div class="section-card">
-    <h2 class="section-title">
-        <i class="fas fa-star"></i> Recent Grades
-    </h2>
-    
-    @foreach($student->scores->sortByDesc('created_at')->take(5) as $score)
-        <div class="class-item-card" style="border-left-color: {{ $score->score >= 80 ? '#2ecc71' : ($score->score >= 60 ? '#f39c12' : '#e74c3c') }};">
-            <div class="class-icon-card" style="background: linear-gradient(135deg, {{ $score->score >= 80 ? '#2ecc71, #27ae60' : ($score->score >= 60 ? '#f39c12, #e67e22' : '#e74c3c, #c0392b') }});">
-                <i class="fas fa-{{ $score->score >= 80 ? 'trophy' : ($score->score >= 60 ? 'medal' : 'flag') }}"></i>
-            </div>
-            <div class="class-details-card">
-                <h4>{{ $score->assignment->title ?? 'Assignment' }}</h4>
-                <p>
-                    <i class="fas fa-calendar"></i> {{ $score->created_at->format('M d, Y') }} • 
-                    <i class="fas fa-clock"></i> {{ $score->created_at->diffForHumans() }}
-                </p>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 1.8rem; font-weight: 700; color: {{ $score->score >= 80 ? '#2ecc71' : ($score->score >= 60 ? '#f39c12' : '#e74c3c') }};">
-                    {{ number_format($score->score, 1) }}%
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-star"></i> Recent Grades
+        </h2>
+        
+        @if($student->scores->count() > 0)
+            @foreach($student->scores->sortByDesc('created_at')->take(4) as $score)
+                @php
+                    $statusColor = $score->score >= 80 ? '#27ae60' : ($score->score >= 60 ? '#f39c12' : '#e74c3c');
+                @endphp
+                <div class="class-item-card" style="border-left-color: {{ $statusColor }};">
+                    <div class="class-details-card">
+                        <h4>{{ Str::limit($score->assignment->title ?? 'Assignment', 25) }}</h4>
+                        <p style="font-size: 0.9rem;">{{ $score->created_at->format('M d, Y') }}</p>
+                    </div>
+                    <div class="score-value" style="color: {{ $statusColor }};">
+                        {{ number_format($score->score, 0) }}%
+                    </div>
                 </div>
+            @endforeach
+        @else
+            <div class="empty-state">
+                <i class="fas fa-graduation-cap"></i>
+                <p style="color:#000; font-weight:600;">No grades available yet.</p>
             </div>
-        </div>
-    @endforeach
+        @endif
+    </div>
 </div>
 @endif
 @endsection
