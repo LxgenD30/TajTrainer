@@ -820,6 +820,9 @@ function addFromSearch(index) {
     
     showCustomAlert('Resource added to material', 'success');
     
+    // Update Generate Information button state
+    updateGenerateButtonState();
+    
     // Scroll to the new item
     document.querySelector(`[data-item-id="${itemId}"]`).scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -895,6 +898,10 @@ function addMaterialItem() {
     `;
     
     container.insertAdjacentHTML('beforeend', html);
+    
+    // Update Generate Information button state
+    updateGenerateButtonState();
+    
     return itemId;
 }
 
@@ -931,6 +938,9 @@ function removeItem(itemId) {
         
         console.log('[ITEM] Renumbered', remainingItems.length, 'remaining items');
         showCustomAlert('Item removed and list renumbered', 'info');
+        
+        // Update Generate Information button state
+        updateGenerateButtonState();
     }
 }
 
@@ -1000,6 +1010,26 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Update Generate Information button state
+function updateGenerateButtonState() {
+    const items = document.querySelectorAll('[data-item-id]');
+    const generateBtn = document.getElementById('generateInfoBtn');
+    
+    if (generateBtn) {
+        if (items.length === 0) {
+            generateBtn.disabled = true;
+            generateBtn.style.opacity = '0.5';
+            generateBtn.style.cursor = 'not-allowed';
+            generateBtn.title = 'Please add at least one material item first';
+        } else {
+            generateBtn.disabled = false;
+            generateBtn.style.opacity = '1';
+            generateBtn.style.cursor = 'pointer';
+            generateBtn.title = 'Generate title and description based on added materials';
+        }
+    }
 }
 
 // Generate basic information using AI
@@ -1088,6 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     @endforeach
     
     console.log('[INIT] Loaded {{ $material->items->count() }} existing items');
+    updateGenerateButtonState();
 });
 
 // Add existing item to form
