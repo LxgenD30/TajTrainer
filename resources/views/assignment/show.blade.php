@@ -75,9 +75,9 @@
     }
 
     .btn-back {
-        background: white;
+        background: rgba(255, 255, 255, 0.95); /* Slight transparency */
         color: #0a5c36;
-        border-color: white;
+        border: none;
     }
 
     .btn-edit {
@@ -243,23 +243,23 @@
         @if(auth()->user()->role_id == 2)
             {{-- Student Status --}}
             @if(isset($submission))
-                <span class="btn" style="background: #27ae60; color: white; border-color: #27ae60; cursor: default;">
-                    <i class="fas fa-check-circle"></i> Completed
+                <span class="btn" style="background: rgba(255, 255, 255, 0.2); color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); cursor: default;">
+                    <i class="fas fa-check-circle" style="color: #a3ffce;"></i> Completed
                 </span>
             @else
-                <span class="btn" style="background: #e67e22; color: white; border-color: #e67e22; cursor: default;">
-                    <i class="fas fa-clock"></i> Pending
+                <span class="btn" style="background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); cursor: default;">
+                    <i class="fas fa-clock" style="color: #ffd085;"></i> Pending
                 </span>
             @endif
         @else
-            {{-- Teacher Status (Shows if everyone has submitted) --}}
+            {{-- Teacher Status --}}
             @if($notSubmittedStudents->isEmpty())
-                <span class="btn" style="background: #27ae60; color: white; border-color: #27ae60; cursor: default;">
-                    <i class="fas fa-check-double"></i> All Submitted
+                <span class="btn" style="background: rgba(255, 255, 255, 0.2); color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); cursor: default;">
+                    <i class="fas fa-check-double" style="color: #a3ffce;"></i> All Submitted
                 </span>
             @else
-                <span class="btn" style="background: #3498db; color: white; border-color: #3498db; cursor: default;">
-                    <i class="fas fa-tasks"></i> In Progress
+                <span class="btn" style="background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); cursor: default;">
+                    <i class="fas fa-tasks" style="color: #85d7ff;"></i> In Progress
                 </span>
             @endif
         @endif
@@ -268,7 +268,7 @@
             <i class="fas fa-arrow-left"></i> Back
         </a>
 
-        {{-- Teacher Edit/Delete Actions --}}
+        {{-- Teacher Actions --}}
         @if(auth()->user()->role_id == 3)
             <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" class="btn btn-edit">
                 <i class="fas fa-edit"></i> Edit
