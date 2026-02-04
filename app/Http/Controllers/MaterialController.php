@@ -79,8 +79,11 @@ class MaterialController extends Controller
         try {
             // Build search query and domain filters based on type
             if ($searchType === 'youtube') {
+                // Add Tajweed/Islamic keywords to ensure relevant results
+                $enhancedQuery = $searchQuery . ' (tajweed OR Quran OR Quranic OR Islamic OR recitation OR "Arabic pronunciation" OR "Quran reading")';
+                
                 $searchParams = [
-                    'query' => $searchQuery,
+                    'query' => $enhancedQuery,
                     'search_depth' => 'basic',
                     'max_results' => 10,
                     'include_images' => true,
@@ -89,9 +92,12 @@ class MaterialController extends Controller
                     'include_domains' => ['youtube.com', 'youtu.be'],
                 ];
             } else {
+                // PDF search - add Tajweed/Islamic context to query
+                $enhancedQuery = $searchQuery . ' (tajweed OR Quran OR Quranic OR Islamic OR "Arabic recitation" OR "Quran studies") filetype:pdf';
+                
                 // PDF search - only educational institutions and Google Scholar
                 $searchParams = [
-                    'query' => $searchQuery . ' filetype:pdf',
+                    'query' => $enhancedQuery,
                     'search_depth' => 'advanced',
                     'max_results' => 10,
                     'include_images' => false,
@@ -125,9 +131,41 @@ class MaterialController extends Controller
                 $data = $response->json();
                 $results = $data['results'] ?? [];
                 
+                // Islamic/Tajweed keywords for content filtering
+                $islamicKeywords = [
+                    'tajweed', 'quran', 'quranic', 'islamic', 'islam', 'recitation', 
+                    'surah', 'ayah', 'verse', 'arabic', 'prophet', 'muhammad',
+                    'idgham', 'ghunnah', 'madd', 'qalqalah', 'ikhfa', 'iqlab',
+                    'izhar', 'noon sakinah', 'tanween', 'makhraj', 'makharij',
+                    'tilawah', 'tarteel', 'mujawwad', 'hafs', 'warsh', 'qira',
+                    'muslim', 'mosque', 'prayer', 'salah', 'allah'
+                ];
+                
                 // Process results based on type
                 $processedResults = [];
                 foreach ($results as $result) {
+                    $title = strtolower($result['title'] ?? '');
+                    $content = strtolower($result['content'] ?? '');
+                    $combinedText = $title . ' ' . $content;
+                    
+                    // Check if result contains Islamic/Tajweed keywords
+                    $isRelevant = false;
+                    foreach ($islamicKeywords as $keyword) {
+                        if (stripos($combinedText, $keyword) !== false) {
+                            $isRelevant = true;
+                            break;
+                        }
+                    }
+                    
+                    // Skip irrelevant results
+                    if (!$isRelevant) {
+                        Log::info('Skipping irrelevant result', [
+                            'title' => $result['title'] ?? '',
+                            'url' => $result['url'] ?? ''
+                        ]);
+                        continue;
+                    }
+                    
                     $processed = [
                         'title' => $result['title'] ?? '',
                         'url' => $result['url'] ?? '',
@@ -158,6 +196,7 @@ class MaterialController extends Controller
                     'success' => true,
                     'results' => $processedResults,
                     'search_type' => $searchType,
+                    'filtered_count' => count($results) - count($processedResults),
                 ]);
             } else {
                 Log::error('Tavily API Error: ' . $response->body());
