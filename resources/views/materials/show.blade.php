@@ -17,13 +17,92 @@
 @endsection
 
 @section('content')
-    <!-- Success Message -->
-    @if(session('success'))
-        <div style="background: rgba(46, 125, 50, 0.2); border: 3px solid #4caf50; color: #2e7d32; padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.5rem;">✓</span>
-            <span style="font-weight: 600;">{{ session('success') }}</span>
-        </div>
-    @endif
+<style>
+    .material-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        margin-top: 20px;
+    }
+    
+    .material-column {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        border: 3px solid #2a2a2a;
+        box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
+    }
+    
+    .column-header {
+        border-bottom: 3px solid #0a5c36;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .column-header h2 {
+        font-family: 'El Messiri', sans-serif;
+        font-size: 1.8rem;
+        color: #0a5c36;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .resource-item {
+        background: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .resource-item:hover {
+        border-color: #0a5c36;
+        box-shadow: 0 4px 12px rgba(10, 92, 54, 0.1);
+    }
+    
+    .resource-type-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .badge-file { background: #e74c3c; color: white; }
+    .badge-youtube { background: #ff0000; color: white; }
+    .badge-url { background: #3498db; color: white; }
+    
+    .info-row {
+        padding: 15px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 700;
+        color: #0a5c36;
+        margin-bottom: 5px;
+        font-size: 0.95rem;
+    }
+    
+    .info-value {
+        color: #666;
+        font-size: 1.05rem;
+    }
+    
+    @media (max-width: 992px) {
+        .material-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
     <!-- Back Button -->
     <div style="margin-bottom: 20px;">
@@ -34,70 +113,206 @@
             <i class="fas fa-arrow-left"></i> Back to Materials
         </a>
     </div>
-
-    <!-- Material Header -->
-    <div style="background: white; border-radius: 25px; padding: 30px; margin-bottom: 30px; border: 3px solid #2a2a2a; box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);">
-        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 20px;">
-            <div style="flex: 1; min-width: 300px;">
-                <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; color: #0a5c36; font-weight: 700; line-height: 1.2;">
-                    {{ $material->title }}
-                </h1>
-                
-                <!-- Category Badge -->
-                @if($material->category)
-                    <div style="display: inline-block; padding: 8px 18px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 25px; font-size: 1rem; font-weight: 700; margin-bottom: 15px;">
-                        <i class="fas fa-tag"></i> {{ $material->category }}
-                    </div>
-                @endif
-                
-                <p style="margin: 0 0 20px 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif; line-height: 1.6;">
-                    {{ $material->description ?? 'No description available' }}
+    
+    <!-- Page Title -->
+    <div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border: 3px solid #2a2a2a; border-radius: 15px; padding: 25px; margin-bottom: 30px; color: white;">
+        <h1 style="margin: 0; font-family: 'El Messiri', sans-serif; font-size: 2.2rem; font-weight: 700;">
+            <i class="fas fa-book-open"></i> {{ $material->title }}
+        </h1>
+        @if($material->category)
+            <div style="margin-top: 10px;">
+                <span style="background: rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 20px; font-size: 0.95rem; font-weight: 600;">
+                    <i class="fas fa-tag"></i> {{ $material->category }}
+                </span>
+            </div>
+        @endif
+    </div>
+    
+    <!-- 2-Column Layout -->
+    <div class="material-container">
+        <!-- LEFT COLUMN: Material Resources -->
+        <div class="material-column">
+            <div class="column-header">
+                <h2><i class="fas fa-layer-group"></i> Material Resources</h2>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 1rem;">
+                    {{ $material->items->count() }} item{{ $material->items->count() != 1 ? 's' : '' }} available
                 </p>
-                
-                <!-- Meta Info -->
-                <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-                    <span style="padding: 6px 15px; background: rgba(10, 92, 54, 0.1); color: #0a5c36; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
-                        <i class="fas fa-calendar"></i> {{ $material->created_at->format('M d, Y') }}
-                    </span>
+            </div>
+            
+            @if($material->items && $material->items->count() > 0)
+                @foreach($material->items as $item)
+                    <div class="resource-item">
+                        <!-- Type Badge -->
+                        <span class="resource-type-badge badge-{{ $item->type }}">
+                            @if($item->type === 'file')
+                                <i class="fas fa-file"></i> FILE
+                            @elseif($item->type === 'youtube')
+                                <i class="fab fa-youtube"></i> YOUTUBE
+                            @else
+                                <i class="fas fa-link"></i> LINK
+                            @endif
+                        </span>
+                        
+                        <!-- Item Title -->
+                        <h3 style="margin: 10px 0; font-size: 1.3rem; color: #2a2a2a; font-weight: 700;">
+                            {{ $item->title ?: 'Resource Item' }}
+                        </h3>
+                        
+                        <!-- Description -->
+                        @if($item->description)
+                            <p style="color: #666; margin: 10px 0; line-height: 1.6;">
+                                {{ $item->description }}
+                            </p>
+                        @endif
+                        
+                        <!-- Action Button -->
+                        <div style="margin-top: 15px;">
+                            @if($item->type === 'file')
+                                <a href="{{ Storage::url($item->path) }}" 
+                                   download
+                                   style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1e8449;"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(39, 174, 96, 0.4)'"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <i class="fas fa-download"></i> Download File
+                                </a>
+                            @elseif($item->type === 'youtube')
+                                <a href="{{ $item->path }}" 
+                                   target="_blank"
+                                   style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #ff0000, #cc0000); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #990000;"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255, 0, 0, 0.4)'"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <i class="fab fa-youtube"></i> Watch Video
+                                </a>
+                            @else
+                                <a href="{{ $item->path }}" 
+                                   target="_blank"
+                                   style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #1f5f8b;"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(52, 152, 219, 0.4)'"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <i class="fas fa-external-link-alt"></i> Open Link
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <p style="font-size: 1.1rem;">No resources available for this material</p>
+                </div>
+            @endif
+        </div>
+        
+        <!-- RIGHT COLUMN: Material Information -->
+        <div class="material-column">
+            <div class="column-header">
+                <h2><i class="fas fa-info-circle"></i> Material Information</h2>
+            </div>
+            
+            <!-- Description -->
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-align-left"></i> Description</div>
+                <div class="info-value">{{ $material->description ?: 'No description provided' }}</div>
+            </div>
+            
+            <!-- Category -->
+            @if($material->category)
+                <div class="info-row">
+                    <div class="info-label"><i class="fas fa-tag"></i> Category</div>
+                    <div class="info-value">
+                        <span style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 6px 15px; border-radius: 20px; font-weight: 700;">
+                            {{ $material->category }}
+                        </span>
+                    </div>
+                </div>
+            @endif
+            
+            <!-- Uploaded By -->
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-user"></i> Uploaded By</div>
+                <div class="info-value">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
+                            {{ strtoupper(substr($material->user->name ?? 'U', 0, 2)) }}
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: #2a2a2a;">{{ $material->user->name ?? 'Unknown' }}</div>
+                            <div style="font-size: 0.85rem; color: #999;">
+                                {{ $material->user->role_id == 3 ? 'Teacher' : 'Student' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upload Date -->
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-calendar"></i> Upload Date</div>
+                <div class="info-value">{{ $material->created_at->format('F d, Y') }}</div>
+            </div>
+            
+            <!-- Last Updated -->
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-clock"></i> Last Updated</div>
+                <div class="info-value">{{ $material->updated_at->diffForHumans() }}</div>
+            </div>
+            
+            <!-- Visibility -->
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-eye"></i> Visibility</div>
+                <div class="info-value">
                     @if($material->is_public)
-                        <span style="padding: 6px 15px; background: rgba(26, 188, 156, 0.15); color: #1abc9c; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
+                        <span style="background: rgba(26, 188, 156, 0.15); color: #1abc9c; padding: 6px 15px; border-radius: 20px; font-weight: 700;">
                             <i class="fas fa-globe"></i> Public
                         </span>
-                    @endif
-                    @if($material->items && $material->items->count() > 0)
-                        <span style="padding: 6px 15px; background: rgba(142, 68, 173, 0.15); color: #8e44ad; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
-                            <i class="fas fa-layer-group"></i> {{ $material->items->count() }} item{{ $material->items->count() != 1 ? 's' : '' }}
+                    @else
+                        <span style="background: rgba(231, 76, 60, 0.15); color: #e74c3c; padding: 6px 15px; border-radius: 20px; font-weight: 700;">
+                            <i class="fas fa-lock"></i> Private
                         </span>
                     @endif
-                    <span style="padding: 6px 15px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 12px; font-size: 0.95rem; font-weight: 600; font-family: 'Cairo', sans-serif;">
-                        @if($material->video_link)
-                            <i class="fas fa-video"></i> Video
-                        @elseif($material->file_path && Str::endsWith($material->file_path, '.pdf'))
-                            <i class="fas fa-file-pdf"></i> PDF
-                        @elseif($material->file_path && (Str::endsWith($material->file_path, '.mp3') || Str::endsWith($material->file_path, '.wav')))
-                            <i class="fas fa-volume-up"></i> Audio
-                        @else
-                            <i class="fas fa-file"></i> Document
-                        @endif
+                </div>
+            </div>
+            
+            <!-- Resource Count -->
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-layer-group"></i> Total Resources</div>
+                <div class="info-value">
+                    <span style="font-size: 1.5rem; font-weight: 700; color: #0a5c36;">
+                        {{ $material->items->count() }}
+                    </span>
+                    <span style="color: #999; font-size: 0.95rem;">
+                        item{{ $material->items->count() != 1 ? 's' : '' }}
                     </span>
                 </div>
             </div>
-
+            
             <!-- Action Buttons -->
             @if(!$isStudent)
-                <div style="display: flex; gap: 10px;">
-                    <a href="{{ route('materials.edit', $material->material_id) }}" 
-                       style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 15px; text-decoration: none; font-weight: 600; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; border: 3px solid #d4af37;"
-                       onmouseover="this.style.background='rgba(212, 175, 55, 0.25)'"
-                       onmouseout="this.style.background='rgba(212, 175, 55, 0.15)'">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>
-                    <form action="{{ route('materials.destroy', $material->material_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this material? This action cannot be undone.');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" 
-                                style="padding: 12px 20px; background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 3px solid #e74c3c; border-radius: 15px; font-weight: 600; font-family: 'Cairo', sans-serif; cursor: pointer; transition: all 0.3s ease;"
-                                onmouseover="this.style.background='rgba(231, 76, 60, 0.25)'"
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <div class="info-label" style="margin-bottom: 15px;"><i class="fas fa-cog"></i> Actions</div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="{{ route('materials.edit', $material->material_id) }}" 
+                           style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border-radius: 10px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 2px solid #d68910;"
+                           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(243, 156, 18, 0.4)'"
+                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                            <i class="fas fa-edit"></i> Edit Material
+                        </a>
+                        <form action="{{ route('materials.destroy', $material->material_id) }}" method="POST" onsubmit="return confirm('Delete this material and all its resources?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" 
+                                    style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: 2px solid #a93226; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(231, 76, 60, 0.4)'"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                <i class="fas fa-trash"></i> Delete Material
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+@endsection
                                 onmouseout="this.style.background='rgba(231, 76, 60, 0.15)'">
                             <i class="fas fa-trash"></i> Delete
                         </button>

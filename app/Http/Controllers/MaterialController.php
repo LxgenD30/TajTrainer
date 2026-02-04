@@ -53,9 +53,11 @@ class MaterialController extends Controller
     {
         $validated = $request->validate([
             'query' => 'required|string|max:255',
+            'type' => 'nullable|in:pdf,youtube',
         ]);
 
         $searchQuery = $validated['query'];
+        $searchType = $validated['type'] ?? 'pdf';
         $apiKey = config('services.tavily.api_key');
         
         if (!$apiKey) {
@@ -66,24 +68,59 @@ class MaterialController extends Controller
         }
 
         try {
+            // Build search query based on type
+            if ($searchType === 'youtube') {
+                $finalQuery = $searchQuery . ' site:youtube.com';
+            } else {
+                // Filter for educational institutions and PDF files
+                $finalQuery = $searchQuery . ' (site:.edu OR site:.ac.uk OR site:.gov OR site:scholar.google.com) filetype:pdf';
+            }
+
             $response = Http::withoutVerifying()->withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])->post('https://api.tavily.com/search', [
-                'query' => $searchQuery . ' educational materials learning resources',
+                'query' => $finalQuery,
                 'search_depth' => 'basic',
                 'max_results' => 4,
-                'include_images' => true,
+                'include_images' => $searchType === 'youtube',
                 'include_answer' => false,
                 'topic' => 'general',
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
+                $results = $data['results'] ?? [];
+                
+                // Process results based on type
+                $processedResults = [];
+                foreach ($results as $result) {
+                    $processed = [
+                        'title' => $result['title'] ?? '',
+                        'url' => $result['url'] ?? '',
+                        'content' => $result['content'] ?? '',
+                        'type' => $searchType,
+                    ];
+                    
+                    if ($searchType === 'pdf') {
+                        // Check if URL is a direct PDF link
+                        $processed['is_pdf'] = str_ends_with(strtolower($result['url'] ?? ''), '.pdf');
+                        $processed['download_url'] = $processed['is_pdf'] ? $result['url'] : null;
+                    } elseif ($searchType === 'youtube') {
+                        // Extract YouTube video ID
+                        if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', $result['url'] ?? '', $matches)) {
+                            $processed['video_id'] = $matches[1];
+                            $processed['thumbnail'] = 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
+                        }
+                    }
+                    
+                    $processedResults[] = $processed;
+                }
+                
                 return response()->json([
                     'success' => true,
-                    'results' => $data['results'] ?? [],
-                    'images' => $data['images'] ?? [],
+                    'results' => $processedResults,
+                    'search_type' => $searchType,
                 ]);
             } else {
                 Log::error('Tavily API Error: ' . $response->body());

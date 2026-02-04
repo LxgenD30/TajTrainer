@@ -329,6 +329,33 @@
         color: #0c5460;
     }
 
+    /* Search Type Buttons */
+    .search-type-btn {
+        padding: 12px 24px;
+        border: 2px solid rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .search-type-btn:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-2px);
+    }
+
+    .search-type-btn.active {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        border-color: #c0392b;
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    }
+
     /* Loading Spinner */
     .loading-spinner {
         display: none;
@@ -399,7 +426,17 @@
         <!-- Search Section -->
         <div class="search-section">
             <h2>🔍 Search Online Resources</h2>
-            <p style="color: white; margin-bottom: 15px;">Find educational materials from across the internet using AI-powered search</p>
+            <p style="color: white; margin-bottom: 15px;">Find educational materials from approved institutions</p>
+            
+            <!-- Search Type Toggle -->
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; justify-content: center;">
+                <button type="button" onclick="setSearchType('pdf')" id="pdfSearchBtn" class="search-type-btn active">
+                    <i class="fas fa-file-pdf"></i> PDF Documents
+                </button>
+                <button type="button" onclick="setSearchType('youtube')" id="youtubeSearchBtn" class="search-type-btn">
+                    <i class="fab fa-youtube"></i> YouTube Videos
+                </button>
+            </div>
             
             <div class="search-input-group">
                 <input type="text" 
@@ -511,12 +548,30 @@
 
 <script>
 let itemCounter = 0;
+let currentSearchType = 'pdf';
+
+// Set search type
+function setSearchType(type) {
+    console.log('[SEARCH_TYPE] Switching to:', type);
+    currentSearchType = type;
+    
+    // Update button states
+    document.getElementById('pdfSearchBtn').classList.toggle('active', type === 'pdf');
+    document.getElementById('youtubeSearchBtn').classList.toggle('active', type === 'youtube');
+    
+    // Update placeholder
+    const placeholder = type === 'pdf' 
+        ? 'Search for PDF materials from educational institutions...'
+        : 'Search for YouTube videos about Tajweed...';
+    document.getElementById('searchQuery').placeholder = placeholder;
+}
 
 // Search online resources using Tavily API
 async function searchOnline() {
     console.log('[SEARCH] Starting search...');
     const query = document.getElementById('searchQuery').value.trim();
     console.log('[SEARCH] Query:', query);
+    console.log('[SEARCH] Type:', currentSearchType);
     
     if (!query) {
         console.log('[SEARCH] Empty query');
@@ -540,7 +595,10 @@ async function searchOnline() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({ query: query })
+            body: JSON.stringify({ 
+                query: query,
+                type: currentSearchType 
+            })
         });
 
         console.log('[SEARCH] Response status:', response.status);
@@ -569,16 +627,43 @@ function displayResults(results) {
     let html = '<div class="results-grid">';
     
     results.forEach((result, index) => {
+        const isPDF = result.type === 'pdf' && result.is_pdf;
+        const isYouTube = result.type === 'youtube';
+        
+        let actionButtons = '';
+        if (isPDF && result.download_url) {
+            actionButtons = `
+                <button onclick="event.stopPropagation(); downloadPDF('${escapeHtml(result.download_url)}', '${escapeHtml(result.title)}')" 
+                        style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 5px;">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+            `;
+        }
+        
+        actionButtons += `
+            <button onclick="event.stopPropagation(); addResultAsItem(${index})" 
+                    style="padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                + Add as Item
+            </button>
+        `;
+        
+        let thumbnail = '';
+        if (isYouTube && result.thumbnail) {
+            thumbnail = `<img src="${escapeHtml(result.thumbnail)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;" alt="Video thumbnail">`;
+        }
+        
+        const typeLabel = isPDF ? '<span style="background: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">📄 PDF</span>' :
+                         isYouTube ? '<span style="background: #ff0000; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">▶ YouTube</span>' : '';
+        
         html += `
             <div class="result-card" onclick="previewResult(${index})">
+                ${thumbnail}
+                <div style="margin-bottom: 8px;">${typeLabel}</div>
                 <h3>${escapeHtml(result.title)}</h3>
                 <div class="url">${escapeHtml(result.url)}</div>
                 <div class="content">${escapeHtml(result.content.substring(0, 150))}...</div>
                 <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
-                    <button onclick="event.stopPropagation(); addResultAsItem(${index})" 
-                            style="padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
-                        + Add as Item
-                    </button>
+                    ${actionButtons}
                 </div>
             </div>
         `;
@@ -590,6 +675,19 @@ function displayResults(results) {
     
     // Store results for later use
     window.searchResults = results;
+}
+
+// Download PDF function
+function downloadPDF(url, filename) {
+    console.log('[DOWNLOAD] Downloading PDF:', url);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename + '.pdf';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showMessage('Download started!', 'success');
 }
 
 // Preview search result
