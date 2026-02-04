@@ -368,7 +368,7 @@ class MaterialController extends Controller
             
             // Multiple items support
             'items' => 'nullable|array',
-            'items.*.type' => 'required|in:file,youtube',
+            'items.*.type' => 'required|in:file,youtube,url',
             'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:20480',
             'items.*.youtube_link' => 'nullable|url',
             'items.*.pdf_url' => 'nullable|url',
@@ -446,7 +446,7 @@ class MaterialController extends Controller
                             }
                         }
                     } elseif ($itemData['type'] === 'file' && !empty($itemData['pdf_url'])) {
-                        // PDF from search result - download it
+                        // PDF from search result - try to download it
                         Log::info('Attempting to download PDF from search', [
                             'url' => $itemData['pdf_url'],
                             'index' => $index
@@ -462,10 +462,12 @@ class MaterialController extends Controller
                                     'full_path' => storage_path('app/public/' . $downloadedPath)
                                 ]);
                             } else {
-                                Log::warning('PDF download returned null, skipping item', [
+                                // Download failed, save as external URL instead
+                                Log::warning('PDF download failed, saving as URL instead', [
                                     'url' => $itemData['pdf_url']
                                 ]);
-                                continue; // Skip this item if download failed
+                                $item->type = 'url';
+                                $item->path = $itemData['pdf_url'];
                             }
                         } catch (\Exception $e) {
                             Log::error('PDF download exception', [
@@ -473,7 +475,9 @@ class MaterialController extends Controller
                                 'error' => $e->getMessage(),
                                 'trace' => $e->getTraceAsString()
                             ]);
-                            continue; // Skip this item
+                            // Save as URL on exception
+                            $item->type = 'url';
+                            $item->path = $itemData['pdf_url'];
                         }
                     } elseif ($itemData['type'] === 'youtube') {
                         $item->path = $itemData['youtube_link'] ?? null;
@@ -584,7 +588,7 @@ class MaterialController extends Controller
             // Multiple items support
             'items' => 'nullable|array',
             'items.*.id' => 'nullable|integer', // Existing item ID
-            'items.*.type' => 'required|in:file,youtube',
+            'items.*.type' => 'required|in:file,youtube,url',
             'items.*.file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:20480',
             'items.*.youtube_link' => 'nullable|url',
             'items.*.title' => 'nullable|string|max:255',
@@ -914,10 +918,21 @@ Respond with ONLY the category name, nothing else. If Ghunnah or nasal sound is 
         Log::info('downloadPDF called', ['url' => $url]);
         
         try {
-            // Download PDF with timeout
+            // Download PDF with proper headers and longer timeout
             Log::info('Sending HTTP request to download PDF');
+            
+            // Try with browser-like headers to avoid blocks
             $response = Http::withoutVerifying()
-                ->timeout(30)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept' => 'application/pdf,application/octet-stream,*/*',
+                    'Accept-Language' => 'en-US,en;q=0.9',
+                    'Accept-Encoding' => 'gzip, deflate, br',
+                    'Connection' => 'keep-alive',
+                    'Upgrade-Insecure-Requests' => '1',
+                ])
+                ->timeout(60) // Increased timeout to 60 seconds
+                ->retry(3, 1000) // Retry 3 times with 1 second delay
                 ->get($url);
 
             Log::info('HTTP response received', [
@@ -929,12 +944,23 @@ Respond with ONLY the category name, nothing else. If Ghunnah or nasal sound is 
             if (!$response->successful()) {
                 Log::warning('PDF download HTTP request failed', [
                     'status' => $response->status(),
-                    'url' => $url
+                    'url' => $url,
+                    'reason' => $response->reason()
                 ]);
                 return null;
             }
 
             $content = $response->body();
+            
+            // Check if content is too small (likely error page)
+            if (strlen($content) < 1024) {
+                Log::warning('PDF content too small, likely an error page', [
+                    'url' => $url,
+                    'size' => strlen($content),
+                    'content_preview' => substr($content, 0, 200)
+                ]);
+                return null;
+            }
             
             // Validate it's actually a PDF
             $header = substr($content, 0, 4);
