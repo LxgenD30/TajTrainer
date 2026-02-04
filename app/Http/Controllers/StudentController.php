@@ -798,25 +798,31 @@ class StudentController extends Controller
                     $overallScore = round(($maddScore + $noonSakinScore) / 2);
                 }
                 
-                // Generate feedback based on score
+                // Use AI feedback if available, otherwise use overall_score feedback from Python
                 $feedback = '';
-                if ($overallScore >= 90) {
-                    $feedback = 'Excellent recitation! Your Tajweed is very strong. Keep up the great work!';
-                } elseif ($overallScore >= 80) {
-                    $feedback = 'Very good recitation! Minor improvements in elongation and articulation will make it even better.';
-                } elseif ($overallScore >= 70) {
-                    $feedback = 'Good effort! Focus on practicing the rules of Madd and proper pronunciation of Makharij.';
+                if (isset($analysisResult['ai_feedback']['summary'])) {
+                    $feedback = $analysisResult['ai_feedback']['summary'];
+                } elseif (isset($analysisResult['overall_score']['feedback'])) {
+                    $feedback = $analysisResult['overall_score']['feedback'];
                 } else {
-                    $feedback = 'Keep practicing! Review the Tajweed rules and listen carefully to the reference audio.';
+                    // Fallback to generic feedback only if Python provides nothing
+                    if ($overallScore >= 90) {
+                        $feedback = 'Excellent recitation! Your Tajweed is very strong. Keep up the great work!';
+                    } elseif ($overallScore >= 80) {
+                        $feedback = 'Very good recitation! Minor improvements in elongation and articulation will make it even better.';
+                    } elseif ($overallScore >= 70) {
+                        $feedback = 'Good effort! Focus on practicing the rules of Madd and proper pronunciation of Makharij.';
+                    } else {
+                        $feedback = 'Keep practicing! Review the Tajweed rules and listen carefully to the reference audio.';
+                    }
                 }
                 
                 $formattedAnalysis = [
                     'accuracy_score' => $overallScore,
                     'details' => [
-                        'pronunciation' => $overallScore,
-                        'tajweed_rules' => $maddScore,
-                        'makharij' => $noonSakinScore,
-                        'fluency' => $overallScore,
+                        'pronunciation' => $analysisResult['overall_score']['pronunciation_accuracy'] ?? $overallScore,
+                        'reference_similarity' => $analysisResult['overall_score']['reference_similarity'] ?? $overallScore,
+                        'tajweed_rules' => $analysisResult['overall_score']['tajweed_rules_score'] ?? $maddScore,
                     ],
                     'feedback' => $feedback,
                     'python_analysis' => $analysisResult,

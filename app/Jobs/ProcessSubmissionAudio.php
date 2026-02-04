@@ -70,7 +70,29 @@ class ProcessSubmissionAudio implements ShouldQueue
                     
                     // Create score based on analysis
                     $overallScore = $tajweedAnalysis['overall_score']['score'] ?? 0;
-                    $feedback = $tajweedAnalysis['overall_score']['feedback'] ?? 'Analysis completed.';
+                    
+                    // Use AI feedback if available, otherwise use overall_score feedback
+                    if (isset($tajweedAnalysis['ai_feedback']['summary'])) {
+                        $feedback = $tajweedAnalysis['ai_feedback']['summary'];
+                        
+                        // Append improvements if available
+                        if (isset($tajweedAnalysis['ai_feedback']['improvements']) && 
+                            is_array($tajweedAnalysis['ai_feedback']['improvements']) && 
+                            count($tajweedAnalysis['ai_feedback']['improvements']) > 0) {
+                            $feedback .= "\n\nAreas for Improvement:\n";
+                            foreach ($tajweedAnalysis['ai_feedback']['improvements'] as $improvement) {
+                                $feedback .= "• " . $improvement['issue'] . ": " . $improvement['suggestion'] . "\n";
+                            }
+                        }
+                        
+                        // Append next steps if available
+                        if (isset($tajweedAnalysis['ai_feedback']['next_steps'])) {
+                            $feedback .= "\nNext Steps: " . $tajweedAnalysis['ai_feedback']['next_steps'];
+                        }
+                    } else {
+                        $feedback = $tajweedAnalysis['overall_score']['feedback'] ?? 'Analysis completed.';
+                    }
+                    
                     $scoreValue = round(($overallScore / 100) * $assignment->total_marks);
                     
                     Log::info('Creating score: ' . $scoreValue . '/' . $assignment->total_marks);
