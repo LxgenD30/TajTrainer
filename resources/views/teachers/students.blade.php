@@ -23,21 +23,22 @@
         box-shadow: 5px 5px 0 #2a2a2a;
     }
     .page-header {
-        background: white;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
         border-radius: 15px;
         padding: 25px;
         margin-bottom: 30px;
         border: 3px solid #2a2a2a;
         box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
+        color: #fff;
     }
     .page-title {
         font-size: 2rem;
-        color: #000;
+        color: #fff;
         font-weight: 800;
     }
     .page-subtitle {
         font-size: 1.2rem;
-        color: #666;
+        color: rgba(255, 255, 255, 0.9);
         font-weight: 600;
     }
     .student-avatar {

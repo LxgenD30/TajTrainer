@@ -315,6 +315,14 @@
     .info-box { background: rgba(10, 92, 54, 0.05); padding: 15px; border-radius: 10px; border: 2px solid #2a2a2a; text-align: center; font-size: 1.05rem; font-weight: 600; }
 </style>
 
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="welcome-content">
+        <h1>Assalamu'alaikum, <span style="color: #d4af37;">{{ $teacher->name }}</span>! 👋</h1>
+        <p>Welcome back to your teaching dashboard. Manage your classes and track student progress.</p>
+    </div>
+</div>
+
 <!-- Dashboard Layout -->
 <div class="dashboard-layout">
     <!-- Main Content -->
