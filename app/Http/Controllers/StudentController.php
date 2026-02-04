@@ -709,10 +709,19 @@ class StudentController extends Controller
                 $pythonCmd = $this->getPythonCommand();
                 $analyzerPath = base_path('python/tajweed_analyzer.py');
                 
-                // Build command with expected text and reference audio
-                $command = sprintf(
+                // Build command with OpenAI API key in environment (for AI feedback)
+                $openaiKey = config('services.openai.api_key');
+                $envVars = '';
+                if ($openaiKey) {
+                    $envVars = 'OPENAI_API_KEY=' . escapeshellarg($openaiKey) . ' ';
+                    \Log::info('OpenAI API key configured: Yes');
+                } else {
+                    \Log::warning('OpenAI API key not configured - AI feedback will be unavailable');
+                }
+                
+                $command = $envVars . sprintf(
                     '%s %s %s %s',
-                    $pythonCmd,
+                    escapeshellarg($pythonCmd),
                     escapeshellarg($analyzerPath),
                     escapeshellarg($fullAudioPath),
                     escapeshellarg($request->expected_text)

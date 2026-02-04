@@ -655,10 +655,16 @@ class TajweedAnalyzer:
         try:
             from openai import OpenAI
             
+            # Get API key from environment variable
             api_key = os.environ.get('OPENAI_API_KEY')
             if not api_key:
+                print(json.dumps({
+                    "status": "openai_skipped",
+                    "reason": "OPENAI_API_KEY environment variable not set"
+                }), file=sys.stderr)
                 return None
             
+            # Initialize OpenAI client with proper API key
             client = OpenAI(api_key=api_key)
             
             # Prepare analysis summary for GPT
@@ -691,22 +697,41 @@ Provide feedback in this EXACT JSON format:
 
 Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
 
+            # Use GPT-4 for better quality feedback (can switch to gpt-3.5-turbo for cost savings)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4-turbo-preview",  # or "gpt-4o" or "gpt-3.5-turbo" for lower cost
                 messages=[
                     {"role": "system", "content": "You are an expert Quran Tajweed teacher. You MUST respond with valid JSON only, no other text."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=400,
+                max_tokens=500,
                 temperature=0.7
             )
             
             feedback_text = response.choices[0].message.content.strip()
             
+            # Remove markdown code blocks if present (```json ... ```)
+            if feedback_text.startswith('```'):
+                feedback_text = feedback_text.split('```')[1]
+                if feedback_text.startswith('json'):
+                    feedback_text = feedback_text[4:]
+                feedback_text = feedback_text.strip()
+            
             # Try to parse as JSON
             try:
-                return json.loads(feedback_text)
-            except:
+                feedback_obj = json.loads(feedback_text)
+                print(json.dumps({
+                    "status": "openai_success",
+                    "model": response.model,
+                    "tokens_used": response.usage.total_tokens if hasattr(response, 'usage') else 0
+                }), file=sys.stderr)
+                return feedback_obj
+            except json.JSONDecodeError as je:
+                print(json.dumps({
+                    "status": "json_parse_failed",
+                    "error": str(je),
+                    "raw_response": feedback_text[:200]
+                }), file=sys.stderr)
                 # Fallback to simple format if JSON parsing fails
                 return {
                     "summary": feedback_text,
@@ -717,20 +742,100 @@ Be encouraging, specific, and actionable. Reference actual Tajweed rules."""
             
         except Exception as e:
             error_str = str(e)
+            error_type = type(e).__name__
             print(json.dumps({
-                "status": "openai_failed",
-                "error": error_str
+                "status": "openai_error",
+                "error_type": error_type,
+                "error": error_str[:500]  # Limit error message length
             }), file=sys.stderr)
             
-            # Return basic feedback if API quota exceeded or other error
-            if 'insufficient_quota' in error_str or '429' in error_str:
-                return {
-                    "summary": "Unable to generate AI feedback due to API quota. Your recitation has been analyzed using acoustic analysis.",
-                    "strengths": ["Submission completed successfully"],
-                    "improvements": [],
-                    "next_steps": "Review the detailed Tajweed analysis above for specific areas to improve."
-                }
-            return None
+            # Generate intelligent fallback feedback based on analysis results
+            return self.generate_fallback_feedback(analysis_results, error_str)
+    
+    def generate_fallback_feedback(self, analysis_results, error_reason=""):
+        """Generate intelligent fallback feedback when OpenAI API is unavailable"""
+        score = analysis_results['overall_score']['score']
+        madd_score = analysis_results['madd_analysis']['percentage']
+        idgham_bila_score = analysis_results['idgham_bila_ghunnah_analysis']['percentage']
+        idgham_bi_score = analysis_results['idgham_bi_ghunnah_analysis']['percentage']
+        
+        madd_issues = len(analysis_results['madd_analysis']['issues'])
+        idgham_bila_issues = len(analysis_results['idgham_bila_ghunnah_analysis']['issues'])
+        idgham_bi_issues = len(analysis_results['idgham_bi_ghunnah_analysis']['issues'])
+        
+        # Determine strengths based on scores
+        strengths = []
+        if madd_score >= 80:
+            strengths.append("Good application of Madd (elongation) rules")
+        if idgham_bila_score >= 80:
+            strengths.append("Strong understanding of Idgham Bila Ghunnah (merging without nasalization)")
+        if idgham_bi_score >= 80:
+            strengths.append("Excellent use of Idgham Bi Ghunnah (merging with nasalization)")
+        if score >= 85:
+            strengths.append("Overall strong Tajweed application")
+        elif score >= 70:
+            strengths.append("Solid foundation in Tajweed principles")
+        else:
+            strengths.append("Completed recitation with effort")
+        
+        # Determine improvements needed
+        improvements = []
+        if madd_issues > 0:
+            improvements.append({
+                "issue": f"Madd (elongation) needs attention ({madd_issues} issues detected)",
+                "suggestion": "Practice holding vowels for the correct duration (2-6 counts). Listen to reference audio carefully."
+            })
+        if idgham_bila_issues > 0:
+            improvements.append({
+                "issue": f"Idgham Bila Ghunnah requires work ({idgham_bila_issues} issues found)",
+                "suggestion": "Focus on merging Noon Sakin with Raa (ر) and Lam (ل) without nasalization. Practice slowly."
+            })
+        if idgham_bi_issues > 0:
+            improvements.append({
+                "issue": f"Idgham Bi Ghunnah needs improvement ({idgham_bi_issues} issues detected)",
+                "suggestion": "Practice nasalization (ghunnah) when merging with letters و م ن ي. Hold for 2 counts."
+            })
+        
+        # Generate summary
+        if score >= 90:
+            summary = "Excellent recitation! Your Tajweed application is very strong. Continue practicing to maintain this level."
+        elif score >= 80:
+            summary = "Very good recitation! You demonstrate solid understanding of Tajweed rules with minor areas for improvement."
+        elif score >= 70:
+            summary = "Good effort! You show understanding of key Tajweed principles. Focus on the specific areas below to improve."
+        elif score >= 60:
+            summary = "Your recitation shows potential. Consistent practice on the identified areas will lead to significant improvement."
+        else:
+            summary = "Keep practicing! Tajweed mastery takes time. Focus on one rule at a time and listen carefully to reference audio."
+        
+        # Add API failure context if error occurred
+        if 'insufficient_quota' in error_reason.lower() or '429' in error_reason:
+            summary += " (Note: AI-enhanced feedback temporarily unavailable due to API quota. Analysis based on acoustic analysis.)"
+        elif error_reason:
+            summary += " (Note: Advanced AI feedback unavailable. Analysis based on acoustic analysis.)"
+        
+        # Generate next steps
+        next_steps_options = [
+            "Listen to Sheikh Alafasy's reference audio multiple times before practicing.",
+            "Record yourself again and compare with the reference to hear the differences.",
+            "Focus on one Tajweed rule at a time rather than trying to perfect everything at once.",
+            "Practice with a qualified teacher for personalized guidance on pronunciation."
+        ]
+        
+        # Select most relevant next step based on weakest area
+        if madd_score <= idgham_bila_score and madd_score <= idgham_bi_score:
+            next_steps = "Focus on Madd rules. " + next_steps_options[0]
+        elif idgham_bila_score <= idgham_bi_score:
+            next_steps = "Work on Idgham Bila Ghunnah. " + next_steps_options[1]
+        else:
+            next_steps = "Practice Idgham Bi Ghunnah with nasalization. " + next_steps_options[0]
+        
+        return {
+            "summary": summary,
+            "strengths": strengths if strengths else ["Submission completed"],
+            "improvements": improvements,
+            "next_steps": next_steps
+        }
     
     def compare_with_reference(self):
         """
