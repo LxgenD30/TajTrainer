@@ -3,7 +3,7 @@
     $isStudent = $currentUser->role_id == 2;
 @endphp
 
-@extends('layouts.simple')
+@extends('layouts.dashboard')
 
 @section('title', $material->title)
 @section('user-role', ($isStudent ? 'Student' : 'Teacher') . ' • Material Details')
