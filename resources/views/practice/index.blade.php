@@ -825,9 +825,6 @@
         var html = '<div style="background: rgba(26, 188, 156, 0.05); padding: 25px; border-radius: 15px; border: 2px solid rgba(26, 188, 156, 0.2);">';
         
         // Overall Score
-        html += '<h4 style="color: var(--primary-green); margin-bottom: 20px; font-size: 1.4rem; font-weight: 700;">';
-        html += '<i class="fas fa-chart-line"></i> Tajweed Analysis Results';
-        html += '</h4>';
         html += '<div style="font-size: 3.5rem; font-weight: 700; color: var(--primary-green); text-align: center; margin: 25px 0;">';
         html += accuracyScore + '%';
         html += '</div>';
