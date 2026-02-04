@@ -585,8 +585,12 @@ function openPreview(result) {
         <h3 style="margin: 15px 0 10px 0; color: #2a2a2a;">${escapeHtml(result.title)}</h3>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #e0e0e0;">
-            <strong style="color: #0a5c36;"><i class="fas fa-link"></i> URL:</strong>
-            <p style="margin: 5px 0 0 0; word-break: break-all; color: #666;">${escapeHtml(result.url)}</p>
+            <strong style="color: #0a5c36;"><i class="fas fa-link"></i> Source URL:</strong>
+            <p style="margin: 5px 0 0 0; word-break: break-all;">
+                <a href="${escapeHtml(result.url)}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                    ${escapeHtml(result.url)} <i class="fas fa-external-link-alt" style="font-size: 0.85rem;"></i>
+                </a>
+            </p>
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #e0e0e0;">
@@ -742,13 +746,18 @@ function addFromSearch(index) {
 function addMaterialItem() {
     itemCounter++;
     const itemId = itemCounter;
-    console.log('[ITEM] Adding new material item #' + itemId);
+    
+    // Get current number of visible items
+    const currentItems = document.querySelectorAll('[data-item-id]').length;
+    const displayNumber = currentItems + 1;
+    
+    console.log('[ITEM] Adding new material item. Counter ID:', itemId, 'Display #:', displayNumber);
     const container = document.getElementById('materialItemsContainer');
     
     const html = `
-        <div class="item-card" data-item-id="${itemId}">
+        <div class="item-card" data-item-id="${itemId}" data-display-number="${displayNumber}">
             <div class="item-header">
-                <strong style="font-size: 1.1rem; color: #0a5c36;">Item #${itemId}</strong>
+                <strong style="font-size: 1.1rem; color: #0a5c36;" class="item-number">Item #${displayNumber}</strong>
                 <button type="button" class="remove-btn" onclick="removeItem(${itemId})">
                     <i class="fas fa-trash"></i> Remove
                 </button>
@@ -820,7 +829,17 @@ function removeItem(itemId) {
     if (confirm('Remove this item?')) {
         console.log('[ITEM] Removing item #' + itemId);
         document.querySelector(`[data-item-id="${itemId}"]`).remove();
-        showCustomAlert('Item removed', 'info');
+        
+        // Renumber remaining items
+        const remainingItems = document.querySelectorAll('[data-item-id]');
+        remainingItems.forEach((item, index) => {
+            const displayNumber = index + 1;
+            item.setAttribute('data-display-number', displayNumber);
+            item.querySelector('.item-number').textContent = `Item #${displayNumber}`;
+        });
+        
+        console.log('[ITEM] Renumbered', remainingItems.length, 'remaining items');
+        showCustomAlert('Item removed and list renumbered', 'info');
     }
 }
 
@@ -854,18 +873,26 @@ async function suggestCategory() {
         console.log('[AI] Response received:', data);
         
         if (data.success && data.category) {
-            console.log('[AI] Suggested category:', data.category);
-            document.getElementById('suggestedCategory').textContent = data.category;
-            suggestionDiv.innerHTML = `<strong style="color: #3498db;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong><p style="margin: 5px 0 0 0; font-weight: 600;">${data.category}</p>`;
+            const category = data.category;
+            console.log('[AI] Suggested category:', category);
+            document.getElementById('suggestedCategory').textContent = category;
+            suggestionDiv.innerHTML = `<strong style="color: #3498db;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong><p style="margin: 5px 0 0 0; font-weight: 600;">${category}</p>`;
             
-            // Auto-select the suggested category
-            if (data.category === 'Madd Rules') document.getElementById('cat1').checked = true;
-            else if (data.category === 'Idgham Billa Ghunnah') document.getElementById('cat2').checked = true;
-            else if (data.category === 'Idgham Bi Ghunnah') document.getElementById('cat3').checked = true;
+            // Auto-select the suggested category radio button
+            if (category === 'Madd Rules') {
+                document.getElementById('cat1').checked = true;
+                console.log('[AI] Auto-selected: Madd Rules');
+            } else if (category === 'Idgham Billa Ghunnah') {
+                document.getElementById('cat2').checked = true;
+                console.log('[AI] Auto-selected: Idgham Billa Ghunnah');
+            } else if (category === 'Idgham Bi Ghunnah') {
+                document.getElementById('cat3').checked = true;
+                console.log('[AI] Auto-selected: Idgham Bi Ghunnah');
+            }
             
-            showCustomAlert('AI suggested: ' + data.category, 'success');
+            showCustomAlert('AI suggested: ' + category, 'success');
         } else {
-            console.warn('[AI] Could not determine category');
+            console.warn('[AI] Could not determine category:', data);
             suggestionDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Could not determine category';
             showCustomAlert('Could not determine category', 'warning');
         }
@@ -883,13 +910,9 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Add first item on load with file type selected by default
+// Page ready - no auto-add items, teacher adds manually
 document.addEventListener('DOMContentLoaded', () => {
-    const itemId = addMaterialItem();
-    // Auto-select file type and show file upload field
-    document.getElementById(`type_file_${itemId}`).checked = true;
-    toggleItemFields(itemId, 'file');
-    console.log('[INIT] Item #1 created with file type selected by default');
+    console.log('[INIT] Create materials page loaded. Teacher can add items manually.');
 });
 </script>
 @endsection

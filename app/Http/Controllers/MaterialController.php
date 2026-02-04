@@ -478,14 +478,21 @@ class MaterialController extends Controller
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'You are an expert in Tajweed (Quranic recitation rules). Analyze the given material and categorize it into exactly ONE of these categories: "Madd Rules", "Idgham Billa Ghunnah", or "Idgham Bi Ghunnah". Respond with ONLY the category name, nothing else.'
+                            'content' => 'You are an expert in Tajweed (Quranic recitation rules). Analyze the material and categorize it into EXACTLY ONE category: "Madd Rules", "Idgham Billa Ghunnah", or "Idgham Bi Ghunnah". 
+
+Category Guidelines:
+- "Madd Rules": Materials about elongation/lengthening in recitation (Madd Tabi\'i, Madd Munfasil, Madd Muttasil, Madd Lazim, Madd Arid, prolongation)
+- "Idgham Billa Ghunnah": Materials about merging WITHOUT nasal sound (letters ل and ر, clear merging)
+- "Idgham Bi Ghunnah": Materials about merging WITH nasal sound (letters ي، ن، م، و, nasal merging, ghunnah/nasalization)
+
+Respond with ONLY the category name, nothing else.'
                         ],
                         [
                             'role' => 'user',
                             'content' => $content
                         ]
                     ],
-                    'temperature' => 0.3,
+                    'temperature' => 0.2,
                     'max_tokens' => 50,
                 ]);
 
@@ -493,15 +500,22 @@ class MaterialController extends Controller
                 $data = $response->json();
                 $category = trim($data['choices'][0]['message']['content'] ?? '');
                 
+                Log::info('OpenAI Category Response', [
+                    'input' => $content,
+                    'raw_response' => $category,
+                    'full_data' => $data
+                ]);
+                
                 // Validate category
                 $validCategories = ['Madd Rules', 'Idgham Billa Ghunnah', 'Idgham Bi Ghunnah'];
                 if (in_array($category, $validCategories)) {
+                    Log::info('Category validated successfully: ' . $category);
                     return $category;
                 }
                 
-                Log::warning('OpenAI returned invalid category: ' . $category);
+                Log::warning('OpenAI returned invalid category: ' . $category . ' | Valid options: ' . implode(', ', $validCategories));
             } else {
-                Log::error('OpenAI API Error: ' . $response->body());
+                Log::error('OpenAI API Error: ' . $response->status() . ' | Body: ' . $response->body());
             }
         } catch (\Exception $e) {
             Log::error('OpenAI Categorization Exception: ' . $e->getMessage());
