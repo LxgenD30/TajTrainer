@@ -266,6 +266,7 @@
                 <span class="btn" style="background: #95a5a6; color: white; border-color: #95a5a6; cursor: default;">
                     ✅ Submitted
                 </span>
+            @endif
         @endif
     </div>
 </div>
