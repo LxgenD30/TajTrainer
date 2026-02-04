@@ -356,10 +356,6 @@
                     </div>
                 </a>
                 
-                <nav class="main-nav">
-                @yield ('navigation')
-                </nav>
-
                 <div class="user-profile" id="userProfile">
                     <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}</div>
                     <div class="user-info">
