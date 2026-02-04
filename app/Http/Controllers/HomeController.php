@@ -47,8 +47,10 @@ class HomeController extends Controller
             
             $stats['total_materials'] = Material::count();
             
+            $teacher = \App\Models\Teacher::find($teacherId);
+            
             \Log::info('Teacher stats calculated', $stats);
-            return view('teachers.index', compact('stats'));
+            return view('teachers.index', compact('stats', 'teacher'));
         } elseif (Auth::user()->role_id == 2) {
             // Student dashboard - show stats
             $student = Student::with(['classrooms.teacher', 'classrooms.assignments', 'scores'])
