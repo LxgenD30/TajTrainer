@@ -789,6 +789,19 @@
         
         // Build detailed breakdown HTML for 2nd column
         var breakdownHtml = '';
+        
+        // Add transcribed text to breakdown column (at the top)
+        if (analysis.python_analysis && analysis.python_analysis.whisper_transcription) {
+            var transcription = analysis.python_analysis.whisper_transcription;
+            transcription = transcription.replace(/<\|[^|]+\|>/g, '').trim();
+            if (transcription) {
+                breakdownHtml += '<div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px; direction: rtl; border: 2px solid rgba(212, 175, 55, 0.3);">';
+                breakdownHtml += '<h5 style="color: #d4af37; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-microphone"></i> Your Recitation (Transcribed):</h5>';
+                breakdownHtml += '<p style="font-size: 2rem; color: #333; text-align: center; line-height: 1.8;">' + transcription + '</p>';
+                breakdownHtml += '</div>';
+            }
+        }
+        
         if (analysis.details) {
             breakdownHtml += '<h4 style="color: var(--primary-green); margin-bottom: 15px; font-size: 1.3rem; font-weight: 700;"><i class="fas fa-list-check"></i> Detailed Breakdown</h4>';
             breakdownHtml += '<div style="display: grid; grid-template-columns: 1fr; gap: 15px;">';
@@ -803,18 +816,6 @@
             }
             
             breakdownHtml += '</div>';
-        }
-        
-        // Add transcribed text to breakdown column
-        if (analysis.python_analysis && analysis.python_analysis.whisper_transcription) {
-            var transcription = analysis.python_analysis.whisper_transcription;
-            transcription = transcription.replace(/<\|[^|]+\|>/g, '').trim();
-            if (transcription) {
-                breakdownHtml += '<div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 10px; margin-top: 20px; direction: rtl; border: 2px solid rgba(212, 175, 55, 0.3);">';
-                breakdownHtml += '<h5 style="color: #d4af37; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-microphone"></i> Your Recitation (Transcribed):</h5>';
-                breakdownHtml += '<p style="font-size: 2rem; color: #333; text-align: center; line-height: 1.8;">' + transcription + '</p>';
-                breakdownHtml += '</div>';
-            }
         }
         
         breakdownDiv.innerHTML = breakdownHtml;
