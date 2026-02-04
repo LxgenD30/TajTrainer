@@ -52,54 +52,117 @@
 
 @section('content')
 <style>
+    /* Welcome Banner */
+    .welcome-banner {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border-radius: 25px;
+        padding: 40px;
+        margin-bottom: 30px;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
+    }
+    
+    .welcome-banner:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
+    }
+    
+    .welcome-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .welcome-content h1 {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        font-weight: 700;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .welcome-content p {
+        font-size: 1.05rem;
+        opacity: 0.95;
+        margin: 0;
+    }
+    
+    .btn-create {
+        background: white;
+        color: #0a5c36;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-create:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+    
     .view-toggle-btn {
         padding: 10px 20px;
-        background: transparent;
+        background: white;
         color: #666;
-        border: 2px solid #e0e0e0;
+        border: 2px solid #2a2a2a;
         border-radius: 12px;
         cursor: pointer;
-        font-weight: 600;
+        font-weight: 700;
         font-family: 'Cairo', sans-serif;
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        font-size: 1.05rem;
     }
     
     .view-toggle-btn.active {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
         color: white;
-        border-color: #0a5c36;
+        border-color: #2a2a2a;
     }
     
     .view-toggle-btn:hover:not(.active) {
-        border-color: #0a5c36;
-        color: #0a5c36;
+        background: #f9f9f9;
+        transform: translateY(-2px);
     }
 </style>
     <!-- Success Message -->
     @if(session('success'))
-        <div style="background: rgba(46, 125, 50, 0.2); border: 3px solid #4caf50; color: #2e7d32; padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.5rem;">✓</span>
-            <span style="font-weight: 600;">{{ session('success') }}</span>
+        <div style="background: #d4edda; border: 3px solid #28a745; color: #155724; padding: 15px 20px; border-radius: 15px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem;">
+            <i class="fas fa-check-circle" style="font-size: 1.5rem;"></i>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
-    <!-- Page Header -->
-    <div style="background: white; border-radius: 25px; padding: 30px; margin-bottom: 30px; border: 3px solid #2a2a2a; box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+        <div class="welcome-content" style="width: 100%;">
             <div>
-                <h1 style="margin: 0 0 10px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; color: #0a5c36; font-weight: 700;">
-                    <i class="fas fa-book-open"></i> Learning Materials
-                </h1>
-                <p style="margin: 0; font-size: 1.1rem; color: #666; font-family: 'Cairo', sans-serif;">
-                    {{ $materials->total() }} material{{ $materials->total() != 1 ? 's' : '' }} available
-                </p>
+                <h1><i class="fas fa-book-open"></i> Learning Materials</h1>
+                <p>{{ $materials->total() }} material{{ $materials->total() != 1 ? 's' : '' }} available</p>
             </div>
             <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                <!-- View Toggle -->
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 10px;">
                     <button onclick="setView('grid')" id="gridBtn" class="view-toggle-btn active">
                         <i class="fas fa-th"></i> Grid
                     </button>
@@ -107,13 +170,9 @@
                         <i class="fas fa-list"></i> List
                     </button>
                 </div>
-                
                 @if(!$isStudent)
-                    <a href="{{ route('materials.create') }}" 
-                       style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 25px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 15px; text-decoration: none; font-weight: 700; font-size: 1rem; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; border: 3px solid transparent;"
-                       onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 5px 20px rgba(10, 92, 54, 0.4)'"
-                       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
-                        <i class="fas fa-plus-circle"></i> Add New Material
+                    <a href="{{ route('materials.create') }}" class="btn-create">
+                        <i class="fas fa-plus-circle"></i> Add Material
                     </a>
                 @endif
             </div>

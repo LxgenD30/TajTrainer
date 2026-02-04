@@ -398,29 +398,6 @@
     </div>
 </section>
 
-<!-- About Section -->
-@if($teacher->biodata)
-<div class="biodata-card">
-    <h3><i class="fas fa-user-circle"></i> About</h3>
-    <p>{{ $teacher->biodata }}</p>
-</div>
-@endif
-
-<!-- Statistics -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon">📚</div>
-        <div class="stat-value">{{ $teacher->classrooms->count() }}</div>
-        <div class="stat-label">Total Classes</div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-value">{{ $teacher->classrooms->sum(function($classroom) { return $classroom->students->count(); }) }}</div>
-        <div class="stat-label">Total Students</div>
-    </div>
-</div>
-
 <!-- Personal Information -->
 <div class="info-grid">
     <div class="info-card">
@@ -494,37 +471,5 @@
             </div>
         </div>
     </div>
-</div>
-
-<!-- My Classes -->
-<div class="section-card">
-    <h2 class="section-title">
-        <i class="fas fa-chalkboard-teacher"></i> My Classes
-    </h2>
-    
-    @if($teacher->classrooms->count() > 0)
-        @foreach($teacher->classrooms as $classroom)
-            <a href="{{ route('classroom.show', $classroom) }}" class="class-item">
-                <div class="class-icon">
-                    <i class="fas fa-book-quran"></i>
-                </div>
-                <div class="class-details">
-                    <h4>{{ $classroom->class_name }}</h4>
-                    <p>
-                        <i class="fas fa-users"></i> {{ $classroom->students->count() }} students enrolled
-                    </p>
-                </div>
-                <i class="fas fa-arrow-right" style="color: #0a5c36; font-size: 1.2rem;"></i>
-            </a>
-        @endforeach
-    @else
-        <div class="empty-state">
-            <i class="fas fa-inbox"></i>
-            <p>No classes created yet.</p>
-            <a href="{{ route('classroom.create') }}" style="display: inline-flex; align-items: center; gap: 8px; background: #0a5c36; color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: 700; margin-top: 10px;">
-                <i class="fas fa-plus-circle"></i> Create New Class
-            </a>
-        </div>
-    @endif
 </div>
 @endsection

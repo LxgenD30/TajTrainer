@@ -35,7 +35,7 @@
     .edit-profile-banner {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
         border-radius: 25px;
-        padding: 30px 40px;
+        padding: 40px;
         margin-bottom: 30px;
         color: #ffffff;
         position: relative;
@@ -76,25 +76,26 @@
     }
     
     .back-to-profile {
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: #ffffff;
-        padding: 10px 20px;
-        border-radius: 12px;
+        background: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: #0a5c36;
+        padding: 12px 24px;
+        border-radius: 25px;
         text-decoration: none;
-        font-weight: 600;
+        font-weight: 700;
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
         gap: 8px;
         position: relative;
         z-index: 2;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
     
     .back-to-profile:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateX(-5px);
-        color: #ffffff;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        color: #0a5c36;
     }
     
     .form-card {
