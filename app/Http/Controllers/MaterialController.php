@@ -36,12 +36,24 @@ class MaterialController extends Controller
         $materials = $query->paginate(12);
         $isStudent = auth()->check() && auth()->user()->role_id == 2;
         
-        // Get category counts for filter badges
+        // Get category counts for filter badges (respecting search filter)
+        $baseQuery = Material::query();
+        
+        // Apply search filter to counts if present
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $baseQuery->where(function($q) use ($searchTerm) {
+                $q->where('title', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
         $categoryCounts = [
-            'all' => Material::count(),
-            'Madd Rules' => Material::where('category', 'Madd Rules')->count(),
-            'Idgham Billa Ghunnah' => Material::where('category', 'Idgham Billa Ghunnah')->count(),
-            'Idgham Bi Ghunnah' => Material::where('category', 'Idgham Bi Ghunnah')->count(),
+            'all' => (clone $baseQuery)->count(),
+            'Madd Rules' => (clone $baseQuery)->where('category', 'Madd Rules')->count(),
+            'Idgham Billa Ghunnah' => (clone $baseQuery)->where('category', 'Idgham Billa Ghunnah')->count(),
+            'Idgham Bi Ghunnah' => (clone $baseQuery)->where('category', 'Idgham Bi Ghunnah')->count(),
+            'Others' => (clone $baseQuery)->where('category', 'Others')->count(),
         ];
         
         return view('materials.index', compact('materials', 'isStudent', 'categoryCounts'));
