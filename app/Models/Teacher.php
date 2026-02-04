@@ -15,7 +15,6 @@ class Teacher extends Model
         'name',
         'biodata',
         'title',
-        'phone_number',
     ];
 
     public function user()

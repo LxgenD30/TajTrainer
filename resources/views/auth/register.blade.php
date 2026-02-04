@@ -52,9 +52,9 @@
             <div class="error-message">{{ $message }}</div>
         @enderror
         <div style="height:8px"></div>
-        <label for="phone_number_student">Phone Number *</label>
-        <input id="phone_number_student" type="tel" name="phone_number" value="{{ old('phone_number') }}" placeholder="+60123456789">
-        @error('phone_number')
+        <label for="phone_student">Phone Number *</label>
+        <input id="phone_student" type="tel" name="phone" value="{{ old('phone') }}" placeholder="+60123456789">
+        @error('phone')
             <div class="error-message">{{ $message }}</div>
         @enderror
     </div>
@@ -72,9 +72,9 @@
             <div class="error-message">{{ $message }}</div>
         @enderror
         <div style="height:8px"></div>
-        <label for="phone_number_teacher">Phone Number *</label>
-        <input id="phone_number_teacher" type="tel" name="phone_number" value="{{ old('phone_number') }}" placeholder="+60123456789">
-        @error('phone_number')
+        <label for="phone_teacher">Phone Number *</label>
+        <input id="phone_teacher" type="tel" name="phone" value="{{ old('phone') }}" placeholder="+60123456789">
+        @error('phone')
             <div class="error-message">{{ $message }}</div>
         @enderror
     </div>
@@ -108,8 +108,8 @@ function toggleRoleFields() {
     const teacherTitleField = document.getElementById('teacher_title_field');
     const currentLevelSelect = document.getElementById('current_level');
     const titleSelect = document.getElementById('title');
-    const phoneStudent = document.getElementById('phone_number_student');
-    const phoneTeacher = document.getElementById('phone_number_teacher');
+    const phoneStudent = document.getElementById('phone_student');
+    const phoneTeacher = document.getElementById('phone_teacher');
     
     // Hide both fields initially
     studentLevelField.style.display = 'none';

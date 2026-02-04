@@ -92,7 +92,7 @@ class RegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:role,id'],
-            'phone_number' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:20'],
         ];
 
         // Add role-specific validation
@@ -119,6 +119,7 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role_id' => $data['role_id'],
+            'phone' => $data['phone'],
         ]);
 
         // Create corresponding Student or Teacher record with name and role-specific data
@@ -145,7 +146,6 @@ class RegisterController extends Controller
                     'name' => $data['name'],
                     'biodata' => null,
                     'current_level' => $data['current_level'] ?? 'Beginner',
-                    'phone_number' => $data['phone_number'],
                 ]);
                 break;
             
@@ -155,7 +155,6 @@ class RegisterController extends Controller
                     'name' => $data['name'],
                     'biodata' => null,
                     'title' => $data['title'] ?? 'Teacher',
-                    'phone_number' => $data['phone_number'],
                 ]);
                 break;
         }
