@@ -508,12 +508,12 @@
             @method('PUT')
         
         <div class="compact-grid">
-            <!-- Left Column: Basic Info -->
+            <!-- Left Column: Basic Info + Category -->
             <div class="section-card">
                 <h2 class="section-header">
                     <i class="fas fa-info-circle"></i> Basic Information
-                    <button type="button" class="btn btn-secondary" onclick="generateBasicInfo()" style="margin-left: auto; padding: 8px 16px; font-size: 0.9rem;">
-                        <i class="fas fa-magic"></i> AI Generate
+                    <button type="button" id="generateInfoBtn" class="btn btn-secondary" onclick="generateBasicInfo()" style="margin-left: auto; padding: 8px 16px; font-size: 0.9rem;" disabled>
+                        <i class="fas fa-magic"></i> Generate Information
                     </button>
                 </h2>
                 
@@ -532,71 +532,64 @@
                     <input type="file" name="thumbnail" class="form-control" accept="image/*">
                 </div>
                 
-                <div class="form-group">
-                    <label style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" name="is_public" value="1" checked style="width: 20px; height: 20px;">
-                        Make this material public
+                <!-- Category moved here -->
+                <div class="form-group" style="margin-top: 25px;">
+                    <label style="font-weight: 700; color: #0a5c36; font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-tag"></i> Category *
+                        <button type="button" class="btn btn-secondary" onclick="suggestCategory()" style="margin-left: auto; padding: 6px 12px; font-size: 0.85rem;">
+                            <i class="fas fa-magic"></i> AI Suggest
+                        </button>
                     </label>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div class="category-selector" onclick="document.getElementById('cat1').click()">
+                            <input type="radio" name="category" id="cat1" value="Madd Rules" required style="display: none;">
+                            <label for="cat1" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
+                                <i class="fas fa-circle" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
+                                <span style="font-weight: 700; flex: 1;">Madd Rules</span>
+                            </label>
+                        </div>
+                        <div class="category-selector" onclick="document.getElementById('cat2').click()">
+                            <input type="radio" name="category" id="cat2" value="Idgham Billa Ghunnah" required style="display: none;">
+                            <label for="cat2" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
+                                <i class="fas fa-wave-square" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
+                                <span style="font-weight: 700; flex: 1;">Idgham Billa Ghunnah</span>
+                            </label>
+                        </div>
+                        <div class="category-selector" onclick="document.getElementById('cat3').click()">
+                            <input type="radio" name="category" id="cat3" value="Idgham Bi Ghunnah" required style="display: none;">
+                            <label for="cat3" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
+                                <i class="fas fa-water" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
+                                <span style="font-weight: 700; flex: 1;">Idgham Bi Ghunnah</span>
+                            </label>
+                        </div>
+                        <div class="category-selector" onclick="document.getElementById('cat4').click()">
+                            <input type="radio" name="category" id="cat4" value="Others" required style="display: none;">
+                            <label for="cat4" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
+                                <i class="fas fa-ellipsis-h" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
+                                <span style="font-weight: 700; flex: 1;">Others</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="aiSuggestion" style="margin-top: 15px; padding: 12px; background: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db; border-radius: 6px; display: none;">
+                        <strong style="color: #3498db; font-size: 0.9rem;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong>
+                        <p id="suggestedCategory" style="margin: 5px 0 0 0; font-weight: 600; color: #0a5c36;"></p>
+                    </div>
                 </div>
             </div>
             
-            <!-- Right Column: Category -->
+            <!-- Right Column: Material Resources -->
             <div class="section-card">
                 <h2 class="section-header">
-                    <i class="fas fa-tag"></i> Category *
-                    <button type="button" class="btn btn-secondary" onclick="suggestCategory()" style="margin-left: auto; padding: 8px 16px; font-size: 0.9rem;">
-                        <i class="fas fa-magic"></i> AI Suggest
+                    <i class="fas fa-layer-group"></i> Material Resources
+                    <button type="button" class="btn btn-secondary" onclick="addMaterialItem()" style="margin-left: auto; padding: 8px 16px; font-size: 0.9rem;">
+                        <i class="fas fa-plus"></i> Add Item
                     </button>
                 </h2>
                 
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <div class="category-selector" onclick="document.getElementById('cat1').click()">
-                        <input type="radio" name="category" id="cat1" value="Madd Rules" required style="display: none;">
-                        <label for="cat1" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
-                            <i class="fas fa-circle" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
-                            <span style="font-weight: 700; flex: 1;">Madd Rules</span>
-                        </label>
-                    </div>
-                    <div class="category-selector" onclick="document.getElementById('cat2').click()">
-                        <input type="radio" name="category" id="cat2" value="Idgham Billa Ghunnah" required style="display: none;">
-                        <label for="cat2" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
-                            <i class="fas fa-wave-square" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
-                            <span style="font-weight: 700; flex: 1;">Idgham Billa Ghunnah</span>
-                        </label>
-                    </div>
-                    <div class="category-selector" onclick="document.getElementById('cat3').click()">
-                        <input type="radio" name="category" id="cat3" value="Idgham Bi Ghunnah" required style="display: none;">
-                        <label for="cat3" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
-                            <i class="fas fa-water" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
-                            <span style="font-weight: 700; flex: 1;">Idgham Bi Ghunnah</span>
-                        </label>
-                    </div>
-                    <div class="category-selector" onclick="document.getElementById('cat4').click()">
-                        <input type="radio" name="category" id="cat4" value="Others" required style="display: none;">
-                        <label for="cat4" style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%;">
-                            <i class="fas fa-ellipsis-h" style="font-size: 1.3rem; min-width: 24px; text-align: center;"></i>
-                            <span style="font-weight: 700; flex: 1;">Others</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div id="aiSuggestion" style="margin-top: 15px; padding: 12px; background: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db; border-radius: 6px; display: none;">
-                    <strong style="color: #3498db; font-size: 0.9rem;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong>
-                    <p id="suggestedCategory" style="margin: 5px 0 0 0; font-weight: 600; color: #fff;"></p>
-                </div>
+                <div id="materialItemsContainer"></div>
             </div>
-        </div>
-        
-        <!-- Material Items -->
-        <div class="section-card">
-            <h2 class="section-header">
-                <i class="fas fa-layer-group"></i> Material Resources
-                <button type="button" class="btn btn-secondary" onclick="addMaterialItem()" style="margin-left: auto; padding: 8px 16px; font-size: 0.9rem;">
-                    <i class="fas fa-plus"></i> Add Item
-                </button>
-            </h2>
-            
-            <div id="materialItemsContainer"></div>
         </div>
         
         <!-- Submit -->
