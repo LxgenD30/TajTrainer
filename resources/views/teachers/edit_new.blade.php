@@ -1,10 +1,10 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Edit Profile')
-@section('user-role', 'Student • Edit Profile')
+@section('title', 'Update Profile')
+@section('user-role', 'Teacher • Edit Profile')
 
 @section('navigation')
-    @include('partials.student-nav')
+    @include('partials.teacher-nav')
 @endsection
 
 @section('content')
@@ -332,6 +332,9 @@
 </style>
 
 <div class="profile-edit-container">
+    <a href="{{ route('teachers.show', $teacher) }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Profile
+    </a>
 
     @if($errors->any())
         <div class="alert-error">
@@ -344,7 +347,7 @@
         </div>
     @endif
 
-    <form action="{{ route('students.update', $student->id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('teachers.update', $teacher) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -355,11 +358,11 @@
                 <!-- Left: Profile Picture -->
                 <div class="id-card-left">
                     <div class="profile-picture-section">
-                        @if($student->user->profile_picture)
-                            <img src="{{ asset('storage/' . $student->user->profile_picture) }}" alt="Profile" class="profile-picture-display" id="profilePreview">
+                        @if($teacher->user->profile_picture)
+                            <img src="{{ asset('storage/' . $teacher->user->profile_picture) }}" alt="Profile" class="profile-picture-display" id="profilePreview">
                         @else
                             <div class="profile-picture-display" id="profilePreview">
-                                <i class="fas fa-user-graduate"></i>
+                                <i class="fas fa-user-tie"></i>
                             </div>
                         @endif
                         <label for="profile_picture" class="profile-picture-overlay">
@@ -368,8 +371,8 @@
                     </div>
 
                     <div class="id-badge">
-                        <div class="id-badge-title">Current Level</div>
-                        <div class="id-badge-value">{{ $student->current_level ?? 'Beginner' }}</div>
+                        <div class="id-badge-title">Current Title</div>
+                        <div class="id-badge-value">{{ $teacher->title ?? 'Teacher' }}</div>
                     </div>
                 </div>
 
@@ -377,41 +380,40 @@
                 <div class="id-card-right">
                     <div class="id-card-header">
                         <h1><i class="fas fa-id-card"></i> Edit Profile</h1>
-                        <p class="id-card-subtitle">Update your student profile information</p>
+                        <p class="id-card-subtitle">Update your teacher profile information</p>
                     </div>
 
                     <!-- Personal Information -->
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Full Name *</label>
-                            <input type="text" name="name" value="{{ old('name', $student->name) }}" required class="form-control" placeholder="Enter your full name">
+                            <input type="text" name="name" value="{{ old('name', $teacher->name) }}" required class="form-control" placeholder="Enter your full name">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Current Level</label>
-                            <select name="current_level" class="form-control">
-                                <option value="">Select your level</option>
-                                <option value="Beginner" {{ old('current_level', $student->current_level) == 'Beginner' ? 'selected' : '' }}>Beginner</option>
-                                <option value="Intermediate" {{ old('current_level', $student->current_level) == 'Intermediate' ? 'selected' : '' }}>Intermediate</option>
-                                <option value="Advanced" {{ old('current_level', $student->current_level) == 'Advanced' ? 'selected' : '' }}>Advanced</option>
-                                <option value="Expert" {{ old('current_level', $student->current_level) == 'Expert' ? 'selected' : '' }}>Expert</option>
+                            <label class="form-label">Title *</label>
+                            <select name="title" class="form-control" required>
+                                <option value="">Select your title</option>
+                                <option value="Ustaz" {{ old('title', $teacher->title) == 'Ustaz' ? 'selected' : '' }}>Ustaz</option>
+                                <option value="Ustazah" {{ old('title', $teacher->title) == 'Ustazah' ? 'selected' : '' }}>Ustazah</option>
+                                <option value="Sheikh" {{ old('title', $teacher->title) == 'Sheikh' ? 'selected' : '' }}>Sheikh</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">Email Address *</label>
-                            <input type="email" name="email" value="{{ old('email', $student->user->email) }}" required class="form-control" placeholder="your.email@example.com">
+                            <input type="email" name="email" value="{{ old('email', $teacher->user->email) }}" required class="form-control" placeholder="your.email@example.com">
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">Phone Number</label>
-                            <input type="text" name="phone" value="{{ old('phone', $student->user->phone) }}" class="form-control" placeholder="+60123456789">
+                            <input type="text" name="phone" value="{{ old('phone', $teacher->user->phone) }}" class="form-control" placeholder="+60123456789">
                         </div>
 
                         <div class="form-group full-width">
-                            <label class="form-label">About Me</label>
-                            <textarea name="biodata" class="form-control" placeholder="Tell us about your Quran learning journey...">{{ old('biodata', $student->biodata) }}</textarea>
-                            <small class="form-hint">Share your goals, experience, and what motivates you to learn</small>
+                            <label class="form-label">About / Biodata</label>
+                            <textarea name="biodata" class="form-control" placeholder="Tell us about your teaching experience and qualifications...">{{ old('biodata', $teacher->biodata) }}</textarea>
+                            <small class="form-hint">Share your teaching experience, qualifications, and specialties</small>
                         </div>
                     </div>
 
@@ -421,25 +423,30 @@
                         <small class="form-hint" style="display: block; margin-bottom: 15px;">Leave blank to keep your current password</small>
                         
                         <div class="form-row">
+                            <div class="form-group full-width">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" name="current_password" class="form-control" placeholder="Enter current password">
+                            </div>
+
                             <div class="form-group">
                                 <label class="form-label">New Password</label>
-                                <input type="password" name="password" class="form-control" placeholder="Enter new password">
+                                <input type="password" name="new_password" class="form-control" placeholder="Enter new password">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Confirm New Password</label>
-                                <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm new password">
+                                <input type="password" name="new_password_confirmation" class="form-control" placeholder="Confirm new password">
                             </div>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="btn-group">
-                        <a href="{{ route('students.show', $student->id) }}" class="btn-secondary">
+                        <a href="{{ route('teachers.show', $teacher) }}" class="btn-secondary">
                             <i class="fas fa-times"></i> Cancel
                         </a>
                         <button type="submit" class="btn-primary">
-                            <i class="fas fa-save"></i> Save Changes
+                            <i class="fas fa-save"></i> Update Profile
                         </button>
                     </div>
                 </div>
