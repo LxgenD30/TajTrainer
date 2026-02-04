@@ -477,7 +477,7 @@
                             @endif
 
                             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                                <a href="{{ route('teacher.grade.submission', ['submission' => $submission->id]) }}" 
+                                <a href="{{ route('teacher.submission.grade', ['submission' => $submission->id]) }}" 
                                    style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(10, 92, 54, 0.3);"
                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 92, 54, 0.4)';"
                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 92, 54, 0.3)';">
