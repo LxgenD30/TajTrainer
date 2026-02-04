@@ -304,8 +304,8 @@
         @if($assignment->expected_recitation)
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(0, 0, 0, 0.2);">
                 <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">📝 Expected Arabic Text:</div>
-                <div style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #000000; font-family: 'Amiri', serif; line-height: 2.5; white-space: pre-wrap;">
-                    {!! nl2br(e($assignment->expected_recitation)) !!}
+                <div style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #000000; font-family: 'Amiri', serif; line-height: 2.8;">
+                    {{ $assignment->expected_recitation }}
                 </div>
             </div>
         @endif
@@ -313,13 +313,29 @@
         @if($assignment->reference_audio_url)
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(212, 175, 55, 0.2);">
                 <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">🎧 Reference Audio (Sheikh Alafasy):</div>
-                <audio controls style="width: 100%; border-radius: 10px;">
-                    <source src="{{ $assignment->reference_audio_url }}" type="audio/mpeg">
-                    Your browser does not support the audio element.
-                </audio>
-                <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.6); margin-top: 10px;">
-                    Listen to the correct pronunciation before recording your own recitation.
-                </p>
+                @php
+                    // Check if it's a JSON array (multiple verses) or single URL
+                    $audioData = $assignment->reference_audio_url;
+                    $isJson = (strpos($audioData, '[') === 0);
+                    $audioUrls = $isJson ? json_decode($audioData, true) : [['verse' => $assignment->start_verse, 'url' => $audioData]];
+                @endphp
+                
+                @if($audioUrls && count($audioUrls) > 0)
+                    @foreach($audioUrls as $audio)
+                        <div style="margin-bottom: 15px;">
+                            @if(count($audioUrls) > 1)
+                                <p style="font-size: 0.9rem; color: #000000; margin-bottom: 5px; font-weight: 600;">Verse {{ $audio['verse'] }}:</p>
+                            @endif
+                            <audio controls style="width: 100%; border-radius: 10px;">
+                                <source src="{{ $audio['url'] }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    @endforeach
+                    <p style="font-size: 0.9rem; color: #000000; margin-top: 10px; opacity: 0.7;">
+                        Listen to the correct pronunciation before recording your own recitation.
+                    </p>
+                @endif
             </div>
         @endif
     </div>

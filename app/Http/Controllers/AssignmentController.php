@@ -252,27 +252,41 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Get reference audio URL from API
+     * Get reference audio URLs from API for verse range
      */
     private function getReferenceAudioUrl($surahNumber, $startVerse, $endVerse)
     {
-        // Get first verse audio URL (for now, just use first verse)
-        // In future, could combine multiple verses
-        $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$startVerse}/ar.alafasy";
+        $audioUrls = [];
         
-        try {
-            $response = @file_get_contents($url);
-            if ($response !== false) {
-                $data = json_decode($response, true);
-                if ($data['code'] == 200 && isset($data['data']['audio'])) {
-                    return $data['data']['audio'];
+        // Fetch audio for each verse in the range
+        for ($verse = $startVerse; $verse <= ($endVerse ?? $startVerse); $verse++) {
+            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/ar.alafasy";
+            
+            try {
+                $response = @file_get_contents($url);
+                if ($response !== false) {
+                    $data = json_decode($response, true);
+                    if ($data['code'] == 200 && isset($data['data']['audio'])) {
+                        $audioUrls[] = [
+                            'verse' => $verse,
+                            'url' => $data['data']['audio']
+                        ];
+                    }
                 }
+            } catch (\Exception $e) {
+                \Log::error("Error fetching reference audio for verse {$verse}: " . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            \Log::error("Error fetching reference audio: " . $e->getMessage());
         }
         
-        return null;
+        // Return JSON string if multiple verses, single URL if one verse
+        if (count($audioUrls) === 0) {
+            return null;
+        } elseif (count($audioUrls) === 1) {
+            return $audioUrls[0]['url'];
+        } else {
+            return json_encode($audioUrls);
+        }
+    }
     }
 
     /**
