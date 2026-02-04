@@ -134,13 +134,13 @@
                     <div style="margin-bottom: 20px;">
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-phone" style="color: #0a5c36; width: 20px; font-size: 1.05rem;"></i>
-                                <span class="student-info-text">{{ $student->phone_number ?? 'No phone number' }}</span>
+                                <i class="fas fa-id-card" style="color: #0a5c36; width: 20px; font-size: 1.05rem;"></i>
+                                <span class="student-info-text">ID: {{ $student->id }}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-layer-group" style="color: #0a5c36; width: 20px; font-size: 1.05rem;"></i>
                                 <span style="padding: 4px 12px; background: rgba(26, 188, 156, 0.15); color: #1abc9c; border-radius: 12px; font-size: 1.05rem; font-weight: 700; font-family: 'Cairo', sans-serif;">
-                                    {{ ucfirst($student->level ?? 'Beginner') }}
+                                    {{ ucfirst($student->current_level ?? 'Beginner') }}
                                 </span>
                             </div>
                         </div>

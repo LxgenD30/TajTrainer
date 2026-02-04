@@ -19,9 +19,12 @@ class StudentListController extends Controller
         $students = Student::whereHas('classrooms', function($query) {
                 $query->where('teacher_id', Auth::id());
             })
-            ->with(['classrooms' => function($query) {
-                $query->where('teacher_id', Auth::id());
-            }])
+            ->with([
+                'user', // Load user relationship for name and email
+                'classrooms' => function($query) {
+                    $query->where('teacher_id', Auth::id());
+                }
+            ])
             ->get();
         
         return view('teachers.students', compact('students', 'classrooms'));
