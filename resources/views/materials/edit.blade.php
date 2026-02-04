@@ -456,7 +456,7 @@
 </style>
 
 <div class="create-container">
-    <div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border: 3px solid #2a2a2a; border-radius: 15px; padding: 30px; margin-bottom: 20px; color: white;">
+    <div style="background: linear-gradient(135deg, #ffffff, #ffffff); border: 3px solid #2a2a2a; border-radius: 15px; padding: 30px; margin-bottom: 20px; color: white;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
             <div>
                 <h1 style="margin: 0 0 10px 0; font-family: 'El Messiri', sans-serif; font-size: 2rem; font-weight: 700;">
