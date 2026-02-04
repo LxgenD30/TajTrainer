@@ -416,10 +416,6 @@
                         <option value="assignments">Most Assignments</option>
                     </select>
                 </div>
-                
-                <div style="color: white; font-weight: 600; font-size: 1.05rem;">
-                    <span id="classCount">{{ $classrooms->count() }}</span> {{ $classrooms->count() === 1 ? 'Classroom' : 'Classrooms' }}
-                </div>
             </div>
         @endif
         
