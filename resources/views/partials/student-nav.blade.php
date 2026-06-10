@@ -18,23 +18,8 @@
     <div class="nav-icon"><i class="fas fa-microphone"></i></div>
     <div class="nav-label">Practice</div>
 </a>
-<div class="nav-item {{ request()->is('student/progress*') ? 'active' : '' }}" data-target="progress" data-url="{{ route('student.progress') }}">
-    <div class="nav-icon">
-        <i class="fas fa-chart-line"></i>
-    </div>
-    <div class="nav-label">My Progress</div>
-</div>
-
-<div class="nav-item {{ request()->is('student/memorization*') ? 'active' : '' }}" data-target="memorization" data-url="{{ route('student.memorization') }}">
-    <div class="nav-icon">
-        <i class="fas fa-brain"></i>
-    </div>
+<a href="{{ route('student.memorization') }}" class="nav-item {{ request()->routeIs('student.memorization') ? 'active' : '' }}">
+    <div class="nav-icon"><i class="fas fa-brain"></i></div>
     <div class="nav-label">Memorization</div>
-</div>
+</a>
 
-<div class="nav-item {{ request()->is('student/materials*') ? 'active' : '' }}" data-target="materials" data-url="{{ route('student.materials') }}">
-    <div class="nav-icon">
-        <i class="fas fa-book-open"></i>
-    </div>
-    <div class="nav-label">Materials</div>
-</div>

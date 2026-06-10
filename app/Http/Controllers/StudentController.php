@@ -588,6 +588,11 @@ class StudentController extends Controller
         return view('practice.index');
     }
 
+    public function memorization()
+    {
+        return view('students.memorization');
+    }
+
     public function submitPractice(Request $request)
     {
         try {

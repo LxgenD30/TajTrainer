@@ -59,6 +59,8 @@ Route::middleware('auth')->group(function () {
         ->name('student.practice');
     Route::post('/student/practice/submit', [App\Http\Controllers\StudentController::class, 'submitPractice'])
         ->name('student.practice.submit');
+    Route::get('/student/memorization', [App\Http\Controllers\StudentController::class, 'memorization'])
+        ->name('student.memorization');
     
     // Student materials
     Route::get('/student/materials', [App\Http\Controllers\StudentController::class, 'materials'])
@@ -71,8 +73,6 @@ Route::middleware('auth')->group(function () {
         ->name('student.progress');
     Route::get('/student/submissions/{id}', [App\Http\Controllers\StudentController::class, 'showSubmission'])
         ->name('student.submission.show');
-    Route::get('/student/memorization', [App\Http\Controllers\StudentController::class, 'memorization'])
-        ->name('student.memorization');
     
     // Student assignment submission
     Route::get('/student/assignment/{assignment}/submit', 
