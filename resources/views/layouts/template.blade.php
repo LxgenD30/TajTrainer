@@ -989,6 +989,13 @@
                     </div>
                     <div class="nav-label">My Progress</div>
                 </div>
+
+                <div class="nav-item {{ request()->is('student/memorization*') ? 'active' : '' }}" data-target="memorization" data-url="{{ route('student.memorization') }}">
+                    <div class="nav-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="nav-label">Memorization</div>
+                </div>
                 
                 <div class="nav-item {{ request()->is('student/materials*') ? 'active' : '' }}" data-target="materials" data-url="{{ route('student.materials') }}">
                     <div class="nav-icon">

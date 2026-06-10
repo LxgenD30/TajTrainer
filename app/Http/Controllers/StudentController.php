@@ -1363,7 +1363,7 @@ class StudentController extends Controller
             'Takwir' => 81, 'Infitar' => 82, 'Mutaffifin' => 83,
             'Inshiqaq' => 84, 'Buruj' => 85, 'Tariq' => 86, 'A\'la' => 87,
             'Ghashiya' => 88, 'Fajr' => 89, 'Balad' => 90, 'Shams' => 91,
-            'Lail' => 92, 'Duha' => 93, 'Sharh' => 94, 'Tin' => 95,
+            'Lail' => 92, 'Duhaa' => 93, 'Sharh' => 94, 'Tin' => 95,
             'Alaq' => 96, 'Qadr' => 97, 'Bayyina' => 98, 'Zalzala' => 99,
             'Adiyat' => 100, 'Qari\'a' => 101, 'Takathur' => 102, 'Asr' => 103,
             'Humaza' => 104, 'Fil' => 105, 'Ma\'un' => 107,
