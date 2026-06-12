@@ -153,7 +153,7 @@
                 <button class="status-toggle status-in-progress">In Progress</button>
                 <button class="status-toggle status-memorized">Memorized</button>
             </div>
-            <audio class="ayah-audio" src="{{ $ayah['audio'] }}" preload="none"></audio>
+            <audio class="ayah-audio" src="{{ $ayah['audio'] ?? '#' }}" preload="none"></audio>
         </div>
     @endforeach
 </div>
