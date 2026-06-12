@@ -77,6 +77,34 @@
     .status-in-progress { background-color: #f1c40f; color: #fff; }
     .status-memorized { background-color: #2ecc71; color: #fff; }
 
+    .play-btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+        border: 2px solid #2a2a2a;
+        cursor: pointer;
+        font-weight: bold;
+        background-color: #3498db;
+        color: white;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .play-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .play-btn.playing {
+        background-color: #f1c40f;
+    }
+    .play-btn:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
     .record-section {
         display: flex;
         align-items: center;
@@ -162,8 +190,9 @@
         <div class="ayah-card">
             <p class="ayah-text">{{ $ayah['text'] }} <span class="ayah-number">{{ $ayah['numberInSurah'] }}</span></p>
             <div class="ayah-actions">
-    <button class="btn btn-sm btn-outline-secondary play-btn" data-audio-src="{{ $ayah['audio'] ?? '#' }}" {{ !isset($ayah['audio']) ? 'disabled' : '' }}>
-        <i class="fas fa-play"></i> Play
+    <button class="play-btn" data-audio-src="{{ $ayah['audio'] ?? '#' }}" {{ !isset($ayah['audio']) ? 'disabled' : '' }}>
+        <i class="fas fa-play"></i>
+        <span>Play</span>
     </button>
 </div>
         </div>
@@ -186,17 +215,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (audio.src === audioSrc && !audio.paused) {
+            // If this button is already playing, pause it
+            if (this === currentPlayingButton && !audio.paused) {
                 audio.pause();
-                this.innerHTML = '<i class="fas fa-play"></i> Play';
+                this.innerHTML = '<i class="fas fa-play"></i> <span>Play</span>';
+                this.classList.remove('playing');
                 currentPlayingButton = null;
             } else {
+                // If another button is playing, stop it first
                 if (currentPlayingButton) {
-                    currentPlayingButton.innerHTML = '<i class="fas fa-play"></i> Play';
+                    currentPlayingButton.innerHTML = '<i class="fas fa-play"></i> <span>Play</span>';
+                    currentPlayingButton.classList.remove('playing');
                 }
+                
+                // Play the new audio
                 audio.src = audioSrc;
                 audio.play();
-                this.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                this.innerHTML = '<i class="fas fa-pause"></i> <span>Pause</span>';
+                this.classList.add('playing');
                 currentPlayingButton = this;
             }
         });
@@ -204,7 +240,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     audio.addEventListener('ended', function() {
         if (currentPlayingButton) {
-            currentPlayingButton.innerHTML = '<i class="fas fa-play"></i> Play';
+            currentPlayingButton.innerHTML = '<i class="fas fa-play"></i> <span>Play</span>';
+            currentPlayingButton.classList.remove('playing');
             currentPlayingButton = null;
         }
     });
