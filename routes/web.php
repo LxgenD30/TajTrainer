@@ -73,7 +73,7 @@ Route::middleware('auth')->group(function () {
         ->name('student.material.show');
     
     // Student progress dashboard
-    Route::get('/student/progress', [App\Http\Controllers\StudentController::class, 'viewProgress'])
+    Route::get('/student/progress', [App\Http\Controllers\StudentController::class, 'progress'])
         ->name('student.progress');
     Route::get('/student/submissions/{id}', [App\Http\Controllers\StudentController::class, 'showSubmission'])
         ->name('student.submission.show');
