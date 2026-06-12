@@ -88,12 +88,52 @@
         <div class="ayah-card">
             <p class="ayah-text">{{ $ayah['text'] }} <span class="ayah-number">{{ $ayah['numberInSurah'] }}</span></p>
             <div class="ayah-actions">
-                <button class="status-toggle status-not-memorized">Not Memorized</button>
-                <button class="status-toggle status-in-progress">In Progress</button>
-                <button class="status-toggle status-memorized">Memorized</button>
-            </div>
+    <button class="btn btn-sm btn-outline-secondary play-btn" data-audio-src="{{ $ayah['audio'] ?? '#' }}" {{ !isset($ayah['audio']) ? 'disabled' : '' }}>
+        <i class="fas fa-play"></i> Play
+    </button>
+</div>
         </div>
     @endforeach
 </div>
 
+@endsection
+
+@section('extra-scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const audio = new Audio();
+    let currentPlayingButton = null;
+
+    document.querySelectorAll('.play-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const audioSrc = this.dataset.audioSrc;
+            if (!audioSrc || audioSrc === '#') {
+                console.error('Audio source is not available.');
+                return;
+            }
+
+            if (audio.src === audioSrc && !audio.paused) {
+                audio.pause();
+                this.innerHTML = '<i class="fas fa-play"></i> Play';
+                currentPlayingButton = null;
+            } else {
+                if (currentPlayingButton) {
+                    currentPlayingButton.innerHTML = '<i class="fas fa-play"></i> Play';
+                }
+                audio.src = audioSrc;
+                audio.play();
+                this.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                currentPlayingButton = this;
+            }
+        });
+    });
+
+    audio.addEventListener('ended', function() {
+        if (currentPlayingButton) {
+            currentPlayingButton.innerHTML = '<i class="fas fa-play"></i> Play';
+            currentPlayingButton = null;
+        }
+    });
+});
+</script>
 @endsection
