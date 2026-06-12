@@ -76,11 +76,48 @@
     .status-not-memorized { background-color: #e0e0e0; color: #333; }
     .status-in-progress { background-color: #f1c40f; color: #fff; }
     .status-memorized { background-color: #2ecc71; color: #fff; }
+
+    .record-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    #recordButton {
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 10px;
+        border: 2px solid #2a2a2a;
+        cursor: pointer;
+        font-weight: bold;
+        background-color: #e74c3c;
+        color: white;
+    }
+    #recordButton.recording {
+        background-color: #c0392b;
+    }
+    #recording-output {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        min-height: 100px;
+        display: none; /* Hidden by default */
+    }
 </style>
 
 <div class="surah-header">
     <h1 class="surah-title">{{ $surahData['name'] }}</h1>
     <p class="surah-meta">{{ $surahData['englishName'] }} • {{ $surahData['revelationType'] }} • {{ $surahData['numberOfAyahs'] }} Ayahs</p>
+    <div class="record-section">
+        <button id="recordButton"><i class="fas fa-microphone"></i> Start Recording</button>
+    </div>
+</div>
+
+<div id="recording-output">
+    <p>Your recorded text will appear here...</p>
 </div>
 
 <div class="ayah-grid">
@@ -132,6 +169,56 @@ document.addEventListener('DOMContentLoaded', function () {
         if (currentPlayingButton) {
             currentPlayingButton.innerHTML = '<i class="fas fa-play"></i> Play';
             currentPlayingButton = null;
+        }
+    });
+
+    const recordButton = document.getElementById('recordButton');
+    const recordingOutput = document.getElementById('recording-output');
+    let isRecording = false;
+    let mediaRecorder;
+    let chunks = [];
+
+    recordButton.addEventListener('click', async () => {
+        if (!isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.onstart = () => {
+                    isRecording = true;
+                    recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+                    recordButton.classList.add('recording');
+                    recordingOutput.style.display = 'block';
+                    recordingOutput.innerHTML = '<p>Recording...</p>';
+                    chunks = [];
+                };
+
+                mediaRecorder.ondataavailable = (e) => {
+                    chunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    isRecording = false;
+                    recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
+                    recordButton.classList.remove('recording');
+                    
+                    const blob = new Blob(chunks, { 'type' : 'audio/webm' });
+                    const audioURL = window.URL.createObjectURL(blob);
+                    recordingOutput.innerHTML = `<p>Recording finished.</p><audio controls src="${audioURL}"></audio>`;
+                    
+                    // Stop the microphone track
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                recordingOutput.style.display = 'block';
+                recordingOutput.innerHTML = `<p class="text-danger">Error: Could not access microphone. Please grant permission and try again.</p>`;
+            }
+        } else {
+            mediaRecorder.stop();
         }
     });
 });
