@@ -612,21 +612,14 @@ class StudentController extends Controller
             }
 
             // The response contains multiple editions, we need to structure it for the view
-            $uthmaniData = $responseData['data'][0];
-            $translationData = $responseData['data'][1];
-            $audioData = $responseData['data'][2];
-
-            // Combine the data into a single structure
-            $surahData = $uthmaniData; // Start with the base text data
-            foreach ($surahData['ayahs'] as $key => &$ayah) {
-                $ayah['translation'] = $translationData['ayahs'][$key]['text'] ?? 'No translation available.';
-                $ayah['audio'] = $audioData['ayahs'][$key]['audio'] ?? null;
-            }
+            $uthmaniEdition = $responseData['data'][0];
+            $translationEdition = $responseData['data'][1];
+            $audioEdition = $responseData['data'][2];
 
             // Merge the editions into a single array of ayahs
             $mergedAyahs = [];
-            if (isset($uthmaniEdition['data']['ayahs'])) {
-                foreach ($uthmaniEdition['data']['ayahs'] as $index => $ayah) {
+            if (isset($uthmaniEdition['ayahs'])) {
+                foreach ($uthmaniEdition['ayahs'] as $index => $ayah) {
                     $mergedAyahs[$index] = [
                         'number' => $ayah['number'],
                         'text' => $ayah['text'],
@@ -637,17 +630,19 @@ class StudentController extends Controller
                         'ruku' => $ayah['ruku'],
                         'hizbQuarter' => $ayah['hizbQuarter'],
                         'sajda' => $ayah['sajda'],
-                        'translation' => $translationEdition['data']['ayahs'][$index]['text'] ?? '',
-                        'audio' => $audioEdition['data']['ayahs'][$index]['audio'] ?? null, // Ensure audio key exists
+                        'translation' => $translationEdition['ayahs'][$index]['text'] ?? '',
+                        'audio' => $audioEdition['ayahs'][$index]['audio'] ?? null,
                     ];
                 }
             }
 
             $surahData = [
-                'surah_number' => $surah_number,
-                'englishNameTranslation' => $uthmaniEdition['data']['englishNameTranslation'],
-                'revelationType' => $uthmaniEdition['data']['revelationType'],
-                'numberOfAyahs' => $uthmaniEdition['data']['numberOfAyahs'],
+                'number' => $uthmaniEdition['number'],
+                'name' => $uthmaniEdition['name'],
+                'englishName' => $uthmaniEdition['englishName'],
+                'englishNameTranslation' => $uthmaniEdition['englishNameTranslation'],
+                'revelationType' => $uthmaniEdition['revelationType'],
+                'numberOfAyahs' => $uthmaniEdition['numberOfAyahs'],
                 'ayahs' => $mergedAyahs,
             ];
 
