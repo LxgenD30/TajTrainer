@@ -623,6 +623,34 @@ class StudentController extends Controller
                 $ayah['audio'] = $audioData['ayahs'][$key]['audio'] ?? null;
             }
 
+            // Merge the editions into a single array of ayahs
+            $mergedAyahs = [];
+            if (isset($uthmaniEdition['data']['ayahs'])) {
+                foreach ($uthmaniEdition['data']['ayahs'] as $index => $ayah) {
+                    $mergedAyahs[$index] = [
+                        'number' => $ayah['number'],
+                        'text' => $ayah['text'],
+                        'numberInSurah' => $ayah['numberInSurah'],
+                        'juz' => $ayah['juz'],
+                        'manzil' => $ayah['manzil'],
+                        'page' => $ayah['page'],
+                        'ruku' => $ayah['ruku'],
+                        'hizbQuarter' => $ayah['hizbQuarter'],
+                        'sajda' => $ayah['sajda'],
+                        'translation' => $translationEdition['data']['ayahs'][$index]['text'] ?? '',
+                        'audio' => $audioEdition['data']['ayahs'][$index]['audio'] ?? null, // Ensure audio key exists
+                    ];
+                }
+            }
+
+            $surahData = [
+                'surah_number' => $surah_number,
+                'englishNameTranslation' => $uthmaniEdition['data']['englishNameTranslation'],
+                'revelationType' => $uthmaniEdition['data']['revelationType'],
+                'numberOfAyahs' => $uthmaniEdition['data']['numberOfAyahs'],
+                'ayahs' => $mergedAyahs,
+            ];
+
             return view('students.surah_details', compact('surahData'));
         } catch (\Exception $e) {
             Log::error("Failed to fetch Surah details for Surah {$surah_number}: " . $e->getMessage());
