@@ -2035,13 +2035,7 @@ class StudentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Student $student)
-    {
-        //
-    }
-}
-
-public function transcribeAudioChunk(Request $request)
+    public function transcribeAudioChunk(Request $request)
     {
         Log::info('transcribeAudioChunk endpoint hit');
 
@@ -2116,3 +2110,12 @@ public function transcribeAudioChunk(Request $request)
             return response()->json(['error' => 'Server error during transcription: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Student $student)
+    {
+        //
+    }
+}
