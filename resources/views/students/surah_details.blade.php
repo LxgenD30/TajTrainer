@@ -7,7 +7,7 @@
     @include('partials.student-nav')
 @endsection
 
-@section('content')
+@section('extra-styles')
 <style>
     .surah-header {
         text-align: center;
@@ -115,7 +115,9 @@
         color: #333;
     }
 </style>
+@endsection
 
+@section('content')
 <div class="surah-header">
     <h1 class="surah-title">{{ $surahData['name'] }}</h1>
     <p class="surah-meta">{{ $surahData['englishName'] }} • {{ $surahData['revelationType'] }} • {{ $surahData['numberOfAyahs'] }} Ayahs</p>
