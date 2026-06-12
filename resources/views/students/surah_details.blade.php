@@ -83,28 +83,63 @@
         justify-content: center;
         gap: 15px;
         margin-top: 20px;
+        flex-wrap: wrap;
     }
     #recordButton {
-        padding: 10px 20px;
-        font-size: 1rem;
-        border-radius: 10px;
-        border: 2px solid #2a2a2a;
+        padding: 12px 25px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        border: 3px solid #2a2a2a;
         cursor: pointer;
         font-weight: bold;
-        background-color: #e74c3c;
+        background-color: #1abc9c;
         color: white;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    #recordButton:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
     }
     #recordButton.recording {
-        background-color: #c0392b;
+        background-color: #e74c3c;
+        animation: pulse 1.5s infinite;
+    }
+    #timer {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #333;
+        background-color: #fff;
+        padding: 8px 15px;
+        border-radius: 8px;
+        border: 3px solid #2a2a2a;
+        min-width: 80px;
+        text-align: center;
     }
     #recording-output {
         margin-top: 20px;
-        padding: 20px;
-        background-color: #f8f9fa;
-        border: 2px solid #dee2e6;
-        border-radius: 10px;
-        min-height: 100px;
+        padding: 25px;
+        background: #fff;
+        border-radius: 15px;
+        border: 3px solid #2a2a2a;
+        box-shadow: 0 8px 15px rgba(0,0,0,0.07);
         display: none; /* Hidden by default */
+    }
+    #recording-output p {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    #recording-output audio {
+        width: 100%;
+        margin-top: 10px;
+    }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
     }
 </style>
 
@@ -113,11 +148,13 @@
     <p class="surah-meta">{{ $surahData['englishName'] }} • {{ $surahData['revelationType'] }} • {{ $surahData['numberOfAyahs'] }} Ayahs</p>
     <div class="record-section">
         <button id="recordButton"><i class="fas fa-microphone"></i> Start Recording</button>
+        <div id="timer">00:00</div>
     </div>
 </div>
 
-<div id="recording-output">
-    <p>Your recorded text will appear here...</p>
+<div id="recording-output" class="section-card" style="display: none;">
+    <p>Your recorded audio:</p>
+    <div id="audio-player-container"></div>
 </div>
 
 <div class="ayah-grid">
@@ -174,23 +211,47 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const recordButton = document.getElementById('recordButton');
     const recordingOutput = document.getElementById('recording-output');
+    const audioPlayerContainer = document.getElementById('audio-player-container');
+    const timerDisplay = document.getElementById('timer');
     let isRecording = false;
     let mediaRecorder;
     let chunks = [];
+    let timerInterval;
+    let seconds = 0;
+
+    function formatTime(sec) {
+        const minutes = Math.floor(sec / 60);
+        const seconds = sec % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+        seconds = 0;
+        timerDisplay.textContent = formatTime(seconds);
+        timerInterval = setInterval(() => {
+            seconds++;
+            timerDisplay.textContent = formatTime(seconds);
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+    }
 
     recordButton.addEventListener('click', async () => {
         if (!isRecording) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
                 
                 mediaRecorder.onstart = () => {
                     isRecording = true;
                     recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
                     recordButton.classList.add('recording');
-                    recordingOutput.style.display = 'block';
-                    recordingOutput.innerHTML = '<p>Recording...</p>';
+                    recordingOutput.style.display = 'none';
+                    audioPlayerContainer.innerHTML = '';
                     chunks = [];
+                    startTimer();
                 };
 
                 mediaRecorder.ondataavailable = (e) => {
@@ -201,10 +262,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     isRecording = false;
                     recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
                     recordButton.classList.remove('recording');
+                    stopTimer();
                     
                     const blob = new Blob(chunks, { 'type' : 'audio/webm' });
                     const audioURL = window.URL.createObjectURL(blob);
-                    recordingOutput.innerHTML = `<p>Recording finished.</p><audio controls src="${audioURL}"></audio>`;
+                    
+                    const audioPlayer = new Audio(audioURL);
+                    audioPlayer.controls = true;
+                    
+                    recordingOutput.style.display = 'block';
+                    audioPlayerContainer.appendChild(audioPlayer);
                     
                     // Stop the microphone track
                     stream.getTracks().forEach(track => track.stop());
@@ -215,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (err) {
                 console.error('Error accessing microphone:', err);
                 recordingOutput.style.display = 'block';
-                recordingOutput.innerHTML = `<p class="text-danger">Error: Could not access microphone. Please grant permission and try again.</p>`;
+                audioPlayerContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> Could not access microphone. Please grant permission and try again.</p>`;
             }
         } else {
             mediaRecorder.stop();
