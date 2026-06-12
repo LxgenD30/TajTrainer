@@ -266,75 +266,59 @@ document.addEventListener('DOMContentLoaded', function () {
     
     let isRecording = false;
     let mediaRecorder;
-    let socket;
+    let fullTranscript = '';
     let timerInterval;
     let seconds = 0;
 
-    const setupWebSocket = (token) => {
-        return new Promise((resolve, reject) => {
-            const url = `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`;
-            socket = new WebSocket(url);
+    const sendAudioChunk = async (chunk) => {
+        if (!chunk) return;
 
-            socket.onopen = () => {
-                console.log('WebSocket connected');
-                transcriptContainer.innerHTML = '<span class="placeholder">Start speaking...</span>';
-                resolve();
-            };
+        const reader = new FileReader();
+        reader.readAsDataURL(chunk);
+        reader.onloadend = async () => {
+            const base64Audio = reader.result.split(',')[1];
+            
+            try {
+                const response = await fetch('{{ route('student.memorization.transcribe') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ audio_chunk: base64Audio })
+                });
 
-            socket.onmessage = (message) => {
-                const result = JSON.parse(message.data);
-                if (result.text) {
-                    if (result.message_type === 'FinalTranscript') {
-                        transcriptContainer.innerHTML = `<span class="final-transcript">${result.text}</span>`;
-                    } else {
-                        transcriptContainer.innerHTML = `<span class="final-transcript">${transcriptContainer.querySelector('.final-transcript')?.textContent || ''}</span> <span class="partial-transcript">${result.text}</span>`;
-                    }
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.statusText}`);
                 }
-            };
 
-            socket.onerror = (event) => {
-                console.error('WebSocket error:', event);
-                reject(new Error('WebSocket error.'));
-            };
+                const data = await response.json();
+                if (data.text) {
+                    fullTranscript += data.text + ' ';
+                    transcriptContainer.innerHTML = `<span class="final-transcript">${fullTranscript}</span>`;
+                }
 
-            socket.onclose = (event) => {
-                console.log('WebSocket closed:', event);
-                socket = null;
-            };
-        });
+            } catch (error) {
+                console.error('Transcription error:', error);
+                transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> Could not get transcription.</p>`;
+            }
+        };
     };
 
     const startRecording = async () => {
         if (isRecording) return;
 
-        transcriptContainer.innerHTML = '<span class="placeholder">Connecting...</span>';
+        fullTranscript = '';
+        transcriptContainer.innerHTML = '<span class="placeholder">Connecting to microphone...</span>';
         recordingOutput.style.display = 'block';
 
         try {
-            // 1. Get AssemblyAI token
-            const response = await fetch('{{ route('api.assemblyai.token') }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to get AssemblyAI token.');
-            }
-            const data = await response.json();
-            
-            // 2. Setup WebSocket
-            await setupWebSocket(data.token);
-
-            // 3. Start microphone stream
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
             mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0 && socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ audio_data: event.data.toString('base64') }));
+                if (event.data.size > 0) {
+                    sendAudioChunk(event.data);
                 }
             };
             
@@ -342,13 +326,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 isRecording = true;
                 recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
                 recordButton.classList.add('recording');
+                transcriptContainer.innerHTML = '<span class="placeholder">Start speaking...</span>';
                 startTimer();
             };
 
             mediaRecorder.onstop = () => {
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ terminate_session: true }));
-                }
                 stream.getTracks().forEach(track => track.stop());
                 isRecording = false;
                 recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
@@ -356,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 stopTimer();
             };
 
-            mediaRecorder.start(1000); // Send data every 1000ms
+            mediaRecorder.start(3000); // Send data every 3 seconds
 
         } catch (error) {
             console.error('Recording failed:', error);

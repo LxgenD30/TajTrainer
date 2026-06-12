@@ -63,6 +63,8 @@ Route::middleware('auth')->group(function () {
         ->name('student.memorization');
     Route::get('/student/memorization/{surah_number}', [App\Http\Controllers\StudentController::class, 'surahDetails'])
         ->name('student.memorization.surah');
+    Route::post('/student/memorization/transcribe', [App\Http\Controllers\StudentController::class, 'transcribeAudioChunk'])
+        ->name('student.memorization.transcribe');
     
     // Student materials
     Route::get('/student/materials', [App\Http\Controllers\StudentController::class, 'materials'])
