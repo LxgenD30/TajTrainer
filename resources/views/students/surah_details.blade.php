@@ -154,11 +154,23 @@
         border: 3px solid #2a2a2a;
         box-shadow: 0 8px 15px rgba(0,0,0,0.07);
         display: none; /* Hidden by default */
+        font-family: 'Amiri', serif;
+        font-size: 1.5rem;
+        text-align: right;
+        line-height: 2;
+        min-height: 150px;
     }
-    #recording-output p {
-        font-size: 1.1rem;
-        font-weight: bold;
-        margin-bottom: 15px;
+    #recording-output .placeholder {
+        color: #999;
+        font-style: italic;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+    #recording-output .final-transcript {
+        color: #000;
+    }
+    #recording-output .partial-transcript {
+        color: #777;
     }
     #recording-output audio {
         width: 100%;
@@ -181,8 +193,9 @@
 </div>
 
 <div id="recording-output" class="section-card" style="display: none;">
-    <p>Your recorded audio:</p>
-    <div id="audio-player-container"></div>
+    <div id="transcript-container">
+        <span class="placeholder">Live transcription will appear here...</span>
+    </div>
 </div>
 
 <div class="ayah-grid">
@@ -248,13 +261,114 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const recordButton = document.getElementById('recordButton');
     const recordingOutput = document.getElementById('recording-output');
-    const audioPlayerContainer = document.getElementById('audio-player-container');
+    const transcriptContainer = document.getElementById('transcript-container');
     const timerDisplay = document.getElementById('timer');
+    
     let isRecording = false;
     let mediaRecorder;
-    let chunks = [];
+    let socket;
     let timerInterval;
     let seconds = 0;
+
+    const setupWebSocket = (token) => {
+        return new Promise((resolve, reject) => {
+            const url = `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`;
+            socket = new WebSocket(url);
+
+            socket.onopen = () => {
+                console.log('WebSocket connected');
+                transcriptContainer.innerHTML = '<span class="placeholder">Start speaking...</span>';
+                resolve();
+            };
+
+            socket.onmessage = (message) => {
+                const result = JSON.parse(message.data);
+                if (result.text) {
+                    if (result.message_type === 'FinalTranscript') {
+                        transcriptContainer.innerHTML = `<span class="final-transcript">${result.text}</span>`;
+                    } else {
+                        transcriptContainer.innerHTML = `<span class="final-transcript">${transcriptContainer.querySelector('.final-transcript')?.textContent || ''}</span> <span class="partial-transcript">${result.text}</span>`;
+                    }
+                }
+            };
+
+            socket.onerror = (event) => {
+                console.error('WebSocket error:', event);
+                reject(new Error('WebSocket error.'));
+            };
+
+            socket.onclose = (event) => {
+                console.log('WebSocket closed:', event);
+                socket = null;
+            };
+        });
+    };
+
+    const startRecording = async () => {
+        if (isRecording) return;
+
+        transcriptContainer.innerHTML = '<span class="placeholder">Connecting...</span>';
+        recordingOutput.style.display = 'block';
+
+        try {
+            // 1. Get AssemblyAI token
+            const response = await fetch('{{ route('api.assemblyai.token') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to get AssemblyAI token.');
+            }
+            const data = await response.json();
+            
+            // 2. Setup WebSocket
+            await setupWebSocket(data.token);
+
+            // 3. Start microphone stream
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0 && socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ audio_data: event.data.toString('base64') }));
+                }
+            };
+            
+            mediaRecorder.onstart = () => {
+                isRecording = true;
+                recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+                recordButton.classList.add('recording');
+                startTimer();
+            };
+
+            mediaRecorder.onstop = () => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ terminate_session: true }));
+                }
+                stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
+                recordButton.classList.remove('recording');
+                stopTimer();
+            };
+
+            mediaRecorder.start(1000); // Send data every 1000ms
+
+        } catch (error) {
+            console.error('Recording failed:', error);
+            transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${error.message}</p>`;
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorder && isRecording) {
+            mediaRecorder.stop();
+        }
+    };
 
     function formatTime(sec) {
         const minutes = Math.floor(sec / 60);
@@ -275,54 +389,11 @@ document.addEventListener('DOMContentLoaded', function () {
         clearInterval(timerInterval);
     }
 
-    recordButton.addEventListener('click', async () => {
-        if (!isRecording) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-                
-                mediaRecorder.onstart = () => {
-                    isRecording = true;
-                    recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
-                    recordButton.classList.add('recording');
-                    recordingOutput.style.display = 'none';
-                    audioPlayerContainer.innerHTML = '';
-                    chunks = [];
-                    startTimer();
-                };
-
-                mediaRecorder.ondataavailable = (e) => {
-                    chunks.push(e.data);
-                };
-
-                mediaRecorder.onstop = () => {
-                    isRecording = false;
-                    recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
-                    recordButton.classList.remove('recording');
-                    stopTimer();
-                    
-                    const blob = new Blob(chunks, { 'type' : 'audio/webm' });
-                    const audioURL = window.URL.createObjectURL(blob);
-                    
-                    const audioPlayer = new Audio(audioURL);
-                    audioPlayer.controls = true;
-                    
-                    recordingOutput.style.display = 'block';
-                    audioPlayerContainer.appendChild(audioPlayer);
-                    
-                    // Stop the microphone track
-                    stream.getTracks().forEach(track => track.stop());
-                };
-
-                mediaRecorder.start();
-
-            } catch (err) {
-                console.error('Error accessing microphone:', err);
-                recordingOutput.style.display = 'block';
-                audioPlayerContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> Could not access microphone. Please grant permission and try again.</p>`;
-            }
+    recordButton.addEventListener('click', () => {
+        if (isRecording) {
+            stopRecording();
         } else {
-            mediaRecorder.stop();
+            startRecording();
         }
     });
 });
