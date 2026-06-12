@@ -720,9 +720,9 @@ Provide feedback in this EXACT JSON format:
 
 Be honest, specific, and constructive. Students need ACCURATE feedback to improve."""
 
-            # Use GPT-4 for better quality feedback (can switch to gpt-3.5-turbo for cost savings)
+            # Use GPT-4o for the best quality and cost-effectiveness
             response = client.chat.completions.create(
-                model="gpt-4-turbo-preview",  # or "gpt-4o" or "gpt-3.5-turbo" for lower cost
+                model="gpt-4o",  # or "gpt-3.5-turbo" for maximum cost savings
                 messages=[
                     {"role": "system", "content": "You are an expert Quran Tajweed teacher. You MUST respond with valid JSON only, no other text."},
                     {"role": "user", "content": prompt}
