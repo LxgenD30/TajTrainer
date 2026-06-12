@@ -2040,3 +2040,79 @@ class StudentController extends Controller
         //
     }
 }
+
+public function transcribeAudioChunk(Request $request)
+    {
+        Log::info('transcribeAudioChunk endpoint hit');
+
+        try {
+            $request->validate([
+                'audio_data' => 'required|string',
+            ]);
+
+            $audioData = $request->input('audio_data');
+            
+            // Decode the base64 audio data
+            if (preg_match('/^data:audio\/(.*?);base64,(.*)$/', $audioData, $matches)) {
+                $audioBinary = base64_decode($matches[2]);
+                $extension = $matches[1]; // e.g., 'webm'
+            } else {
+                // Fallback for raw base64 data
+                $audioBinary = base64_decode($audioData);
+                $extension = 'webm'; // Assume webm if not specified
+            }
+
+            if ($audioBinary === false) {
+                Log::error('Failed to decode base64 audio data.');
+                return response()->json(['error' => 'Invalid audio data'], 400);
+            }
+
+            // Create a temporary file
+            $tempPath = tempnam(sys_get_temp_dir(), 'audio_chunk_');
+            rename($tempPath, $tempPath .= '.' . $extension);
+            file_put_contents($tempPath, $audioBinary);
+            Log::info("Temporary audio file created at: {$tempPath}");
+
+            // Prepare the command to run the Python script
+            $pythonScriptPath = base_path('python/tajweed_analyzer.py');
+            $command = escapeshellcmd("python \"{$pythonScriptPath}\" --file \"{$tempPath}\" --task transcribe");
+            
+            Log::info("Executing command: {$command}");
+
+            // Execute the command
+            $output = shell_exec($command . ' 2>&1'); // Capture both stdout and stderr
+            
+            // Clean up the temporary file
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+                Log::info("Temporary file deleted: {$tempPath}");
+            }
+
+            if ($output === null) {
+                Log::error("Failed to execute Python script. shell_exec returned null.");
+                return response()->json(['error' => 'Failed to execute transcription script.'], 500);
+            }
+
+            Log::info("Python script output: {$output}");
+
+            // Attempt to decode the JSON output
+            $result = json_decode($output, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error("Failed to decode JSON from Python script. Error: " . json_last_error_msg());
+                Log::error("Raw output was: " . $output);
+                // Return the raw output if it's not JSON, it might contain an error message
+                return response()->json(['transcription' => trim($output)]);
+            }
+            
+            // Assuming the python script returns a json with a 'transcription' key
+            $transcription = $result['transcription'] ?? 'No transcription found.';
+
+            return response()->json(['transcription' => $transcription]);
+
+        } catch (\Exception $e) {
+            Log::error("Error in transcribeAudioChunk: " . $e->getMessage());
+            Log::error("Stack trace: " . $e->getTraceAsString());
+            return response()->json(['error' => 'Server error during transcription: ' . $e->getMessage()], 500);
+        }
+    }
