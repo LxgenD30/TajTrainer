@@ -593,6 +593,18 @@ class StudentController extends Controller
         return view('students.memorization');
     }
 
+    public function surahDetails($surah_number)
+    {
+        try {
+            $response = Http::get("https://api.alquran.cloud/v1/surah/{$surah_number}");
+            $surahData = $response->json()['data'];
+            return view('students.surah_details', compact('surahData'));
+        } catch (\Exception $e) {
+            Log::error("Failed to fetch Surah details: " . $e->getMessage());
+            return back()->withErrors(['error' => 'Could not load Surah details. Please try again.']);
+        }
+    }
+
     public function submitPractice(Request $request)
     {
         try {

@@ -99,10 +99,10 @@
         @endphp
 
         @foreach ($surahs as $number => $name)
-            <div class="surah-card">
+            <a href="{{ route('student.memorization.surah', ['surah_number' => $number]) }}" class="surah-card" style="text-decoration: none;">
                 <div class="surah-number">{{ $number }}</div>
                 <div class="surah-name">{{ $name }}</div>
-            </div>
+            </a>
         @endforeach
     </div>
 </div>
