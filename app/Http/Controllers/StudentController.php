@@ -596,11 +596,36 @@ class StudentController extends Controller
     public function surahDetails($surah_number)
     {
         try {
-            $response = Http::get("https://api.alquran.cloud/v1/surah/{$surah_number}");
-            $surahData = $response->json()['data'];
+            // Request the specific audio edition to ensure the 'audio' key is present
+            $response = Http::get("https://api.alquran.cloud/v1/surah/{$surah_number}/editions/quran-uthmani,en.asad,ar.alafasy");
+            
+            if ($response->failed()) {
+                Log::error("API request failed for Surah {$surah_number}: " . $response->body());
+                return back()->withErrors(['error' => 'Could not load Surah details from the API.']);
+            }
+
+            $responseData = $response->json();
+
+            if ($responseData['code'] != 200 || !isset($responseData['data'])) {
+                Log::error("Invalid API response for Surah {$surah_number}: " . json_encode($responseData));
+                return back()->withErrors(['error' => 'Received invalid data for the Surah.']);
+            }
+
+            // The response contains multiple editions, we need to structure it for the view
+            $uthmaniData = $responseData['data'][0];
+            $translationData = $responseData['data'][1];
+            $audioData = $responseData['data'][2];
+
+            // Combine the data into a single structure
+            $surahData = $uthmaniData; // Start with the base text data
+            foreach ($surahData['ayahs'] as $key => &$ayah) {
+                $ayah['translation'] = $translationData['ayahs'][$key]['text'] ?? 'No translation available.';
+                $ayah['audio'] = $audioData['ayahs'][$key]['audio'] ?? null;
+            }
+
             return view('students.surah_details', compact('surahData'));
         } catch (\Exception $e) {
-            Log::error("Failed to fetch Surah details: " . $e->getMessage());
+            Log::error("Failed to fetch Surah details for Surah {$surah_number}: " . $e->getMessage());
             return back()->withErrors(['error' => 'Could not load Surah details. Please try again.']);
         }
     }
