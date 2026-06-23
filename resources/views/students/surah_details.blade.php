@@ -181,6 +181,30 @@
         70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
         100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
     }
+    .status-buttons {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+        flex-wrap: wrap;
+    }
+    .status-toggle {
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 2px solid #2a2a2a;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        opacity: 0.35;
+    }
+    .status-toggle.active-status {
+        opacity: 1;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+    .status-not-memorized { background-color: #e0e0e0; color: #555; }
+    .status-in-progress { background-color: #f1c40f; color: #7a6000; }
+    .status-memorized { background-color: #2ecc71; color: #fff; }
 </style>
 
 <div class="surah-header">
@@ -200,14 +224,23 @@
 
 <div class="ayah-grid">
     @foreach ($surahData['ayahs'] as $ayah)
-        <div class="ayah-card">
+        @php $currentStatus = $statuses[$ayah['numberInSurah']] ?? 'not_memorized'; @endphp
+        <div class="ayah-card" data-ayah="{{ $ayah['numberInSurah'] }}">
             <p class="ayah-text">{{ $ayah['text'] }} <span class="ayah-number">{{ $ayah['numberInSurah'] }}</span></p>
             <div class="ayah-actions">
-    <button class="play-btn" data-audio-src="{{ $ayah['audio'] ?? '#' }}" {{ !isset($ayah['audio']) ? 'disabled' : '' }}>
-        <i class="fas fa-play"></i>
-        <span>Play</span>
-    </button>
-</div>
+                <button class="play-btn" data-audio-src="{{ $ayah['audio'] ?? '#' }}" {{ !isset($ayah['audio']) ? 'disabled' : '' }}>
+                    <i class="fas fa-play"></i>
+                    <span>Play</span>
+                </button>
+                <div class="status-buttons">
+                    <button class="status-toggle status-not-memorized {{ $currentStatus === 'not_memorized' ? 'active-status' : '' }}"
+                        data-ayah="{{ $ayah['numberInSurah'] }}" data-status="not_memorized">✗ Not Memorized</button>
+                    <button class="status-toggle status-in-progress {{ $currentStatus === 'in_progress' ? 'active-status' : '' }}"
+                        data-ayah="{{ $ayah['numberInSurah'] }}" data-status="in_progress">⟳ In Progress</button>
+                    <button class="status-toggle status-memorized {{ $currentStatus === 'memorized' ? 'active-status' : '' }}"
+                        data-ayah="{{ $ayah['numberInSurah'] }}" data-status="memorized">✓ Memorized</button>
+                </div>
+            </div>
         </div>
     @endforeach
 </div>
@@ -377,6 +410,37 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             startRecording();
         }
+    });
+
+    // Memorization status toggle
+    const surahNumber = {{ $surahData['number'] }};
+    document.querySelectorAll('.status-toggle').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const ayahNumber = this.dataset.ayah;
+            const status = this.dataset.status;
+            const card = this.closest('.ayah-card');
+
+            // Update UI optimistically
+            card.querySelectorAll('.status-toggle').forEach(b => b.classList.remove('active-status'));
+            this.classList.add('active-status');
+
+            try {
+                await fetch('{{ route('student.memorization.status') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        surah_number: surahNumber,
+                        ayah_number: parseInt(ayahNumber),
+                        status: status,
+                    })
+                });
+            } catch (error) {
+                console.error('Failed to save memorization status:', error);
+            }
+        });
     });
 });
 </script>

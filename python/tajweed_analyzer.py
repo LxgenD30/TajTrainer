@@ -1173,17 +1173,34 @@ def main():
     expected_text = ""
     reference_audio = None
     
+    task = 'analyze'
     # Parse arguments
     for arg in sys.argv[2:]:
         if arg.startswith('--reference='):
             reference_audio = arg.split('=', 1)[1]
+        elif arg.startswith('--task='):
+            task = arg.split('=', 1)[1]
         elif not arg.startswith('--'):
             expected_text = arg
-    
+
     # Check for flags
     use_whisper = '--no-whisper' not in sys.argv
     use_openai = '--no-openai' not in sys.argv
-    
+
+    # Transcription-only mode: fast path for live memorization recording
+    if task == 'transcribe':
+        try:
+            analyzer = TajweedAnalyzer(audio_path, use_whisper=True, use_openai=False)
+            if analyzer.is_silent:
+                print(json.dumps({'transcription': '', 'warning': 'Silent or empty audio detected'}))
+            else:
+                transcription = analyzer.transcribe_with_whisper()
+                print(json.dumps({'transcription': transcription or ''}))
+        except Exception as e:
+            import traceback
+            print(json.dumps({'transcription': '', 'error': str(e)}))
+        sys.exit(0)
+
     try:
         analyzer = TajweedAnalyzer(audio_path, expected_text, use_whisper, use_openai, reference_audio)
         results = analyzer.analyze()

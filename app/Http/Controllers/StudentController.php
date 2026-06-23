@@ -646,7 +646,13 @@ class StudentController extends Controller
                 'ayahs' => $mergedAyahs,
             ];
 
-            return view('students.surah_details', compact('surahData'));
+            // Load existing memorization statuses for this student and surah
+            $statuses = \App\Models\MemorizationStatus::where('student_id', Auth::id())
+                ->where('surah_number', $surah_number)
+                ->pluck('status', 'ayah_number')
+                ->toArray();
+
+            return view('students.surah_details', compact('surahData', 'statuses'));
         } catch (\Exception $e) {
             Log::error("Failed to fetch Surah details for Surah {$surah_number}: " . $e->getMessage());
             return back()->withErrors(['error' => 'Could not load Surah details. Please try again.']);
@@ -2044,16 +2050,36 @@ class StudentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    public function updateMemorizationStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'surah_number' => 'required|integer|min:1|max:114',
+            'ayah_number'  => 'required|integer|min:1',
+            'status'       => 'required|in:not_memorized,in_progress,memorized',
+        ]);
+
+        \App\Models\MemorizationStatus::updateOrCreate(
+            [
+                'student_id'   => Auth::id(),
+                'surah_number' => $validated['surah_number'],
+                'ayah_number'  => $validated['ayah_number'],
+            ],
+            ['status' => $validated['status']]
+        );
+
+        return response()->json(['success' => true]);
+    }
+
     public function transcribeAudioChunk(Request $request)
     {
         Log::info('transcribeAudioChunk endpoint hit');
 
         try {
             $request->validate([
-                'audio_data' => 'required|string',
+                'audio_chunk' => 'required|string',
             ]);
 
-            $audioData = $request->input('audio_data');
+            $audioData = $request->input('audio_chunk');
             
             // Decode the base64 audio data
             if (preg_match('/^data:audio\/(.*?);base64,(.*)$/', $audioData, $matches)) {
@@ -2076,9 +2102,10 @@ class StudentController extends Controller
             file_put_contents($tempPath, $audioBinary);
             Log::info("Temporary audio file created at: {$tempPath}");
 
-            // Prepare the command to run the Python script
+            // Prepare the command to run the Python script in transcription-only mode
             $pythonScriptPath = base_path('python/tajweed_analyzer.py');
-            $command = escapeshellcmd("python \"{$pythonScriptPath}\" --file \"{$tempPath}\" --task transcribe");
+            $pythonBin = $this->getPythonCommand();
+            $command = escapeshellarg($pythonBin) . ' ' . escapeshellarg($pythonScriptPath) . ' ' . escapeshellarg($tempPath) . ' --task=transcribe --no-openai';
             
             Log::info("Executing command: {$command}");
 
@@ -2104,14 +2131,14 @@ class StudentController extends Controller
             if (json_last_error() !== JSON_ERROR_NONE) {
                 Log::error("Failed to decode JSON from Python script. Error: " . json_last_error_msg());
                 Log::error("Raw output was: " . $output);
-                // Return the raw output if it's not JSON, it might contain an error message
-                return response()->json(['transcription' => trim($output)]);
+                // Return empty text if output is not valid JSON
+                return response()->json(['text' => '']);
             }
-            
-            // Assuming the python script returns a json with a 'transcription' key
-            $transcription = $result['transcription'] ?? 'No transcription found.';
 
-            return response()->json(['transcription' => $transcription]);
+            // Return the transcription keyed as 'text' for the JS frontend
+            $transcription = $result['transcription'] ?? '';
+
+            return response()->json(['text' => $transcription]);
 
         } catch (\Exception $e) {
             Log::error("Error in transcribeAudioChunk: " . $e->getMessage());

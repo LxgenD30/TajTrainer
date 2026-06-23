@@ -40,25 +40,6 @@
         color: #333;
         margin-top: 5px;
     }
-    .progress-bar-container {
-        background-color: #e0e0e0;
-        border-radius: 15px;
-        overflow: hidden;
-        height: 30px;
-        border: 3px solid #2a2a2a;
-        margin-bottom: 30px;
-    }
-    .progress-bar {
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        height: 100%;
-        width: 25%; /* Example width */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        transition: width 0.5s ease-in-out;
-    }
     .section-card {
         background: white;
         border-radius: 15px;
@@ -73,14 +54,6 @@
         margin-bottom: 20px;
     }
 </style>
-
-<div class="section-card mb-4">
-    <h2 class="section-title">Overall Memorization Progress</h2>
-    <div class="progress-bar-container">
-        <div class="progress-bar" style="width: 10%;">10%</div>
-    </div>
-</div>
-
 
 <div class="section-card">
     <h2 class="section-title">Surah Status</h2>
