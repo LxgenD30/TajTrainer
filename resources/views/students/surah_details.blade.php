@@ -336,6 +336,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (el) el.style.display = pendingChunks > 0 ? 'block' : 'none';
     }
 
+    function getRMS(samples) {
+        let sum = 0;
+        for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i];
+        return Math.sqrt(sum / samples.length);
+    }
+
     function flushAndSend() {
         if (audioSamples.length === 0) return;
         const total  = audioSamples.reduce((s, a) => s + a.length, 0);
@@ -343,6 +349,8 @@ document.addEventListener('DOMContentLoaded', function () {
         let off = 0;
         audioSamples.forEach(a => { merged.set(a, off); off += a.length; });
         audioSamples = [];
+        // VAD: skip silent/background-noise chunks — don't waste API calls on silence
+        if (getRMS(merged) < 0.01) return;
         sendWavChunk(encodeWAV(merged, audioCtx ? audioCtx.sampleRate : 16000));
     }
 
@@ -399,8 +407,8 @@ document.addEventListener('DOMContentLoaded', function () {
             transcriptContainer.innerHTML = '<span class="placeholder">Listening… transcription will appear below.</span>';
             startTimer();
 
-            // Send a WAV chunk every 2 seconds for rolling live transcription
-            chunkInterval = setInterval(flushAndSend, 2000);
+            // Send a WAV chunk every 1.5 seconds for rolling live transcription
+            chunkInterval = setInterval(flushAndSend, 1500);
         } catch (err) {
             transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${err.message}</p>`;
         }
