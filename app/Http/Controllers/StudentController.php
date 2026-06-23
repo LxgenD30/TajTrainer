@@ -2106,39 +2106,51 @@ class StudentController extends Controller
             $pythonScriptPath = base_path('python/tajweed_analyzer.py');
             $pythonBin = $this->getPythonCommand();
             $command = escapeshellarg($pythonBin) . ' ' . escapeshellarg($pythonScriptPath) . ' ' . escapeshellarg($tempPath) . ' --task=transcribe --no-openai';
-            
+
             Log::info("Executing command: {$command}");
 
-            // Execute the command
-            $output = shell_exec($command . ' 2>&1'); // Capture both stdout and stderr
-            
+            // Use proc_open to capture stdout and stderr separately.
+            // shell_exec with 2>&1 mixes stderr status/warning messages into stdout
+            // causing JSON parsing to fail on the combined output.
+            $descriptorspec = [
+                0 => ['pipe', 'r'],
+                1 => ['pipe', 'w'],  // stdout — only the final JSON result
+                2 => ['pipe', 'w'],  // stderr — warnings, model loading messages (ignored)
+            ];
+
+            $process = proc_open($command, $descriptorspec, $pipes);
+            $output = '';
+
+            if (is_resource($process)) {
+                fclose($pipes[0]);
+                $output = stream_get_contents($pipes[1]);
+                $stderr  = stream_get_contents($pipes[2]);
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                proc_close($process);
+
+                if (!empty($stderr)) {
+                    Log::info("Python stderr (transcribe): " . substr($stderr, 0, 500));
+                }
+            }
+
             // Clean up the temporary file
             if (file_exists($tempPath)) {
                 unlink($tempPath);
                 Log::info("Temporary file deleted: {$tempPath}");
             }
 
-            if ($output === null) {
-                Log::error("Failed to execute Python script. shell_exec returned null.");
-                return response()->json(['error' => 'Failed to execute transcription script.'], 500);
-            }
+            Log::info("Python stdout: " . substr($output, 0, 300));
 
-            Log::info("Python script output: {$output}");
-
-            // Attempt to decode the JSON output
-            $result = json_decode($output, true);
+            $result = json_decode(trim($output), true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 Log::error("Failed to decode JSON from Python script. Error: " . json_last_error_msg());
-                Log::error("Raw output was: " . $output);
-                // Return empty text if output is not valid JSON
+                Log::error("Raw stdout: " . $output);
                 return response()->json(['text' => '']);
             }
 
-            // Return the transcription keyed as 'text' for the JS frontend
-            $transcription = $result['transcription'] ?? '';
-
-            return response()->json(['text' => $transcription]);
+            return response()->json(['text' => $result['transcription'] ?? '']);
 
         } catch (\Exception $e) {
             Log::error("Error in transcribeAudioChunk: " . $e->getMessage());
