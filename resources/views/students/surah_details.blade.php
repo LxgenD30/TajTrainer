@@ -220,6 +220,9 @@
     <div id="transcript-container">
         <span class="placeholder">Live transcription will appear here...</span>
     </div>
+    <div id="processing-indicator" style="display:none; color:#888; font-style:italic; font-size:0.9rem; text-align:center; margin-top:8px;">
+        <i class="fas fa-spinner fa-spin"></i> Processing audio chunk...
+    </div>
 </div>
 
 <div class="ayah-grid">
@@ -297,20 +300,57 @@ document.addEventListener('DOMContentLoaded', function () {
     const transcriptContainer = document.getElementById('transcript-container');
     const timerDisplay = document.getElementById('timer');
     
-    let isRecording = false;
-    let mediaRecorder;
+    // ── WAV encoder (no ffmpeg needed on server) ────────────────────────────
+    function encodeWAV(samples, sampleRate) {
+        const buf  = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buf);
+        const ws   = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
+        ws(0, 'RIFF'); view.setUint32(4, 36 + samples.length * 2, true);
+        ws(8, 'WAVE'); ws(12, 'fmt ');
+        view.setUint32(16, 16, true);  view.setUint16(20, 1, true);   // PCM
+        view.setUint16(22, 1, true);   view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        ws(36, 'data'); view.setUint32(40, samples.length * 2, true);
+        let off = 44;
+        for (let i = 0; i < samples.length; i++) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            off += 2;
+        }
+        return new Blob([buf], { type: 'audio/wav' });
+    }
+
+    let isRecording  = false;
+    let audioCtx, micSource, scriptProc, micStream;
+    let audioSamples = [];
+    let chunkInterval;
     let fullTranscript = '';
     let timerInterval;
-    let seconds = 0;
+    let seconds       = 0;
+    let pendingChunks = 0;
 
-    const sendAudioChunk = async (chunk) => {
-        if (!chunk) return;
+    function setProcessing(delta) {
+        pendingChunks = Math.max(0, pendingChunks + delta);
+        const el = document.getElementById('processing-indicator');
+        if (el) el.style.display = pendingChunks > 0 ? 'block' : 'none';
+    }
 
+    function flushAndSend() {
+        if (audioSamples.length === 0) return;
+        const total  = audioSamples.reduce((s, a) => s + a.length, 0);
+        const merged = new Float32Array(total);
+        let off = 0;
+        audioSamples.forEach(a => { merged.set(a, off); off += a.length; });
+        audioSamples = [];
+        sendWavChunk(encodeWAV(merged, audioCtx ? audioCtx.sampleRate : 16000));
+    }
+
+    const sendWavChunk = (wavBlob) => {
+        setProcessing(+1);
         const reader = new FileReader();
-        reader.readAsDataURL(chunk);
+        reader.readAsDataURL(wavBlob); // → data:audio/wav;base64,...
         reader.onloadend = async () => {
-            const base64Audio = reader.result.split(',')[1];
-            
             try {
                 const response = await fetch('{{ route('student.memorization.transcribe') }}', {
                     method: 'POST',
@@ -318,99 +358,80 @@ document.addEventListener('DOMContentLoaded', function () {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ audio_chunk: base64Audio })
+                    body: JSON.stringify({ audio_chunk: reader.result })
                 });
-
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.statusText}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.text && data.text.trim()) {
+                        fullTranscript += data.text.trim() + ' ';
+                        transcriptContainer.innerHTML = `<span class="final-transcript">${fullTranscript}</span>`;
+                    }
                 }
-
-                const data = await response.json();
-                if (data.text) {
-                    fullTranscript += data.text + ' ';
-                    transcriptContainer.innerHTML = `<span class="final-transcript">${fullTranscript}</span>`;
-                }
-
-            } catch (error) {
-                console.error('Transcription error:', error);
-                transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> Could not get transcription.</p>`;
+            } catch (err) {
+                console.error('Transcription error:', err);
+            } finally {
+                setProcessing(-1);
             }
         };
     };
 
     const startRecording = async () => {
         if (isRecording) return;
-
         fullTranscript = '';
         transcriptContainer.innerHTML = '<span class="placeholder">Connecting to microphone...</span>';
         recordingOutput.style.display = 'block';
-
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            micStream  = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioCtx   = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            micSource  = audioCtx.createMediaStreamSource(micStream);
+            scriptProc = audioCtx.createScriptProcessor(4096, 1, 1);
+            audioSamples = [];
 
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    sendAudioChunk(event.data);
-                }
+            scriptProc.onaudioprocess = (e) => {
+                if (isRecording) audioSamples.push(new Float32Array(e.inputBuffer.getChannelData(0)));
             };
-            
-            mediaRecorder.onstart = () => {
-                isRecording = true;
-                recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
-                recordButton.classList.add('recording');
-                transcriptContainer.innerHTML = '<span class="placeholder">Start speaking...</span>';
-                startTimer();
-            };
+            micSource.connect(scriptProc);
+            scriptProc.connect(audioCtx.destination);
 
-            mediaRecorder.onstop = () => {
-                stream.getTracks().forEach(track => track.stop());
-                isRecording = false;
-                recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
-                recordButton.classList.remove('recording');
-                stopTimer();
-            };
+            isRecording = true;
+            recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+            recordButton.classList.add('recording');
+            transcriptContainer.innerHTML = '<span class="placeholder">Listening… transcription will appear below.</span>';
+            startTimer();
 
-            mediaRecorder.start(3000); // Send data every 3 seconds
-
-        } catch (error) {
-            console.error('Recording failed:', error);
-            transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${error.message}</p>`;
+            // Send a WAV chunk every 4 seconds for rolling live transcription
+            chunkInterval = setInterval(flushAndSend, 4000);
+        } catch (err) {
+            transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${err.message}</p>`;
         }
     };
 
     const stopRecording = () => {
-        if (mediaRecorder && isRecording) {
-            mediaRecorder.stop();
-        }
+        if (!isRecording) return;
+        isRecording = false;
+        clearInterval(chunkInterval);
+        flushAndSend(); // send any remaining audio before stopping
+        if (scriptProc) { scriptProc.disconnect(); scriptProc = null; }
+        if (micSource)  { micSource.disconnect();  micSource  = null; }
+        if (audioCtx)   { audioCtx.close();         audioCtx   = null; }
+        if (micStream)  { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+        recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
+        recordButton.classList.remove('recording');
+        stopTimer();
     };
 
     function formatTime(sec) {
-        const minutes = Math.floor(sec / 60);
-        const seconds = sec % 60;
-        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        const m = Math.floor(sec / 60), s = sec % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
-
     function startTimer() {
         seconds = 0;
-        timerDisplay.textContent = formatTime(seconds);
-        timerInterval = setInterval(() => {
-            seconds++;
-            timerDisplay.textContent = formatTime(seconds);
-        }, 1000);
+        timerDisplay.textContent = formatTime(0);
+        timerInterval = setInterval(() => { seconds++; timerDisplay.textContent = formatTime(seconds); }, 1000);
     }
+    function stopTimer() { clearInterval(timerInterval); }
 
-    function stopTimer() {
-        clearInterval(timerInterval);
-    }
-
-    recordButton.addEventListener('click', () => {
-        if (isRecording) {
-            stopRecording();
-        } else {
-            startRecording();
-        }
-    });
+    recordButton.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
 
     // Memorization status toggle
     const surahNumber = {{ $surahData['number'] }};
