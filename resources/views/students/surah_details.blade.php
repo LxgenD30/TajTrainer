@@ -399,8 +399,8 @@ document.addEventListener('DOMContentLoaded', function () {
             transcriptContainer.innerHTML = '<span class="placeholder">Listening… transcription will appear below.</span>';
             startTimer();
 
-            // Send a WAV chunk every 4 seconds for rolling live transcription
-            chunkInterval = setInterval(flushAndSend, 4000);
+            // Send a WAV chunk every 2 seconds for rolling live transcription
+            chunkInterval = setInterval(flushAndSend, 2000);
         } catch (err) {
             transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${err.message}</p>`;
         }

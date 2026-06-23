@@ -2072,90 +2072,54 @@ class StudentController extends Controller
 
     public function transcribeAudioChunk(Request $request)
     {
-        Log::info('transcribeAudioChunk endpoint hit');
-
         try {
             $request->validate([
                 'audio_chunk' => 'required|string',
             ]);
 
             $audioData = $request->input('audio_chunk');
-            
-            // Decode the base64 audio data
+
+            // Decode the base64 audio data (expects data:audio/wav;base64,...)
             if (preg_match('/^data:audio\/(.*?);base64,(.*)$/', $audioData, $matches)) {
                 $audioBinary = base64_decode($matches[2]);
-                $extension = $matches[1]; // e.g., 'webm'
             } else {
-                // Fallback for raw base64 data
                 $audioBinary = base64_decode($audioData);
-                $extension = 'webm'; // Assume webm if not specified
             }
 
-            if ($audioBinary === false) {
-                Log::error('Failed to decode base64 audio data.');
-                return response()->json(['error' => 'Invalid audio data'], 400);
-            }
-
-            // Create a temporary file
-            $tempPath = tempnam(sys_get_temp_dir(), 'audio_chunk_');
-            rename($tempPath, $tempPath .= '.' . $extension);
-            file_put_contents($tempPath, $audioBinary);
-            Log::info("Temporary audio file created at: {$tempPath}");
-
-            // Prepare the command to run the Python script in transcription-only mode
-            $pythonScriptPath = base_path('python/tajweed_analyzer.py');
-            $pythonBin = $this->getPythonCommand();
-            $command = escapeshellarg($pythonBin) . ' ' . escapeshellarg($pythonScriptPath) . ' ' . escapeshellarg($tempPath) . ' --task=transcribe --no-openai';
-
-            Log::info("Executing command: {$command}");
-
-            // Use proc_open to capture stdout and stderr separately.
-            // shell_exec with 2>&1 mixes stderr status/warning messages into stdout
-            // causing JSON parsing to fail on the combined output.
-            $descriptorspec = [
-                0 => ['pipe', 'r'],
-                1 => ['pipe', 'w'],  // stdout — only the final JSON result
-                2 => ['pipe', 'w'],  // stderr — warnings, model loading messages (ignored)
-            ];
-
-            $process = proc_open($command, $descriptorspec, $pipes);
-            $output = '';
-
-            if (is_resource($process)) {
-                fclose($pipes[0]);
-                $output = stream_get_contents($pipes[1]);
-                $stderr  = stream_get_contents($pipes[2]);
-                fclose($pipes[1]);
-                fclose($pipes[2]);
-                proc_close($process);
-
-                if (!empty($stderr)) {
-                    Log::info("Python stderr (transcribe): " . substr($stderr, 0, 500));
-                }
-            }
-
-            // Clean up the temporary file
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-                Log::info("Temporary file deleted: {$tempPath}");
-            }
-
-            Log::info("Python stdout: " . substr($output, 0, 300));
-
-            $result = json_decode(trim($output), true);
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error("Failed to decode JSON from Python script. Error: " . json_last_error_msg());
-                Log::error("Raw stdout: " . $output);
+            if ($audioBinary === false || strlen($audioBinary) < 4096) {
+                // Too short / empty — skip silently
                 return response()->json(['text' => '']);
             }
 
-            return response()->json(['text' => $result['transcription'] ?? '']);
+            $apiKey = config('services.openai.api_key');
+            if (empty($apiKey)) {
+                Log::error('OpenAI API key not configured for live transcription.');
+                return response()->json(['text' => ''], 500);
+            }
+
+            // Send WAV directly to OpenAI Whisper API — no Python subprocess, no model loading delay
+            $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                ])
+                ->attach('file', $audioBinary, 'audio.wav', ['Content-Type' => 'audio/wav'])
+                ->post('https://api.openai.com/v1/audio/transcriptions', [
+                    'model'           => 'whisper-1',
+                    'language'        => 'ar',
+                    'response_format' => 'json',
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('OpenAI Whisper API error: ' . $response->status() . ' ' . $response->body());
+                return response()->json(['text' => '']);
+            }
+
+            $text = $response->json('text') ?? '';
+
+            return response()->json(['text' => trim($text)]);
 
         } catch (\Exception $e) {
             Log::error("Error in transcribeAudioChunk: " . $e->getMessage());
-            Log::error("Stack trace: " . $e->getTraceAsString());
-            return response()->json(['error' => 'Server error during transcription: ' . $e->getMessage()], 500);
+            return response()->json(['text' => ''], 500);
         }
     }
 
