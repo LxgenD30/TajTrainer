@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('materials', 'teacher_id')) {
+            return;
+        }
+
         Schema::table('materials', function (Blueprint $table) {
             $table->unsignedInteger('teacher_id')->nullable()->after('material_id');
             $table->foreign('teacher_id')->references('id')->on('teachers')->onDelete('cascade');
