@@ -2097,12 +2097,13 @@ class StudentController extends Controller
                 return response()->json(['text' => ''], 500);
             }
 
-            // Build Whisper prompt using the last portion of the transcript for context
+            // Build Whisper prompt using the last portion of the transcript for context.
+            // Feeding back the previous diacritized text guides Whisper to continue in the same style.
             $context = trim($request->input('context', ''));
             $seed    = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ مَٰلِكِ يَوْمِ ٱلدِّينِ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ';
             $prompt  = $context ? mb_substr($context, -200) : $seed;
 
-            // Step 1: Transcribe with Whisper (verbose_json gives us no_speech_prob for hallucination filtering)
+            // Transcribe with Whisper (verbose_json gives us no_speech_prob for hallucination filtering)
             $whisperResp = Http::withHeaders(['Authorization' => 'Bearer ' . $apiKey])
                 ->attach('file', $audioBinary, 'audio.wav', ['Content-Type' => 'audio/wav'])
                 ->post('https://api.openai.com/v1/audio/transcriptions', [
@@ -2110,6 +2111,7 @@ class StudentController extends Controller
                     'language'        => 'ar',
                     'response_format' => 'verbose_json',
                     'prompt'          => $prompt,
+                    'temperature'     => 0,
                 ]);
 
             if (!$whisperResp->successful()) {
@@ -2117,7 +2119,7 @@ class StudentController extends Controller
                 return response()->json(['text' => '']);
             }
 
-            // Filter hallucinations: if Whisper itself says there's no speech, discard
+            // Discard hallucinations: if Whisper signals no real speech detected, return nothing
             $segments    = $whisperResp->json('segments') ?? [];
             $noSpeechMax = collect($segments)->max('no_speech_prob') ?? 0;
             if ($noSpeechMax > 0.6) {
@@ -2125,34 +2127,6 @@ class StudentController extends Controller
             }
 
             $text = trim($whisperResp->json('text') ?? '');
-            if (empty($text)) {
-                return response()->json(['text' => '']);
-            }
-
-            // Step 2: Add tashkeel (harakat) via GPT-4o-mini.
-            // whisper-1 consistently strips diacritics; this restores them reliably.
-            $gptResp = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type'  => 'application/json',
-                ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model'       => 'gpt-4o-mini',
-                    'messages'    => [
-                        [
-                            'role'    => 'system',
-                            'content' => 'أضف التشكيل الكامل (الحركات) للنص العربي التالي دون تغيير أي كلمة. أخرج النص المشكّل فقط بدون أي شرح.',
-                        ],
-                        ['role' => 'user', 'content' => $text],
-                    ],
-                    'max_tokens'  => 300,
-                    'temperature' => 0,
-                ]);
-
-            if ($gptResp->successful()) {
-                $tashkeel = trim($gptResp->json('choices.0.message.content') ?? '');
-                if (!empty($tashkeel)) {
-                    $text = $tashkeel;
-                }
-            }
 
             return response()->json(['text' => $text]);
 
