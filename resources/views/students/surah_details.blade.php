@@ -327,8 +327,9 @@ document.addEventListener('DOMContentLoaded', function () {
     let chunkInterval;
     let fullTranscript = '';
     let timerInterval;
-    let seconds       = 0;
-    let pendingChunks = 0;
+    let seconds         = 0;
+    let pendingChunks   = 0;
+    let isChunkInFlight = false;
 
     function setProcessing(delta) {
         pendingChunks = Math.max(0, pendingChunks + delta);
@@ -342,7 +343,33 @@ document.addEventListener('DOMContentLoaded', function () {
         return Math.sqrt(sum / samples.length);
     }
 
+    // Strip Arabic diacritics for duplicate comparison (keeps them for display)
+    function normalizeAr(s) {
+        return s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u0671]/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    // Append newText to existing, removing word-level overlap at the boundary
+    function deduplicateAppend(existing, newText) {
+        const trimmed = newText.trim();
+        if (!trimmed) return existing;
+        const eWords = existing.trim().split(/\s+/).filter(Boolean);
+        const nWords = trimmed.split(/\s+/).filter(Boolean);
+        let overlap = 0;
+        const maxCheck = Math.min(8, eWords.length, nWords.length);
+        for (let len = maxCheck; len >= 1; len--) {
+            if (eWords.slice(-len).map(normalizeAr).join(' ') ===
+                nWords.slice(0, len).map(normalizeAr).join(' ')) {
+                overlap = len;
+                break;
+            }
+        }
+        const unique = nWords.slice(overlap);
+        if (!unique.length) return existing;
+        return (existing.trimEnd() + ' ' + unique.join(' ') + ' ').trimStart();
+    }
+
     function flushAndSend() {
+        if (isChunkInFlight) return;  // wait for in-flight request before sending next
         if (audioSamples.length === 0) return;
         const total  = audioSamples.reduce((s, a) => s + a.length, 0);
         const merged = new Float32Array(total);
@@ -355,6 +382,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const sendWavChunk = (wavBlob) => {
+        isChunkInFlight = true;
         setProcessing(+1);
         const reader = new FileReader();
         reader.readAsDataURL(wavBlob); // → data:audio/wav;base64,...
@@ -366,18 +394,22 @@ document.addEventListener('DOMContentLoaded', function () {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ audio_chunk: reader.result })
+                    body: JSON.stringify({
+                        audio_chunk: reader.result,
+                        context: fullTranscript.slice(-120)  // last ~120 chars for diacritics style context
+                    })
                 });
                 if (response.ok) {
                     const data = await response.json();
                     if (data.text && data.text.trim()) {
-                        fullTranscript += data.text.trim() + ' ';
+                        fullTranscript = deduplicateAppend(fullTranscript, data.text);
                         transcriptContainer.innerHTML = `<span class="final-transcript">${fullTranscript}</span>`;
                     }
                 }
             } catch (err) {
                 console.error('Transcription error:', err);
             } finally {
+                isChunkInFlight = false;
                 setProcessing(-1);
             }
         };

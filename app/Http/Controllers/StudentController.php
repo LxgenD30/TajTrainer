@@ -2097,8 +2097,13 @@ class StudentController extends Controller
                 return response()->json(['text' => ''], 500);
             }
 
+            // Build Whisper prompt: use the last portion of the transcript for style continuity
+            // (keeps diacritics consistent across chunks) or fall back to a Quranic seed.
+            $context  = trim($request->input('context', ''));
+            $seed     = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ مَٰلِكِ يَوْمِ ٱلدِّينِ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ';
+            $prompt   = $context ? mb_substr($context, -200) : $seed;
+
             // Send WAV directly to OpenAI Whisper API — no Python subprocess, no model loading delay
-            // The prompt hints Whisper to output full Arabic diacritical marks (tashkeel/harakat)
             $response = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                 ])
@@ -2107,7 +2112,7 @@ class StudentController extends Controller
                     'model'           => 'whisper-1',
                     'language'        => 'ar',
                     'response_format' => 'json',
-                    'prompt'          => 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ مَٰلِكِ يَوْمِ ٱلدِّينِ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
+                    'prompt'          => $prompt,
                 ]);
 
             if (!$response->successful()) {
