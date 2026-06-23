@@ -92,6 +92,17 @@ class TajweedAnalyzer:
         self.y, self.sr = librosa.load(audio_for_analysis, sr=16000)  # 16kHz for Whisper
         self.duration = librosa.get_duration(y=self.y, sr=self.sr)
         
+        # Validate that the audio contains actual sound content
+        # RMS energy threshold: below this is considered silent
+        rms_energy = float(np.sqrt(np.mean(self.y ** 2)))
+        self.is_silent = rms_energy < 0.005 or self.duration < 0.5
+        if self.is_silent:
+            print(json.dumps({
+                "warning": "Audio appears to be silent or too short",
+                "duration": round(self.duration, 2),
+                "rms_energy": round(rms_energy, 6)
+            }), file=sys.stderr)
+        
         # Load reference audio if provided
         self.y_ref, self.sr_ref = None, None
         self.duration_ref = 0
@@ -179,6 +190,14 @@ class TajweedAnalyzer:
     def transcribe_with_whisper(self):
         """Transcribe audio using Tarteel AI's Whisper model"""
         if not self.whisper_model or not self.whisper_processor:
+            return None
+        
+        # Do not attempt transcription on silent or near-silent audio
+        if self.is_silent:
+            print(json.dumps({
+                "status": "transcription_skipped",
+                "reason": "Audio is silent or too short — skipping Whisper to avoid hallucination"
+            }), file=sys.stderr)
             return None
         
         try:
@@ -1006,6 +1025,26 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
     
     def analyze(self):
         """Run complete Tajweed analysis"""
+        # Short-circuit immediately if the audio is silent or empty
+        if self.is_silent:
+            return {
+                'audio_file': self.audio_path,
+                'duration': round(float(self.duration), 2),
+                'error': 'No audio detected. Please record or upload a valid audio file.',
+                'is_silent': True,
+                'whisper_transcription': None,
+                'expected_text': self.expected_text,
+                'madd_analysis': {'percentage': 0, 'issues': [], 'details': []},
+                'idgham_bila_ghunnah_analysis': {'percentage': 0, 'issues': [], 'details': []},
+                'idgham_bi_ghunnah_analysis': {'percentage': 0, 'issues': [], 'details': []},
+                'overall_score': {
+                    'score': 0,
+                    'grade': 'No Submission',
+                    'feedback': 'No audio was detected in the recording. Please try again with a working microphone.'
+                },
+                'ai_feedback': None
+            }
+
         madd = self.analyze_madd()
         idgham_bila = self.analyze_idgham_bila_ghunnah()
         idgham_bi = self.analyze_idgham_bi_ghunnah()

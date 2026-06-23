@@ -870,6 +870,15 @@ class StudentController extends Controller
                     throw new \Exception('Failed to parse Python analysis output');
                 }
                 
+                // Check if audio was detected as silent / empty
+                if (!empty($analysisResult['is_silent'])) {
+                    \Log::warning('Silent audio detected: ' . ($analysisResult['error'] ?? 'No audio content'));
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No audio was detected in your recording. Please check your microphone and try again.',
+                    ], 422);
+                }
+
                 // Check if there's an error in the analysis result
                 if (isset($analysisResult['error'])) {
                     \Log::error('Python analysis error: ' . $analysisResult['error']);
