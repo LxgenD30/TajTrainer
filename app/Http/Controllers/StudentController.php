@@ -2097,32 +2097,64 @@ class StudentController extends Controller
                 return response()->json(['text' => ''], 500);
             }
 
-            // Build Whisper prompt: use the last portion of the transcript for style continuity
-            // (keeps diacritics consistent across chunks) or fall back to a Quranic seed.
-            $context  = trim($request->input('context', ''));
-            $seed     = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ مَٰلِكِ يَوْمِ ٱلدِّينِ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ';
-            $prompt   = $context ? mb_substr($context, -200) : $seed;
+            // Build Whisper prompt using the last portion of the transcript for context
+            $context = trim($request->input('context', ''));
+            $seed    = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ مَٰلِكِ يَوْمِ ٱلدِّينِ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ';
+            $prompt  = $context ? mb_substr($context, -200) : $seed;
 
-            // Send WAV directly to OpenAI Whisper API — no Python subprocess, no model loading delay
-            $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                ])
+            // Step 1: Transcribe with Whisper (verbose_json gives us no_speech_prob for hallucination filtering)
+            $whisperResp = Http::withHeaders(['Authorization' => 'Bearer ' . $apiKey])
                 ->attach('file', $audioBinary, 'audio.wav', ['Content-Type' => 'audio/wav'])
                 ->post('https://api.openai.com/v1/audio/transcriptions', [
                     'model'           => 'whisper-1',
                     'language'        => 'ar',
-                    'response_format' => 'json',
+                    'response_format' => 'verbose_json',
                     'prompt'          => $prompt,
                 ]);
 
-            if (!$response->successful()) {
-                Log::error('OpenAI Whisper API error: ' . $response->status() . ' ' . $response->body());
+            if (!$whisperResp->successful()) {
+                Log::error('OpenAI Whisper API error: ' . $whisperResp->status() . ' ' . $whisperResp->body());
                 return response()->json(['text' => '']);
             }
 
-            $text = $response->json('text') ?? '';
+            // Filter hallucinations: if Whisper itself says there's no speech, discard
+            $segments    = $whisperResp->json('segments') ?? [];
+            $noSpeechMax = collect($segments)->max('no_speech_prob') ?? 0;
+            if ($noSpeechMax > 0.6) {
+                return response()->json(['text' => '']);
+            }
 
-            return response()->json(['text' => trim($text)]);
+            $text = trim($whisperResp->json('text') ?? '');
+            if (empty($text)) {
+                return response()->json(['text' => '']);
+            }
+
+            // Step 2: Add tashkeel (harakat) via GPT-4o-mini.
+            // whisper-1 consistently strips diacritics; this restores them reliably.
+            $gptResp = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type'  => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model'       => 'gpt-4o-mini',
+                    'messages'    => [
+                        [
+                            'role'    => 'system',
+                            'content' => 'أضف التشكيل الكامل (الحركات) للنص العربي التالي دون تغيير أي كلمة. أخرج النص المشكّل فقط بدون أي شرح.',
+                        ],
+                        ['role' => 'user', 'content' => $text],
+                    ],
+                    'max_tokens'  => 300,
+                    'temperature' => 0,
+                ]);
+
+            if ($gptResp->successful()) {
+                $tashkeel = trim($gptResp->json('choices.0.message.content') ?? '');
+                if (!empty($tashkeel)) {
+                    $text = $tashkeel;
+                }
+            }
+
+            return response()->json(['text' => $text]);
 
         } catch (\Exception $e) {
             Log::error("Error in transcribeAudioChunk: " . $e->getMessage());
