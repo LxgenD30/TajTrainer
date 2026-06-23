@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('memorization_statuses', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('student_id');
+            $table->unsignedInteger('student_id');
             $table->unsignedSmallInteger('surah_number');
             $table->unsignedSmallInteger('ayah_number');
             $table->enum('status', ['not_memorized', 'in_progress', 'memorized'])->default('not_memorized');
