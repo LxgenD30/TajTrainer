@@ -45,6 +45,35 @@
         line-height: 2.5;
         margin-bottom: 15px;
     }
+
+    /* ── Tajweed colour coding ───────────────────────────────────────────── */
+    .ayah-text tajweed, .ayah-text [class] {
+        /* default: inherit (unstyled rules remain readable) */
+    }
+    /* Hamzat al-Wasl & Laam Shamsiyah — shown lighter (structurally silent) */
+    tajweed.ham_wasl,
+    tajweed.laam_shamsiyah    { color: #9b9b9b; }
+    /* Madd extensions — blue family */
+    tajweed.madda_normal,
+    tajweed.madda_permissible { color: #537fff; }
+    tajweed.madda_necessary,
+    tajweed.madda_obligatory,
+    tajweed.madda_prolonged   { color: #295eff; }
+    /* Qalaqah — green */
+    tajweed.qalaqah           { color: #169200; }
+    /* Ghunnah — teal */
+    tajweed.ghunnah           { color: #06b6a0; }
+    /* Ikhfa rules — orange */
+    tajweed.ikhfa,
+    tajweed.ikhfa_shafawi     { color: #e36000; }
+    /* Idgham rules — olive-green */
+    tajweed.idgham_ghunnah,
+    tajweed.idgham_no_ghunnah,
+    tajweed.idgham_shafawi    { color: #5d8a00; }
+    /* Iqlab — pink/rose */
+    tajweed.iqlab             { color: #c0006e; }
+    /* Verse-end circle already styled via .ayah-number; hide duplicate span */
+    .ayah-text span.end       { display: none; }
     .ayah-number {
         display: inline-block;
         width: 30px;
@@ -234,7 +263,7 @@
     @foreach ($surahData['ayahs'] as $ayah)
         @php $currentStatus = $statuses[$ayah['numberInSurah']] ?? 'not_memorized'; @endphp
         <div class="ayah-card" data-ayah="{{ $ayah['numberInSurah'] }}">
-            <p class="ayah-text">{{ $ayah['text'] }} <span class="ayah-number">{{ $ayah['numberInSurah'] }}</span></p>
+            <p class="ayah-text">{!! $ayah['text'] !!} <span class="ayah-number">{{ $ayah['numberInSurah'] }}</span></p>
             <div class="ayah-actions">
                 <button class="play-btn" data-audio-src="{{ $ayah['audio'] ?? '#' }}" {{ !isset($ayah['audio']) ? 'disabled' : '' }}>
                     <i class="fas fa-play"></i>
