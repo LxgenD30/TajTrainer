@@ -450,8 +450,9 @@ const processed = VERSES.map(v => {
 // ── Arabic normalization (diacritics stripped for comparison) ───────────────
 function normalizeAr(s) {
     return s
-        .replace(/[\u064B-\u065F\u0610-\u061A\u0670]/g, '') // tashkeel (keep \u0671 for step below)
+        .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0670 or \u0671)
         .replace(/\u0640/g, '')              // tatweel
+        .replace(/\u0670/g, 'ا')            // ٰ dagger alef → full alef (عَـٰلَمِينَ → عالمين)
         .replace(/[\u0671أإآٱ]/g, 'ا')      // alef wasla + variants → plain alef
         .replace(/ة/g,  'ه')                // ta marbuta
         .replace(/ى/g,  'ي')                // alef maqsura
@@ -536,7 +537,7 @@ if (!SR) {
                     }
                 }
                 processFinal(best);
-                document.getElementById('interim-box').textContent = '';
+                console.log('[Recitation Debug] Chosen alt:', JSON.stringify(best), '| score:', bestScore, '| alts:', [...alts].map(a => a.transcript));
             } else {
                 document.getElementById('interim-box').textContent = evt.results[i][0].transcript;
             }
@@ -559,6 +560,20 @@ function processFinal(text) {
 
     const spoken = text.trim().split(/\s+/).filter(Boolean);
 
+    // ── Debug: open browser console (F12) to see full recitation vs expected ──
+    console.group('[Recitation Debug] ' + new Date().toLocaleTimeString());
+    console.log('Spoken raw   :', JSON.stringify(text));
+    console.log('Spoken words :', spoken);
+    console.log('Normalized   :', spoken.map(normalizeAr));
+    const _v = processed[st.ayahIdx];
+    if (_v) {
+        const _wi = st.wordIdx;
+        console.log('Expected norm:', _v.normWords.slice(_wi, _wi + spoken.length + 3));
+        console.log('Expected comp:', _v.compWords.slice(_wi, _wi + spoken.length + 3));
+        console.log('Ayah', _v.number, '| word pos', _wi + 1, '/', _v.words.length);
+    }
+    console.groupEnd();
+    // ── End Debug ────────────────────────────────────────────────────────────
     for (const word of spoken) {
         if (st.phase !== 'active') return;
 

@@ -48,9 +48,10 @@ def has_hukum(word: str) -> bool:
 
 # â”€â”€ Arabic normalisation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-# NOTE: \u0671 (Alef Wasla) intentionally excluded from _TASHKEEL; it is
-# converted to plain Alef via _ALEF_MAP rather than being stripped entirely.
-_TASHKEEL  = re.compile(r'[\u0610-\u061A\u064B-\u065F\u0670]')
+# NOTE: \u0671 (Alef Wasla) intentionally excluded — converted to plain Alef via _ALEF_MAP.
+# NOTE: \u0670 (Dagger Alef) intentionally excluded — converted to plain Alef below (it
+#       represents a phonetic long-vowel alef in Uthmani script, e.g. \u0639\u064e\u0640\u0670 -> \u0639\u0627).
+_TASHKEEL  = re.compile(r'[\u0610-\u061A\u064B-\u065F]')
 _TATWEEL   = re.compile(r'\u0640')
 _ALEF_MAP  = {'\u0622': '\u0627', '\u0623': '\u0627', '\u0625': '\u0627', '\u0671': '\u0627'}
 
@@ -71,6 +72,7 @@ def normalize_arabic(text: str) -> str:
     text = unicodedata.normalize('NFC', text)
     text = _TASHKEEL.sub('', text)
     text = _TATWEEL.sub('', text)
+    text = text.replace('\u0670', '\u0627')   # \u0670 dagger alef \u2192 full alef (e.g. \u0639\u064e\u0640\u0670\u0644\u064e\u0645 \u2192 \u0639\u0627\u0644\u0645)
     for variant, canon in _ALEF_MAP.items():
         text = text.replace(variant, canon)
     # Small Waw / Small Ya (Madd Silah markers) -> base letters
