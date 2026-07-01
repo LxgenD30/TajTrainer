@@ -593,9 +593,46 @@ class StudentController extends Controller
         return view('students.memorization');
     }
 
-    public function memorizeSession()
+    public function memorizeSession($surah_number)
     {
-        return view('students.memorization_session');
+        try {
+            $chapterResp = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/chapters/{$surah_number}",
+                ['language' => 'en']
+            );
+            $versesResp = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surah_number}",
+                ['per_page' => 300, 'page' => 1, 'fields' => 'text_uthmani']
+            );
+
+            if ($chapterResp->failed() || $versesResp->failed()) {
+                return back()->withErrors(['error' => 'Could not load Surah data.']);
+            }
+
+            $chapter = $chapterResp->json('chapter');
+            $verses  = $versesResp->json('verses') ?? [];
+
+            // Build clean ayah list with diacritized text (text_uthmani has full tashkeel, no HTML)
+            $ayahs = collect($verses)->map(function ($verse) {
+                [, $verseNum] = explode(':', $verse['verse_key']);
+                return [
+                    'number' => (int) $verseNum,
+                    'text'   => $verse['text_uthmani'] ?? '',
+                ];
+            })->values()->toArray();
+
+            $surahData = [
+                'number'      => $chapter['id'],
+                'name'        => $chapter['name_arabic'],
+                'englishName' => $chapter['name_simple'],
+                'totalAyahs'  => $chapter['verses_count'],
+            ];
+
+            return view('students.memorization_session', compact('surahData', 'ayahs'));
+        } catch (\Exception $e) {
+            Log::error('Failed to load memorization session: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Could not load Surah data. Please try again.']);
+        }
     }
 
     public function surahDetails($surah_number)

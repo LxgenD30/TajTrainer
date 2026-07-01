@@ -24,7 +24,9 @@
         font-family: 'Amiri', serif; /* A nice font for Arabic */
     }
     .surah-meta {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+        color: rgba(255,255,255,0.9);
+        margin-bottom: 16px;
     }
     .ayah-grid {
         display: grid;
@@ -139,76 +141,8 @@
         align-items: center;
         justify-content: center;
         gap: 15px;
-        margin-top: 20px;
+        margin-top: 16px;
         flex-wrap: wrap;
-    }
-    #recordButton {
-        padding: 12px 25px;
-        font-size: 1.1rem;
-        border-radius: 12px;
-        border: 3px solid #2a2a2a;
-        cursor: pointer;
-        font-weight: bold;
-        background-color: #1abc9c;
-        color: white;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    #recordButton:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-    }
-    #recordButton.recording {
-        background-color: #e74c3c;
-        animation: pulse 1.5s infinite;
-    }
-    #timer {
-        font-weight: bold;
-        font-size: 1.1rem;
-        color: #333;
-        background-color: #fff;
-        padding: 8px 15px;
-        border-radius: 8px;
-        border: 3px solid #2a2a2a;
-        min-width: 80px;
-        text-align: center;
-    }
-    #recording-output {
-        margin-top: 20px;
-        padding: 25px;
-        background: #fff;
-        border-radius: 15px;
-        border: 3px solid #2a2a2a;
-        box-shadow: 0 8px 15px rgba(0,0,0,0.07);
-        display: none; /* Hidden by default */
-        font-family: 'Amiri', serif;
-        font-size: 1.5rem;
-        text-align: right;
-        line-height: 2;
-        min-height: 150px;
-    }
-    #recording-output .placeholder {
-        color: #999;
-        font-style: italic;
-        font-size: 1.2rem;
-        text-align: center;
-    }
-    #recording-output .final-transcript {
-        color: #000;
-    }
-    #recording-output .partial-transcript {
-        color: #777;
-    }
-    #recording-output audio {
-        width: 100%;
-        margin-top: 10px;
-    }
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-        70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
     }
     .status-buttons {
         display: flex;
@@ -240,22 +174,12 @@
     <h1 class="surah-title">{{ $surahData['name'] }}</h1>
     <p class="surah-meta">{{ $surahData['englishName'] }} • {{ $surahData['revelationType'] }} • {{ $surahData['numberOfAyahs'] }} Ayahs</p>
     <div class="record-section">
-        <button id="recordButton"><i class="fas fa-microphone"></i> Start Recording</button>
-        <div id="timer">00:00</div>
-        <a href="{{ route('student.memorization.start') }}"
-           style="display:inline-flex; align-items:center; gap:8px; padding:10px 22px; background:linear-gradient(135deg,#0a5c36,#1abc9c); color:white; border:2px solid rgba(255,255,255,0.3); border-radius:50px; font-weight:700; font-size:0.95rem; text-decoration:none; transition:all 0.25s;"
-           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 18px rgba(10,92,54,0.4)'"
-           onmouseout="this.style.transform=''; this.style.boxShadow=''"
-        ><i class="fas fa-play-circle"></i> Start Memorizing</a>
-    </div>
-</div>
-
-<div id="recording-output" class="section-card" style="display: none;">
-    <div id="transcript-container">
-        <span class="placeholder">Live transcription will appear here...</span>
-    </div>
-    <div id="processing-indicator" style="display:none; color:#888; font-style:italic; font-size:0.9rem; text-align:center; margin-top:8px;">
-        <i class="fas fa-spinner fa-spin"></i> Processing audio chunk...
+        <a href="{{ route('student.memorization.start', $surahData['number']) }}"
+           style="display:inline-flex; align-items:center; gap:10px; padding:12px 28px; background:rgba(255,255,255,0.15); color:white; border:2px solid rgba(255,255,255,0.5); border-radius:50px; font-weight:700; font-size:1rem; text-decoration:none; transition:all 0.25px; backdrop-filter:blur(4px);"
+           onmouseover="this.style.background='rgba(255,255,255,0.25)'; this.style.transform='translateY(-2px)';"
+           onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='';">
+            <i class="fas fa-play-circle"></i> Start Memorizing
+        </a>
     </div>
 </div>
 
@@ -328,181 +252,6 @@ document.addEventListener('DOMContentLoaded', function () {
             currentPlayingButton = null;
         }
     });
-
-    const recordButton = document.getElementById('recordButton');
-    const recordingOutput = document.getElementById('recording-output');
-    const transcriptContainer = document.getElementById('transcript-container');
-    const timerDisplay = document.getElementById('timer');
-
-    let isRecording = false, fullTranscript = '', timerInterval, seconds = 0;
-
-    // ── Arabic deduplication helpers ──────────────────────────────────────
-    function normalizeAr(s) {
-        return s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u0671]/g, '').replace(/\s+/g, ' ').trim();
-    }
-    function deduplicateAppend(existing, newText) {
-        const trimmed = newText.trim();
-        if (!trimmed) return existing;
-        const eWords = existing.trim().split(/\s+/).filter(Boolean);
-        const nWords = trimmed.split(/\s+/).filter(Boolean);
-        let overlap = 0;
-        const maxCheck = Math.min(8, eWords.length, nWords.length);
-        for (let len = maxCheck; len >= 1; len--) {
-            if (eWords.slice(-len).map(normalizeAr).join(' ') ===
-                nWords.slice(0, len).map(normalizeAr).join(' ')) {
-                overlap = len; break;
-            }
-        }
-        const unique = nWords.slice(overlap);
-        if (!unique.length) return existing;
-        return (existing.trimEnd() + ' ' + unique.join(' ') + ' ').trimStart();
-    }
-
-    // ── Primary: Web Speech API (instant — no server round-trip) ──────────
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition = null;
-
-    if (SpeechRecognitionAPI) {
-        recognition = new SpeechRecognitionAPI();
-        recognition.lang = 'ar-SA';
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.maxAlternatives = 1;
-
-        recognition.onresult = (event) => {
-            let interim = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                if (event.results[i].isFinal) {
-                    const text = event.results[i][0].transcript.trim();
-                    if (text) fullTranscript = deduplicateAppend(fullTranscript, text);
-                } else {
-                    interim += event.results[i][0].transcript;
-                }
-            }
-            transcriptContainer.innerHTML =
-                `<span class="final-transcript">${fullTranscript}</span>` +
-                (interim ? `<span style="color:#aaa;font-style:italic;">${interim}</span>` : '');
-        };
-
-        recognition.onerror = (e) => {
-            if (e.error !== 'no-speech' && e.error !== 'aborted')
-                console.warn('Speech recognition error:', e.error);
-        };
-
-        // Auto-restart: browser stops after ~60s silence or network issues
-        recognition.onend = () => { if (isRecording) { try { recognition.start(); } catch(e) {} } };
-    }
-
-    // ── Fallback: WAV chunks → OpenAI Whisper (for Firefox / no SpeechRecognition) ──
-    let audioCtx, micSource, scriptProc, micStream;
-    let audioSamples = [], chunkInterval, isChunkInFlight = false;
-
-    function encodeWAV(samples, sampleRate) {
-        const buf = new ArrayBuffer(44 + samples.length * 2), view = new DataView(buf);
-        const ws = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
-        ws(0,'RIFF'); view.setUint32(4,36+samples.length*2,true); ws(8,'WAVE'); ws(12,'fmt ');
-        view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
-        view.setUint32(24,sampleRate,true); view.setUint32(28,sampleRate*2,true);
-        view.setUint16(32,2,true); view.setUint16(34,16,true);
-        ws(36,'data'); view.setUint32(40,samples.length*2,true);
-        let off=44;
-        for (let i=0;i<samples.length;i++) { const s=Math.max(-1,Math.min(1,samples[i])); view.setInt16(off,s<0?s*0x8000:s*0x7FFF,true); off+=2; }
-        return new Blob([buf],{type:'audio/wav'});
-    }
-    function getRMS(s) { let sum=0; for(let i=0;i<s.length;i++) sum+=s[i]*s[i]; return Math.sqrt(sum/s.length); }
-
-    function flushAndSend() {
-        if (isChunkInFlight || audioSamples.length===0) return;
-        const total=audioSamples.reduce((s,a)=>s+a.length,0);
-        const merged=new Float32Array(total); let off=0;
-        audioSamples.forEach(a=>{merged.set(a,off);off+=a.length;}); audioSamples=[];
-        if (getRMS(merged)<0.01) return;
-        isChunkInFlight=true;
-        const reader=new FileReader();
-        reader.readAsDataURL(encodeWAV(merged,audioCtx?audioCtx.sampleRate:16000));
-        reader.onloadend=async()=>{
-            try {
-                const resp=await fetch('{{ route("student.memorization.transcribe") }}',{
-                    method:'POST',
-                    headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
-                    body:JSON.stringify({audio_chunk:reader.result,context:fullTranscript.slice(-120)})
-                });
-                if(resp.ok){const d=await resp.json();if(d.text&&d.text.trim()){fullTranscript=deduplicateAppend(fullTranscript,d.text);transcriptContainer.innerHTML=`<span class="final-transcript">${fullTranscript}</span>`;}}
-            } catch(e){console.error(e);}
-            finally{isChunkInFlight=false;}
-        };
-    }
-
-    // ── Start / Stop ───────────────────────────────────────────────────────
-    const startRecording = async () => {
-        if (isRecording) return;
-        fullTranscript = '';
-        transcriptContainer.innerHTML = '<span class="placeholder">Connecting…</span>';
-        recordingOutput.style.display = 'block';
-
-        if (recognition) {
-            // Web Speech API path — instant, no server needed
-            try {
-                recognition.start();
-                isRecording = true;
-                recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
-                recordButton.classList.add('recording');
-                transcriptContainer.innerHTML = '<span class="placeholder">Listening… speak now.</span>';
-                startTimer();
-            } catch(err) {
-                transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${err.message}</p>`;
-            }
-        } else {
-            // Whisper fallback (Firefox / no SpeechRecognition)
-            try {
-                micStream = await navigator.mediaDevices.getUserMedia({audio:true});
-                audioCtx = new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
-                micSource = audioCtx.createMediaStreamSource(micStream);
-                scriptProc = audioCtx.createScriptProcessor(4096,1,1);
-                audioSamples = [];
-                scriptProc.onaudioprocess=(e)=>{if(isRecording)audioSamples.push(new Float32Array(e.inputBuffer.getChannelData(0)));};
-                micSource.connect(scriptProc); scriptProc.connect(audioCtx.destination);
-                isRecording = true;
-                recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
-                recordButton.classList.add('recording');
-                transcriptContainer.innerHTML = '<span class="placeholder">Listening…</span>';
-                startTimer();
-                chunkInterval = setInterval(flushAndSend, 1000);
-            } catch(err) {
-                transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${err.message}</p>`;
-            }
-        }
-    };
-
-    const stopRecording = () => {
-        if (!isRecording) return;
-        isRecording = false;
-        if (recognition) {
-            recognition.stop();
-        } else {
-            clearInterval(chunkInterval); flushAndSend();
-            if(scriptProc){scriptProc.disconnect();scriptProc=null;}
-            if(micSource){micSource.disconnect();micSource=null;}
-            if(audioCtx){audioCtx.close();audioCtx=null;}
-            if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
-        }
-        recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
-        recordButton.classList.remove('recording');
-        stopTimer();
-    };
-
-    function formatTime(sec) {
-        const m = Math.floor(sec / 60), s = sec % 60;
-        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-    function startTimer() {
-        seconds = 0;
-        timerDisplay.textContent = formatTime(0);
-        timerInterval = setInterval(() => { seconds++; timerDisplay.textContent = formatTime(seconds); }, 1000);
-    }
-    function stopTimer() { clearInterval(timerInterval); }
-
-    recordButton.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
 
     // Memorization status toggle
     const surahNumber = {{ $surahData['number'] }};

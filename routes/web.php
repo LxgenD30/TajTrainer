@@ -61,7 +61,7 @@ Route::middleware('auth')->group(function () {
         ->name('student.practice.submit');
     Route::get('/student/memorization', [App\Http\Controllers\StudentController::class, 'memorization'])
         ->name('student.memorization');
-    Route::get('/student/memorization/start', [App\Http\Controllers\StudentController::class, 'memorizeSession'])
+    Route::get('/student/memorization/{surah_number}/start', [App\Http\Controllers\StudentController::class, 'memorizeSession'])
         ->name('student.memorization.start');
     Route::get('/student/memorization/{surah_number}', [App\Http\Controllers\StudentController::class, 'surahDetails'])
         ->name('student.memorization.surah');
