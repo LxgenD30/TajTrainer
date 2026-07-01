@@ -416,12 +416,12 @@ const processed = VERSES.map(v => {
 // ── Arabic normalization (diacritics stripped for comparison) ───────────────
 function normalizeAr(s) {
     return s
-        .replace(/[\u064B-\u065F\u0610-\u061A\u0670\u0671]/g, '') // tashkeel
-        .replace(/\u0640/g, '')          // tatweel
-        .replace(/[أإآٱ]/g, 'ا')         // alef variants
-        .replace(/ة/g,  'ه')             // ta marbuta
-        .replace(/ى/g,  'ي')             // alef maqsura
-        .replace(/[^\u0600-\u06FF]/g, '') // keep Arabic only
+        .replace(/[\u064B-\u065F\u0610-\u061A\u0670]/g, '') // tashkeel (NOT \u0671 — handled below)
+        .replace(/\u0640/g, '')              // tatweel
+        .replace(/[\u0671أإآٱ]/g, 'ا')      // alef wasla + alef variants → plain alef
+        .replace(/ة/g,  'ه')                // ta marbuta
+        .replace(/ى/g,  'ي')                // alef maqsura
+        .replace(/[^\u0600-\u06FF]/g, '')   // keep Arabic only
         .trim();
 }
 
@@ -479,8 +479,23 @@ if (!SR) {
     recog.onresult = evt => {
         for (let i = evt.resultIndex; i < evt.results.length; i++) {
             if (evt.results[i].isFinal) {
-                // Pick the best alternative that gives the most correct words
-                let best = evt.results[i][0].transcript.trim();
+                // Pick the alternative that matches the most upcoming expected words
+                const alts = evt.results[i];
+                let best = alts[0].transcript.trim();
+                let bestScore = -1;
+                const curVerse = processed[st.ayahIdx];
+                if (curVerse) {
+                    for (let a = 0; a < alts.length; a++) {
+                        const altWords = alts[a].transcript.trim().split(/\s+/).filter(Boolean);
+                        let score = 0;
+                        for (let w = 0; w < altWords.length; w++) {
+                            const nw = normalizeAr(altWords[w]);
+                            if (nw && curVerse.normWords[st.wordIdx + w] === nw) score++;
+                            else break;
+                        }
+                        if (score > bestScore) { bestScore = score; best = alts[a].transcript.trim(); }
+                    }
+                }
                 processFinal(best);
                 document.getElementById('interim-box').textContent = '';
             } else {
@@ -515,8 +530,8 @@ function processFinal(text) {
         const expected = verse.normWords[st.wordIdx];
 
         if (normWord === expected) {
-            // ✓ Correct word
-            st.display.push({ t: word, ok: true });
+            // ✓ Correct word — display the diacritized expected form, not the plain spoken word
+            st.display.push({ t: verse.words[st.wordIdx], ok: true });
             st.wordIdx++;
 
             if (st.wordIdx >= verse.words.length) {
