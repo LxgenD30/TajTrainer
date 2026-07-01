@@ -438,11 +438,12 @@ const processed = VERSES.map(v => {
     const words     = [];  // display: individual letter chars for Muqattaat, original otherwise
     const compWords = [];  // what user should say: letter names for Muqattaat, original otherwise
     v.text.trim().split(/\s+/).filter(w => w.length > 0).forEach(w => {
-        expandIfMuqattaat(w).forEach(({ disp, comp }) => {
-            words.push(disp);
-            compWords.push(comp);
+            expandIfMuqattaat(w).forEach(({ disp, comp }) => {
+                if (!normalizeAr(comp)) return; // skip stop marks / annotation-only tokens (e.g. \u06db \u06da)
+                words.push(disp);
+                compWords.push(comp);
+            });
         });
-    });
     const normWords = compWords.map(normalizeAr); // compare against spoken letter names
     return { number: v.number, words, normWords, compWords };
 });
@@ -450,15 +451,16 @@ const processed = VERSES.map(v => {
 // ── Arabic normalization (diacritics stripped for comparison) ───────────────
 function normalizeAr(s) {
     return s
-        .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0670 or \u0671)
+        .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0671)
         .replace(/\u0640/g, '')              // tatweel
-        .replace(/\u0670/g, 'ا')            // ٰ dagger alef → full alef (عَـٰلَمِينَ → عالمين)
+        .replace(/\u0670/g, '')              // strip dagger alef (long vowel handled by medial-alef strip below)
         .replace(/[\u0671أإآٱ]/g, 'ا')      // alef wasla + variants → plain alef
         .replace(/ة/g,  'ه')                // ta marbuta
         .replace(/ى/g,  'ي')                // alef maqsura
-        .replace(/\u06E5/g, 'و')            // ۥ Small Waw (Madd Silah) → و
-        .replace(/\u06E6/g, 'ي')            // ۦ Small Ya  (Madd Silah) → ي
+        .replace(/\u06E5/g, 'و')            // ۥ Small Waw → و
+        .replace(/\u06E6/g, 'ي')            // ۦ Small Ya  → ي
         .replace(/[\u06D6-\u06E4\u06E7-\u06FF]/g, '') // strip Quranic annotation marks
+        .replace(/([؀-ۿ])ا([؀-ۿ])/g, '$1$2') // strip medial alef (ذالك→ذلك, عالمين→علمين, كتاب→كتب)
         .replace(/^([وبفلك])ال(?=[تثدذرزسشصضطظن])/, '$1') // strip ال after connector before sun letter
         .replace(/ط/g, 'ت')                 // ط often transcribed as ت
         .replace(/[^\u0600-\u06FF]/g, '')   // keep Arabic only

@@ -72,7 +72,7 @@ def normalize_arabic(text: str) -> str:
     text = unicodedata.normalize('NFC', text)
     text = _TASHKEEL.sub('', text)
     text = _TATWEEL.sub('', text)
-    text = text.replace('\u0670', '\u0627')   # \u0670 dagger alef \u2192 full alef (e.g. \u0639\u064e\u0640\u0670\u0644\u064e\u0645 \u2192 \u0639\u0627\u0644\u0645)
+    text = text.replace('\u0670', '')          # strip dagger alef (long vowel handled by medial-alef strip below)
     for variant, canon in _ALEF_MAP.items():
         text = text.replace(variant, canon)
     # Small Waw / Small Ya (Madd Silah markers) -> base letters
@@ -84,6 +84,9 @@ def normalize_arabic(text: str) -> str:
     text = text.replace('\u0629', '\u0647')
     # alef maqsura -> ya
     text = text.replace('\u0649', '\u064A')
+    # Strip medial alef: handles dagger-alef long vowels (\u0630\u0627\u0644\u0643 \u2192 \u0630\u0644\u0643, \u0639\u0627\u0644\u0645\u064a\u0646 \u2192 \u0639\u0644\u0645\u064a\u0646, \u0643\u062a\u0627\u0628 \u2192 \u0643\u062a\u0628)
+    # Alef surrounded by two Arabic chars = optional long vowel, strip from both sides
+    text = re.sub(r'([\u0600-\u06FF])\u0627([\u0600-\u06FF])', r'\1\2', text)
     # Strip \u0627\u0644 after word-initial connector before sun letter (assimilation)
     text = re.sub(r'(?<=[\u0648\u0628\u0641\u0644\u0643])\u0627\u0644(?=[\u062a\u062b\u062f\u0630\u0631\u0632\u0633\u0634\u0635\u0636\u0637\u0638\u0646])', '', text)
     # \u0637 -> \u062a (emphatic ta misrecognised by speech engines)
