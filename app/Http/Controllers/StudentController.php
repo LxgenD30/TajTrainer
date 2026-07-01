@@ -601,35 +601,33 @@ class StudentController extends Controller
     public function surahDetails($surah_number)
     {
         try {
-            // Sequential API calls: verse text (Quran Foundation) + chapter metadata + translations
-            $versesResp = Http::timeout(15)->get(
-                'https://apis.quran.foundation/content/api/v4/quran/verses/uthmani_tajweed',
-                ['chapter_number' => $surah_number, 'per_page' => 300]
-            );
+            // Two QuranCDN calls only — publicly accessible, no auth required
             $chapterResp = Http::timeout(15)->get(
                 "https://api.qurancdn.com/api/qdc/chapters/{$surah_number}",
                 ['language' => 'en']
             );
+            $versesResp = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surah_number}",
+                [
+                    'translations' => 131,
+                    'per_page'     => 300,
+                    'page'         => 1,
+                    'fields'       => 'text_uthmani_tajweed,text_uthmani',
+                ]
+            );
 
-            if ($versesResp->failed() || $chapterResp->failed()) {
+            if ($chapterResp->failed() || $versesResp->failed()) {
                 Log::error("API request failed for Surah {$surah_number}", [
-                    'verses_status'  => $versesResp->status(),
                     'chapter_status' => $chapterResp->status(),
-                    'verses_body'    => substr($versesResp->body(), 0, 300),
+                    'verses_status'  => $versesResp->status(),
                     'chapter_body'   => substr($chapterResp->body(), 0, 300),
+                    'verses_body'    => substr($versesResp->body(), 0, 300),
                 ]);
                 return back()->withErrors(['error' => 'Could not load Surah details from the API.']);
             }
 
-            $translationsResp = Http::timeout(15)->get(
-                "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surah_number}",
-                ['translations' => 131, 'per_page' => 300, 'fields' => 'verse_key']
-            );
-
-            $chapter         = $chapterResp->json('chapter');
-            $verses          = $versesResp->json('verses') ?? [];
-            $translationsRaw = collect($translationsResp->json('verses') ?? [])
-                ->keyBy('verse_key');
+            $chapter = $chapterResp->json('chapter');
+            $verses  = $versesResp->json('verses') ?? [];
 
             $mergedAyahs = [];
             foreach ($verses as $verse) {
@@ -638,18 +636,17 @@ class StudentController extends Controller
                 $surahPadded = str_pad($surah_number, 3, '0', STR_PAD_LEFT);
                 $versePadded = str_pad($verseNum, 3, '0', STR_PAD_LEFT);
 
-                $translationEntry = $translationsRaw[$verseKey] ?? null;
-                $translationText  = strip_tags(
-                    $translationEntry['translations'][0]['text'] ?? ''
+                // Translations are included in the same response
+                $translationText = strip_tags(
+                    $verse['translations'][0]['text'] ?? ''
                 );
 
                 $mergedAyahs[] = [
                     'number'        => $verse['id'],
-                    'text'          => $verse['text_uthmani_tajweed'],
+                    'text'          => $verse['text_uthmani_tajweed'] ?? $verse['text_uthmani'] ?? '',
                     'numberInSurah' => (int) $verseNum,
                     'translation'   => $translationText,
-                    // Alafasy audio via verses.quran.com CDN (no extra API call)
-                    'audio' => "https://verses.quran.com/Alafasy/mp3/{$surahPadded}{$versePadded}.mp3",
+                    'audio'         => "https://verses.quran.com/Alafasy/mp3/{$surahPadded}{$versePadded}.mp3",
                 ];
             }
 
