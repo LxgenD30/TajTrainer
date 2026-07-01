@@ -443,6 +443,69 @@
             </div>
         </div>
         @endif
+
+        @if($assignment->material)
+        <div class="info-card" style="border-left: 4px solid #d4af37;">
+            <div class="info-card-title">
+                <i class="fas fa-book-open" style="color:#d4af37;"></i>
+                Reference Material
+            </div>
+            <p style="color:#555; margin-bottom:14px; font-size:0.95rem;">
+                Review this material before submitting your assignment.
+            </p>
+
+            {{-- Show individual items (PDFs, YouTube, URLs) if available --}}
+            @if($assignment->material->items && $assignment->material->items->count() > 0)
+                <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+                    @foreach($assignment->material->items as $item)
+                        @if($item->type === 'youtube' && $item->path)
+                            @php
+                                preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $item->path, $ytMatch);
+                                $videoId = $ytMatch[1] ?? null;
+                            @endphp
+                            @if($videoId)
+                            <div style="border-radius:10px; overflow:hidden; border:2px solid #1abc9c;">
+                                @if($item->title)
+                                    <div style="padding:8px 12px; background:#f8f9fa; font-weight:600; font-size:0.9rem; color:#0a5c36;">
+                                        <i class="fab fa-youtube" style="color:#e74c3c;"></i> {{ $item->title }}
+                                    </div>
+                                @endif
+                                <iframe width="100%" height="200"
+                                    src="https://www.youtube.com/embed/{{ $videoId }}"
+                                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen style="display:block;"></iframe>
+                            </div>
+                            @endif
+                        @elseif(in_array($item->type, ['file','image']) && $item->path)
+                            <a href="{{ asset('storage/' . $item->path) }}" target="_blank"
+                               style="display:flex; align-items:center; gap:10px; padding:12px 16px; background:#f0faf5; border:2px solid #1abc9c; border-radius:10px; text-decoration:none; color:#0a5c36; font-weight:600; font-size:0.9rem; transition:background 0.2s;"
+                               onmouseover="this.style.background='#d4f5e9'" onmouseout="this.style.background='#f0faf5'">
+                                <i class="fas fa-file-pdf" style="color:#e74c3c; font-size:1.3rem;"></i>
+                                {{ $item->title ?: basename($item->path) }}
+                                <i class="fas fa-external-link-alt" style="margin-left:auto; font-size:0.8rem;"></i>
+                            </a>
+                        @elseif($item->type === 'url' && $item->path)
+                            <a href="{{ $item->path }}" target="_blank"
+                               style="display:flex; align-items:center; gap:10px; padding:12px 16px; background:#f0faf5; border:2px solid #1abc9c; border-radius:10px; text-decoration:none; color:#0a5c36; font-weight:600; font-size:0.9rem; transition:background 0.2s;"
+                               onmouseover="this.style.background='#d4f5e9'" onmouseout="this.style.background='#f0faf5'">
+                                <i class="fas fa-link" style="color:#1abc9c; font-size:1.2rem;"></i>
+                                {{ $item->title ?: $item->path }}
+                                <i class="fas fa-external-link-alt" style="margin-left:auto; font-size:0.8rem;"></i>
+                            </a>
+                        @endif
+                    @endforeach
+                </div>
+            @endif
+
+            <a href="{{ route('student.material.show', ['id' => $assignment->material->material_id, 'from' => 'assignment', 'assignment' => $assignment->assignment_id]) }}"
+               style="display:inline-flex; align-items:center; gap:8px; padding:10px 20px; background:linear-gradient(135deg,#d4af37,#f1c40f); color:#0a5c36; border:2px solid #b38f2d; border-radius:10px; font-weight:700; font-size:0.95rem; text-decoration:none; transition:all 0.2s;"
+               onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <i class="fas fa-book"></i>
+                View Full Material: {{ $assignment->material->title }}
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        @endif
     </div>
     
     <!-- RIGHT COLUMN - Submission Form -->

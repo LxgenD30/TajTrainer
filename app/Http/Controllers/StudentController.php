@@ -177,7 +177,7 @@ class StudentController extends Controller
             \Log::info('Assignment ID: ' . $assignmentId);
             \Log::info('Student ID: ' . Auth::id());
             
-            $assignment = \App\Models\Assignment::with('material', 'classroom')->findOrFail($assignmentId);
+            $assignment = \App\Models\Assignment::with('material.items', 'classroom')->findOrFail($assignmentId);
             \Log::info('Assignment loaded: ' . $assignment->surah . ' verses ' . $assignment->start_verse . '-' . ($assignment->end_verse ?? $assignment->start_verse));
             \Log::info('Tajweed rules: ' . json_encode($assignment->tajweed_rules));
             
