@@ -418,26 +418,33 @@ const LETTER_NAMES = {
     'ط':'طا','س':'سين','ك':'كاف','ه':'ها','ع':'عين',
     'ر':'را','ص':'صاد','ق':'قاف','ن':'نون',
 };
-// Expand Muqatta'at: U+0653 (Arabic Maddah Above) appears on each letter in text_uthmani
-// e.g. الٓمٓ → ['الف','لام','ميم']
+// Expand Muqatta'at: U+0653 (Arabic Maddah Above) marks each letter in text_uthmani Muqatta'at
+// Returns {disp, comp} pairs: disp = letter char to display, comp = letter name user should say
+// e.g. الٓمٓ → [{ا,'الف'},{ل,'لام'},{م,'ميم'}]
 function expandIfMuqattaat(word) {
-    if (!word.includes('\u0653')) return [word];
+    if (!word.includes('\u0653')) return [{ disp: word, comp: word }];
     const base = word
         .replace(/[\u064B-\u065F\u0610-\u061A\u0640\u0653\u0670]/g, '')
         .replace(/[\u0671أإآٱ]/g, 'ا');
     const names = [...base].map(c => LETTER_NAMES[c]);
-    if (names.length > 0 && names.every(n => n !== undefined)) return names;
-    return [word];
+    if (names.length > 0 && names.every(n => n !== undefined)) {
+        return [...base].map((c, i) => ({ disp: c, comp: names[i] }));
+    }
+    return [{ disp: word, comp: word }];
 }
 
-// Pre-process each verse: expand Muqatta'at, build word list, normalize for comparison
+// Pre-process each verse: expand Muqatta'at, build display + comparison + human-readable arrays
 const processed = VERSES.map(v => {
-    const words = [];
+    const words     = [];  // display: individual letter chars for Muqattaat, original otherwise
+    const compWords = [];  // what user should say: letter names for Muqattaat, original otherwise
     v.text.trim().split(/\s+/).filter(w => w.length > 0).forEach(w => {
-        words.push(...expandIfMuqattaat(w));
+        expandIfMuqattaat(w).forEach(({ disp, comp }) => {
+            words.push(disp);
+            compWords.push(comp);
+        });
     });
-    const normWords = words.map(normalizeAr);
-    return { number: v.number, words, normWords };
+    const normWords = compWords.map(normalizeAr); // compare against spoken letter names
+    return { number: v.number, words, normWords, compWords };
 });
 
 // ── Arabic normalization (diacritics stripped for comparison) ───────────────
@@ -448,8 +455,11 @@ function normalizeAr(s) {
         .replace(/[\u0671أإآٱ]/g, 'ا')      // alef wasla + variants → plain alef
         .replace(/ة/g,  'ه')                // ta marbuta
         .replace(/ى/g,  'ي')                // alef maqsura
+        .replace(/\u06E5/g, 'و')            // ۥ Small Waw (Madd Silah) → و
+        .replace(/\u06E6/g, 'ي')            // ۦ Small Ya  (Madd Silah) → ي
+        .replace(/[\u06D6-\u06E4\u06E7-\u06FF]/g, '') // strip Quranic annotation marks
         .replace(/^([وبفلك])ال(?=[تثدذرزسشصضطظن])/, '$1') // strip ال after connector before sun letter
-        .replace(/ط/g, 'ت')                 // ط often transcribed as ت by speech engines
+        .replace(/ط/g, 'ت')                 // ط often transcribed as ت
         .replace(/[^\u0600-\u06FF]/g, '')   // keep Arabic only
         .trim();
 }
@@ -593,7 +603,7 @@ function processFinal(text) {
             st.phase = 'error';
             st.errInfo = {
                 said:    word,
-                want:    verse.words[st.wordIdx],
+                want:    verse.compWords[st.wordIdx], // letter name for Muqattaat, original word otherwise
                 ayahNum: verse.number,
                 wordPos: st.wordIdx + 1,
                 total:   verse.words.length,
