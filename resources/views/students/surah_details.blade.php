@@ -299,56 +299,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const recordingOutput = document.getElementById('recording-output');
     const transcriptContainer = document.getElementById('transcript-container');
     const timerDisplay = document.getElementById('timer');
-    
-    // ── WAV encoder (no ffmpeg needed on server) ────────────────────────────
-    function encodeWAV(samples, sampleRate) {
-        const buf  = new ArrayBuffer(44 + samples.length * 2);
-        const view = new DataView(buf);
-        const ws   = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
-        ws(0, 'RIFF'); view.setUint32(4, 36 + samples.length * 2, true);
-        ws(8, 'WAVE'); ws(12, 'fmt ');
-        view.setUint32(16, 16, true);  view.setUint16(20, 1, true);   // PCM
-        view.setUint16(22, 1, true);   view.setUint32(24, sampleRate, true);
-        view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
-        view.setUint16(34, 16, true);
-        ws(36, 'data'); view.setUint32(40, samples.length * 2, true);
-        let off = 44;
-        for (let i = 0; i < samples.length; i++) {
-            const s = Math.max(-1, Math.min(1, samples[i]));
-            view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-            off += 2;
-        }
-        return new Blob([buf], { type: 'audio/wav' });
-    }
 
-    let isRecording  = false;
-    let audioCtx, micSource, scriptProc, micStream;
-    let audioSamples = [];
-    let chunkInterval;
-    let fullTranscript = '';
-    let timerInterval;
-    let seconds         = 0;
-    let pendingChunks   = 0;
-    let isChunkInFlight = false;
+    let isRecording = false, fullTranscript = '', timerInterval, seconds = 0;
 
-    function setProcessing(delta) {
-        pendingChunks = Math.max(0, pendingChunks + delta);
-        const el = document.getElementById('processing-indicator');
-        if (el) el.style.display = pendingChunks > 0 ? 'block' : 'none';
-    }
-
-    function getRMS(samples) {
-        let sum = 0;
-        for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i];
-        return Math.sqrt(sum / samples.length);
-    }
-
-    // Strip Arabic diacritics for duplicate comparison (keeps them for display)
+    // ── Arabic deduplication helpers ──────────────────────────────────────
     function normalizeAr(s) {
         return s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u0671]/g, '').replace(/\s+/g, ' ').trim();
     }
-
-    // Append newText to existing, removing word-level overlap at the boundary
     function deduplicateAppend(existing, newText) {
         const trimmed = newText.trim();
         if (!trimmed) return existing;
@@ -359,8 +316,7 @@ document.addEventListener('DOMContentLoaded', function () {
         for (let len = maxCheck; len >= 1; len--) {
             if (eWords.slice(-len).map(normalizeAr).join(' ') ===
                 nWords.slice(0, len).map(normalizeAr).join(' ')) {
-                overlap = len;
-                break;
+                overlap = len; break;
             }
         }
         const unique = nWords.slice(overlap);
@@ -368,93 +324,134 @@ document.addEventListener('DOMContentLoaded', function () {
         return (existing.trimEnd() + ' ' + unique.join(' ') + ' ').trimStart();
     }
 
-    function flushAndSend() {
-        if (isChunkInFlight) return;  // wait for in-flight request before sending next
-        if (audioSamples.length === 0) return;
-        const total  = audioSamples.reduce((s, a) => s + a.length, 0);
-        const merged = new Float32Array(total);
-        let off = 0;
-        audioSamples.forEach(a => { merged.set(a, off); off += a.length; });
-        audioSamples = [];
-        // VAD: skip silent/background-noise chunks — don't waste API calls on silence
-        if (getRMS(merged) < 0.01) return;
-        sendWavChunk(encodeWAV(merged, audioCtx ? audioCtx.sampleRate : 16000));
+    // ── Primary: Web Speech API (instant — no server round-trip) ──────────
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+
+    if (SpeechRecognitionAPI) {
+        recognition = new SpeechRecognitionAPI();
+        recognition.lang = 'ar-SA';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = (event) => {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    const text = event.results[i][0].transcript.trim();
+                    if (text) fullTranscript = deduplicateAppend(fullTranscript, text);
+                } else {
+                    interim += event.results[i][0].transcript;
+                }
+            }
+            transcriptContainer.innerHTML =
+                `<span class="final-transcript">${fullTranscript}</span>` +
+                (interim ? `<span style="color:#aaa;font-style:italic;">${interim}</span>` : '');
+        };
+
+        recognition.onerror = (e) => {
+            if (e.error !== 'no-speech' && e.error !== 'aborted')
+                console.warn('Speech recognition error:', e.error);
+        };
+
+        // Auto-restart: browser stops after ~60s silence or network issues
+        recognition.onend = () => { if (isRecording) { try { recognition.start(); } catch(e) {} } };
     }
 
-    const sendWavChunk = (wavBlob) => {
-        isChunkInFlight = true;
-        setProcessing(+1);
-        const reader = new FileReader();
-        reader.readAsDataURL(wavBlob); // → data:audio/wav;base64,...
-        reader.onloadend = async () => {
-            try {
-                const response = await fetch('{{ route('student.memorization.transcribe') }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        audio_chunk: reader.result,
-                        context: fullTranscript.slice(-120)  // last ~120 chars for diacritics style context
-                    })
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.text && data.text.trim()) {
-                        fullTranscript = deduplicateAppend(fullTranscript, data.text);
-                        transcriptContainer.innerHTML = `<span class="final-transcript">${fullTranscript}</span>`;
-                    }
-                }
-            } catch (err) {
-                console.error('Transcription error:', err);
-            } finally {
-                isChunkInFlight = false;
-                setProcessing(-1);
-            }
-        };
-    };
+    // ── Fallback: WAV chunks → OpenAI Whisper (for Firefox / no SpeechRecognition) ──
+    let audioCtx, micSource, scriptProc, micStream;
+    let audioSamples = [], chunkInterval, isChunkInFlight = false;
 
+    function encodeWAV(samples, sampleRate) {
+        const buf = new ArrayBuffer(44 + samples.length * 2), view = new DataView(buf);
+        const ws = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
+        ws(0,'RIFF'); view.setUint32(4,36+samples.length*2,true); ws(8,'WAVE'); ws(12,'fmt ');
+        view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
+        view.setUint32(24,sampleRate,true); view.setUint32(28,sampleRate*2,true);
+        view.setUint16(32,2,true); view.setUint16(34,16,true);
+        ws(36,'data'); view.setUint32(40,samples.length*2,true);
+        let off=44;
+        for (let i=0;i<samples.length;i++) { const s=Math.max(-1,Math.min(1,samples[i])); view.setInt16(off,s<0?s*0x8000:s*0x7FFF,true); off+=2; }
+        return new Blob([buf],{type:'audio/wav'});
+    }
+    function getRMS(s) { let sum=0; for(let i=0;i<s.length;i++) sum+=s[i]*s[i]; return Math.sqrt(sum/s.length); }
+
+    function flushAndSend() {
+        if (isChunkInFlight || audioSamples.length===0) return;
+        const total=audioSamples.reduce((s,a)=>s+a.length,0);
+        const merged=new Float32Array(total); let off=0;
+        audioSamples.forEach(a=>{merged.set(a,off);off+=a.length;}); audioSamples=[];
+        if (getRMS(merged)<0.01) return;
+        isChunkInFlight=true;
+        const reader=new FileReader();
+        reader.readAsDataURL(encodeWAV(merged,audioCtx?audioCtx.sampleRate:16000));
+        reader.onloadend=async()=>{
+            try {
+                const resp=await fetch('{{ route("student.memorization.transcribe") }}',{
+                    method:'POST',
+                    headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+                    body:JSON.stringify({audio_chunk:reader.result,context:fullTranscript.slice(-120)})
+                });
+                if(resp.ok){const d=await resp.json();if(d.text&&d.text.trim()){fullTranscript=deduplicateAppend(fullTranscript,d.text);transcriptContainer.innerHTML=`<span class="final-transcript">${fullTranscript}</span>`;}}
+            } catch(e){console.error(e);}
+            finally{isChunkInFlight=false;}
+        };
+    }
+
+    // ── Start / Stop ───────────────────────────────────────────────────────
     const startRecording = async () => {
         if (isRecording) return;
         fullTranscript = '';
-        transcriptContainer.innerHTML = '<span class="placeholder">Connecting to microphone...</span>';
+        transcriptContainer.innerHTML = '<span class="placeholder">Connecting…</span>';
         recordingOutput.style.display = 'block';
-        try {
-            micStream  = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioCtx   = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-            micSource  = audioCtx.createMediaStreamSource(micStream);
-            scriptProc = audioCtx.createScriptProcessor(4096, 1, 1);
-            audioSamples = [];
 
-            scriptProc.onaudioprocess = (e) => {
-                if (isRecording) audioSamples.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-            };
-            micSource.connect(scriptProc);
-            scriptProc.connect(audioCtx.destination);
-
-            isRecording = true;
-            recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
-            recordButton.classList.add('recording');
-            transcriptContainer.innerHTML = '<span class="placeholder">Listening… transcription will appear below.</span>';
-            startTimer();
-
-            // Send a WAV chunk every 1 second for rolling live transcription
-            chunkInterval = setInterval(flushAndSend, 1000);
-        } catch (err) {
-            transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${err.message}</p>`;
+        if (recognition) {
+            // Web Speech API path — instant, no server needed
+            try {
+                recognition.start();
+                isRecording = true;
+                recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+                recordButton.classList.add('recording');
+                transcriptContainer.innerHTML = '<span class="placeholder">Listening… speak now.</span>';
+                startTimer();
+            } catch(err) {
+                transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${err.message}</p>`;
+            }
+        } else {
+            // Whisper fallback (Firefox / no SpeechRecognition)
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({audio:true});
+                audioCtx = new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+                micSource = audioCtx.createMediaStreamSource(micStream);
+                scriptProc = audioCtx.createScriptProcessor(4096,1,1);
+                audioSamples = [];
+                scriptProc.onaudioprocess=(e)=>{if(isRecording)audioSamples.push(new Float32Array(e.inputBuffer.getChannelData(0)));};
+                micSource.connect(scriptProc); scriptProc.connect(audioCtx.destination);
+                isRecording = true;
+                recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+                recordButton.classList.add('recording');
+                transcriptContainer.innerHTML = '<span class="placeholder">Listening…</span>';
+                startTimer();
+                chunkInterval = setInterval(flushAndSend, 1000);
+            } catch(err) {
+                transcriptContainer.innerHTML = `<p class="text-danger"><strong>Error:</strong> ${err.message}</p>`;
+            }
         }
     };
 
     const stopRecording = () => {
         if (!isRecording) return;
         isRecording = false;
-        clearInterval(chunkInterval);
-        flushAndSend(); // send any remaining audio before stopping
-        if (scriptProc) { scriptProc.disconnect(); scriptProc = null; }
-        if (micSource)  { micSource.disconnect();  micSource  = null; }
-        if (audioCtx)   { audioCtx.close();         audioCtx   = null; }
-        if (micStream)  { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+        if (recognition) {
+            recognition.stop();
+        } else {
+            clearInterval(chunkInterval); flushAndSend();
+            if(scriptProc){scriptProc.disconnect();scriptProc=null;}
+            if(micSource){micSource.disconnect();micSource=null;}
+            if(audioCtx){audioCtx.close();audioCtx=null;}
+            if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
+        }
         recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
         recordButton.classList.remove('recording');
         stopTimer();

@@ -593,57 +593,70 @@ class StudentController extends Controller
         return view('students.memorization');
     }
 
+    public function memorizeSession()
+    {
+        return view('students.memorization_session');
+    }
+
     public function surahDetails($surah_number)
     {
         try {
-            // Request the specific audio edition to ensure the 'audio' key is present
-            $response = Http::get("https://api.alquran.cloud/v1/surah/{$surah_number}/editions/quran-uthmani,en.asad,ar.alafasy");
-            
-            if ($response->failed()) {
-                Log::error("API request failed for Surah {$surah_number}: " . $response->body());
+            // Parallel API calls: verse text (Quran Foundation) + chapter metadata + translations
+            $responses = Http::pool(fn ($pool) => [
+                $pool->as('verses')->get(
+                    "https://apis.quran.foundation/content/api/v4/quran/verses/uthmani_tajweed",
+                    ['chapter_number' => $surah_number, 'per_page' => 300]
+                ),
+                $pool->as('chapter')->get(
+                    "https://api.qurancdn.com/api/qdc/chapters/{$surah_number}",
+                    ['language' => 'en']
+                ),
+                $pool->as('translations')->get(
+                    "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surah_number}",
+                    ['translations' => 131, 'per_page' => 300, 'fields' => 'verse_key']
+                ),
+            ]);
+
+            if ($responses['verses']->failed() || $responses['chapter']->failed()) {
+                Log::error("API request failed for Surah {$surah_number}");
                 return back()->withErrors(['error' => 'Could not load Surah details from the API.']);
             }
 
-            $responseData = $response->json();
+            $chapter      = $responses['chapter']->json('chapter');
+            $verses       = $responses['verses']->json('verses') ?? [];
+            $translationsRaw = collect($responses['translations']->json('verses') ?? [])
+                ->keyBy('verse_key');
 
-            if ($responseData['code'] != 200 || !isset($responseData['data'])) {
-                Log::error("Invalid API response for Surah {$surah_number}: " . json_encode($responseData));
-                return back()->withErrors(['error' => 'Received invalid data for the Surah.']);
-            }
-
-            // The response contains multiple editions, we need to structure it for the view
-            $uthmaniEdition = $responseData['data'][0];
-            $translationEdition = $responseData['data'][1];
-            $audioEdition = $responseData['data'][2];
-
-            // Merge the editions into a single array of ayahs
             $mergedAyahs = [];
-            if (isset($uthmaniEdition['ayahs'])) {
-                foreach ($uthmaniEdition['ayahs'] as $index => $ayah) {
-                    $mergedAyahs[$index] = [
-                        'number' => $ayah['number'],
-                        'text' => $ayah['text'],
-                        'numberInSurah' => $ayah['numberInSurah'],
-                        'juz' => $ayah['juz'],
-                        'manzil' => $ayah['manzil'],
-                        'page' => $ayah['page'],
-                        'ruku' => $ayah['ruku'],
-                        'hizbQuarter' => $ayah['hizbQuarter'],
-                        'sajda' => $ayah['sajda'],
-                        'translation' => $translationEdition['ayahs'][$index]['text'] ?? '',
-                        'audio' => $audioEdition['ayahs'][$index]['audio'] ?? null,
-                    ];
-                }
+            foreach ($verses as $verse) {
+                $verseKey = $verse['verse_key']; // e.g. "1:1"
+                [, $verseNum] = explode(':', $verseKey);
+                $surahPadded = str_pad($surah_number, 3, '0', STR_PAD_LEFT);
+                $versePadded = str_pad($verseNum, 3, '0', STR_PAD_LEFT);
+
+                $translationEntry = $translationsRaw[$verseKey] ?? null;
+                $translationText  = strip_tags(
+                    $translationEntry['translations'][0]['text'] ?? ''
+                );
+
+                $mergedAyahs[] = [
+                    'number'        => $verse['id'],
+                    'text'          => $verse['text_uthmani_tajweed'],
+                    'numberInSurah' => (int) $verseNum,
+                    'translation'   => $translationText,
+                    // Alafasy audio via verses.quran.com CDN (no extra API call)
+                    'audio' => "https://verses.quran.com/Alafasy/mp3/{$surahPadded}{$versePadded}.mp3",
+                ];
             }
 
             $surahData = [
-                'number' => $uthmaniEdition['number'],
-                'name' => $uthmaniEdition['name'],
-                'englishName' => $uthmaniEdition['englishName'],
-                'englishNameTranslation' => $uthmaniEdition['englishNameTranslation'],
-                'revelationType' => $uthmaniEdition['revelationType'],
-                'numberOfAyahs' => $uthmaniEdition['numberOfAyahs'],
-                'ayahs' => $mergedAyahs,
+                'number'                  => $chapter['id'],
+                'name'                    => $chapter['name_arabic'],
+                'englishName'             => $chapter['name_simple'],
+                'englishNameTranslation'  => $chapter['translated_name']['name'] ?? '',
+                'revelationType'          => ucfirst($chapter['revelation_place'] ?? ''),
+                'numberOfAyahs'           => $chapter['verses_count'],
+                'ayahs'                   => $mergedAyahs,
             ];
 
             // Load existing memorization statuses for this student and surah
