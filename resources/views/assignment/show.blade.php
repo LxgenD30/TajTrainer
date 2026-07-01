@@ -365,19 +365,51 @@
             </h4>
             <div class="material-info">
                 <p class="material-title" style="font-size: 1.2rem;">{{ $assignment->material->title }}</p>
-                
-                <div class="material-links">
-                    @if($assignment->material->file_path)
-                        <a href="{{ Storage::url($assignment->material->file_path) }}" target="_blank" class="material-link" style="font-size: 1rem;">
-                            📄 Download PDF
-                        </a>
-                    @endif
-                    
-                    @if($assignment->material->video_link)
-                        <a href="{{ $assignment->material->video_link }}" target="_blank" class="material-link" style="font-size: 1rem;">
-                            🎥 Watch Video
-                        </a>
-                    @endif
+
+                @if($assignment->material->items && $assignment->material->items->count() > 0)
+                    <div style="display:flex; flex-direction:column; gap:10px; margin-top:12px;">
+                        @foreach($assignment->material->items as $item)
+                            @if($item->type === 'youtube' && $item->path)
+                                @php
+                                    preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $item->path, $ytMatch);
+                                    $videoId = $ytMatch[1] ?? null;
+                                @endphp
+                                @if($videoId)
+                                <div style="border-radius:10px; overflow:hidden; border:2px solid #1abc9c; margin-bottom:4px;">
+                                    @if($item->title)
+                                        <div style="padding:7px 12px; background:#f8f9fa; font-weight:600; font-size:0.9rem; color:#0a5c36;">
+                                            <i class="fab fa-youtube" style="color:#e74c3c;"></i> {{ $item->title }}
+                                        </div>
+                                    @endif
+                                    <iframe width="100%" height="200"
+                                        src="https://www.youtube.com/embed/{{ $videoId }}"
+                                        frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen style="display:block;"></iframe>
+                                </div>
+                                @endif
+                            @elseif(in_array($item->type, ['file','image']) && $item->path)
+                                <a href="{{ asset('storage/' . $item->path) }}" target="_blank" class="material-link" style="font-size:1rem; display:flex; align-items:center; gap:8px;">
+                                    <i class="fas fa-file-pdf" style="color:#e74c3c;"></i>
+                                    {{ $item->title ?: basename($item->path) }}
+                                    <i class="fas fa-external-link-alt" style="font-size:0.8rem; margin-left:auto;"></i>
+                                </a>
+                            @elseif($item->type === 'url' && $item->path)
+                                <a href="{{ $item->path }}" target="_blank" class="material-link" style="font-size:1rem; display:flex; align-items:center; gap:8px;">
+                                    <i class="fas fa-link" style="color:#1abc9c;"></i>
+                                    {{ $item->title ?: $item->path }}
+                                    <i class="fas fa-external-link-alt" style="font-size:0.8rem; margin-left:auto;"></i>
+                                </a>
+                            @endif
+                        @endforeach
+                    </div>
+                @else
+                    <p style="color:#888; font-size:0.9rem; margin-top:8px;">No items attached to this material.</p>
+                @endif
+
+                <div class="material-links" style="margin-top:14px;">
+                    <a href="{{ route('student.material.show', ['id' => $assignment->material->material_id, 'from' => 'assignment', 'assignment' => $assignment->assignment_id]) }}" class="material-link" style="font-size:1rem;">
+                        📖 View Full Material
+                    </a>
                 </div>
             </div>
         </div>

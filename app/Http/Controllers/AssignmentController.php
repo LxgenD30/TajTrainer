@@ -101,7 +101,7 @@ class AssignmentController extends Controller
             abort(403, 'Unauthorized access to this assignment. You must be enrolled in this classroom.');
         }
 
-        $assignment->load('material', 'classroom');
+        $assignment->load('material.items', 'classroom');
         
         // If student, check if they have a submission
         $submission = null;
