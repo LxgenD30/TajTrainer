@@ -177,16 +177,17 @@
             </div>
         @endif
     </div>
-    @if(isset($from) && $from === 'assignment' && isset($assignmentId) && $assignmentId)
-    <a href="{{ route('assignment.show', $assignmentId) }}"
-    @else
-    <a href="{{ route('materials.index') }}"
-    @endif
+    @php
+        $backUrl   = (isset($from) && $from === 'assignment' && isset($assignmentId) && $assignmentId)
+            ? route('assignment.show', $assignmentId)
+            : route('materials.index');
+        $backLabel = (isset($from) && $from === 'assignment') ? 'Back to Assignment' : 'Back to Materials';
+    @endphp
+    <a href="{{ $backUrl }}"
         style="display: inline-flex; align-items: center; gap: 10px; color: #1a1a1a; text-decoration: none; font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 1rem; padding: 12px 24px; border-radius: 50px; background: #d4af37; border: 3px solid #b8860b; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); white-space: nowrap;"
         onmouseover="this.style.background='#ffcc33'; this.style.transform='translateY(-2px)';"
         onmouseout="this.style.background='#d4af37'; this.style.transform='translateY(0)';">
-        <i class="fas fa-arrow-left"></i>
-        @if(isset($from) && $from === 'assignment')Back to Assignment@else Back to Materials@endif
+        <i class="fas fa-arrow-left"></i> {{ $backLabel }}
     </a>
 </div>
 

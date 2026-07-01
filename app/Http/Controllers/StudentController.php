@@ -601,30 +601,34 @@ class StudentController extends Controller
     public function surahDetails($surah_number)
     {
         try {
-            // Parallel API calls: verse text (Quran Foundation) + chapter metadata + translations
-            $responses = Http::pool(fn ($pool) => [
-                $pool->as('verses')->get(
-                    "https://apis.quran.foundation/content/api/v4/quran/verses/uthmani_tajweed",
-                    ['chapter_number' => $surah_number, 'per_page' => 300]
-                ),
-                $pool->as('chapter')->get(
-                    "https://api.qurancdn.com/api/qdc/chapters/{$surah_number}",
-                    ['language' => 'en']
-                ),
-                $pool->as('translations')->get(
-                    "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surah_number}",
-                    ['translations' => 131, 'per_page' => 300, 'fields' => 'verse_key']
-                ),
-            ]);
+            // Sequential API calls: verse text (Quran Foundation) + chapter metadata + translations
+            $versesResp = Http::timeout(15)->get(
+                'https://apis.quran.foundation/content/api/v4/quran/verses/uthmani_tajweed',
+                ['chapter_number' => $surah_number, 'per_page' => 300]
+            );
+            $chapterResp = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/chapters/{$surah_number}",
+                ['language' => 'en']
+            );
 
-            if ($responses['verses']->failed() || $responses['chapter']->failed()) {
-                Log::error("API request failed for Surah {$surah_number}");
+            if ($versesResp->failed() || $chapterResp->failed()) {
+                Log::error("API request failed for Surah {$surah_number}", [
+                    'verses_status'  => $versesResp->status(),
+                    'chapter_status' => $chapterResp->status(),
+                    'verses_body'    => substr($versesResp->body(), 0, 300),
+                    'chapter_body'   => substr($chapterResp->body(), 0, 300),
+                ]);
                 return back()->withErrors(['error' => 'Could not load Surah details from the API.']);
             }
 
-            $chapter      = $responses['chapter']->json('chapter');
-            $verses       = $responses['verses']->json('verses') ?? [];
-            $translationsRaw = collect($responses['translations']->json('verses') ?? [])
+            $translationsResp = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surah_number}",
+                ['translations' => 131, 'per_page' => 300, 'fields' => 'verse_key']
+            );
+
+            $chapter         = $chapterResp->json('chapter');
+            $verses          = $versesResp->json('verses') ?? [];
+            $translationsRaw = collect($translationsResp->json('verses') ?? [])
                 ->keyBy('verse_key');
 
             $mergedAyahs = [];

@@ -73,7 +73,7 @@
 </div>
 @endsection
 
-@push('scripts')
+@section('extra-scripts')
 <script>
     const transcriptContainer = document.getElementById('transcript-container');
     const interimContainer    = document.getElementById('interim-container');
@@ -261,4 +261,4 @@
         interimContainer.textContent='';
     }
 </script>
-@endpush
+@endsection

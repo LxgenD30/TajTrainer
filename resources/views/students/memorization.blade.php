@@ -56,17 +56,9 @@
 </style>
 
 <div class="section-card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
-        <div>
-            <h2 class="section-title" style="margin-bottom:4px;">Surah Status</h2>
-            <p class="text-gray-500">Click on a Surah to view and update your memorization progress for each Ayah.</p>
-        </div>
-        <a href="{{ route('student.memorization.start') }}"
-           style="display:inline-flex; align-items:center; gap:10px; padding:14px 28px; background:linear-gradient(135deg,#0a5c36,#1abc9c); color:white; border:3px solid #2a2a2a; border-radius:15px; font-weight:800; font-size:1.1rem; text-decoration:none; box-shadow:0 6px 20px rgba(26,188,156,0.35); transition:all 0.3s ease;"
-           onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 25px rgba(26,188,156,0.45)';"
-           onmouseout="this.style.transform=''; this.style.boxShadow='0 6px 20px rgba(26,188,156,0.35)';">
-            <i class="fas fa-play-circle" style="font-size:1.3rem;"></i> Start Memorizing
-        </a>
+    <div style="margin-bottom:20px;">
+        <h2 class="section-title" style="margin-bottom:4px;">Surah Status</h2>
+        <p class="text-gray-500">Click on a Surah to view ayahs and start memorizing.</p>
     </div>
     <div class="memorization-grid">
         @php

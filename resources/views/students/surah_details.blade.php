@@ -213,6 +213,11 @@
     <div class="record-section">
         <button id="recordButton"><i class="fas fa-microphone"></i> Start Recording</button>
         <div id="timer">00:00</div>
+        <a href="{{ route('student.memorization.start') }}"
+           style="display:inline-flex; align-items:center; gap:8px; padding:10px 22px; background:linear-gradient(135deg,#0a5c36,#1abc9c); color:white; border:2px solid rgba(255,255,255,0.3); border-radius:50px; font-weight:700; font-size:0.95rem; text-decoration:none; transition:all 0.25s;"
+           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 18px rgba(10,92,54,0.4)'"
+           onmouseout="this.style.transform=''; this.style.boxShadow=''"
+        ><i class="fas fa-play-circle"></i> Start Memorizing</a>
     </div>
 </div>
 
