@@ -207,6 +207,36 @@
         line-height: 1.6;
         white-space: pre-wrap;
     }
+
+    .quran-verse-display {
+        background: rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        border-radius: 10px;
+        direction: rtl;
+        text-align: center;
+        font-family: 'Amiri', serif;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #000000;
+        line-height: 2.8;
+    }
+
+    .quran-verse-display tajweed {
+        display: inline;
+        font-weight: 700;
+    }
+
+    .quran-verse-display tajweed.ham_wasl { color: #2e7d32; }
+    .quran-verse-display tajweed.laam_shamsiyah { color: #ef6c00; }
+    .quran-verse-display tajweed.ikhafa { color: #1565c0; }
+    .quran-verse-display tajweed.idgham_ghunnah { color: #7b1fa2; }
+    .quran-verse-display tajweed.idgham_shafawi { color: #00897b; }
+    .quran-verse-display tajweed.gunnah { color: #2e7d32; }
+    .quran-verse-display tajweed.madda_obligatory,
+    .quran-verse-display tajweed.madda_normal,
+    .quran-verse-display tajweed.madda_permissible { color: #c62828; }
+    .quran-verse-display tajweed.slnt { color: #6d4c41; }
+    .quran-verse-display tajweed.end { color: #555555; }
     
     .submission-badge {
         display: inline-flex;
@@ -306,10 +336,18 @@
         @endif
         
         @if($assignment->expected_recitation)
+            @php
+                $expectedRecitation = $assignment->expected_recitation;
+                $hasTajweedMarkup = str_contains($expectedRecitation, '<tajweed') || str_contains($expectedRecitation, '<span class=end');
+            @endphp
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(0, 0, 0, 0.2);">
                 <div class="info-label" style="margin-bottom: 10px; font-size: 1rem;">📝 Expected Arabic Text:</div>
-                <div style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 10px; direction: rtl; text-align: center; font-size: 2rem; font-weight: bold; color: #000000; font-family: 'Amiri', serif; line-height: 2.8;">
-                    {{ $assignment->expected_recitation }}
+                <div class="quran-verse-display">
+                    @if($hasTajweedMarkup)
+                        {!! $expectedRecitation !!}
+                    @else
+                        {!! nl2br(e($expectedRecitation)) !!}
+                    @endif
                 </div>
             </div>
         @endif

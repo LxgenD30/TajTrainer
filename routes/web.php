@@ -148,6 +148,8 @@ Route::middleware('auth')->group(function () {
         ->name('assignment.create');
     Route::post('/assignments', [App\Http\Controllers\AssignmentController::class, 'store'])
         ->name('assignment.store');
+    Route::get('/assignments/preview-verse', [App\Http\Controllers\AssignmentController::class, 'previewVerse'])
+        ->name('assignment.preview-verse');
     Route::get('/assignments/{assignment}', [App\Http\Controllers\AssignmentController::class, 'show'])
         ->name('assignment.show');
     Route::get('/assignments/{assignment}/edit', [App\Http\Controllers\AssignmentController::class, 'edit'])

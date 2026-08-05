@@ -241,6 +241,10 @@
         border: 2px solid rgba(26, 188, 156, 0.4);
         margin-top: 15px;
     }
+
+    .verse-display tajweed {
+        display: inline;
+    }
     
     .verse-arabic {
         text-align: right;
@@ -248,14 +252,32 @@
         font-family: 'Amiri', 'Traditional Arabic', serif;
         font-size: 1.5rem;
         line-height: 2;
-        color: #0a5c36;
+        color: #000000;
         margin-bottom: 12px;
     }
+
+    .verse-arabic tajweed {
+        display: inline;
+        font-weight: 700;
+    }
+
+    .verse-arabic tajweed.ham_wasl { color: #2e7d32; }
+    .verse-arabic tajweed.laam_shamsiyah { color: #ef6c00; }
+    .verse-arabic tajweed.ikhafa { color: #1565c0; }
+    .verse-arabic tajweed.idgham_ghunnah { color: #7b1fa2; }
+    .verse-arabic tajweed.idgham_shafawi { color: #00897b; }
+    .verse-arabic tajweed.gunnah { color: #2e7d32; }
+    .verse-arabic tajweed.madda_obligatory,
+    .verse-arabic tajweed.madda_normal,
+    .verse-arabic tajweed.madda_permissible { color: #c62828; }
+    .verse-arabic tajweed.slnt { color: #6d4c41; }
+    .verse-arabic tajweed.end { color: #555555; }
     
     .verse-translation {
-        color: #555;
+        color: #000000;
         font-size: 0.9rem;
         line-height: 1.6;
+        white-space: pre-wrap;
         padding: 12px;
         background: white;
         border-radius: 8px;
@@ -755,54 +777,26 @@
             const start = parseInt(ayahStart);
             const requestedEnd = ayahEnd ? parseInt(ayahEnd) : start;
 
-            const chapterResponse = await fetch(`https://api.qurancdn.com/api/qdc/chapters/${surahNumber}?language=en`);
-            const versesResponse = await fetch(`https://api.qurancdn.com/api/qdc/verses/by_chapter/${surahNumber}?translations=131&per_page=300&page=1&fields=text_uthmani,text_uthmani_tajweed`);
-
-            if (!chapterResponse.ok || !versesResponse.ok) {
-                throw new Error(`Failed to fetch Surah ${surahNumber}`);
-            }
-
-            const chapterResult = await chapterResponse.json();
-            const versesResult = await versesResponse.json();
-            const chapter = chapterResult.chapter;
-            const verses = versesResult.verses || [];
-            const maxAyah = verses.length;
-            const end = Math.min(requestedEnd, maxAyah);
-
-            if (start > maxAyah) {
-                throw new Error(`Verse ${start} is not available in this Surah`);
-            }
-
-            const selectedVerses = verses.filter(verse => {
-                const verseKey = verse.verse_key || '';
-                const verseNumber = parseInt((verseKey.split(':')[1] || '0'), 10);
-                return verseNumber >= start && verseNumber <= end;
+            const previewUrl = "{{ route('assignment.preview-verse') }}";
+            const response = await fetch(`${previewUrl}?surah_number=${encodeURIComponent(surahNumber)}&start_verse=${encodeURIComponent(start)}&end_verse=${encodeURIComponent(requestedEnd)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
             });
 
-            if (!selectedVerses.length) {
-                throw new Error('No verses found for the selected range');
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || `Failed to fetch Surah ${surahNumber}`);
             }
 
-            const stripHtml = (text) => String(text || '').replace(/<[^>]*>/g, '').trim();
-            const selectedOption = document.querySelector(`#surahSelect option[value="${surahNumber}"]`);
-            const surahName = selectedOption ? selectedOption.getAttribute('data-name') : (chapter && chapter.name_simple) ? chapter.name_simple : '';
-            const surahArabic = chapter && chapter.name_arabic ? chapter.name_arabic : '';
+            const verse = result.verse || {};
 
-            const arabicTexts = selectedVerses.map(verse => verse.text_uthmani_tajweed || verse.text_uthmani || '');
-            const translations = selectedVerses.map(verse => {
-                const verseNumber = parseInt((verse.verse_key || '').split(':')[1] || '0', 10);
-                const translationText = stripHtml(verse.translations && verse.translations[0] ? verse.translations[0].text : '');
-                return `[${verseNumber}] ${translationText}`;
-            });
-
-            const arabicText = arabicTexts.join(' ۝ ');
-            const translationText = translations.join('\n\n');
-
-            verseArabic.textContent = arabicText;
-            verseTranslation.textContent = translationText;
+            verseArabic.innerHTML = verse.arabic_html || verse.arabic_plain || '';
+            verseTranslation.textContent = verse.translation || '';
             versePreview.style.display = 'block';
 
-            currentVerseData = `\n\n--- Quran Verse ---\nSurah: ${surahName}${surahArabic ? ` (${surahArabic})` : ''}\nAyat: ${start}${end !== start ? `-${end}` : ''}\n\nArabic:\n${arabicText}\n\nTranslation:\n${translationText}\n--- End Verse ---\n\n`;
+            currentVerseData = `\n\n--- Quran Verse ---\nSurah: ${verse.surah_name || ''}${verse.surah_name_arabic ? ` (${verse.surah_name_arabic})` : ''}\nAyat: ${start}${requestedEnd !== start ? `-${requestedEnd}` : ''}\n\nArabic:\n${verse.arabic_plain || ''}\n\nTranslation:\n${verse.translation || ''}\n--- End Verse ---\n\n`;
 
         } catch (error) {
             alert('Error fetching verse: ' + error.message);

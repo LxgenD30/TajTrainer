@@ -200,6 +200,36 @@ class AssignmentController extends Controller
     }
 
     /**
+     * Preview a Quran verse range for the create assignment form.
+     */
+    public function previewVerse(Request $request)
+    {
+        $validated = $request->validate([
+            'surah_number' => 'required|integer|min:1|max:114',
+            'start_verse' => 'required|integer|min:1',
+            'end_verse' => 'nullable|integer|min:1',
+        ]);
+
+        $verseData = $this->fetchQuranVerseRange(
+            $validated['surah_number'],
+            $validated['start_verse'],
+            $validated['end_verse'] ?? null
+        );
+
+        if (!$verseData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load the selected verses right now.',
+            ], 502);
+        }
+
+        return response()->json([
+            'success' => true,
+            'verse' => $verseData,
+        ]);
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Assignment $assignment)
@@ -228,52 +258,104 @@ class AssignmentController extends Controller
      */
     private function getQuranText($surahNumber, $startVerse, $endVerse)
     {
-        $verses = [];
+        $verseData = $this->fetchQuranVerseRange($surahNumber, $startVerse, $endVerse);
+
+        return $verseData['arabic_html'] ?? '';
+    }
+
+    /**
+     * Fetch verse data from Qurancdn for both preview and assignment storage.
+     */
+    private function fetchQuranVerseRange($surahNumber, $startVerse, $endVerse = null)
+    {
         $endVerse = $endVerse ?? $startVerse;
 
         try {
-            $response = Http::timeout(15)->get(
+            $chapterResponse = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/chapters/{$surahNumber}",
+                ['language' => 'en']
+            );
+
+            $versesResponse = Http::timeout(15)->get(
                 "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surahNumber}",
                 [
+                    'translations' => 131,
                     'per_page' => 300,
                     'page' => 1,
-                    'fields' => 'text_uthmani',
+                    'fields' => 'text_uthmani,text_uthmani_tajweed',
                 ]
             );
 
-            if ($response->successful()) {
-                $chapterVerses = $response->json('verses') ?? [];
-
-                foreach ($chapterVerses as $verse) {
-                    $verseKey = $verse['verse_key'] ?? '';
-                    $verseParts = explode(':', $verseKey);
-                    $verseNumber = (int) ($verseParts[1] ?? 0);
-
-                    if ($verseNumber >= $startVerse && $verseNumber <= $endVerse) {
-                        $text = $verse['text_uthmani'] ?? '';
-                        if ($text !== '') {
-                            $verses[] = $text;
-                        }
-                    }
-                }
-            } else {
+            if ($chapterResponse->failed() || $versesResponse->failed()) {
                 \Log::warning("Qurancdn verse API failed for surah {$surahNumber}", [
-                    'status' => $response->status(),
+                    'chapter_status' => $chapterResponse->status(),
+                    'verses_status' => $versesResponse->status(),
                 ]);
+
+                return null;
             }
+
+            $chapter = $chapterResponse->json('chapter') ?? [];
+            $verses = $versesResponse->json('verses') ?? [];
+
+            if (empty($verses)) {
+                return null;
+            }
+
+            $selectedVerses = [];
+            foreach ($verses as $verse) {
+                $verseKey = $verse['verse_key'] ?? '';
+                $verseParts = explode(':', $verseKey);
+                $verseNumber = (int) ($verseParts[1] ?? 0);
+
+                if ($verseNumber >= $startVerse && $verseNumber <= $endVerse) {
+                    $selectedVerses[] = $verse;
+                }
+            }
+
+            if (empty($selectedVerses)) {
+                return null;
+            }
+
+            $arabicHtml = [];
+            $arabicPlain = [];
+            $translations = [];
+
+            foreach ($selectedVerses as $verse) {
+                $verseParts = explode(':', $verse['verse_key'] ?? '0:0');
+                $verseNumber = (int) ($verseParts[1] ?? 0);
+                $tajweedText = $verse['text_uthmani_tajweed'] ?? $verse['text_uthmani'] ?? '';
+                $plainText = trim(strip_tags($tajweedText));
+                $translationText = trim(strip_tags($verse['translations'][0]['text'] ?? ''));
+
+                if ($tajweedText !== '') {
+                    $arabicHtml[] = $tajweedText;
+                }
+
+                if ($plainText !== '') {
+                    $arabicPlain[] = $plainText;
+                }
+
+                if ($translationText !== '') {
+                    $translations[] = '[' . $verseNumber . '] ' . $translationText;
+                }
+            }
+
+            return [
+                'surah_number' => (int) $surahNumber,
+                'surah_name' => $chapter['name_simple'] ?? '',
+                'surah_name_arabic' => $chapter['name_arabic'] ?? '',
+                'start_verse' => (int) $startVerse,
+                'end_verse' => (int) $endVerse,
+                'arabic_html' => implode(' ۝ ', $arabicHtml),
+                'arabic_plain' => implode(' ۝ ', $arabicPlain),
+                'translation' => implode("\n\n", $translations),
+            ];
         } catch (\Exception $e) {
             \Log::error('Error fetching Qurancdn verses: ' . $e->getMessage());
-        }
 
-        if (empty($verses)) {
-            \Log::warning("No verses returned from Qurancdn for surah {$surahNumber}", [
-                'start_verse' => $startVerse,
-                'end_verse' => $endVerse,
-            ]);
+            return null;
         }
-        
-        // Join verses with Arabic verse separator ۝
-        return implode(" ۝ ", $verses);
     }
 
     /**

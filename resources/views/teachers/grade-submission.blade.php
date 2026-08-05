@@ -64,6 +64,35 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
     }
+
+    .quran-verse-display {
+        background: rgba(0, 0, 0, 0.05);
+        padding: 16px;
+        border-radius: 10px;
+        direction: rtl;
+        text-align: center;
+        font-family: 'Amiri', serif;
+        font-size: 1.7rem;
+        line-height: 2.5;
+        color: #000000;
+    }
+
+    .quran-verse-display tajweed {
+        display: inline;
+        font-weight: 700;
+    }
+
+    .quran-verse-display tajweed.ham_wasl { color: #2e7d32; }
+    .quran-verse-display tajweed.laam_shamsiyah { color: #ef6c00; }
+    .quran-verse-display tajweed.ikhafa { color: #1565c0; }
+    .quran-verse-display tajweed.idgham_ghunnah { color: #7b1fa2; }
+    .quran-verse-display tajweed.idgham_shafawi { color: #00897b; }
+    .quran-verse-display tajweed.gunnah { color: #2e7d32; }
+    .quran-verse-display tajweed.madda_obligatory,
+    .quran-verse-display tajweed.madda_normal,
+    .quran-verse-display tajweed.madda_permissible { color: #c62828; }
+    .quran-verse-display tajweed.slnt { color: #6d4c41; }
+    .quran-verse-display tajweed.end { color: #555555; }
 </style>
 
 <section class="welcome-banner">
@@ -232,6 +261,23 @@
                     <span><i class="far fa-calendar"></i> Due {{ $submission->assignment->due_date->format('M d, Y') }}</span>
                 </div>
             </div>
+
+            @if($submission->assignment->expected_recitation)
+            @php
+                $expectedRecitation = $submission->assignment->expected_recitation;
+                $hasTajweedMarkup = str_contains($expectedRecitation, '<tajweed') || str_contains($expectedRecitation, '<span class=end');
+            @endphp
+            <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
+                <div style="color: #0a5c36; font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-quran"></i> Expected Recitation</div>
+                <div class="quran-verse-display">
+                    @if($hasTajweedMarkup)
+                        {!! $expectedRecitation !!}
+                    @else
+                        {!! nl2br(e($expectedRecitation)) !!}
+                    @endif
+                </div>
+            </div>
+            @endif
 
             <!-- Submission Time -->
             <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
