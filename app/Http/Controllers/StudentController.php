@@ -201,6 +201,15 @@ class StudentController extends Controller
                     if (!empty($verseData['arabic_html']) || !empty($verseData['arabic_plain'])) {
                         $verses = $verseData;
                         \Log::info('Verses fetched successfully: ' . substr($verseData['arabic_plain'], 0, 100));
+                    } elseif (!empty($assignment->expected_recitation)) {
+                        // Fallback to assignment snapshot to avoid showing an incorrect chapter.
+                        $verses = [
+                            'arabic_html' => (string) $assignment->expected_recitation,
+                            'arabic_plain' => trim(strip_tags((string) $assignment->expected_recitation)),
+                            'translation' => '',
+                            'audio_urls' => [],
+                        ];
+                        \Log::warning('Using expected_recitation fallback because verse API returned empty data');
                     } else {
                         \Log::warning('No verses returned for assigned range');
                     }
@@ -1386,9 +1395,24 @@ class StudentController extends Controller
      */
     private function fetchQuranVerseRange($surah, $startVerse, $endVerse)
     {
-        $surahNumber = (int) $this->getSurahNumber($surah);
+        $surahNumber = $this->getSurahNumber($surah);
         $startVerse = max(1, (int) $startVerse);
         $endVerse = max($startVerse, (int) ($endVerse ?? $startVerse));
+
+        if (!$surahNumber) {
+            \Log::error('Unable to resolve surah number for verse fetch', [
+                'surah' => $surah,
+                'start_verse' => $startVerse,
+                'end_verse' => $endVerse,
+            ]);
+
+            return [
+                'arabic_html' => '',
+                'arabic_plain' => '',
+                'translation' => '',
+                'audio_urls' => [],
+            ];
+        }
 
         try {
             $response = Http::timeout(15)->get(
@@ -1576,6 +1600,26 @@ class StudentController extends Controller
      */
     private function getSurahNumber($surahName)
     {
+        if (is_numeric($surahName)) {
+            $value = (int) $surahName;
+            if ($value >= 1 && $value <= 114) {
+                return $value;
+            }
+        }
+
+        $surahName = trim((string) $surahName);
+        if ($surahName === '') {
+            return null;
+        }
+
+        // Handle values like "2", "2. Al-Baqarah", or "2 - Al-Baqarah".
+        if (preg_match('/^(\d{1,3})\b/', $surahName, $matches)) {
+            $value = (int) $matches[1];
+            if ($value >= 1 && $value <= 114) {
+                return $value;
+            }
+        }
+
         $surahs = [
             // API format (with proper Arabic transliteration)
             'Al-Faatiha' => 1, 'Al-Baqara' => 2, 'Aal-i-Imraan' => 3, 'An-Nisaa' => 4,
@@ -1633,8 +1677,70 @@ class StudentController extends Controller
             'Kawthar' => 108, 'Kafirun' => 109, 'Nasr' => 110, 'Masad' => 111,
             'Ikhlas' => 112, 'Falaq' => 113, 'Nas' => 114,
         ];
-        
-        return $surahs[$surahName] ?? 1;
+
+        if (isset($surahs[$surahName])) {
+            return (int) $surahs[$surahName];
+        }
+
+        $normalize = static function (string $value): string {
+            $value = strtolower($value);
+            $value = preg_replace('/[^a-z0-9]+/', '', $value);
+            return $value ?? '';
+        };
+
+        $normalizedInput = $normalize($surahName);
+        if ($normalizedInput !== '') {
+            foreach ($surahs as $name => $number) {
+                if ($normalize((string) $name) === $normalizedInput) {
+                    return (int) $number;
+                }
+            }
+        }
+
+        // Last-resort lookup from Qurancdn chapter names used by assignment forms.
+        try {
+            static $chapterIndex = null;
+
+            if ($chapterIndex === null) {
+                $chapterIndex = [];
+                $response = Http::timeout(15)->get('https://api.qurancdn.com/api/qdc/chapters', [
+                    'language' => 'en',
+                ]);
+
+                if ($response->ok()) {
+                    $chapters = $response->json('chapters') ?? [];
+
+                    foreach ($chapters as $chapter) {
+                        $chapterNumber = (int) ($chapter['id'] ?? 0);
+                        if ($chapterNumber < 1) {
+                            continue;
+                        }
+
+                        $simpleName = (string) ($chapter['name_simple'] ?? '');
+                        $translatedName = (string) (($chapter['translated_name']['name'] ?? ''));
+
+                        foreach ([$simpleName, $translatedName] as $candidate) {
+                            $candidateKey = $normalize($candidate);
+                            if ($candidateKey !== '') {
+                                $chapterIndex[$candidateKey] = $chapterNumber;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($normalizedInput !== '' && isset($chapterIndex[$normalizedInput])) {
+                return (int) $chapterIndex[$normalizedInput];
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Qurancdn surah lookup failed: ' . $e->getMessage());
+        }
+
+        \Log::warning('Unable to map surah name to a valid surah number', [
+            'surah' => $surahName,
+        ]);
+
+        return null;
     }
     
     /**
