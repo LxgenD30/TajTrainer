@@ -12,206 +12,705 @@
 @endsection
 
 @section('content')
-    <style>
-    /* High Contrast Card Styles */
-    .class-item-card {
-        display: flex; align-items: center; gap: 15px; padding: 15px; 
-        background: #f9f9f9; border-radius: 12px; border: 2px solid #2a2a2a; 
-        margin-bottom: 12px; transition: all 0.3s ease; text-decoration: none; color: inherit;
-    }
-    .class-item-card:hover { background: #fff; transform: translateX(5px); box-shadow: 5px 5px 0 #2a2a2a; }
+@php
+    $isTeacher = auth()->user()->role_id == 3;
+    $studentCount = $classroom->students->count();
+    $assignmentCount = $assignments->count();
+    $submissionsByAssignment = $submissions ?? collect();
+@endphp
 
-    .class-icon-card { 
-        width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); 
-        border-radius: 12px; display: flex; align-items: center; justify-content: center; 
-        font-size: 1.5rem; color: white; border: 2px solid #2a2a2a;
+<style>
+    /* ============ HERO ============ */
+    .cd-hero {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border: 3px solid #0a4a2b;
+        border-radius: 20px;
+        color: #fff;
+        padding: 28px 34px;
+        margin-bottom: 26px;
+        box-shadow: 0 14px 32px rgba(10, 92, 54, 0.24);
+        position: relative;
+        overflow: hidden;
     }
 
-    .class-details-card { flex: 1; }
-    .class-details-card h4 { color: #000 !important; font-weight: 800; margin-bottom: 5px; font-size: 1.2rem; }
-    .class-details-card p { color: #222 !important; font-size: 1.05rem; font-weight: 600; margin: 0; }
-    
-    .section-card-title { font-size: 1.6rem; color: #000 !important; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-    .empty-state { text-align: center; padding: 40px; color: #000; font-weight: 700; font-size: 1.1rem; }
-    .empty-state i { font-size: 3rem; margin-bottom: 15px; display: block; opacity: 0.5; }
-    </style>
-    <!-- Classroom Header Banner (Like Student Welcome Banner) -->
-    <div style="background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 25px; padding: 40px; margin-bottom: 30px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25); border: 3px solid #2a2a2a;">
-        <div style="content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E\"); opacity: 0.4;"></div>
-        <div style="position: relative; z-index: 2;">
-            @if(auth()->user()->role_id != 3)
-                {{-- Student Back Button at top right aligned with title --}}
-                <a href="{{ route('student.classes') }}" 
-                    style="position: absolute; top: 0; right: 0; padding: 12px 25px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); z-index: 10;"
-                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
-                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
-                    <i class="fas fa-arrow-left"></i> Back to My Classes
+    .cd-hero:before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -80px;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .cd-hero-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+        margin-bottom: 22px;
+    }
+
+    .cd-hero-title-wrap {
+        flex: 1;
+        min-width: 240px;
+    }
+
+    .cd-hero h1 {
+        margin: 0 0 6px;
+        font-size: 2.2rem;
+        line-height: 1.2;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: 'El Messiri', serif;
+    }
+
+    .cd-hero p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.05rem;
+        line-height: 1.6;
+    }
+
+    .cd-hero-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .cd-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 20px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 0.98rem;
+        border: 2px solid transparent;
+        transition: all 0.22s ease;
+        font-family: 'Cairo', sans-serif;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .cd-btn.gold {
+        background: linear-gradient(135deg, #d4af37, #f4d03f);
+        color: #111827;
+        border-color: #3d3520;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    }
+
+    .cd-btn.gold:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.24); }
+    .cd-btn.gold.danger { background: #fff; color: #e74c3c; border-color: #e74c3c; box-shadow: none; }
+    .cd-btn.gold.danger:hover { background: #e74c3c; color: #fff; }
+
+    .cd-btn.white {
+        background: #fff;
+        color: #0a5c36;
+        border-color: #0a5c36;
+    }
+
+    .cd-btn.white:hover { background: #0a5c36; color: #fff; }
+
+    /* Hero stats */
+    .cd-hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .cd-hero-stat {
+        background: rgba(255, 255, 255, 0.14);
+        border: 2px solid rgba(255, 255, 255, 0.28);
+        border-radius: 16px;
+        padding: 18px 20px;
+        text-align: center;
+        backdrop-filter: blur(8px);
+        transition: all 0.22s ease;
+    }
+
+    .cd-hero-stat:hover { background: rgba(255, 255, 255, 0.22); transform: translateY(-2px); }
+
+    .cd-hero-stat .v {
+        font-size: 2.1rem;
+        font-weight: 800;
+        line-height: 1;
+        color: #fff;
+    }
+
+    .cd-hero-stat .v.gold { color: #f4d03f; }
+    .cd-hero-stat .k {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        margin-top: 7px;
+        font-weight: 600;
+    }
+
+    .cd-hero-stat .code {
+        font-family: 'Courier New', monospace;
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: 5px;
+        color: #f4d03f;
+    }
+
+    /* ============ CONTENT GRID ============ */
+    .cd-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+        gap: 26px;
+        align-items: start;
+    }
+
+    .cd-grid.single {
+        grid-template-columns: 1fr;
+    }
+
+    .cd-card {
+        background: #fff;
+        border: 2px solid #2a2a2a;
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(14, 28, 18, 0.07);
+        padding: 24px;
+        animation: cdFadeUp 0.45s ease both;
+    }
+
+    .cd-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 3px solid #0a5c36;
+    }
+
+    .cd-card-header h3 {
+        margin: 0;
+        color: #0a5c36;
+        font-family: 'El Messiri', serif;
+        font-size: 1.35rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .cd-badge-count {
+        background: #0a5c36;
+        color: #fff;
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 800;
+    }
+
+    /* ============ STUDENT ROWS (Teacher view) ============ */
+    .cd-student-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .cd-student {
+        background: #f8fcf8;
+        border: 2px solid #deeadf;
+        border-radius: 14px;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        transition: all 0.22s ease;
+    }
+
+    .cd-student:hover {
+        background: #edf8ef;
+        border-color: #0a5c36;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(10, 92, 54, 0.12);
+    }
+
+    .cd-student-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .cd-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .cd-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .cd-student-name {
+        font-weight: 800;
+        color: #1a1a1a;
+        font-size: 1.05rem;
+        font-family: 'Cairo', sans-serif;
+        margin: 0 0 2px;
+    }
+
+    .cd-student-email {
+        color: #5f6f65;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .cd-student-stats {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .cd-mini-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        padding: 6px 14px;
+        border-radius: 50px;
+    }
+
+    .cd-mini-badge.subs { color: #1d4ed8; background: #dbeafe; }
+    .cd-mini-badge.graded { color: #15803d; background: #dcfce7; }
+    .cd-mini-badge.pending { color: #b45309; background: #fef3c7; }
+
+    .cd-student-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 18px;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 0.92rem;
+        transition: all 0.22s ease;
+        font-family: 'Cairo', sans-serif;
+        box-shadow: 0 6px 14px rgba(10, 92, 54, 0.22);
+        white-space: nowrap;
+    }
+
+    .cd-student-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(10, 92, 54, 0.3); }
+
+    /* ============ ASSIGNMENT ROWS ============ */
+    .cd-assignment-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .cd-assignment {
+        border: 2px solid #deeadf;
+        border-radius: 14px;
+        background: #f8fcf8;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        flex-wrap: wrap;
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cd-assignment::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background: linear-gradient(180deg, #1abc9c, #0a5c36);
+    }
+
+    .cd-assignment:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(10, 92, 54, 0.12);
+        border-color: #0a5c36;
+        background: #fff;
+    }
+
+    .cd-assignment-main {
+        flex: 1;
+        min-width: 220px;
+        padding-left: 6px;
+    }
+
+    .cd-assignment-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0a5c36;
+        margin: 0 0 6px;
+        font-family: 'El Messiri', serif;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-wrap: wrap;
+    }
+
+    .cd-assignment-title i { color: #d4af37; }
+
+    .cd-assignment-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        color: #5f6f65;
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+
+    .cd-assignment-meta i { color: #1abc9c; margin-right: 5px; }
+
+    .cd-assignment-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .cd-pts {
+        background: #f8f1d5;
+        border: 2px solid #e5d699;
+        color: #8a6d0b;
+        font-weight: 800;
+        font-size: 0.9rem;
+        padding: 6px 14px;
+        border-radius: 50px;
+        white-space: nowrap;
+    }
+
+    .cd-status-submitted {
+        background: #dcfce7;
+        color: #15803d;
+        font-weight: 800;
+        font-size: 0.82rem;
+        padding: 6px 14px;
+        border-radius: 50px;
+        white-space: nowrap;
+    }
+
+    .cd-status-notsubmitted {
+        background: #fef3c7;
+        color: #b45309;
+        font-weight: 800;
+        font-size: 0.82rem;
+        padding: 6px 14px;
+        border-radius: 50px;
+        white-space: nowrap;
+    }
+
+    .cd-assignment-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 18px;
+        border-radius: 11px;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 0.92rem;
+        transition: all 0.22s ease;
+        font-family: 'Cairo', sans-serif;
+        white-space: nowrap;
+    }
+
+    .cd-assignment-btn.solid {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        color: #fff;
+        box-shadow: 0 6px 14px rgba(10, 92, 54, 0.22);
+    }
+
+    .cd-assignment-btn.solid:hover { transform: translateY(-2px); }
+
+    .cd-assignment-btn.outline {
+        background: #fff;
+        color: #0a5c36;
+        border: 2px solid #0a5c36;
+    }
+
+    .cd-assignment-btn.outline:hover { background: #0a5c36; color: #fff; }
+
+    .cd-assignment-btn.edit {
+        background: #fff;
+        color: #f39c12;
+        border: 2px solid #f39c12;
+    }
+
+    .cd-assignment-btn.edit:hover { background: #f39c12; color: #fff; }
+
+    /* Empty state */
+    .cd-empty {
+        text-align: center;
+        padding: 44px 20px;
+        color: #5f6f65;
+        border: 2px dashed #b7c6ba;
+        border-radius: 14px;
+        background: #f7faf8;
+    }
+
+    .cd-empty i {
+        font-size: 3rem;
+        opacity: 0.35;
+        margin-bottom: 10px;
+        display: block;
+        color: #0a5c36;
+    }
+
+    .cd-empty h4 {
+        color: #0a5c36;
+        font-size: 1.25rem;
+        margin: 0 0 4px;
+        font-family: 'El Messiri', serif;
+    }
+
+    .cd-empty p { margin: 0; font-size: 0.98rem; }
+
+    @keyframes cdFadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1100px) {
+        .cd-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+        .cd-hero { padding: 22px; }
+        .cd-hero-top { flex-direction: column; }
+    }
+</style>
+
+<!-- ============ HERO ============ -->
+<div class="cd-hero">
+    <div class="cd-hero-top">
+        <div class="cd-hero-title-wrap">
+            <h1><i class="fas fa-chalkboard-teacher"></i> {{ $classroom->class_name }}</h1>
+            <p>{{ $classroom->description ?: ($isTeacher ? 'Manage your classroom students and assignments' : 'Your Tajweed learning classroom') }}</p>
+            @if($classroom->teacher)
+                <p style="margin-top: 8px;">
+                    <i class="fas fa-user-tie"></i>
+                    {{ $isTeacher ? 'Your Classroom' : 'Teacher: ' . $classroom->teacher->name }}
+                </p>
+            @endif
+        </div>
+
+        <div class="cd-hero-actions">
+            @if($isTeacher)
+                <a href="{{ route('classroom.index') }}" class="cd-btn gold">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+                <a href="{{ route('classroom.edit', $classroom->id) }}" class="cd-btn gold">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{{ route('assignment.create', $classroom->id) }}" class="cd-btn gold">
+                    <i class="fas fa-plus"></i> New Assignment
                 </a>
             @else
-                {{-- Teacher Actions --}}
-                <div style="position: absolute; top: 0; right: 0; display: flex; gap: 12px; flex-wrap: wrap; z-index: 10;">
-                    <a href="{{ route('classroom.index') }}" 
-                        style="padding: 10px 20px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
-                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </a>
-                    
-                    <a href="{{ route('classroom.edit', $classroom->id) }}" 
-                        style="padding: 10px 20px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
-                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>                   
-                    
-                    <a href="{{ route('assignment.create', $classroom->id) }}" 
-                        style="padding: 10px 20px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1a1a1a; border: 2px solid rgba(255, 215, 0, 0.8); border-radius: 50px; text-decoration: none; font-weight: 700; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.5)'"
-                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'">
-                        <i class="fas fa-plus"></i> New Assignment
-                    </a>
-                </div>
+                <a href="{{ route('student.classes') }}" class="cd-btn gold">
+                    <i class="fas fa-arrow-left"></i> Back to My Classes
+                </a>
             @endif
-
-            <h1 style="margin: 0 0 15px 0; font-family: 'El Messiri', serif; font-size: 2.5rem; font-weight: 700; color: white; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); padding-right: 250px;">
-                <i class="fas fa-chalkboard-teacher"></i> {{ $classroom->class_name }}
-            </h1>
-            <p style="margin: 0 0 30px 0; font-size: 1.25rem; opacity: 0.95; font-weight: 500; font-family: 'Cairo', sans-serif; line-height: 1.6; color: white;">
-                {{ $classroom->description ?? 'Manage your classroom students and assignments' }}
-            </p>
-            
-            <!-- Stats Grid (Like Student Stats) -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
-                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{ $classroom->students->count() }}</div>
-                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Students</div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
-                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1; color: #ffd700;">{{ $assignments->count() }}</div>
-                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Assignments</div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
-                    <div style="font-size: 1.6rem; font-weight: 700; line-height: 1; letter-spacing: 3px; font-family: 'JetBrains Mono', monospace;">{{ $classroom->access_code }}</div>
-                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Access Code</div>
-                </div>
-            </div>
-
         </div>
     </div>
 
-    <!-- Two Column Layout for Teacher, Single Column for Student -->
-    <div style="display: grid; grid-template-columns: {{ auth()->user()->role_id == 3 ? '1fr 1fr' : '1fr' }}; gap: 30px; margin-bottom: 30px;">
-        <!-- Students Section (Teachers Only) -->
-        @if(auth()->user()->role_id == 3)
-                <div style="background: white; border-radius: 15px; padding: 25px; border: 3px solid #2a2a2a; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
-                    <h3 class="section-card-title" style="margin: 0; font-family: 'El Messiri', serif; color: #000;">
-                        <i class="fas fa-users"></i> Students ({{ $classroom->students->count() }})
-                    </h3>
-                </div>
-                
-                @if($classroom->students->count() > 0)
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    @foreach($classroom->students as $student)
-                        <div style="background: rgba(10, 92, 54, 0.05); border-radius: 12px; padding: 15px 20px; border: 2px solid rgba(10, 92, 54, 0.3); transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(10, 92, 54, 0.1);"
-                            onmouseover="this.style.background='rgba(10, 92, 54, 0.1)'; this.style.borderColor='#0a5c36'"
-                            onmouseout="this.style.background='rgba(10, 92, 54, 0.05)'; this.style.borderColor='rgba(10, 92, 54, 0.1)'">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #0a5c36, #1abc9c); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.25rem;">
-                                        {{ strtoupper(substr($student->name, 0, 1)) }}
-                                    </div>
-                                    <div>
-                                        <div style="font-weight: 600; color: #1a1a1a; font-family: 'Cairo', sans-serif;">{{ $student->name }}</div>
-                                        <div style="font-size: 0.85rem; color: #666;">{{ $student->email }}</div>
-                                    </div>
+    <!-- Hero Stats -->
+    <div class="cd-hero-stats">
+        <div class="cd-hero-stat">
+            <div class="v">{{ $studentCount }}</div>
+            <div class="k"><i class="fas fa-users"></i> Students</div>
+        </div>
+        <div class="cd-hero-stat">
+            <div class="v gold">{{ $assignmentCount }}</div>
+            <div class="k"><i class="fas fa-tasks"></i> Assignments</div>
+        </div>
+        <div class="cd-hero-stat">
+            <div class="code" id="cdAccessCode">••••••</div>
+            <div class="k" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-key"></i> Access Code
+                <button onclick="toggleAccessCode()" class="cd-btn gold" style="padding: 3px 10px; font-size: 0.8rem; border-radius: 8px;">
+                    <i class="fas fa-eye" id="cdCodeIcon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cd-grid {{ $isTeacher ? '' : 'single' }}">
+    @if($isTeacher)
+        <!-- ============ STUDENTS SECTION (Teacher only) ============ -->
+        <div class="cd-card">
+            <div class="cd-card-header">
+                <h3><i class="fas fa-users"></i> Students</h3>
+                <span class="cd-badge-count">{{ $studentCount }}</span>
+            </div>
+
+            @if($studentCount > 0)
+                <div class="cd-student-list">
+                    @foreach($students as $studentUser)
+                        @php
+                            $subCount = $studentUser->total_submissions ?? 0;
+                            $gradedCount = $studentUser->graded_submissions ?? 0;
+                            $pendingCount = max(0, $subCount - $gradedCount);
+                        @endphp
+                        <div class="cd-student">
+                            <div class="cd-student-info">
+                                <div class="cd-avatar">
+                                    @if($studentUser->profile_picture)
+                                        <img src="{{ asset('storage/' . $studentUser->profile_picture) }}" alt="Avatar">
+                                    @else
+                                        {{ strtoupper(substr($studentUser->name, 0, 1)) }}
+                                    @endif
                                 </div>
-                                @php
-                                    $submissionCount = \App\Models\AssignmentSubmission::where('student_id', $student->id)
-                                        ->whereHas('assignment', function($query) use ($classroom) {
-                                            $query->where('class_id', $classroom->id);
-                                        })->count();
-                                    $gradedCount = \App\Models\AssignmentSubmission::where('student_id', $student->id)
-                                        ->where('status', 'graded')
-                                        ->whereHas('assignment', function($query) use ($classroom) {
-                                            $query->where('class_id', $classroom->id);
-                                        })->count();
-                                @endphp
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="padding: 6px 15px; background: rgba(76, 175, 80, 0.1); color: #4caf50; border-radius: 50px; font-size: 0.85rem; font-weight: 600;">
-                                        {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}
-                                    </span>
+                                <div>
+                                    <p class="cd-student-name">{{ $studentUser->name }}</p>
+                                    <p class="cd-student-email">{{ $studentUser->email }}</p>
                                 </div>
                             </div>
-                            <a href="{{ route('teacher.student.submissions', ['classroom' => $classroom->id, 'student' => $student->id]) }}" 
-                                style="display: block; width: 100%; padding: 10px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: all 0.3s ease;"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(10, 92, 54, 0.3)'"
-                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                                <i class="fas fa-clipboard-check"></i> View Submissions & Grade
+
+                            <div class="cd-student-stats">
+                                <span class="cd-mini-badge subs"><i class="fas fa-clipboard-list"></i> {{ $subCount }} Submitted</span>
+                                <span class="cd-mini-badge graded"><i class="fas fa-check-circle"></i> {{ $gradedCount }} Graded</span>
+                                @if($pendingCount > 0)
+                                    <span class="cd-mini-badge pending"><i class="fas fa-hourglass-half"></i> {{ $pendingCount }} Pending</span>
+                                @endif
+                            </div>
+
+                            <a href="{{ route('teacher.student.submissions', ['classroom' => $classroom->id, 'student' => $studentUser->id]) }}" class="cd-student-btn">
+                                <i class="fas fa-clipboard-check"></i> Review & Grade
                             </a>
                         </div>
                     @endforeach
                 </div>
             @else
-                <div style="text-align: center; padding: 50px 20px; color: #999;">
-                    <div style="font-size: 3rem; margin-bottom: 15px;">👥</div>
-                    <p style="margin: 0; font-size: 1.25rem; color: #666;">No students enrolled yet</p>
-                    <p style="margin: 5px 0 0 0; font-size: 1.05rem; color: #999;">Share the access code to invite students</p>
-                </div>
-            @endif
-            </div>
-        @endif
-
-        <!-- Assignments Section -->
-            <div style="background: white; border-radius: 15px; padding: 25px; border: 3px solid #2a2a2a; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
-                <h3 class="section-card-title" style="margin: 0; font-family: 'El Messiri', serif; color: #000;">
-                    <i class="fas fa-tasks"></i> Assignments ({{ $assignments->count() }})
-                </h3>
-            </div>
-            
-            @if($assignments->count() > 0)
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    @foreach($assignments as $assignment)
-                        <div class="class-item-card" style="border-left: 4px solid #0a5c36;">
-                            <div class="class-icon-card">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <div class="class-details-card">
-                                <h4 style="margin: 0 0 8px 0;">{{ $assignment->surah }} ({{ $assignment->start_verse }}{{ $assignment->end_verse ? '-' . $assignment->end_verse : '' }})</h4>
-                                <p style="display: flex; align-items: center; gap: 15px; font-size: 1.05rem;">
-                                    <span><i class="far fa-calendar"></i> Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y') }}</span>
-                                    @php
-                                        $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->assignment_id)->count();
-                                    @endphp
-                                    <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}</span>
-                                </p>
-                            </div>
-                            <span style="padding: 8px 16px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 12px; font-size: 1.05rem; font-weight: 700; white-space: nowrap;">
-                                {{ $assignment->total_marks }} pts
-                            </span>
-                            <div style="display: flex; gap: 10px; margin-left: auto;">
-                                <a href="{{ route('assignment.show', $assignment->assignment_id) }}" style="padding: 10px 20px; background: white; color: #0a5c36; border: 2px solid #0a5c36; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 700; font-size: 1.05rem; transition: all 0.3s ease;"
-                                    onmouseover="this.style.background='#0a5c36'; this.style.color='white'"
-                                    onmouseout="this.style.background='white'; this.style.color='#0a5c36'">
-                                    View
-                                </a>
-                                @if(auth()->user()->role_id == 3)
-                                <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" style="padding: 10px 20px; background: white; color: #ff9800; border: 2px solid #ff9800; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 700; font-size: 1.05rem; transition: all 0.3s ease;"
-                                    onmouseover="this.style.background='#ff9800'; this.style.color='white'"
-                                    onmouseout="this.style.background='white'; this.style.color='#ff9800'">
-                                    Edit
-                                </a>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="empty-state">
-                    <i class="fas fa-clipboard"></i>
-                    <p style="margin: 0; font-size: 1.1rem;">No assignments yet</p>
-                    <p style="margin: 5px 0 0 0; font-size: 1.05rem; color: #666; font-weight: 600;">Create your first assignment to get started</p>
+                <div class="cd-empty">
+                    <i class="fas fa-user-plus"></i>
+                    <h4>No Students Enrolled Yet</h4>
+                    <p>Share the access code to invite students to this class</p>
                 </div>
             @endif
         </div>
+    @endif
+
+    <!-- ============ ASSIGNMENTS SECTION ============ -->
+    <div class="cd-card">
+        <div class="cd-card-header">
+            <h3><i class="fas fa-tasks"></i> Assignments</h3>
+            <span class="cd-badge-count">{{ $assignmentCount }}</span>
+        </div>
+
+        @if($assignmentCount > 0)
+            <div class="cd-assignment-list">
+                @foreach($assignments as $assignment)
+                    @php
+                        $assignmentTitle = $assignment->surah
+                            ? $assignment->surah . ' (' . $assignment->start_verse . ($assignment->end_verse ? '-' . $assignment->end_verse : '') . ')'
+                            : ($assignment->material ? $assignment->material->title : 'Assignment');
+
+                        $studentSubmission = $isStudent ? $submissionsByAssignment->get($assignment->assignment_id) : null;
+
+                        $submissionCount = 0;
+                        if ($isTeacher) {
+                            $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->assignment_id)->count();
+                        }
+                    @endphp
+                    <div class="cd-assignment">
+                        <div class="cd-assignment-main">
+                            <h4 class="cd-assignment-title">
+                                <i class="fas fa-book-quran"></i>
+                                {{ $assignmentTitle }}
+                            </h4>
+                            <div class="cd-assignment-meta">
+                                <span><i class="far fa-calendar"></i> Due {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y g:i A') }}</span>
+                                @if($isTeacher)
+                                    <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="cd-assignment-right">
+                            <span class="cd-pts"><i class="fas fa-star"></i> {{ $assignment->total_marks }} pts</span>
+
+                            @if($isTeacher)
+                                <a href="{{ route('assignment.show', $assignment->assignment_id) }}" class="cd-assignment-btn solid">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{{ route('assignment.edit', $assignment->assignment_id) }}" class="cd-assignment-btn edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            @else
+                                @if($studentSubmission)
+                                    <span class="cd-status-submitted"><i class="fas fa-check-circle"></i> Submitted</span>
+                                    <a href="{{ route('student.assignment.view', $assignment->assignment_id) }}" class="cd-assignment-btn outline">
+                                        <i class="fas fa-eye"></i> View Submission
+                                    </a>
+                                @else
+                                    <span class="cd-status-notsubmitted"><i class="fas fa-hourglass-half"></i> Not Submitted</span>
+                                    <a href="{{ route('student.assignment.submit', $assignment->assignment_id) }}" class="cd-assignment-btn solid">
+                                        <i class="fas fa-paper-plane"></i> Submit
+                                    </a>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="cd-empty">
+                <i class="fas fa-clipboard"></i>
+                <h4>No Assignments Yet</h4>
+                <p>{{ $isTeacher ? 'Create your first assignment to get started' : 'Your teacher has not created any assignments yet' }}</p>
+            </div>
+        @endif
     </div>
+</div>
+
+@endsection
+
+@section('extra-scripts')
+<script>
+    function toggleAccessCode() {
+        const el = document.getElementById('cdAccessCode');
+        const icon = document.getElementById('cdCodeIcon');
+        const realCode = @json($classroom->access_code);
+
+        if (el.textContent.indexOf('•') !== -1) {
+            el.textContent = realCode;
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            el.textContent = '••••••';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
 @endsection
