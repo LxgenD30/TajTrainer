@@ -8,479 +8,730 @@
 @endsection
 
 @section('content')
+@php
+    $enrolledClasses = $student->classrooms;
+    $totalAssignments = $enrolledClasses->flatMap->assignments->count();
+    $totalStudents = $enrolledClasses->sum(function ($c) { return $c->students->count(); });
+@endphp
+
 <style>
-    .modern-card {
-        background: #ffffff;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
-        border: 3px solid #2a2a2a;
-        transition: all 0.3s ease;
-    }
-    
-    .modern-card:hover {
-        box-shadow: 0 15px 40px rgba(10, 92, 54, 0.15);
-    }
-    
-    .alert-success {
-        background: linear-gradient(135deg, #d4f4dd, #a8e6cf);
-        border-left: 5px solid #0a5c36;
-        color: #064e32;
-        padding: 15px 20px;
-        border-radius: 10px;
-        margin-bottom: 25px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-weight: 500;
-    }
-    
-    .alert-error {
-        background: linear-gradient(135deg, #ffe5e5, #ffcccc);
-        border-left: 5px solid #e74c3c;
-        color: #c0392b;
-        padding: 15px 20px;
-        border-radius: 10px;
-        margin-bottom: 25px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-weight: 500;
-    }
-    
-    .section-header {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 3px solid #f5f5dc;
-    }
-    
-    .icon-badge {
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(135deg, #0a5c36, #2e8b57);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        border: 2px solid #2a2a2a;
-        flex-shrink: 0;
-    }
-    
-    .class-card {
-        background: #f9f9f9;
-        border: 2px solid #2a2a2a;
-        border-radius: 12px;
-        padding: 20px;
-        transition: all 0.3s ease;
-        cursor: pointer;
+    /* ============ HERO ============ */
+    .st-hero {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        border: 3px solid #0a4a2b;
+        border-radius: 20px;
+        color: #fff;
+        padding: 28px 34px;
+        margin-bottom: 26px;
+        box-shadow: 0 14px 32px rgba(10, 92, 54, 0.24);
         position: relative;
         overflow: hidden;
     }
-    
-    .class-card::before {
+
+    .st-hero:before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 5px;
-        height: 100%;
-        background: linear-gradient(180deg, #d4af37, #0a5c36);
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        top: -100px;
+        right: -80px;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+        pointer-events: none;
     }
-    
-    .class-card:hover {
-        background: #fff;
-        transform: translateX(5px);
-        box-shadow: 5px 5px 0 #2a2a2a;
-    }
-    
-    .class-card:hover::before {
-        opacity: 1;
-    }
-    
-    .btn-view-class {
-        background: linear-gradient(135deg, #0a5c36, #2e8b57);
-        color: #ffffff;
-        padding: 10px 25px;
-        border-radius: 50px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        border: none;
-        cursor: pointer;
-        display: inline-flex;
+
+    .st-hero h1 {
+        margin: 0 0 4px;
+        font-size: 2.1rem;
+        line-height: 1.2;
+        color: #fff;
+        display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
+        position: relative;
+        z-index: 2;
     }
-    
-    .btn-view-class:hover {
-        background: linear-gradient(135deg, #064e32, #0a5c36);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(10, 92, 54, 0.3);
+
+    .st-hero p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.05rem;
+        position: relative;
+        z-index: 2;
     }
-    
-    .enroll-form-input {
-        width: 100%;
-        padding: 15px 20px;
-        background: #ffffff;
-        border: 2px solid #e8e8e8;
-        border-radius: 10px;
-        color: #064e32;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        font-family: 'Courier New', monospace;
-        letter-spacing: 4px;
-        text-align: center;
-        text-transform: uppercase;
-        font-weight: 600;
+
+    /* ============ STATS STRIP ============ */
+    .st-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 18px;
+        margin-bottom: 28px;
     }
-    
-    .enroll-form-input:focus {
-        border-color: #d4af37;
-        outline: none;
-        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+
+    .st-stat {
+        background: #fff;
+        border: 2px solid #2a2a2a;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 20px rgba(14, 28, 18, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: all 0.25s ease;
+        animation: stFadeUp 0.5s ease both;
     }
-    
-    .btn-enroll {
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, #d4af37, #c9a961);
-        color: #064e32;
-        border: none;
-        border-radius: 10px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
+
+    .st-stat:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 26px rgba(10, 92, 54, 0.12);
+    }
+
+    .st-stat:nth-child(2) { animation-delay: 0.06s; }
+    .st-stat:nth-child(3) { animation-delay: 0.12s; }
+
+    .st-stat-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 1.35rem;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .st-stat-icon.blue { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .st-stat-icon.gold { background: linear-gradient(135deg, #d4af37, #b8860b); }
+    .st-stat-icon.green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+
+    .st-stat-value {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: #0a5c36;
+        line-height: 1;
+    }
+
+    .st-stat-label {
+        color: #666;
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    /* ============ LAYOUT ============ */
+    .st-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+        gap: 26px;
+        align-items: start;
+    }
+
+    /* ============ CLASSES COLUMN ============ */
+    .st-toolbar {
+        background: #fff;
+        border: 2px solid #2a2a2a;
+        border-radius: 16px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 20px rgba(14, 28, 18, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .st-search {
+        position: relative;
+        flex: 1 1 200px;
+        min-width: 180px;
+    }
+
+    .st-search i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #0a5c36;
+        font-size: 0.9rem;
+    }
+
+    .st-search input {
+        width: 100%;
+        padding: 11px 16px 11px 38px;
+        border: 2px solid #cfd9d0;
+        border-radius: 50px;
+        font-size: 0.98rem;
+        font-family: 'Cairo', sans-serif;
+        font-weight: 600;
+        color: #1f2937;
+        transition: all 0.2s ease;
+    }
+
+    .st-search input:focus {
+        outline: none;
+        border-color: #0a5c36;
+        box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.12);
+    }
+
+    .st-sort {
+        position: relative;
+        min-width: 170px;
+    }
+
+    .st-sort i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #0a5c36;
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+
+    .st-sort select {
+        width: 100%;
+        padding: 11px 30px 11px 38px;
+        border: 2px solid #cfd9d0;
+        border-radius: 50px;
+        font-size: 0.98rem;
+        font-family: 'Cairo', sans-serif;
+        font-weight: 600;
+        color: #1f2937;
+        cursor: pointer;
+        background: #fff;
+        appearance: none;
+        -webkit-appearance: none;
+        transition: all 0.2s ease;
+    }
+
+    .st-sort select:focus {
+        outline: none;
+        border-color: #0a5c36;
+        box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.12);
+    }
+
+    .st-count { font-size: 0.95rem; color: #5f6f65; font-weight: 700; white-space: nowrap; }
+    .st-count span { color: #0a5c36; }
+
+    .st-list {
+        display: grid;
+        gap: 18px;
+    }
+
+    .st-card {
+        background: #fff;
+        border: 2px solid #2a2a2a;
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(14, 28, 18, 0.07);
+        padding: 22px 24px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.28s ease, box-shadow 0.28s ease;
+        animation: stFadeUp 0.45s ease both;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+    }
+
+    .st-card:nth-child(2n) { animation-delay: 0.05s; }
+    .st-card:nth-child(3n) { animation-delay: 0.1s; }
+
+    .st-card:hover {
+        transform: translateX(4px) translateY(-2px);
+        box-shadow: 0 16px 34px rgba(10, 92, 54, 0.14);
+    }
+
+    .st-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        background: linear-gradient(180deg, #1abc9c, #0a5c36);
+        border-radius: 18px 0 0 18px;
+    }
+
+    .st-card-main {
+        flex: 1;
+        min-width: 240px;
+    }
+
+    .st-card-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0a5c36;
+        margin: 0 0 6px;
+        font-family: 'El Messiri', serif;
+        display: flex;
+        align-items: center;
         gap: 10px;
     }
-    
-    .btn-enroll:hover {
-        background: linear-gradient(135deg, #c9a961, #d4af37);
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+
+    .st-card-title i { color: #d4af37; }
+
+    .st-card-desc {
+        color: #5f6f65;
+        font-size: 0.93rem;
+        line-height: 1.55;
+        margin: 0 0 10px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
-    
-    .info-box {
-        background: linear-gradient(135deg, #fffef7, #f5f5dc);
-        border: 2px solid #d4af37;
-        border-radius: 12px;
-        padding: 20px;
-        margin-top: 25px;
+
+    .st-card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
     }
-    
-    .empty-state {
-        text-align: center;
-        padding: 60px 40px;
-        color: #666;
-    }
-    
-    .empty-state-icon {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        opacity: 0.5;
-    }
-    
-    .empty-state h3 {
-        color: #000;
-        font-size: 1.6rem;
-        margin-bottom: 10px;
-        font-weight: 800;
-    }
-    
-    .empty-state p {
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-    
-    .stat-badge {
+
+    .st-chip {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 15px;
-        background: rgba(10, 92, 54, 0.1);
-        border: 2px solid #2a2a2a;
-        border-radius: 50px;
-        color: #064e32;
-        font-size: 1.05rem;
+        gap: 6px;
+        font-size: 0.85rem;
         font-weight: 700;
+        color: #0a5c36;
+        background: #f0faf5;
+        border: 1px solid #bfe9d6;
+        padding: 5px 12px;
+        border-radius: 50px;
     }
-    
-    @media (max-width: 968px) {
-        .classes-grid {
-            grid-template-columns: 1fr !important;
-        }
+
+    .st-chip i { color: #1abc9c; }
+
+    .st-card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        min-width: 150px;
+    }
+
+    .st-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 11px 20px;
+        border-radius: 11px;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        font-family: 'Cairo', sans-serif;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .st-btn.view {
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        color: #fff;
+        box-shadow: 0 6px 14px rgba(10, 92, 54, 0.22);
+    }
+
+    .st-btn.view:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(10, 92, 54, 0.3); }
+
+    .st-btn.leave {
+        background: #fff;
+        color: #e74c3c;
+        border-color: #e74c3c;
+    }
+
+    .st-btn.leave:hover { background: #e74c3c; color: #fff; }
+
+    /* Empty state */
+    .st-empty {
+        background: #fff;
+        border: 2px dashed #b7c6ba;
+        border-radius: 18px;
+        padding: 60px 30px;
+        text-align: center;
+        color: #5f6f65;
+        animation: stFadeUp 0.45s ease both;
+    }
+
+    .st-empty i {
+        font-size: 4rem;
+        opacity: 0.3;
+        margin-bottom: 14px;
+        display: block;
+        color: #0a5c36;
+    }
+
+    .st-empty h3 {
+        color: #0a5c36;
+        font-size: 1.4rem;
+        margin: 0 0 6px;
+        font-family: 'El Messiri', serif;
+    }
+
+    .st-empty p { margin: 0; font-size: 1.02rem; }
+
+    /* ============ ENROLL COLUMN ============ */
+    .st-enroll-wrap {
+        position: sticky;
+        top: 20px;
+        display: grid;
+        gap: 18px;
+    }
+
+    .st-enroll {
+        background: #fff;
+        border: 2px solid #2a2a2a;
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(14, 28, 18, 0.07);
+        padding: 24px;
+        animation: stFadeUp 0.5s ease both;
+    }
+
+    .st-enroll-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 3px solid #0a5c36;
+    }
+
+    .st-enroll-header .icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .st-enroll-header h3 {
+        margin: 0;
+        color: #0a5c36;
+        font-family: 'El Messiri', serif;
+        font-size: 1.3rem;
+        line-height: 1.2;
+    }
+
+    .st-enroll-header p {
+        margin: 2px 0 0;
+        color: #5f6f65;
+        font-size: 0.9rem;
+    }
+
+    .st-field-label {
+        display: block;
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #0a5c36;
+        margin-bottom: 8px;
+    }
+
+    .st-code-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #cfd9d0;
+        border-radius: 12px;
+        font-family: 'Courier New', monospace;
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: 6px;
+        text-align: center;
+        text-transform: uppercase;
+        color: #0a5c36;
+        background: #fafcf8;
+        transition: all 0.2s ease;
+    }
+
+    .st-code-input:focus {
+        outline: none;
+        border-color: #0a5c36;
+        box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.12);
+        background: #fff;
+    }
+
+    .st-enroll-btn {
+        width: 100%;
+        margin-top: 14px;
+        padding: 14px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.05rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'Cairo', sans-serif;
+        box-shadow: 0 8px 18px rgba(10, 92, 54, 0.25);
+    }
+
+    .st-enroll-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(10, 92, 54, 0.32);
+    }
+
+    .st-enroll-hint {
+        margin-top: 14px;
+        padding: 12px;
+        background: #f8f1d5;
+        border: 1px solid #e5d699;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        color: #7a6110;
+        line-height: 1.6;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .st-enroll-hint i { color: #b8860b; margin-top: 3px; }
+
+    /* How to enroll */
+    .st-howto {
+        background: #fff;
+        border: 2px solid #2a2a2a;
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(14, 28, 18, 0.07);
+        padding: 20px 24px;
+        animation: stFadeUp 0.5s ease both;
+        animation-delay: 0.08s;
+    }
+
+    .st-howto h4 {
+        margin: 0 0 12px;
+        color: #0a5c36;
+        font-family: 'El Messiri', serif;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .st-howto ol {
+        margin: 0;
+        padding-left: 20px;
+        color: #4b5563;
+        font-size: 0.95rem;
+        line-height: 2;
+        font-weight: 600;
+    }
+
+    .st-hidden { display: none !important; }
+
+    @keyframes stFadeUp {
+        from { opacity: 0; transform: translateY(22px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1100px) {
+        .st-layout { grid-template-columns: 1fr; }
+        .st-enroll-wrap { position: static; }
+    }
+
+    @media (max-width: 720px) {
+        .st-hero { padding: 22px; }
+        .st-card-actions { width: 100%; flex-direction: row; }
+        .st-card-actions .st-btn { flex: 1; }
     }
 </style>
 
-<div style="padding: 0;">
-    @if($errors->any())
-        <div class="alert-error">
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.8rem;">⚠</span>
-                    <span style="font-weight: 700;">Please fix the following errors:</span>
-                </div>
-                <ul style="margin-left: 40px; list-style: disc;">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
+<!-- ============ HERO ============ -->
+<div class="st-hero">
+    <h1><i class="fas fa-school"></i> My Classes</h1>
+    <p>Join and manage the classes where you learn Tajweed</p>
+</div>
+
+<!-- ============ STATS STRIP ============ -->
+<div class="st-stats">
+    <div class="st-stat">
+        <div class="st-stat-icon blue"><i class="fas fa-chalkboard"></i></div>
+        <div>
+            <div class="st-stat-value">{{ $enrolledClasses->count() }}</div>
+            <div class="st-stat-label">Enrolled Classes</div>
         </div>
-    @endif
-
-    <div class="classes-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px;">
-        <!-- My Enrolled Classes Section -->
-        <div class="modern-card">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f5f5dc; padding-bottom: 20px; margin-bottom: 25px;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div class="icon-badge">
-                        <i class="fas fa-school" style="color: #d4af37;"></i>
-                    </div>
-                    <div>
-                        <h2 style="color: #000; font-size: 1.6rem; margin: 0; font-weight: 800;">My Enrolled Classes</h2>
-                        <p id="classCountLabel" style="color: #666; font-size: 1.05rem; margin: 0; font-weight: 600;">{{ $student->classrooms->count() }} Active</p>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <div style="position: relative;">
-                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #d4af37; z-index: 10;"></i>
-                        <input 
-                            type="text" 
-                            id="classSearch" 
-                            placeholder="Search..." 
-                            onkeyup="filterClasses()"
-                            style="padding: 12px 15px 12px 40px; background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 12px; color: white; font-size: 0.95rem; width: 200px; outline: none; transition: all 0.3s ease;"
-                        >
-                    </div>
-
-                    <div style="position: relative;">
-                        <i class="fas fa-filter" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #d4af37; z-index: 10; pointer-events: none;"></i>
-                        <select 
-                            id="classSort" 
-                            onchange="sortClasses()"
-                            style="padding: 12px 15px 12px 40px; background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 12px; color: white; font-size: 0.95rem; cursor: pointer; appearance: none; -webkit-appearance: none; min-width: 160px; outline: none;"
-                        >
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            @if($student->classrooms->isEmpty())
-                <div class="empty-state">
-                    <div class="empty-state-icon">📚</div>
-                    <h3 style="color: #0a5c36; font-size: 1.5rem; margin-bottom: 15px; font-weight: 600;">No Classes Yet</h3>
-                    <p style="color: #666; font-size: 1.25rem; line-height: 1.6;">Use the access code from your teacher to enroll in your first class</p>
-                </div>
-            @else
-                <div style="display: grid; gap: 20px;" id="classesContainer">
-                    @foreach($student->classrooms as $classroom)
-                        <div class="class-card" data-classroom-name="{{ strtolower($classroom->class_name) }}" data-teacher-name="{{ strtolower($classroom->teacher->name ?? '') }}" data-enrolled-date="{{ $classroom->pivot->created_at ?? now() }}">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
-                                <div style="flex: 1;">
-                                    <h3 style="color: #000; font-size: 1.2rem; margin-bottom: 10px; font-weight: 800;">{{ $classroom->class_name }}</h3>
-                                    <p style="color: #666; margin-bottom: 12px; line-height: 1.5; font-size: 1.05rem; font-weight: 600;">{{ $classroom->description ?? 'No description available' }}</p>
-                                </div>
-                                <div style="display: flex; gap: 10px;">
-                                    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-view-class">
-                                        View Class <i class="fas fa-arrow-right"></i>
-                                    </a>
-                                    <form method="POST" action="{{ route('classroom.leave', $classroom->id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to leave {{ $classroom->class_name }}? You will need a new access code to rejoin.');">
-                                        @csrf
-                                        <button type="submit" style="padding: 12px 24px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 1rem; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(231, 76, 60, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(231, 76, 60, 0.3)';">
-                                            <i class="fas fa-sign-out-alt"></i> Leave Class
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <div style="display: flex; flex-wrap: wrap; gap: 12px; padding-top: 15px; border-top: 2px solid #f5f5dc;">
-                                <span class="stat-badge">
-                                    <i class="fas fa-chalkboard-teacher" style="color: #0a5c36;"></i>
-                                    {{ $classroom->teacher->name ?? 'Unknown' }}
-                                </span>
-                                <span class="stat-badge">
-                                    <i class="fas fa-users" style="color: #2e8b57;"></i>
-                                    {{ $classroom->students->count() }} Students
-                                </span>
-                                <span class="stat-badge">
-                                    <i class="fas fa-tasks" style="color: #d4af37;"></i>
-                                    {{ $classroom->assignments->count() }} Assignments
-                                </span>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
+    </div>
+    <div class="st-stat">
+        <div class="st-stat-icon gold"><i class="fas fa-tasks"></i></div>
+        <div>
+            <div class="st-stat-value">{{ $totalAssignments }}</div>
+            <div class="st-stat-label">Assignments</div>
         </div>
-
-        <!-- Enroll in Class Section -->
-        <div class="modern-card" style="height: fit-content;">
-            <div class="section-header">
-                <div class="icon-badge">
-                    <i class="fas fa-plus-circle" style="color: #d4af37;"></i>
-                </div>
-                <div>
-                    <h2 style="color: #000; font-size: 1.6rem; margin-bottom: 5px; font-weight: 800;">Enroll in Class</h2>
-                    <p style="color: #666; font-size: 1.05rem; font-weight: 600;">Enter access code</p>
-                </div>
-            </div>
-
-            <div style="background: white; border: 3px solid #000000; border-radius: 20px; padding: 30px; box-shadow: 8px 8px 0px rgba(0,0,0,0.1); margin-bottom: 30px;">
-                
-                <form method="POST" action="{{ route('student.enroll') }}">
-                    @csrf
-                    <div style="margin-bottom: 25px;">
-                        <label style="display: block; color: #0a5c36; font-weight: 700; margin-bottom: 12px; font-size: 1.1rem; font-family: 'Cairo', sans-serif;">
-                            Access Code <span style="color: #e74c3c;">*</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            name="access_code" 
-                            value="{{ old('access_code') }}"
-                            placeholder="XXXXXX"
-                            required
-                            maxlength="6"
-                            style="width: 100%; padding: 15px 20px; border: 3px solid #e0e0e0; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 3px; transition: all 0.3s ease;"
-                            onfocus="this.style.borderColor='#0a5c36'; this.style.outline='none';"
-                            onblur="this.style.borderColor='#e0e0e0';"
-                        >
-                        <p style="color: #666; font-size: 0.95rem; margin-top: 12px; line-height: 1.5; font-family: 'Cairo', sans-serif;">
-                            <i class="fas fa-info-circle" style="color: #d4af37;"></i> Ask your teacher for the unique 6-digit access code to enter the classroom.
-                        </p>
-                    </div>
-
-                    <button type="submit" class="btn-enroll" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;">
-                        <i class="fas fa-graduation-cap"></i> Join Class
-                    </button>
-                </form>
-
-            </div>
-
-            <div class="info-box">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                    <i class="fas fa-lightbulb" style="font-size: 1.5rem; color: #d4af37;"></i>
-                    <h4 style="color: #0a5c36; font-size: 1.1rem; font-weight: 600;">How to Enroll</h4>
-                </div>
-                <ol style="color: #064e32; font-size: 1.1rem; margin-left: 25px; line-height: 2; list-style: decimal;">
-                    <li>Get the access code from your teacher</li>
-                    <li>Enter the code in the field above</li>
-                    <li>Click "Join Class" to enroll</li>
-                    <li>Start learning immediately!</li>
-                </ol>
-            </div>
+    </div>
+    <div class="st-stat">
+        <div class="st-stat-icon green"><i class="fas fa-users"></i></div>
+        <div>
+            <div class="st-stat-value">{{ $totalStudents }}</div>
+            <div class="st-stat-label">Classmates</div>
         </div>
     </div>
 </div>
 
-<!-- Font Awesome (if not already included in layout) -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<div class="st-layout">
+    <!-- ============ CLASSES COLUMN ============ -->
+    <div>
+        <div class="st-toolbar">
+            <div class="st-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="stSearch" placeholder="Search classes..." onkeyup="filterClasses()">
+            </div>
+            <div class="st-sort">
+                <i class="fas fa-filter"></i>
+                <select id="stSort" onchange="sortClasses()">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="students">Most Students</option>
+                </select>
+            </div>
+            <div class="st-count"><span id="stCount">{{ $enrolledClasses->count() }}</span> class{{ $enrolledClasses->count() != 1 ? 'es' : '' }}</div>
+        </div>
 
+        @if($enrolledClasses->isEmpty())
+            <div class="st-empty">
+                <i class="fas fa-book-open"></i>
+                <h3>No Classes Yet</h3>
+                <p>Use the access code from your teacher to enroll in your first class</p>
+            </div>
+        @else
+            <div class="st-list" id="stList">
+                @foreach($enrolledClasses as $classroom)
+                    <div class="st-card"
+                         data-name="{{ strtolower($classroom->class_name) }}"
+                         data-teacher="{{ strtolower($classroom->teacher->name ?? '') }}"
+                         data-joined="{{ $classroom->pivot->created_at ?? now() }}"
+                         data-students="{{ $classroom->students->count() }}">
+                        <div class="st-card-main">
+                            <h3 class="st-card-title">
+                                <i class="fas fa-book-quran"></i>
+                                {{ $classroom->class_name }}
+                            </h3>
+                            <p class="st-card-desc">{{ $classroom->description ?: 'No description available' }}</p>
+                            <div class="st-card-meta">
+                                <span class="st-chip"><i class="fas fa-user-tie"></i> {{ $classroom->teacher->name ?? 'Teacher' }}</span>
+                                <span class="st-chip"><i class="fas fa-users"></i> {{ $classroom->students->count() }} Students</span>
+                                <span class="st-chip"><i class="fas fa-tasks"></i> {{ $classroom->assignments->count() }} Tasks</span>
+                            </div>
+                        </div>
+                        <div class="st-card-actions">
+                            <a href="{{ route('classroom.show', $classroom->id) }}" class="st-btn view">
+                                <i class="fas fa-eye"></i> View Class
+                            </a>
+                            <form method="POST" action="{{ route('classroom.leave', $classroom->id) }}"
+                                  onsubmit="return confirm('Leave {{ $classroom->class_name }}? You will need a new access code to rejoin.');" style="width: 100%;">
+                                @csrf
+                                <button type="submit" class="st-btn leave">
+                                    <i class="fas fa-sign-out-alt"></i> Leave
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
+    <!-- ============ ENROLL COLUMN ============ -->
+    <div class="st-enroll-wrap">
+        <div class="st-enroll">
+            <div class="st-enroll-header">
+                <div class="icon"><i class="fas fa-plus-circle"></i></div>
+                <div>
+                    <h3>Enroll in a Class</h3>
+                    <p>Enter the access code from your teacher</p>
+                </div>
+            </div>
+
+            @if($errors->any())
+                <div style="background: #fee2e2; border: 2px solid #fca5a5; color: #b91c1c; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 0.95rem; font-weight: 700;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    @foreach($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div style="background: #fee2e2; border: 2px solid #fca5a5; color: #b91c1c; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 0.95rem; font-weight: 700;">
+                    <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+                </div>
+            @endif
+
+            @if(session('success'))
+                <div style="background: #dcfce7; border: 2px solid #86efac; color: #15803d; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 0.95rem; font-weight: 700;">
+                    <i class="fas fa-check-circle"></i> {{ session('success') }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('student.enroll') }}">
+                @csrf
+                <label class="st-field-label">Access Code *</label>
+                <input type="text" name="access_code" value="{{ old('access_code') }}"
+                       class="st-code-input" placeholder="••••••" required maxlength="6" autocomplete="off">
+                <button type="submit" class="st-enroll-btn">
+                    <i class="fas fa-graduation-cap"></i> Join Class
+                </button>
+            </form>
+
+            <div class="st-enroll-hint">
+                <i class="fas fa-info-circle"></i>
+                <span>Ask your teacher for the unique 6-digit access code to enter the classroom.</span>
+            </div>
+        </div>
+
+        <div class="st-howto">
+            <h4><i class="fas fa-lightbulb"></i> How to Enroll</h4>
+            <ol>
+                <li>Get the access code from your teacher</li>
+                <li>Enter the code in the field above</li>
+                <li>Click "Join Class" to enroll</li>
+                <li>Start learning immediately!</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+@endsection
+
+@section('extra-scripts')
 <script>
-function filterClasses() {
-    // 1. Get the search value
-    const searchInput = document.getElementById('classSearch').value.toLowerCase().trim();
-    
-    // 2. Select all cards specifically inside the classesContainer
-    const container = document.getElementById('classesContainer');
-    if (!container) return;
-    
-    const classCards = container.querySelectorAll('.class-card');
-    let visibleCount = 0;
-    
-    classCards.forEach(card => {
-        // Use getAttribute or search the text content directly for better reliability
-        const className = card.getAttribute('data-classroom-name') || '';
-        const teacherName = card.getAttribute('data-teacher-name') || '';
-        
-        if (className.includes(searchInput) || teacherName.includes(searchInput)) {
-            card.style.display = 'block'; // Or '' to restore original
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-    
-    // 3. Update the count label
-    const countLabel = document.getElementById('classCountLabel');
-    if (countLabel) {
-        if (searchInput === "") {
-            countLabel.textContent = `${classCards.length} Active`;
-            countLabel.style.color = "#666";
-        } else {
-            countLabel.textContent = `Found ${visibleCount} matches`;
-            countLabel.style.color = "#d4af37";
-        }
-    }
-}
+    function filterClasses() {
+        const q = document.getElementById('stSearch').value.toLowerCase().trim();
+        let visible = 0;
 
-function sortClasses() {
-    const sortValue = document.getElementById('classSort').value;
-    const container = document.getElementById('classesContainer');
-    if (!container) return;
+        document.querySelectorAll('#stList .st-card').forEach(function (card) {
+            const name = card.dataset.name;
+            const teacher = card.dataset.teacher;
+            const show = q === '' || name.includes(q) || teacher.includes(q);
+            card.classList.toggle('st-hidden', !show);
+            if (show) visible++;
+        });
 
-    const cards = Array.from(container.querySelectorAll('.class-card'));
-    
-    cards.sort((a, b) => {
-        const dateA = new Date(a.getAttribute('data-enrolled-date'));
-        const dateB = new Date(b.getAttribute('data-enrolled-date'));
-        
-        return sortValue === 'newest' ? dateB - dateA : dateA - dateB;
-    });
-    
-    // Re-append to DOM
-    container.innerHTML = '';
-    cards.forEach(card => container.appendChild(card));
-}
+        document.getElementById('stCount').textContent = visible;
+    }
 
-// Load sort preference on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const savedSort = localStorage.getItem('classSort');
-    if (savedSort) {
-        document.getElementById('classSort').value = savedSort;
-        sortClasses();
+    function sortClasses() {
+        const value = document.getElementById('stSort').value;
+        const list = document.getElementById('stList');
+        const cards = Array.from(document.querySelectorAll('#stList .st-card'));
+
+        cards.sort(function (a, b) {
+            switch (value) {
+                case 'newest': return new Date(b.dataset.joined) - new Date(a.dataset.joined);
+                case 'oldest': return new Date(a.dataset.joined) - new Date(b.dataset.joined);
+                case 'students': return parseInt(b.dataset.students) - parseInt(a.dataset.students);
+                default: return 0;
+            }
+        });
+
+        cards.forEach(function (card) { list.appendChild(card); });
     }
-    
-    // Add focus effect to search input
-    const searchInput = document.getElementById('classSearch');
-    if (searchInput) {
-        searchInput.addEventListener('focus', function() {
-            this.style.borderColor = '#d4af37';
-            this.style.boxShadow = '0 4px 12px rgba(212, 175, 55, 0.3)';
-        });
-        
-        searchInput.addEventListener('blur', function() {
-            this.style.borderColor = '#0a5c36';
-            this.style.boxShadow = '0 2px 8px rgba(10, 92, 54, 0.1)';
-        });
-    }
-    
-    // Add hover effect to sort dropdown
-    const sortSelect = document.getElementById('classSort');
-    if (sortSelect) {
-        sortSelect.addEventListener('focus', function() {
-            this.style.borderColor = '#d4af37';
-            this.style.boxShadow = '0 4px 12px rgba(212, 175, 55, 0.3)';
-        });
-        
-        sortSelect.addEventListener('blur', function() {
-            this.style.borderColor = '#0a5c36';
-            this.style.boxShadow = '0 2px 8px rgba(10, 92, 54, 0.1)';
-        });
-    }
-});
 </script>
 @endsection
