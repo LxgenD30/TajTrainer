@@ -469,41 +469,149 @@ if (msSizeSlider && msSizeValue) {
     });
 }
 
-// ── Muqatta'at letter names ──────────────────────────────────────────────────
+// ── Muqatta'at lexicon ───────────────────────────────────────────────────────
 const LETTER_NAMES = {
     'ا':'الف','ل':'لام','م':'ميم','ح':'حا','ي':'يا',
     'ط':'طا','س':'سين','ك':'كاف','ه':'ها','ع':'عين',
     'ر':'را','ص':'صاد','ق':'قاف','ن':'نون',
 };
-// Expand Muqatta'at: U+0653 (Arabic Maddah Above) marks each letter in text_uthmani Muqatta'at
-// Returns {disp, comp} pairs: disp = letter char to display, comp = letter name user should say
-// e.g. الٓمٓ → [{ا,'الف'},{ل,'لام'},{م,'ميم'}]
+
+const MUQATTAAT_CANONICAL = new Set([
+    'الم', 'المص', 'الر', 'المر', 'كهيعص', 'طه', 'طسم', 'طس',
+    'يس', 'ص', 'حم', 'عسق', 'ق', 'ن'
+]);
+
+const MUQATTAAT_PHRASE_PATTERNS = [
+    { parts: ['الف','لام','ميم','صاد'], canonical: 'المص' },
+    { parts: ['الف','لام','ميم','راء'], canonical: 'المر' },
+    { parts: ['الف','لام','ميم'], canonical: 'الم' },
+    { parts: ['الف','لام','راء'], canonical: 'الر' },
+    { parts: ['الم','ص'], canonical: 'المص' },
+    { parts: ['الم','ر'], canonical: 'المر' },
+    { parts: ['كاف','ها','يا','عين','صاد'], canonical: 'كهيعص' },
+    { parts: ['طا','سين','ميم'], canonical: 'طسم' },
+    { parts: ['طا','سين'], canonical: 'طس' },
+    { parts: ['طا','ها'], canonical: 'طه' },
+    { parts: ['يا','سين'], canonical: 'يس' },
+    { parts: ['حا','ميم'], canonical: 'حم' },
+    { parts: ['عين','سين','قاف'], canonical: 'عسق' },
+    { parts: ['صاد'], canonical: 'ص' },
+    { parts: ['قاف'], canonical: 'ق' },
+    { parts: ['نون'], canonical: 'ن' }
+];
+
+// Gentle normalization for letter-name tokens: strips diacritics, keeps medial alef
+// intact (so لام stays لام), drops hamza (راء→را) and collapses elongated madd letters.
+function normLetter(tok) {
+    return (tok || '')
+        .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')
+        .replace(/[\u0671أإآٱ]/g, 'ا')
+        .replace(/ى/g, 'ي')
+        .replace(/ة/g, 'ه')
+        .replace(/\u0640/g, '')
+        .replace(/ء/g, '')
+        .replace(/[\u06D6-\u06FF]/g, '')
+        .replace(/([\u0600-\u06FF])\1+/g, '$1')
+        .replace(/[^\u0600-\u06FF]/g, '')
+        .trim();
+}
+
+// Detect a Muqatta'at word (U+0653 Maddah Above marks each letter) and return ONE display unit.
+// The student recites the letter names, but we display the full compact text (e.g. يسٓ)
+// instead of separated letters once the whole phrase is matched.
 function expandIfMuqattaat(word) {
-    if (!word.includes('\u0653')) return [{ disp: word, comp: word }];
+    if (!word.includes('\u0653')) return null;
     const base = word
         .replace(/[\u064B-\u065F\u0610-\u061A\u0640\u0653\u0670]/g, '')
         .replace(/[\u0671أإآٱ]/g, 'ا');
     const names = [...base].map(c => LETTER_NAMES[c]);
     if (names.length > 0 && names.every(n => n !== undefined)) {
-        return [...base].map((c, i) => ({ disp: c, comp: names[i] }));
+        return {
+            isMuqattaat: true,
+            disp: word,            // full Arabic text to display
+            seq: base,
+            rawPhrase: names,      // letter names (human readable)
+            phrase: names.map(normLetter), // normalized for matching
+        };
     }
-    return [{ disp: word, comp: word }];
+    return null;
 }
 
-// Pre-process each verse: expand Muqatta'at, build display + comparison + human-readable arrays
+// Expand a spoken compact Muqatta'at (e.g. يس, المص) back into letter names so it
+// can be matched against the expected phrase.
+function expandSpokenMuqattaat(tok) {
+    if (!tok) return null;
+    const isKnown = MUQATTAAT_CANONICAL.has(tok) ||
+        MUQATTAAT_PHRASE_PATTERNS.some(p => p.canonical === tok);
+    if (!isKnown) return null;
+    const names = [...tok].map(c => LETTER_NAMES[c]);
+    if (names.length > 0 && names.every(n => n !== undefined)) return names;
+    return null;
+}
+
+// Pre-process each verse into a list of display/comparison units.
 const processed = VERSES.map(v => {
-    const words     = [];  // display: individual letter chars for Muqattaat, original otherwise
-    const compWords = [];  // what user should say: letter names for Muqattaat, original otherwise
+    const units = [];
     v.text.trim().split(/\s+/).filter(w => w.length > 0).forEach(w => {
-            expandIfMuqattaat(w).forEach(({ disp, comp }) => {
-                if (!normalizeAr(comp)) return; // skip stop marks / annotation-only tokens (e.g. \u06db \u06da)
-                words.push(disp);
-                compWords.push(comp);
-            });
-        });
-    const normWords = compWords.map(normalizeAr); // compare against spoken letter names
-    return { number: v.number, words, normWords, compWords };
+        const m = expandIfMuqattaat(w);
+        if (m) {
+            units.push(m);
+        } else {
+            const norm = normalizeAr(w);
+            if (norm) {
+                units.push({ isMuqattaat: false, disp: w, phrase: [norm], rawPhrase: [w] });
+            }
+        }
+    });
+    return { number: v.number, units };
 });
+
+// Attempt to match the upcoming spoken tokens against one display unit.
+// Returns the number of spoken tokens consumed if the unit fully matches, otherwise 0.
+function matchUnit(unit, spoken, start) {
+    const expected = unit.phrase;
+    const rem = spoken.slice(start);
+    const normFn = unit.isMuqattaat ? normLetter : normalizeAr;
+    let e = 0;
+    let used = 0;
+
+    while (e < expected.length) {
+        if (used >= rem.length) return 0;
+        const sp = normFn(rem[used]);
+        const exp = expected[e];
+
+        // 1) exact token match
+        if (sp === exp) { e++; used++; continue; }
+
+        // 2) spoken token is a compact Muqatta'at expanding to the expected letters
+        const expanded = expandSpokenMuqattaat(sp);
+        if (expanded && expanded.length > 0) {
+            let ok = true;
+            for (let k = 0; k < expanded.length; k++) {
+                if (normLetter(expanded[k]) !== expected[e + k]) { ok = false; break; }
+            }
+            if (ok) { e += expanded.length; used++; continue; }
+        }
+
+        // 3) spoken token == concatenation of the next expected tokens (e.g. ياسين)
+        let concat = '';
+        let k = e;
+        let joined = false;
+        while (k < expected.length) {
+            concat += expected[k];
+            if (concat === sp) { e = k + 1; used++; joined = true; break; }
+            if (concat.length > sp.length) break;
+            k++;
+        }
+        if (joined) continue;
+
+        // 4) spoken single letter equals the root letter of the expected name (e.g. ي vs يا)
+        if (sp.length === 1 && exp.charAt(0) === sp) { e++; used++; continue; }
+
+        return 0;
+    }
+    return used;
+}
 
 // ── Arabic normalization (diacritics stripped for comparison) ───────────────
 function normalizeAr(s) {
@@ -578,20 +686,17 @@ if (!SR) {
     recog.onresult = evt => {
         for (let i = evt.resultIndex; i < evt.results.length; i++) {
             if (evt.results[i].isFinal) {
-                // Pick the alternative that matches the most upcoming expected words
+                // Pick the alternative that best matches the upcoming expected unit(s)
                 const alts = evt.results[i];
                 let best = alts[0].transcript.trim();
                 let bestScore = -1;
                 const curVerse = processed[st.ayahIdx];
                 if (curVerse) {
+                    const curUnit = curVerse.units[st.wordIdx];
                     for (let a = 0; a < alts.length; a++) {
                         const altWords = alts[a].transcript.trim().split(/\s+/).filter(Boolean);
                         let score = 0;
-                        for (let w = 0; w < altWords.length; w++) {
-                            const nw = normalizeAr(altWords[w]);
-                            if (nw && curVerse.normWords[st.wordIdx + w] === nw) score++;
-                            else break;
-                        }
+                        if (curUnit) score = matchUnit(curUnit, altWords, 0);
                         if (score > bestScore) { bestScore = score; best = alts[a].transcript.trim(); }
                     }
                 }
@@ -623,31 +728,32 @@ function processFinal(text) {
     console.group('[Recitation Debug] ' + new Date().toLocaleTimeString());
     console.log('Spoken raw   :', JSON.stringify(text));
     console.log('Spoken words :', spoken);
-    console.log('Normalized   :', spoken.map(normalizeAr));
     const _v = processed[st.ayahIdx];
     if (_v) {
-        const _wi = st.wordIdx;
-        console.log('Expected norm:', _v.normWords.slice(_wi, _wi + spoken.length + 3));
-        console.log('Expected comp:', _v.compWords.slice(_wi, _wi + spoken.length + 3));
-        console.log('Ayah', _v.number, '| word pos', _wi + 1, '/', _v.words.length);
+        const _ui = st.wordIdx;
+        console.log('Expected units:', _v.units.slice(_ui, _ui + spoken.length + 2)
+            .map(u => ({ disp: u.disp, phrase: u.phrase })));
+        console.log('Ayah', _v.number, '| unit pos', _ui + 1, '/', _v.units.length);
     }
     console.groupEnd();
     // ── End Debug ────────────────────────────────────────────────────────────
-    for (const word of spoken) {
-        if (st.phase !== 'active') return;
 
-        const normWord = normalizeAr(word);
-        if (!normWord) continue;
+    let consumed = 0;
+    while (st.phase === 'active' && consumed < spoken.length) {
+        const verse = processed[st.ayahIdx];
+        const unit  = verse.units[st.wordIdx];
+        if (!unit) break;
 
-        const verse    = processed[st.ayahIdx];
-        const expected = verse.normWords[st.wordIdx];
+        const n = matchUnit(unit, spoken, consumed);
 
-        if (normWord === expected) {
-            // ✓ Correct word — display the diacritized expected form, not the plain spoken word
-            st.display.push({ t: verse.words[st.wordIdx], ok: true });
+        if (n > 0) {
+            // ✓ Correct unit — display the full expected text (compact Muqatta'at,
+            //   NOT separated letters) for matched Muqatta'at phrases
+            consumed += n;
+            st.display.push({ t: unit.disp, ok: true });
             st.wordIdx++;
 
-            if (st.wordIdx >= verse.words.length) {
+            if (st.wordIdx >= verse.units.length) {
                 // Ayah finished
                 setDot(st.ayahIdx, 'ok');
                 st.display.push({ sep: true });
@@ -672,15 +778,16 @@ function processFinal(text) {
 
             renderTranscript();
         } else {
-            // ✗ Wrong word — stop immediately
-            st.display.push({ t: word, ok: false });
+            // ✗ Wrong unit — stop immediately
+            const saidWord = spoken[consumed] || '';
+            st.display.push({ t: saidWord, ok: false });
             st.phase = 'error';
             st.errInfo = {
-                said:    word,
-                want:    verse.compWords[st.wordIdx], // letter name for Muqattaat, original word otherwise
+                said:    saidWord,
+                want:    unit.isMuqattaat ? unit.disp : (unit.rawPhrase[0] || unit.disp),
                 ayahNum: verse.number,
                 wordPos: st.wordIdx + 1,
-                total:   verse.words.length,
+                total:   verse.units.length,
             };
 
             if (recog) recog.stop();
@@ -698,11 +805,11 @@ function showError() {
     const e     = st.errInfo;
     const verse = processed[st.ayahIdx];
 
-    // Build full ayah: green = correctly said, red = mistake word (shows expected), gray = remaining
-    const html = verse.words.map((w, i) => {
-        if (i < st.wordIdx)   return `<span class="err-w-ok">${w}</span>`;
-        if (i === st.wordIdx) return `<span class="err-w-bad" title="${e.said}">${w}</span>`;
-        return `<span class="err-w-rem">${w}</span>`;
+    // Build full ayah: green = correctly said, red = mistake unit (shows expected), gray = remaining
+    const html = verse.units.map((u, i) => {
+        if (i < st.wordIdx)   return `<span class="err-w-ok">${u.disp}</span>`;
+        if (i === st.wordIdx) return `<span class="err-w-bad" title="${e.said}">${u.disp}</span>`;
+        return `<span class="err-w-rem">${u.disp}</span>`;
     }).join(' ');
 
     document.getElementById('err-ayah-display').innerHTML = html;
@@ -757,10 +864,10 @@ function retryWord() {
 function retryAyah() {
     // Go back to the beginning of the current ayah
     // Remove all display words from current ayah onward
-    // Count how many words belong to completed ayahs
+    // Count how many units belong to completed ayahs
     let keepCount = 0;
     for (let i = 0; i < st.ayahIdx; i++) {
-        keepCount += processed[i].words.length + 1; // +1 for separator
+        keepCount += processed[i].units.length + 1; // +1 for separator
     }
     st.display = st.display.slice(0, keepCount);
     st.wordIdx = 0;
