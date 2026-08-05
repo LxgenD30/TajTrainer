@@ -56,9 +56,16 @@ class ProcessSubmissionAudio implements ShouldQueue
                     );
                     
                     // Extract transcription from Python output
-                    if (isset($tajweedAnalysis['whisper_transcription'])) {
-                        $submission->transcription = $tajweedAnalysis['whisper_transcription'];
+                    $pythonTranscription = $tajweedAnalysis['whisper_transcription']
+                        ?? $tajweedAnalysis['whisper_transcription_raw']
+                        ?? $tajweedAnalysis['transcribed_text']
+                        ?? null;
+
+                    if ($pythonTranscription !== null && trim((string) $pythonTranscription) !== '') {
+                        $submission->transcription = trim((string) $pythonTranscription);
                         Log::info('✓ Whisper transcription: ' . substr($submission->transcription, 0, 100));
+                    } else {
+                        Log::warning('No whisper transcription returned from Python analysis for submission #' . $submission->id);
                     }
                     
                     // Store full Tajweed analysis

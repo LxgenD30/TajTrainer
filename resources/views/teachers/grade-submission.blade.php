@@ -33,7 +33,6 @@
     }
 
     $defaultScore = old('score', $submission->score->score ?? $suggestedScore ?? '');
-
     $defaultFeedback = old('feedback', $submission->score->feedback ?? '');
     if (!$defaultFeedback && isset($overall['feedback'])) {
         $defaultFeedback = $overall['feedback'];
@@ -74,6 +73,8 @@
     $scoreColor = $submission->tajweed_score >= 90
         ? '#2e7d32'
         : ($submission->tajweed_score >= 70 ? '#558b2f' : ($submission->tajweed_score >= 60 ? '#ef6c00' : '#c62828'));
+
+    $aiFeedback = $analysisForDetails['ai_feedback'] ?? null;
 @endphp
 
 <style>
@@ -85,6 +86,7 @@
         --grade-text: #1f2937;
         --grade-muted: #5f6f65;
         --grade-accent: #1abc9c;
+        --grade-gold: #d4af37;
         --grade-shadow: 0 12px 28px rgba(14, 28, 18, 0.08);
     }
 
@@ -94,30 +96,33 @@
         padding: 0;
     }
 
+    /* ============ HERO ============ */
     .grade-hero {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        border: 2px solid #0a4a2b;
+        border: 3px solid #0a4a2b;
         border-radius: 20px;
         color: #fff;
-        padding: 28px 30px;
-        margin-bottom: 24px;
+        padding: 30px 34px;
+        margin-bottom: 28px;
         box-shadow: 0 14px 32px rgba(10, 92, 54, 0.24);
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 20px;
+        flex-wrap: wrap;
     }
 
     .grade-hero h1 {
-        margin: 0 0 8px;
-        font-size: 2rem;
+        margin: 0 0 6px;
+        font-size: 2.2rem;
         line-height: 1.2;
+        color: #fff;
     }
 
     .grade-hero p {
         margin: 0;
         opacity: 0.95;
-        font-size: 1.02rem;
+        font-size: 1.1rem;
     }
 
     .hero-highlight {
@@ -134,38 +139,48 @@
         background: linear-gradient(135deg, #d4af37, #f4d03f);
         color: #111827;
         font-weight: 700;
-        padding: 10px 16px;
+        padding: 12px 20px;
         white-space: nowrap;
+        font-size: 1.05rem;
+        transition: all 0.2s ease;
     }
 
+    .hero-back:hover {
+        background: linear-gradient(135deg, #f4d03f, #d4af37);
+        transform: translateY(-2px);
+    }
+
+    /* ============ 2-COLUMN LAYOUT ============ */
     .grade-grid {
         display: grid;
-        grid-template-columns: minmax(280px, 330px) minmax(0, 1fr) minmax(300px, 360px);
-        gap: 20px;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+        gap: 28px;
         align-items: start;
+    }
+
+    /* ============ LEFT COLUMN CARDS ============ */
+    .left-stack {
+        display: grid;
+        gap: 24px;
+        min-width: 0;
     }
 
     .grade-card {
         background: var(--grade-card);
-        border: 1px solid var(--grade-border);
-        border-radius: 16px;
+        border: 2px solid #2a2a2a;
+        border-radius: 18px;
         box-shadow: var(--grade-shadow);
-        padding: 20px;
-    }
-
-    .grade-sticky {
-        position: sticky;
-        top: 18px;
+        padding: 28px;
     }
 
     .card-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 16px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid #e6ece5;
+        gap: 16px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 3px solid #0a5c36;
     }
 
     .card-header h2,
@@ -173,161 +188,89 @@
         margin: 0;
         color: var(--grade-heading);
         font-family: 'El Messiri', serif;
+        font-size: 1.45rem;
         line-height: 1.2;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .card-subtitle {
         margin: 4px 0 0;
         color: var(--grade-muted);
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 
-    .main-stack {
-        display: grid;
-        gap: 20px;
-    }
-
-    .form-grid {
-        display: grid;
-        gap: 14px;
-    }
-
-    .field-label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: var(--grade-heading);
-    }
-
-    .input-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .grade-input,
-    .grade-textarea {
-        width: 100%;
-        border: 1px solid #cfd9d0;
-        border-radius: 10px;
-        padding: 10px 12px;
-        font-family: 'Cairo', sans-serif;
-        color: var(--grade-text);
-        background: #fff;
-    }
-
-    .grade-input {
-        font-size: 1.1rem;
-        font-weight: 700;
-    }
-
-    .grade-textarea {
-        font-size: 0.93rem;
-        min-height: 140px;
-        line-height: 1.6;
-        resize: vertical;
-    }
-
-    .grade-submit {
-        width: 100%;
-        border: 0;
-        border-radius: 10px;
-        padding: 11px 16px;
-        cursor: pointer;
-        color: #fff;
-        font-weight: 700;
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        box-shadow: 0 10px 18px rgba(10, 92, 54, 0.2);
-    }
-
-    .note-box {
-        border-radius: 12px;
-        border: 1px solid #dde7de;
-        background: #f8fbf8;
-        padding: 12px 14px;
-    }
-
-    .note-box + .note-box {
-        margin-top: 12px;
-    }
-
-    .note-title {
-        margin: 0 0 6px;
-        font-size: 0.85rem;
-        color: var(--grade-muted);
-        font-weight: 700;
-    }
-
-    .note-value {
-        margin: 0;
-        color: var(--grade-text);
-    }
-
-    .status-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        padding: 4px 10px;
-    }
-
-    .chip-green {
-        color: #2e7d32;
-        background: #e7f6ea;
-    }
-
-    .chip-red {
-        color: #b3261e;
-        background: #fce8e6;
-    }
-
+    /* Detail grid */
     .detail-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+        gap: 16px;
     }
 
     .detail-item {
-        border: 1px solid #deeadf;
+        border: 2px solid #deeadf;
         border-radius: 12px;
         background: #f8fcf8;
-        padding: 12px 14px;
+        padding: 16px 18px;
+    }
+
+    .detail-item.wide {
+        grid-column: 1 / -1;
     }
 
     .detail-label {
-        margin: 0 0 6px;
-        font-size: 0.8rem;
+        margin: 0 0 8px;
+        font-size: 0.92rem;
         color: var(--grade-muted);
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
     }
 
     .detail-value {
         margin: 0;
         color: var(--grade-text);
-        line-height: 1.5;
+        line-height: 1.6;
+        font-size: 1.1rem;
+        font-weight: 600;
     }
 
+    .detail-value .muted {
+        color: var(--grade-muted);
+        font-weight: 400;
+    }
+
+    /* Status chips */
+    .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        padding: 6px 14px;
+    }
+
+    .chip-green { color: #2e7d32; background: #e7f6ea; }
+    .chip-red { color: #b3261e; background: #fce8e6; }
+
+    /* Quran verse display */
     .quran-verse-display {
-        border: 1px solid #deeadf;
+        border: 2px solid #deeadf;
         background: #f6fbf7;
-        padding: 16px;
-        border-radius: 12px;
+        padding: 22px;
+        border-radius: 14px;
         direction: rtl;
         text-align: center;
         font-family: 'Amiri', serif;
-        font-size: 1.55rem;
-        line-height: 2.2;
+        font-size: 2rem;
+        line-height: 2.3;
         color: #000;
+        overflow-wrap: break-word;
     }
 
-    .quran-verse-display tajweed {
-        display: inline;
-        font-weight: 700;
-    }
-
+    .quran-verse-display tajweed { display: inline; font-weight: 700; }
     .quran-verse-display tajweed.ham_wasl { color: #2e7d32; }
     .quran-verse-display tajweed.laam_shamsiyah { color: #ef6c00; }
     .quran-verse-display tajweed.ikhafa { color: #1565c0; }
@@ -341,11 +284,12 @@
     .quran-verse-display tajweed.end { color: #555; }
     .quran-verse-display span.end { display: none; }
 
+    /* Recited text */
     .recited-text {
-        border: 1px solid #deeadf;
+        border: 2px solid #deeadf;
         background: #f8fcf8;
         border-radius: 12px;
-        padding: 14px;
+        padding: 20px;
     }
 
     .recited-text p {
@@ -354,254 +298,507 @@
         text-align: right;
         color: #111827;
         font-family: 'Amiri', 'Traditional Arabic', serif;
-        font-size: 1.5rem;
-        line-height: 2;
+        font-size: 1.8rem;
+        line-height: 2.1;
+        overflow-wrap: break-word;
     }
 
     .recited-note {
-        margin-top: 10px;
+        margin-top: 14px !important;
         color: #0a5c36;
-        font-size: 0.82rem;
+        font-size: 0.95rem !important;
+        font-family: 'Cairo', sans-serif !important;
     }
 
+    .no-transcription {
+        color: var(--grade-muted);
+        font-family: 'Cairo', sans-serif;
+        font-size: 1.1rem;
+        text-align: center;
+        padding: 24px;
+        border: 2px dashed #b7c6ba;
+        border-radius: 12px;
+        background: #f7faf8;
+        margin: 0;
+    }
+
+    /* Audio box */
     .audio-box {
-        border: 1px solid #deeadf;
+        border: 2px solid #deeadf;
         border-radius: 12px;
         background: #f8fcf8;
-        padding: 14px;
+        padding: 20px;
     }
 
     .audio-row {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         align-items: center;
         justify-content: space-between;
-        margin-top: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
     }
 
     .download-link {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         text-decoration: none;
         color: #8f6f10;
         background: #f8f1d5;
         border: 1px solid #e5d699;
         border-radius: 8px;
-        padding: 6px 10px;
-        font-size: 0.82rem;
+        padding: 8px 14px;
+        font-size: 0.95rem;
         font-weight: 700;
+        transition: all 0.2s ease;
     }
 
-    .breakdown-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
+    .download-link:hover {
+        background: #f1e3b3;
+        transform: translateY(-1px);
     }
 
-    .breakdown-item {
-        border: 1px solid #deeadf;
+    .audio-player {
+        width: 100%;
         border-radius: 10px;
-        background: #f8fcf8;
-        padding: 10px;
     }
 
-    .breakdown-item p {
-        margin: 0;
+    /* ============ ANALYSIS SECTION ============ */
+    .analysis-summary {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(10, 92, 54, 0.05), rgba(26, 188, 156, 0.05));
+        border: 2px solid rgba(10, 92, 54, 0.15);
+        border-radius: 14px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
     }
 
-    .breakdown-item .k {
-        font-size: 0.75rem;
-        color: var(--grade-muted);
-    }
-
-    .breakdown-item .v {
-        margin-top: 4px;
-        font-size: 1.08rem;
-        font-weight: 800;
+    .big-score {
+        font-size: 3.2rem;
+        font-weight: 900;
+        line-height: 1;
         color: var(--grade-heading);
+        min-width: 110px;
+        text-align: center;
     }
 
-    .rule-card {
-        border: 1px solid #dbe8dd;
-        border-radius: 12px;
-        background: #fdfefe;
-        padding: 14px;
+    .big-score .score-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--grade-muted);
+        margin-top: 4px;
     }
+
+    .analysis-legend {
+        flex: 1;
+        min-width: 240px;
+    }
+
+    .legend-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(10, 92, 54, 0.1);
+        font-size: 1.05rem;
+    }
+
+    .legend-row:last-child { border-bottom: none; }
+
+    .legend-label {
+        color: var(--grade-muted);
+        font-weight: 600;
+    }
+
+    .legend-value {
+        color: var(--grade-heading);
+        font-weight: 800;
+    }
+
+    /* Rule cards (single column) */
+    .rule-card {
+        border: 2px solid #dbe8dd;
+        border-radius: 14px;
+        background: #fdfefe;
+        padding: 24px;
+        margin-bottom: 18px;
+    }
+
+    .rule-card:last-child { margin-bottom: 0; }
 
     .rule-head {
         display: flex;
         align-items: start;
         justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 16px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
     }
 
     .rule-head h4 {
-        margin: 0 0 6px;
+        margin: 0 0 4px;
         color: var(--grade-heading);
-        font-size: 1.03rem;
+        font-size: 1.25rem;
     }
 
     .rule-head p {
         margin: 0;
         color: var(--grade-muted);
-        font-size: 0.88rem;
+        font-size: 1rem;
     }
 
     .rule-percent {
-        font-size: 1.25rem;
+        font-size: 2rem;
         font-weight: 800;
+        white-space: nowrap;
     }
 
     .rule-bar {
-        height: 9px;
+        height: 14px;
         border-radius: 999px;
         background: #e8ece7;
         overflow: hidden;
-        margin: 8px 0 10px;
+        margin: 12px 0 14px;
     }
 
     .rule-bar > span {
         display: block;
         height: 100%;
+        border-radius: 999px;
+        transition: width 0.8s ease;
     }
 
     .rule-stats {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        margin-bottom: 10px;
+        gap: 12px;
+        margin-bottom: 14px;
     }
 
     .rule-stat {
-        border-radius: 8px;
-        border: 1px solid #deeadf;
+        border-radius: 10px;
+        border: 2px solid #deeadf;
         background: #f8fcf8;
         text-align: center;
-        padding: 8px;
+        padding: 12px;
     }
 
-    .rule-stat p {
-        margin: 0;
-    }
+    .rule-stat p { margin: 0; }
 
     .rule-stat .k {
-        font-size: 0.72rem;
+        font-size: 0.85rem;
         color: var(--grade-muted);
+        font-weight: 700;
     }
 
     .rule-stat .v {
         margin-top: 4px;
-        font-size: 1.1rem;
+        font-size: 1.5rem;
         font-weight: 800;
         color: #0a5c36;
     }
 
     .rule-alert {
-        border-radius: 8px;
-        border: 1px solid #efc36f;
+        border-radius: 10px;
+        border: 2px solid #efc36f;
         background: #fff8ec;
         color: #8a5d11;
-        padding: 10px;
-        font-size: 0.85rem;
-        line-height: 1.5;
+        padding: 14px 16px;
+        font-size: 1rem;
+        line-height: 1.7;
     }
+
+    .rule-alert .issue-item {
+        margin-bottom: 8px;
+    }
+
+    .rule-alert .issue-item:last-child { margin-bottom: 0; }
 
     .rule-ok {
-        border-radius: 8px;
-        border: 1px solid #a7d7ae;
+        border-radius: 10px;
+        border: 2px solid #a7d7ae;
         background: #edf8ef;
         color: #2e7d32;
-        padding: 10px;
-        font-size: 0.86rem;
+        padding: 12px 16px;
+        font-size: 1.05rem;
     }
 
+    .ai-overall-feedback {
+        margin-top: 16px;
+        background: #f8f6e8;
+        border: 2px solid #e8ddb2;
+        border-radius: 12px;
+        padding: 16px;
+    }
+
+    .ai-overall-feedback .note-title {
+        color: #7a6110;
+        font-weight: 700;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+
+    .ai-overall-feedback p {
+        color: #333;
+        line-height: 1.7;
+        margin: 0;
+        font-size: 1.05rem;
+    }
+
+    .muted {
+        color: var(--grade-muted);
+        font-size: 0.95rem;
+    }
+
+    /* ============ RIGHT SIDEBAR ============ */
+    .grade-sidebar {
+        position: sticky;
+        top: 20px;
+        display: grid;
+        gap: 22px;
+    }
+
+    .grade-form-card {
+        background: var(--grade-card);
+        border: 2px solid #2a2a2a;
+        border-radius: 18px;
+        box-shadow: var(--grade-shadow);
+        padding: 26px;
+    }
+
+    .grade-form-header {
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 3px solid #0a5c36;
+    }
+
+    .grade-form-header h3 {
+        margin: 0;
+        color: var(--grade-heading);
+        font-family: 'El Messiri', serif;
+        font-size: 1.4rem;
+    }
+
+    .note-box {
+        border-radius: 12px;
+        border: 2px solid #dde7de;
+        background: #f8fbf8;
+        padding: 14px;
+    }
+
+    .note-box + .note-box {
+        margin-top: 12px;
+    }
+
+    .note-title {
+        margin: 0 0 6px;
+        font-size: 0.9rem;
+        color: var(--grade-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .note-value {
+        margin: 0;
+        color: var(--grade-text);
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+
+    .form-grid {
+        display: grid;
+        gap: 18px;
+        margin-top: 18px;
+    }
+
+    .field-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--grade-heading);
+    }
+
+    .input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .grade-input,
+    .grade-textarea {
+        width: 100%;
+        border: 2px solid #cfd9d0;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-family: 'Cairo', sans-serif;
+        color: var(--grade-text);
+        background: #fff;
+        font-size: 1.1rem;
+        transition: border-color 0.2s ease;
+    }
+
+    .grade-input:focus,
+    .grade-textarea:focus {
+        outline: none;
+        border-color: #0a5c36;
+        box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.12);
+    }
+
+    .grade-input {
+        font-size: 1.4rem;
+        font-weight: 800;
+    }
+
+    .grade-textarea {
+        font-size: 1.05rem;
+        min-height: 150px;
+        line-height: 1.7;
+        resize: vertical;
+    }
+
+    .grade-submit {
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        cursor: pointer;
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.15rem;
+        background: linear-gradient(135deg, #0a5c36, #1abc9c);
+        box-shadow: 0 10px 18px rgba(10, 92, 54, 0.2);
+        font-family: 'El Messiri', sans-serif;
+        transition: all 0.2s ease;
+    }
+
+    .grade-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 24px rgba(10, 92, 54, 0.3);
+    }
+
+    .field-error {
+        color: #b3261e;
+        font-size: 0.95rem;
+        margin: 6px 0 0;
+    }
+
+    /* AI Assistant sidebar card */
     .ai-card {
-        border-color: #d9def8;
+        background: var(--grade-card);
+        border: 2px solid #d9def8;
+        border-radius: 18px;
+        box-shadow: var(--grade-shadow);
+        padding: 26px;
+    }
+
+    .ai-card-header {
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+        border-bottom: 3px solid #3f51b5;
+    }
+
+    .ai-card-header h3 {
+        margin: 0;
+        color: #3f51b5;
+        font-family: 'El Messiri', serif;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .ai-block {
         border-radius: 10px;
         border: 1px solid #e5e7eb;
         background: #fafbff;
-        padding: 12px;
-        margin-bottom: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
     }
 
     .ai-block h4 {
         margin: 0 0 8px;
         color: #3f51b5;
-        font-size: 0.95rem;
+        font-size: 1rem;
     }
 
     .ai-block p,
     .ai-block ul {
         margin: 0;
         color: #374151;
-        line-height: 1.6;
-        font-size: 0.88rem;
+        line-height: 1.7;
+        font-size: 1rem;
     }
 
     .ai-block ul {
-        padding-left: 18px;
+        padding-left: 20px;
     }
 
-    .empty-state {
+    .ai-empty {
         border: 1px dashed #b7c6ba;
         border-radius: 12px;
         background: #f7faf8;
         color: #5f6f65;
-        padding: 18px;
+        padding: 20px;
         text-align: center;
+        font-size: 1rem;
+        line-height: 1.6;
     }
 
-    .muted {
-        color: var(--grade-muted);
-        font-size: 0.82rem;
-    }
-
-    @media (max-width: 1280px) {
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 1200px) {
         .grade-grid {
-            grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
+            grid-template-columns: 1fr;
         }
 
-        .grade-grid .ai-panel {
-            grid-column: 1 / -1;
-        }
-
-        .grade-grid .ai-panel .grade-sticky {
+        .grade-sidebar {
             position: static;
         }
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 700px) {
         .grade-hero {
-            padding: 20px;
+            padding: 22px;
+        }
+
+        .grade-hero h1 {
+            font-size: 1.6rem;
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-item.wide {
+            grid-column: 1;
+        }
+
+        .analysis-summary {
             flex-direction: column;
             align-items: flex-start;
         }
 
-        .grade-hero h1 {
-            font-size: 1.65rem;
+        .big-score {
+            text-align: left;
         }
 
-        .grade-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .grade-sticky {
-            position: static;
-        }
-
-        .detail-grid,
-        .breakdown-grid,
         .rule-stats {
             grid-template-columns: 1fr;
+        }
+
+        .grade-card {
+            padding: 20px;
         }
     }
 </style>
 
+<!-- ============ HERO ============ -->
 <section class="grade-hero">
     <div>
         <h1>Grading Submission by <span class="hero-highlight">{{ $submission->student->name }}</span></h1>
@@ -615,120 +812,47 @@
 
 <div class="grade-shell">
     <div class="grade-grid">
-        <aside class="grade-panel">
-            <div class="grade-card grade-sticky">
-                <div class="card-header">
-                    <div>
-                        <h2>{{ $submission->status === 'graded' ? 'Update Grade' : 'Grade Submission' }}</h2>
-                        <p class="card-subtitle">Apply points and written feedback.</p>
-                    </div>
-                </div>
 
-                @if($submission->score)
-                    <div class="note-box">
-                        <p class="note-title">Previously Graded</p>
-                        <p class="note-value" style="font-weight: 800; color: #2e7d32;">
-                            {{ $submission->score->score }}/{{ $submission->assignment->total_marks }}
-                            ({{ round(($submission->score->score / $submission->assignment->total_marks) * 100, 1) }}%)
-                        </p>
-                    </div>
-                @endif
+        <!-- ============ LEFT COLUMN: CONTENT REVIEW ============ -->
+        <div class="left-stack">
 
-                @if($submission->tajweed_score)
-                    <div class="note-box">
-                        <p class="note-title">AI Suggested Score</p>
-                        <p class="note-value" style="font-weight: 800; color: #0a5c36;">
-                            {{ $submission->tajweed_score }}% ({{ $submission->tajweed_grade }})
-                        </p>
-                        <p class="muted" style="margin-top: 4px;">
-                            Suggested points: {{ $suggestedScore }}/{{ $submission->assignment->total_marks }}
-                        </p>
-                    </div>
-                @endif
-
-                <form method="POST" action="{{ route('teacher.submission.update.grade', $submission->id) }}" class="form-grid">
-                    @csrf
-
-                    <div>
-                        <label class="field-label">Points Earned *</label>
-                        <div class="input-row">
-                            <input
-                                type="number"
-                                name="score"
-                                min="0"
-                                max="{{ $submission->assignment->total_marks }}"
-                                step="0.5"
-                                value="{{ $defaultScore }}"
-                                required
-                                class="grade-input"
-                            >
-                            <span class="muted" style="font-weight: 700;">/ {{ $submission->assignment->total_marks }}</span>
-                        </div>
-                        @error('score')
-                            <p style="color: #b3261e; font-size: 0.8rem; margin: 6px 0 0;">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="field-label">Feedback *</label>
-                        <textarea
-                            name="feedback"
-                            required
-                            rows="6"
-                            class="grade-textarea"
-                            placeholder="Provide clear feedback for the student..."
-                        >{{ $defaultFeedback }}</textarea>
-                        @error('feedback')
-                            <p style="color: #b3261e; font-size: 0.8rem; margin: 6px 0 0;">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <button type="submit" class="grade-submit">
-                        {{ $submission->status === 'graded' ? 'Update Grade' : 'Submit Grade' }}
-                    </button>
-                </form>
-            </div>
-        </aside>
-
-        <main class="main-stack">
+            <!-- Submission Details -->
             <section class="grade-card">
                 <div class="card-header">
-                    <div>
-                        <h3>Submission Details</h3>
-                        <p class="card-subtitle">Assignment, student and timeline information.</p>
-                    </div>
+                    <h3><i class="fas fa-clipboard-list"></i> Submission Details</h3>
+                    @if($submission->created_at->gt($submission->assignment->due_date))
+                        <span class="status-chip chip-red"><i class="fas fa-exclamation-triangle"></i> Late</span>
+                    @else
+                        <span class="status-chip chip-green"><i class="fas fa-check-circle"></i> On Time</span>
+                    @endif
                 </div>
 
                 <div class="detail-grid">
                     <div class="detail-item">
                         <p class="detail-label">Student</p>
-                        <p class="detail-value" style="font-weight: 700;">{{ $submission->student->name }}</p>
-                        <p class="detail-value">{{ $submission->student->email }}</p>
+                        <p class="detail-value">{{ $submission->student->name }}</p>
+                        <p class="detail-value muted">{{ $submission->student->email }}</p>
                     </div>
                     <div class="detail-item">
-                        <p class="detail-label">Submission Time</p>
-                        <p class="detail-value" style="font-weight: 700;">{{ $submission->created_at->format('M d, Y h:i A') }}</p>
-                        @if($submission->created_at->gt($submission->assignment->due_date))
-                            <span class="status-chip chip-red"><i class="fas fa-exclamation-triangle"></i> Late</span>
-                        @else
-                            <span class="status-chip chip-green"><i class="fas fa-check-circle"></i> On Time</span>
-                        @endif
+                        <p class="detail-label">Submitted</p>
+                        <p class="detail-value">{{ $submission->created_at->format('M d, Y h:i A') }}</p>
                     </div>
-                </div>
-
-                <div class="detail-item" style="margin-top: 12px;">
-                    <p class="detail-label">Assignment</p>
-                    <p class="detail-value" style="font-weight: 700;">
-                        @if($submission->assignment->surah)
-                            {{ $submission->assignment->surah }} ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
-                        @else
-                            {{ $submission->assignment->material ? $submission->assignment->material->title : 'Assignment' }}
+                    <div class="detail-item wide">
+                        <p class="detail-label">Assignment</p>
+                        <p class="detail-value">
+                            @if($submission->assignment->surah)
+                                📖 {{ $submission->assignment->surah }} ({{ $submission->assignment->start_verse }}@if($submission->assignment->end_verse)-{{ $submission->assignment->end_verse }}@endif)
+                            @else
+                                {{ $submission->assignment->material ? $submission->assignment->material->title : 'Assignment' }}
+                            @endif
+                        </p>
+                        @if($submission->assignment->instructions)
+                            <p class="detail-value muted" style="margin-top: 6px;">{{ $submission->assignment->instructions }}</p>
                         @endif
-                    </p>
-                    <p class="detail-value" style="margin-top: 6px;">{{ $submission->assignment->instructions }}</p>
-                    <p class="muted" style="margin-top: 8px;">
-                        {{ $submission->assignment->total_marks }} marks • Due {{ $submission->assignment->due_date->format('M d, Y') }}
-                    </p>
+                        <p class="muted" style="margin-top: 10px;">
+                            {{ $submission->assignment->total_marks }} marks • Due {{ $submission->assignment->due_date->format('M d, Y') }}
+                        </p>
+                    </div>
                 </div>
 
                 @if(!empty($expectedRecitationDisplay) || $submission->assignment->expected_recitation)
@@ -736,7 +860,7 @@
                         $expectedRecitation = $expectedRecitationDisplay ?: $submission->assignment->expected_recitation;
                         $hasTajweedMarkup = str_contains($expectedRecitation, '<tajweed') || str_contains($expectedRecitation, '<span class=end');
                     @endphp
-                    <div style="margin-top: 12px;">
+                    <div style="margin-top: 20px;">
                         <p class="detail-label">Expected Recitation</p>
                         <div class="quran-verse-display">
                             @if($hasTajweedMarkup)
@@ -749,12 +873,10 @@
                 @endif
             </section>
 
+            <!-- Student Recitation -->
             <section class="grade-card">
                 <div class="card-header">
-                    <div>
-                        <h3>Student Recitation</h3>
-                        <p class="card-subtitle">Transcribed text and uploaded audio.</p>
-                    </div>
+                    <h3><i class="fas fa-microphone-alt"></i> Student Recitation</h3>
                     <span class="status-chip chip-green">Whisper (Tarteel model)</span>
                 </div>
 
@@ -765,7 +887,10 @@
                             <p class="recited-note">Symbol ۝ marks long pauses and does not reduce word-accuracy score.</p>
                         @endif
                     @else
-                        <p class="detail-value">Recited text is not available yet for this submission.</p>
+                        <p class="no-transcription">
+                            <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                            Recited text is not available yet for this submission.
+                        </p>
                     @endif
                 </div>
 
@@ -785,11 +910,11 @@
                         $audioExists = \Storage::disk('public')->exists($submission->audio_file_path);
                     @endphp
 
-                    <div class="audio-box" style="margin-top: 12px;">
-                        <p class="detail-label">Voice Recording</p>
+                    <div class="audio-box" style="margin-top: 16px;">
+                        <p class="detail-label"><i class="fas fa-volume-up"></i> Voice Recording</p>
 
                         @if($audioExists)
-                            <audio id="submissionAudio" controls preload="auto" controlsList="nodownload" style="width: 100%;" src="{{ $audioUrl }}">
+                            <audio id="submissionAudio" controls preload="auto" controlsList="nodownload" class="audio-player" src="{{ $audioUrl }}">
                                 <source src="{{ $audioUrl }}" type="{{ $detectedMime }}">
                                 <source src="{{ $audioUrl }}" type="audio/webm">
                                 <source src="{{ $audioUrl }}" type="audio/mpeg">
@@ -827,40 +952,46 @@
                 @endif
             </section>
 
+            <!-- Tajweed Analysis -->
             @if($submission->tajweed_analysis)
                 <section class="grade-card">
                     <div class="card-header">
-                        <div>
-                            <h3>Tajweed Analysis</h3>
-                            <p class="card-subtitle">Rule-level scoring and detected issues.</p>
-                        </div>
+                        <h3><i class="fas fa-chart-line"></i> Tajweed Analysis</h3>
                         <div style="text-align: right;">
-                            <div style="font-size: 1.75rem; font-weight: 900; color: {{ $scoreColor }}; line-height: 1;">
+                            <div style="font-size: 1.6rem; font-weight: 900; color: {{ $scoreColor }}; line-height: 1;">
                                 {{ $submission->tajweed_score }}%
                             </div>
                             <p class="muted" style="margin: 3px 0 0;">{{ $submission->tajweed_grade }}</p>
                         </div>
                     </div>
 
-                    <div class="breakdown-grid" style="margin-bottom: 12px;">
-                        <div class="breakdown-item">
-                            <p class="k">Tajweed Rules (75%)</p>
-                            <p class="v">{{ $tajweedComponent !== null ? number_format($tajweedComponent, 2) . '%' : 'N/A' }}</p>
+                    <!-- Analysis summary -->
+                    <div class="analysis-summary">
+                        <div class="big-score">
+                            {{ $submission->tajweed_score }}%
+                            <span class="score-label">Overall</span>
                         </div>
-                        <div class="breakdown-item">
-                            <p class="k">Word Accuracy (20%)</p>
-                            <p class="v">{{ $wordComponent !== null ? number_format($wordComponent, 2) . '%' : 'N/A' }}</p>
-                        </div>
-                        <div class="breakdown-item">
-                            <p class="k">Reference Similarity (5%)</p>
-                            <p class="v">{{ $referenceComponent !== null ? number_format($referenceComponent, 2) . '%' : 'N/A' }}</p>
-                        </div>
-                        <div class="breakdown-item">
-                            <p class="k">Pronunciation</p>
-                            <p class="v">{{ $pronunciationComponent !== null ? number_format($pronunciationComponent, 2) . '%' : 'N/A' }}</p>
+                        <div class="analysis-legend">
+                            <div class="legend-row">
+                                <span class="legend-label">Tajweed Rules (75%)</span>
+                                <span class="legend-value">{{ $tajweedComponent !== null ? number_format($tajweedComponent, 2) . '%' : 'N/A' }}</span>
+                            </div>
+                            <div class="legend-row">
+                                <span class="legend-label">Word Accuracy (20%)</span>
+                                <span class="legend-value">{{ $wordComponent !== null ? number_format($wordComponent, 2) . '%' : 'N/A' }}</span>
+                            </div>
+                            <div class="legend-row">
+                                <span class="legend-label">Reference Similarity (5%)</span>
+                                <span class="legend-value">{{ $referenceComponent !== null ? number_format($referenceComponent, 2) . '%' : 'N/A' }}</span>
+                            </div>
+                            <div class="legend-row">
+                                <span class="legend-label">Pronunciation</span>
+                                <span class="legend-value">{{ $pronunciationComponent !== null ? number_format($pronunciationComponent, 2) . '%' : 'N/A' }}</span>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Rule breakdowns -->
                     @foreach($ruleCards as $ruleCard)
                         @if(isset($analysisForDetails[$ruleCard['key']]))
                             @php
@@ -871,7 +1002,7 @@
                                 $ruleColor = !$isApplicable ? '#6b7280' : ($rulePercentage >= 90 ? '#2e7d32' : ($rulePercentage >= 70 ? '#558b2f' : '#ef6c00'));
                             @endphp
 
-                            <article class="rule-card" style="margin-top: 10px;">
+                            <article class="rule-card">
                                 <div class="rule-head">
                                     <div>
                                         <h4>{{ $ruleCard['title'] }}</h4>
@@ -903,7 +1034,7 @@
                                     @if(count($ruleIssues) > 0)
                                         <div class="rule-alert">
                                             @foreach($ruleIssues as $index => $issue)
-                                                <div style="margin-bottom: 7px;">
+                                                <div class="issue-item">
                                                     <strong>Issue {{ $index + 1 }}:</strong>
                                                     {{ $issue['note'] ?? $issue['issue'] ?? 'Issue detected' }}
                                                     @if(!empty($issue['recommendation']))
@@ -925,56 +1056,134 @@
                     @endforeach
 
                     @if(isset($overall['feedback']))
-                        <div class="note-box" style="margin-top: 12px; background: #f8f6e8; border-color: #e8ddb2;">
-                            <p class="note-title" style="color: #7a6110;">AI-Generated Overall Feedback</p>
-                            <p class="note-value" style="line-height: 1.7;">{{ $overall['feedback'] }}</p>
+                        <div class="ai-overall-feedback">
+                            <p class="note-title">AI-Generated Overall Feedback</p>
+                            <p>{{ $overall['feedback'] }}</p>
                         </div>
                     @endif
 
-                    <p class="muted" style="margin: 12px 0 0;">
+                    <p class="muted" style="margin: 16px 0 0;">
                         Analyzed with audio processing pipeline • {{ $submission->created_at->diffForHumans() }}
                     </p>
                 </section>
             @else
-                <section class="grade-card empty-state">
-                    Tajweed analysis is not available for this submission yet.
+                <section class="grade-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-line"></i> Tajweed Analysis</h3>
+                    </div>
+                    <div class="no-transcription">
+                        <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                        Tajweed analysis is not available for this submission yet.
+                    </div>
                 </section>
             @endif
-        </main>
+        </div>
 
-        <aside class="ai-panel">
-            <div class="grade-card ai-card grade-sticky">
-                <div class="card-header">
-                    <div>
-                        <h3 style="color: #3f51b5;">AI Assistant</h3>
-                        <p class="card-subtitle">Reference guidance for teacher grading.</p>
-                    </div>
+        <!-- ============ RIGHT COLUMN: GRADING + AI ============ -->
+        <aside class="grade-sidebar">
+
+            <!-- Grading Form -->
+            <div class="grade-form-card">
+                <div class="grade-form-header">
+                    <h3><i class="fas fa-edit"></i> {{ $submission->status === 'graded' ? 'Update Grade' : 'Grade Submission' }}</h3>
                 </div>
 
-                @if(isset($analysisForDetails['ai_feedback']))
-                    @if(isset($analysisForDetails['ai_feedback']['summary']))
+                @if($submission->score)
+                    <div class="note-box">
+                        <p class="note-title">Previously Graded</p>
+                        <p class="note-value" style="color: #2e7d32;">
+                            {{ $submission->score->score }}/{{ $submission->assignment->total_marks }}
+                            ({{ round(($submission->score->score / $submission->assignment->total_marks) * 100, 1) }}%)
+                        </p>
+                    </div>
+                @endif
+
+                @if($submission->tajweed_score)
+                    <div class="note-box">
+                        <p class="note-title">AI Suggested Score</p>
+                        <p class="note-value" style="color: #0a5c36;">
+                            {{ $submission->tajweed_score }}% ({{ $submission->tajweed_grade }})
+                        </p>
+                        <p class="muted" style="margin-top: 4px;">
+                            Suggested points: {{ $suggestedScore }}/{{ $submission->assignment->total_marks }}
+                        </p>
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('teacher.submission.update.grade', $submission->id) }}" class="form-grid">
+                    @csrf
+
+                    <div>
+                        <label class="field-label">Points Earned *</label>
+                        <div class="input-row">
+                            <input
+                                type="number"
+                                name="score"
+                                min="0"
+                                max="{{ $submission->assignment->total_marks }}"
+                                step="0.5"
+                                value="{{ $defaultScore }}"
+                                required
+                                class="grade-input"
+                            >
+                            <span class="muted" style="font-weight: 700; font-size: 1.1rem;">/ {{ $submission->assignment->total_marks }}</span>
+                        </div>
+                        @error('score')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="field-label">Feedback *</label>
+                        <textarea
+                            name="feedback"
+                            required
+                            rows="7"
+                            class="grade-textarea"
+                            placeholder="Provide clear feedback for the student..."
+                        >{{ $defaultFeedback }}</textarea>
+                        @error('feedback')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="submit" class="grade-submit">
+                        <i class="fas fa-check-circle"></i>
+                        {{ $submission->status === 'graded' ? 'Update Grade' : 'Submit Grade' }}
+                    </button>
+                </form>
+            </div>
+
+            <!-- AI Assistant -->
+            <div class="ai-card">
+                <div class="ai-card-header">
+                    <h3><i class="fas fa-robot"></i> AI Assistant</h3>
+                </div>
+
+                @if(isset($aiFeedback['summary']) || isset($aiFeedback['strengths']) || isset($aiFeedback['improvements']) || isset($aiFeedback['next_steps']))
+                    @if(isset($aiFeedback['summary']))
                         <div class="ai-block">
                             <h4>Summary</h4>
-                            <p>{{ $analysisForDetails['ai_feedback']['summary'] }}</p>
+                            <p>{{ $aiFeedback['summary'] }}</p>
                         </div>
                     @endif
 
-                    @if(isset($analysisForDetails['ai_feedback']['strengths']) && count($analysisForDetails['ai_feedback']['strengths']) > 0)
+                    @if(isset($aiFeedback['strengths']) && count($aiFeedback['strengths']) > 0)
                         <div class="ai-block">
                             <h4>Strengths</h4>
                             <ul>
-                                @foreach($analysisForDetails['ai_feedback']['strengths'] as $strength)
+                                @foreach($aiFeedback['strengths'] as $strength)
                                     <li>{{ $strength }}</li>
                                 @endforeach
                             </ul>
                         </div>
                     @endif
 
-                    @if(isset($analysisForDetails['ai_feedback']['improvements']) && count($analysisForDetails['ai_feedback']['improvements']) > 0)
+                    @if(isset($aiFeedback['improvements']) && count($aiFeedback['improvements']) > 0)
                         <div class="ai-block">
                             <h4>Improvements</h4>
                             <ul>
-                                @foreach($analysisForDetails['ai_feedback']['improvements'] as $improvement)
+                                @foreach($aiFeedback['improvements'] as $improvement)
                                     <li>
                                         @if(is_array($improvement))
                                             {{ $improvement['issue'] ?? '' }}
@@ -987,16 +1196,16 @@
                         </div>
                     @endif
 
-                    @if(isset($analysisForDetails['ai_feedback']['next_steps']))
+                    @if(isset($aiFeedback['next_steps']))
                         <div class="ai-block">
                             <h4>Next Steps</h4>
-                            <p>{{ $analysisForDetails['ai_feedback']['next_steps'] }}</p>
+                            <p>{{ $aiFeedback['next_steps'] }}</p>
                         </div>
                     @endif
                 @else
-                    <div class="empty-state">
+                    <div class="ai-empty">
                         <p style="margin: 0 0 6px; font-weight: 700;">AI feedback not generated</p>
-                        <p style="margin: 0; font-size: 0.85rem;">
+                        <p style="margin: 0; font-size: 0.95rem;">
                             {{ $overall['feedback'] ?? 'No AI feedback found for this submission.' }}
                         </p>
                     </div>
