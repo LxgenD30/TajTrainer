@@ -272,6 +272,23 @@
     .verse-arabic tajweed.madda_permissible { color: #c62828; }
     .verse-arabic tajweed.slnt { color: #6d4c41; }
     .verse-arabic tajweed.end { color: #555555; }
+    .verse-arabic span.end {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.7em;
+        min-height: 1.7em;
+        padding: 0 0.35em;
+        margin: 0 0.15em;
+        border: 2px solid #d4af37;
+        border-radius: 999px;
+        background: rgba(212, 175, 55, 0.14);
+        color: #000000;
+        font-size: 0.78em;
+        line-height: 1;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
     
     .verse-translation {
         color: #000000;
