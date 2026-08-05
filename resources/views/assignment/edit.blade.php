@@ -565,44 +565,6 @@
                         </div>
                     </div>
 
-                    <!-- Tajweed Rules Section -->
-                    <div class="form-section gold">
-                        <h4 class="section-title gold">
-                            <span>✨</span> Tajweed Rules to Focus On *
-                        </h4>
-                        <p class="section-desc">
-                            Select the specific Tajweed rules for this assignment
-                        </p>
-                        
-                        <div class="radio-group">
-                            <label class="radio-option">
-                                <input type="radio" name="tajweed_rules" value="Madd" {{ old('tajweed_rules', $assignment->tajweed_rules) == 'Madd' ? 'checked' : '' }} required>
-                                <div class="radio-label">
-                                    <div class="radio-title">1. Madd (Elongation)</div>
-                                    <div class="radio-desc">Proper lengthening of vowels (ا و ي)</div>
-                                </div>
-                            </label>
-                            
-                            <label class="radio-option">
-                                <input type="radio" name="tajweed_rules" value="Idgham Bi Ghunnah" {{ old('tajweed_rules', $assignment->tajweed_rules) == 'Idgham Bi Ghunnah' ? 'checked' : '' }} required>
-                                <div class="radio-label">
-                                    <div class="radio-title">2. Idgham Bi Ghunnah</div>
-                                    <div class="radio-desc">Merging WITH nasalization (و م ن ي)</div>
-                                </div>
-                            </label>
-                            
-                            <label class="radio-option">
-                                <input type="radio" name="tajweed_rules" value="Idgham Billa Ghunnah" {{ old('tajweed_rules', $assignment->tajweed_rules) == 'Idgham Billa Ghunnah' ? 'checked' : '' }} required>
-                                <div class="radio-label">
-                                    <div class="radio-title">3. Idgham Billa Ghunnah</div>
-                                    <div class="radio-desc">Merging WITHOUT nasalization (ل ر)</div>
-                                </div>
-                            </label>
-                        </div>
-                        @error('tajweed_rules')
-                            <span class="error-text">{{ $message }}</span>
-                        @enderror
-                    </div>
                 </div>
 
                 <!-- RIGHT COLUMN -->

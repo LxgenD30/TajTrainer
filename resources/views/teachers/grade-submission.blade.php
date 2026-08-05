@@ -360,137 +360,113 @@
                     $analysis = is_array($submission->tajweed_analysis) ? $submission->tajweed_analysis : json_decode($submission->tajweed_analysis, true);
                 @endphp
 
-                <!-- Madd Analysis -->
-                @if(isset($analysis['madd_analysis']))
-                <div style="background: rgba(10, 92, 54, 0.05); border: 2px solid rgba(10, 92, 54, 0.2); padding: 25px; border-radius: 15px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <div>
-                            <h5 style="color: #0a5c36; margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 800;">مد (Madd - Elongation)</h5>
-                            <p style="color: #666; font-size: 0.95rem; margin: 0; line-height: 1.5;">Proper elongation of vowel sounds (2-6 counts)</p>
-                        </div>
+                @php
+                    $ruleCards = [
+                        [
+                            'key' => 'madd_analysis',
+                            'title' => 'مد (Madd - Elongation)',
+                            'description' => 'Proper elongation of vowel sounds (2-6 counts)',
+                            'total_key' => 'total_elongations',
+                            'correct_key' => 'correct_elongations',
+                            'success_message' => 'Excellent! No issues detected in Madd elongations.',
+                        ],
+                        [
+                            'key' => 'idgham_bila_ghunnah_analysis',
+                            'title' => 'ادغام بلا غنة (Idgham Bila Ghunnah)',
+                            'description' => 'Merging without nasalization (letters ر and ل)',
+                            'total_key' => 'total_occurrences',
+                            'correct_key' => 'correct_pronunciation',
+                            'success_message' => 'Excellent! No issues detected in Idgham Bila Ghunnah.',
+                        ],
+                        [
+                            'key' => 'idgham_bi_ghunnah_analysis',
+                            'title' => 'ادغام بغنة (Idgham Bi Ghunnah)',
+                            'description' => 'Merging with nasalization (letters و م ن ي)',
+                            'total_key' => 'total_occurrences',
+                            'correct_key' => 'correct_pronunciation',
+                            'success_message' => 'Excellent! No issues detected in Idgham Bi Ghunnah.',
+                        ],
+                    ];
+                @endphp
+
+                @foreach($ruleCards as $ruleCard)
+                    @if(isset($analysis[$ruleCard['key']]))
                         @php
-                            $maddColor = $analysis['madd_analysis']['percentage'] >= 90 ? '#4caf50' : ($analysis['madd_analysis']['percentage'] >= 70 ? '#8bc34a' : '#ff9800');
+                            $ruleData = $analysis[$ruleCard['key']];
+                            $isApplicable = $ruleData['rule_applicable'] ?? true;
+                            $rulePercentage = $ruleData['percentage'] ?? 0;
+                            $ruleIssues = $ruleData['issues'] ?? [];
+                            $ruleColor = !$isApplicable ? '#6c757d' : ($rulePercentage >= 90 ? '#4caf50' : ($rulePercentage >= 70 ? '#8bc34a' : '#ff9800'));
                         @endphp
-                        <div style="padding: 12px 20px; background: white; border: 3px solid {{ $maddColor }}; border-radius: 12px; box-shadow: 0 4px 12px {{ $maddColor }}33;">
-                            <span style="color: {{ $maddColor }}; font-weight: 800; font-size: 1.8rem;">{{ $analysis['madd_analysis']['percentage'] }}%</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Progress Bar -->
-                    <div style="width: 100%; height: 12px; background: rgba(0, 0, 0, 0.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
-                        <div style="width: {{ $analysis['madd_analysis']['percentage'] }}%; height: 100%; background: linear-gradient(90deg, {{ $maddColor }}, {{ $maddColor }}cc); transition: width 0.5s ease;"></div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
-                        <div style="background: white; padding: 18px; border-radius: 12px; text-align: center; border: 2px solid #e0e0e0;">
-                            <div style="color: #666; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Found</div>
-                            <div style="color: #0a5c36; font-size: 2rem; font-weight: 800;">{{ $analysis['madd_analysis']['total_elongations'] }}</div>
-                        </div>
-                        <div style="background: white; padding: 18px; border-radius: 12px; text-align: center; border: 2px solid #4caf50;">
-                            <div style="color: #4caf50; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Correct</div>
-                            <div style="color: #4caf50; font-size: 2rem; font-weight: 800;">{{ $analysis['madd_analysis']['correct_elongations'] }}</div>
-                        </div>
-                        <div style="background: white; padding: 18px; border-radius: 12px; text-align: center; border: 2px solid #f44336;">
-                            <div style="color: #f44336; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Issues</div>
-                            <div style="color: #f44336; font-size: 2rem; font-weight: 800;">{{ count($analysis['madd_analysis']['issues']) }}</div>
-                        </div>
-                    </div>
-
-                    @if(count($analysis['madd_analysis']['issues']) > 0)
-                    <div style="background: rgba(255, 152, 0, 0.08); border-left: 4px solid #ff9800; padding: 12px 15px; border-radius: 8px;">
-                        <div style="color: #ff9800; font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                            <span>⚠️</span>
-                            <span>Issues Detected ({{ count($analysis['madd_analysis']['issues']) }})</span>
-                        </div>
-                        <div style="max-height: 200px; overflow-y: auto;">
-                            @foreach($analysis['madd_analysis']['issues'] as $index => $issue)
-                            <div style="background: rgba(31, 39, 27, 0.5); padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem;">
-                                <div style="display: flex; align-items: start; gap: 10px; margin-bottom: 6px;">
-                                    <span style="background: #ff9800; color: #1f271b; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; min-width: 50px; text-align: center;">Word {{ $issue['position'] ?? $index + 1 }}</span>
-                                    <span style="color: var(--light-green); flex: 1; line-height: 1.5; font-weight: 600;">{{ $issue['word'] ?? '' }}</span>
+                        <div style="background: rgba(10, 92, 54, 0.05); border: 2px solid rgba(10, 92, 54, 0.2); padding: 25px; border-radius: 15px; margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <div>
+                                    <h5 style="color: #0a5c36; margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 800;">{{ $ruleCard['title'] }}</h5>
+                                    <p style="color: #666; font-size: 0.95rem; margin: 0; line-height: 1.5;">{{ $ruleCard['description'] }}</p>
                                 </div>
-                                <div style="color: #ffa726; font-size: 0.8rem; margin-bottom: 4px;">{{ $issue['note'] ?? $issue['issue'] ?? 'Issue detected' }}</div>
-                                <div style="color: rgba(211, 255, 177, 0.7); font-size: 0.75rem;">💡 {{ $issue['recommendation'] ?? '' }}</div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    @else
-                    <div style="background: rgba(76, 175, 80, 0.1); border-left: 4px solid #4caf50; padding: 12px 15px; border-radius: 8px;">
-                        <div style="color: #4caf50; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                            <span>✓</span>
-                            <span>Excellent! No issues detected in Madd elongations.</span>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-                @endif
-
-                <!-- Noon Sakin Analysis -->
-                @if(isset($analysis['noon_sakin_analysis']))
-                <div style="background: rgba(31, 39, 27, 0.6); border: 1px solid rgba(77, 139, 49, 0.3); padding: 18px; border-radius: 10px; margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div>
-                            <h5 style="color: var(--gold); margin: 0 0 5px 0; font-size: 1.1rem; font-weight: 700;">نون ساكن (Noon Sakin & Tanween)</h5>
-                            <p style="color: var(--light-green); opacity: 0.8; font-size: 0.85rem; margin: 0;">Proper nasalization and pronunciation rules</p>
-                        </div>
-                        @php
-                            $noonColor = $analysis['noon_sakin_analysis']['percentage'] >= 90 ? '#4caf50' : ($analysis['noon_sakin_analysis']['percentage'] >= 70 ? '#8bc34a' : '#ff9800');
-                        @endphp
-                        <div style="padding: 8px 15px; background: rgba(77, 139, 49, 0.2); border: 2px solid {{ $noonColor }}; border-radius: 10px;">
-                            <span style="color: {{ $noonColor }}; font-weight: 700; font-size: 1.3rem;">{{ $analysis['noon_sakin_analysis']['percentage'] }}%</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Progress Bar -->
-                    <div style="width: 100%; height: 8px; background: rgba(70, 63, 58, 0.5); border-radius: 10px; overflow: hidden; margin-bottom: 15px;">
-                        <div style="width: {{ $analysis['noon_sakin_analysis']['percentage'] }}%; height: 100%; background: linear-gradient(90deg, {{ $noonColor }}, {{ $noonColor }}dd); transition: width 0.5s ease;"></div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px;">
-                        <div style="background: rgba(77, 139, 49, 0.15); padding: 12px; border-radius: 8px; text-align: center;">
-                            <div style="color: var(--light-green); font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Total Found</div>
-                            <div style="color: var(--gold); font-size: 1.5rem; font-weight: 700; margin-top: 5px;">{{ $analysis['noon_sakin_analysis']['total_occurrences'] }}</div>
-                        </div>
-                        <div style="background: rgba(76, 175, 80, 0.15); padding: 12px; border-radius: 8px; text-align: center;">
-                            <div style="color: var(--light-green); font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Correct</div>
-                            <div style="color: #4caf50; font-size: 1.5rem; font-weight: 700; margin-top: 5px;">{{ $analysis['noon_sakin_analysis']['correct_pronunciation'] }}</div>
-                        </div>
-                        <div style="background: rgba(244, 67, 54, 0.15); padding: 12px; border-radius: 8px; text-align: center;">
-                            <div style="color: var(--light-green); font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Issues</div>
-                            <div style="color: #f44336; font-size: 1.5rem; font-weight: 700; margin-top: 5px;">{{ count($analysis['noon_sakin_analysis']['issues']) }}</div>
-                        </div>
-                    </div>
-
-                    @if(count($analysis['noon_sakin_analysis']['issues']) > 0)
-                    <div style="background: rgba(255, 152, 0, 0.08); border-left: 4px solid #ff9800; padding: 12px 15px; border-radius: 8px;">
-                        <div style="color: #ff9800; font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                            <span>⚠️</span>
-                            <span>Issues Detected ({{ count($analysis['noon_sakin_analysis']['issues']) }})</span>
-                        </div>
-                        <div style="max-height: 200px; overflow-y: auto;">
-                            @foreach($analysis['noon_sakin_analysis']['issues'] as $index => $issue)
-                            <div style="background: rgba(31, 39, 27, 0.5); padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem;">
-                                <div style="display: flex; align-items: start; gap: 10px; margin-bottom: 6px;">
-                                    <span style="background: #ff9800; color: #1f271b; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; min-width: 50px; text-align: center;">Word {{ $issue['position'] ?? $index + 1 }}</span>
-                                    <span style="color: var(--light-green); flex: 1; line-height: 1.5; font-weight: 600;">{{ $issue['word'] ?? '' }}</span>
+                                <div style="padding: 12px 20px; background: white; border: 3px solid {{ $ruleColor }}; border-radius: 12px; box-shadow: 0 4px 12px {{ $ruleColor }}33;">
+                                    <span style="color: {{ $ruleColor }}; font-weight: 800; font-size: 1.8rem;">{{ $rulePercentage }}%</span>
                                 </div>
-                                <div style="color: #ffa726; font-size: 0.8rem; margin-bottom: 4px;">{{ $issue['issue'] }}</div>
-                                <div style="color: rgba(211, 255, 177, 0.7); font-size: 0.75rem;">💡 {{ $issue['recommendation'] ?? '' }}</div>
                             </div>
-                            @endforeach
+
+                            @if($isApplicable)
+                                <div style="width: 100%; height: 12px; background: rgba(0, 0, 0, 0.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                                    <div style="width: {{ $rulePercentage }}%; height: 100%; background: linear-gradient(90deg, {{ $ruleColor }}, {{ $ruleColor }}cc); transition: width 0.5s ease;"></div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                                    <div style="background: white; padding: 18px; border-radius: 12px; text-align: center; border: 2px solid #e0e0e0;">
+                                        <div style="color: #666; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Found</div>
+                                        <div style="color: #0a5c36; font-size: 2rem; font-weight: 800;">{{ $ruleData[$ruleCard['total_key']] ?? 0 }}</div>
+                                    </div>
+                                    <div style="background: white; padding: 18px; border-radius: 12px; text-align: center; border: 2px solid #4caf50;">
+                                        <div style="color: #4caf50; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Correct</div>
+                                        <div style="color: #4caf50; font-size: 2rem; font-weight: 800;">{{ $ruleData[$ruleCard['correct_key']] ?? 0 }}</div>
+                                    </div>
+                                    <div style="background: white; padding: 18px; border-radius: 12px; text-align: center; border: 2px solid #f44336;">
+                                        <div style="color: #f44336; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Issues</div>
+                                        <div style="color: #f44336; font-size: 2rem; font-weight: 800;">{{ count($ruleIssues) }}</div>
+                                    </div>
+                                </div>
+
+                                @if(count($ruleIssues) > 0)
+                                <div style="background: rgba(255, 152, 0, 0.08); border-left: 4px solid #ff9800; padding: 12px 15px; border-radius: 8px;">
+                                    <div style="color: #ff9800; font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                        <span>⚠️</span>
+                                        <span>Issues Detected ({{ count($ruleIssues) }})</span>
+                                    </div>
+                                    <div style="max-height: 200px; overflow-y: auto;">
+                                        @foreach($ruleIssues as $index => $issue)
+                                        <div style="background: rgba(31, 39, 27, 0.5); padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem;">
+                                            <div style="display: flex; align-items: start; gap: 10px; margin-bottom: 6px;">
+                                                <span style="background: #ff9800; color: #1f271b; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; min-width: 50px; text-align: center;">Item {{ $index + 1 }}</span>
+                                                <span style="color: var(--light-green); flex: 1; line-height: 1.5; font-weight: 600;">{{ $issue['word'] ?? $issue['rule_type'] ?? '' }}</span>
+                                            </div>
+                                            <div style="color: #ffa726; font-size: 0.8rem; margin-bottom: 4px;">{{ $issue['note'] ?? $issue['issue'] ?? 'Issue detected' }}</div>
+                                            <div style="color: rgba(211, 255, 177, 0.7); font-size: 0.75rem;">💡 {{ $issue['recommendation'] ?? '' }}</div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @else
+                                <div style="background: rgba(76, 175, 80, 0.1); border-left: 4px solid #4caf50; padding: 12px 15px; border-radius: 8px;">
+                                    <div style="color: #4caf50; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                        <span>✓</span>
+                                        <span>{{ $ruleCard['success_message'] }}</span>
+                                    </div>
+                                </div>
+                                @endif
+                            @else
+                                <div style="background: rgba(108, 117, 125, 0.08); border-left: 4px solid #6c757d; padding: 12px 15px; border-radius: 8px;">
+                                    <div style="color: #6c757d; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                        <span>ℹ️</span>
+                                        <span>Not present in the verse. No rule-specific feedback is generated for this rule.</span>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
-                    </div>
-                    @else
-                    <div style="background: rgba(76, 175, 80, 0.1); border-left: 4px solid #4caf50; padding: 12px 15px; border-radius: 8px;">
-                        <div style="color: #4caf50; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                            <span>✓</span>
-                            <span>Excellent! No issues detected in Noon Sakin pronunciation.</span>
-                        </div>
-                    </div>
                     @endif
-                </div>
-                @endif
+                @endforeach
 
                 <!-- Overall AI Feedback -->
                 @if(isset($analysis['overall_score']['feedback']))

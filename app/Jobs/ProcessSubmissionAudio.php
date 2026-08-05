@@ -82,7 +82,15 @@ class ProcessSubmissionAudio implements ShouldQueue
                             count($tajweedAnalysis['ai_feedback']['improvements']) > 0) {
                             $feedback .= "\n\nAreas for Improvement:\n";
                             foreach ($tajweedAnalysis['ai_feedback']['improvements'] as $improvement) {
-                                $feedback .= "• " . $improvement['issue'] . ": " . $improvement['suggestion'] . "\n";
+                                if (is_array($improvement)) {
+                                    $issue = $improvement['issue'] ?? '';
+                                    $suggestion = $improvement['suggestion'] ?? '';
+                                    if ($issue !== '' || $suggestion !== '') {
+                                        $feedback .= "• " . trim($issue . ': ' . $suggestion, ': ') . "\n";
+                                    }
+                                } elseif (is_string($improvement) && trim($improvement) !== '') {
+                                    $feedback .= "• " . trim($improvement) . "\n";
+                                }
                             }
                         }
                         

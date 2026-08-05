@@ -283,7 +283,7 @@ class TajweedAnalyzer:
         
         if not self.has_madd:
             results['percentage'] = 100
-            results['details'].append({'note': 'No Madd rules applicable to this verse'})
+            results['details'].append({'note': 'Not present in this verse'})
             return results
         
         try:
@@ -479,7 +479,7 @@ class TajweedAnalyzer:
         
         if not self.has_idgham_bila:
             results['percentage'] = 100
-            results['details'].append({'note': 'No Idgham Bila Ghunnah applicable to this verse'})
+            results['details'].append({'note': 'Not present in this verse'})
             return results
         
         try:
@@ -574,7 +574,7 @@ class TajweedAnalyzer:
         
         if not self.has_idgham_bi:
             results['percentage'] = 100
-            results['details'].append({'note': 'No Idgham Bi Ghunnah applicable to this verse'})
+            results['details'].append({'note': 'Not present in this verse'})
             return results
         
         try:
@@ -665,6 +665,70 @@ class TajweedAnalyzer:
             results['percentage'] = 0
             
         return results
+
+    def get_rule_feedback_contexts(self, analysis_results):
+        """Build normalized rule contexts for display and feedback filtering."""
+        definitions = [
+            ('madd_analysis', 'Madd (Elongation)', ['madd', 'elongation', 'مد']),
+            ('idgham_bila_ghunnah_analysis', 'Idgham Bila Ghunnah', ['idgham bila', 'idgham billa', 'without nasalization', 'بلا']),
+            ('idgham_bi_ghunnah_analysis', 'Idgham Bi Ghunnah', ['idgham bi', 'with nasalization', 'ghunnah', 'غنة']),
+        ]
+
+        contexts = []
+        for key, label, keywords in definitions:
+            rule = analysis_results.get(key, {}) or {}
+            contexts.append({
+                'key': key,
+                'label': label,
+                'applicable': bool(rule.get('rule_applicable', True)),
+                'percentage': float(rule.get('percentage', 0) or 0),
+                'issues_count': len(rule.get('issues', []) or []),
+                'keywords': keywords,
+            })
+
+        return contexts
+
+    def filter_feedback_by_applicability(self, feedback_obj, rule_contexts):
+        """Remove improvement/strength entries that refer to rules not present in the verse."""
+        if not isinstance(feedback_obj, dict):
+            return feedback_obj
+
+        excluded_keywords = []
+        for context in rule_contexts:
+            if not context.get('applicable', True):
+                excluded_keywords.extend(context.get('keywords', []))
+
+        if not excluded_keywords:
+            return feedback_obj
+
+        def mentions_excluded(text):
+            lower = str(text).lower()
+            return any(keyword in lower for keyword in excluded_keywords)
+
+        strengths = feedback_obj.get('strengths', [])
+        if isinstance(strengths, list):
+            feedback_obj['strengths'] = [s for s in strengths if not mentions_excluded(s)]
+
+        improvements = feedback_obj.get('improvements', [])
+        if isinstance(improvements, list):
+            filtered = []
+            for item in improvements:
+                if isinstance(item, dict):
+                    issue = item.get('issue', '')
+                    suggestion = item.get('suggestion', '')
+                    if mentions_excluded(issue) or mentions_excluded(suggestion):
+                        continue
+                else:
+                    if mentions_excluded(item):
+                        continue
+                filtered.append(item)
+            feedback_obj['improvements'] = filtered
+
+        next_steps = feedback_obj.get('next_steps', '')
+        if isinstance(next_steps, str) and mentions_excluded(next_steps):
+            feedback_obj['next_steps'] = 'Keep practicing the rules that appear in this verse and compare with the reference recitation.'
+
+        return feedback_obj
     
     def generate_openai_feedback(self, analysis_results):
         """Generate intelligent feedback using OpenAI GPT"""
@@ -689,6 +753,10 @@ class TajweedAnalyzer:
             # Get transcription accuracy
             transcription = analysis_results.get('whisper_transcription', '')
             expected = analysis_results.get('expected_text', '')
+
+            rule_contexts = self.get_rule_feedback_contexts(analysis_results)
+            applicable_rules = [rule for rule in rule_contexts if rule.get('applicable', True)]
+            non_applicable_rules = [rule for rule in rule_contexts if not rule.get('applicable', True)]
             
             # Calculate text similarity
             from difflib import SequenceMatcher
@@ -697,6 +765,20 @@ class TajweedAnalyzer:
             # Get reference comparison if available
             ref_comparison = analysis_results.get('reference_comparison', {})
             ref_similarity = ref_comparison.get('overall_similarity', 0) if ref_comparison else 0
+
+            tajweed_lines = []
+            for rule in applicable_rules:
+                tajweed_lines.append(
+                    f"- {rule['label']}: {rule['percentage']}% correct ({rule['issues_count']} issues)"
+                )
+
+            if not tajweed_lines:
+                tajweed_lines.append('- No target rules are present in this verse.')
+
+            for rule in non_applicable_rules:
+                tajweed_lines.append(f"- {rule['label']}: Not present in this verse")
+
+            tajweed_summary = "\n".join(tajweed_lines)
             
             # Prepare analysis summary for GPT
             prompt = f"""You are an expert Quran Tajweed teacher. Analyze this student's recitation and provide constructive, accurate feedback.
@@ -713,9 +795,7 @@ Reference Audio Comparison:
 - Tempo Match: {ref_comparison.get('tempo_similarity', 0):.1f}%
 
 Tajweed Rules Analysis:
-- Madd (Elongation): {analysis_results['madd_analysis']['percentage']}% correct ({len(analysis_results['madd_analysis']['issues'])} issues)
-- Idgham Bila Ghunnah: {analysis_results['idgham_bila_ghunnah_analysis']['percentage']}% correct ({len(analysis_results['idgham_bila_ghunnah_analysis']['issues'])} issues)
-- Idgham Bi Ghunnah: {analysis_results['idgham_bi_ghunnah_analysis']['percentage']}% correct ({len(analysis_results['idgham_bi_ghunnah_analysis']['issues'])} issues)
+{tajweed_summary}
 
 Overall Score: {analysis_results['overall_score']['score']}%
 
@@ -725,6 +805,7 @@ IMPORTANT GUIDELINES:
 - If Tajweed scores are low, explain WHICH rules need work and WHY
 - Be specific about what letters/sounds are mispronounced
 - If transcription doesn't match expected text, identify the incorrect words
+- Do NOT give improvement points for rules labeled "Not present in this verse"
 
 Provide feedback in this EXACT JSON format:
 {{
@@ -762,6 +843,7 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
             # Try to parse as JSON
             try:
                 feedback_obj = json.loads(feedback_text)
+                feedback_obj = self.filter_feedback_by_applicability(feedback_obj, rule_contexts)
                 print(json.dumps({
                     "status": "openai_success",
                     "model": response.model,
@@ -775,12 +857,13 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
                     "raw_response": feedback_text[:200]
                 }), file=sys.stderr)
                 # Fallback to simple format if JSON parsing fails
-                return {
+                fallback_feedback = {
                     "summary": feedback_text,
                     "strengths": [],
                     "improvements": [],
                     "next_steps": ""
                 }
+                return self.filter_feedback_by_applicability(fallback_feedback, rule_contexts)
             
         except Exception as e:
             error_str = str(e)
@@ -797,46 +880,63 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
     def generate_fallback_feedback(self, analysis_results, error_reason=""):
         """Generate intelligent fallback feedback when OpenAI API is unavailable"""
         score = analysis_results['overall_score']['score']
-        madd_score = analysis_results['madd_analysis']['percentage']
-        idgham_bila_score = analysis_results['idgham_bila_ghunnah_analysis']['percentage']
-        idgham_bi_score = analysis_results['idgham_bi_ghunnah_analysis']['percentage']
-        
-        madd_issues = len(analysis_results['madd_analysis']['issues'])
-        idgham_bila_issues = len(analysis_results['idgham_bila_ghunnah_analysis']['issues'])
-        idgham_bi_issues = len(analysis_results['idgham_bi_ghunnah_analysis']['issues'])
+        rule_contexts = self.get_rule_feedback_contexts(analysis_results)
+
+        rule_definitions = {
+            'madd_analysis': {
+                'strength': 'Good application of Madd (elongation) rules',
+                'issue_template': 'Madd (elongation) needs attention ({issues} issues detected)',
+                'suggestion': 'Practice holding vowels for the correct duration (2-6 counts). Listen to reference audio carefully.',
+                'next_step': "Focus on Madd rules. Listen to Sheikh Alafasy's reference audio multiple times before practicing."
+            },
+            'idgham_bila_ghunnah_analysis': {
+                'strength': 'Strong understanding of Idgham Bila Ghunnah (merging without nasalization)',
+                'issue_template': 'Idgham Bila Ghunnah requires work ({issues} issues found)',
+                'suggestion': 'Focus on merging Noon Sakin with Raa (ر) and Lam (ل) without nasalization. Practice slowly.',
+                'next_step': 'Work on Idgham Bila Ghunnah. Record yourself again and compare with the reference to hear the differences.'
+            },
+            'idgham_bi_ghunnah_analysis': {
+                'strength': 'Excellent use of Idgham Bi Ghunnah (merging with nasalization)',
+                'issue_template': 'Idgham Bi Ghunnah needs improvement ({issues} issues detected)',
+                'suggestion': 'Practice nasalization (ghunnah) when merging with letters و م ن ي. Hold for 2 counts.',
+                'next_step': "Practice Idgham Bi Ghunnah with nasalization. Listen to Sheikh Alafasy's reference audio multiple times before practicing."
+            }
+        }
+
+        applicable_rules = [rule for rule in rule_contexts if rule.get('applicable', True)]
         
         # Determine strengths based on scores
         strengths = []
-        if madd_score >= 80:
-            strengths.append("Good application of Madd (elongation) rules")
-        if idgham_bila_score >= 80:
-            strengths.append("Strong understanding of Idgham Bila Ghunnah (merging without nasalization)")
-        if idgham_bi_score >= 80:
-            strengths.append("Excellent use of Idgham Bi Ghunnah (merging with nasalization)")
+        for rule in applicable_rules:
+            rule_key = rule.get('key')
+            rule_info = rule_definitions.get(rule_key)
+            if rule_info and rule.get('percentage', 0) >= 80:
+                strengths.append(rule_info['strength'])
+
         if score >= 85:
             strengths.append("Overall strong Tajweed application")
         elif score >= 70:
             strengths.append("Solid foundation in Tajweed principles")
         else:
             strengths.append("Completed recitation with effort")
+
+        if not applicable_rules:
+            strengths.append('The selected verse has no target Madd/Idgham rule occurrences.')
         
         # Determine improvements needed
         improvements = []
-        if madd_issues > 0:
-            improvements.append({
-                "issue": f"Madd (elongation) needs attention ({madd_issues} issues detected)",
-                "suggestion": "Practice holding vowels for the correct duration (2-6 counts). Listen to reference audio carefully."
-            })
-        if idgham_bila_issues > 0:
-            improvements.append({
-                "issue": f"Idgham Bila Ghunnah requires work ({idgham_bila_issues} issues found)",
-                "suggestion": "Focus on merging Noon Sakin with Raa (ر) and Lam (ل) without nasalization. Practice slowly."
-            })
-        if idgham_bi_issues > 0:
-            improvements.append({
-                "issue": f"Idgham Bi Ghunnah needs improvement ({idgham_bi_issues} issues detected)",
-                "suggestion": "Practice nasalization (ghunnah) when merging with letters و م ن ي. Hold for 2 counts."
-            })
+        for rule in applicable_rules:
+            rule_key = rule.get('key')
+            rule_info = rule_definitions.get(rule_key)
+            if not rule_info:
+                continue
+
+            issues_count = int(rule.get('issues_count', 0) or 0)
+            if issues_count > 0:
+                improvements.append({
+                    "issue": rule_info['issue_template'].format(issues=issues_count),
+                    "suggestion": rule_info['suggestion']
+                })
         
         # Generate summary
         if score >= 90:
@@ -857,27 +957,24 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
             summary += " (Note: Advanced AI feedback unavailable. Analysis based on acoustic analysis.)"
         
         # Generate next steps
-        next_steps_options = [
-            "Listen to Sheikh Alafasy's reference audio multiple times before practicing.",
-            "Record yourself again and compare with the reference to hear the differences.",
-            "Focus on one Tajweed rule at a time rather than trying to perfect everything at once.",
-            "Practice with a qualified teacher for personalized guidance on pronunciation."
-        ]
-        
-        # Select most relevant next step based on weakest area
-        if madd_score <= idgham_bila_score and madd_score <= idgham_bi_score:
-            next_steps = "Focus on Madd rules. " + next_steps_options[0]
-        elif idgham_bila_score <= idgham_bi_score:
-            next_steps = "Work on Idgham Bila Ghunnah. " + next_steps_options[1]
+        # Select most relevant next step based on weakest applicable rule
+        if applicable_rules:
+            weakest = min(applicable_rules, key=lambda rule: rule.get('percentage', 0))
+            weakest_key = weakest.get('key')
+            next_steps = rule_definitions.get(weakest_key, {}).get(
+                'next_step',
+                'Focus on one Tajweed rule at a time rather than trying to perfect everything at once.'
+            )
         else:
-            next_steps = "Practice Idgham Bi Ghunnah with nasalization. " + next_steps_options[0]
+            next_steps = 'Keep strengthening pronunciation accuracy and rhythm by repeating the verse with the reference recitation.'
         
-        return {
+        feedback_obj = {
             "summary": summary,
             "strengths": strengths if strengths else ["Submission completed"],
             "improvements": improvements,
             "next_steps": next_steps
         }
+        return self.filter_feedback_by_applicability(feedback_obj, rule_contexts)
     
     def compare_with_reference(self):
         """
@@ -1080,6 +1177,10 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         if self.use_openai:
             ai_feedback = self.generate_openai_feedback(results)
             if ai_feedback:
+                ai_feedback = self.filter_feedback_by_applicability(
+                    ai_feedback,
+                    self.get_rule_feedback_contexts(results)
+                )
                 results['ai_feedback'] = ai_feedback
         
         return results

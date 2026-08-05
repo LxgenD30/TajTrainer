@@ -53,7 +53,6 @@ class AssignmentController extends Controller
             'instructions' => 'nullable|string',
             'total_marks' => 'required|integer|min:1',
             'is_voice_submission' => 'required|boolean',
-            'tajweed_rules' => 'required|string|in:Madd,Idgham Bi Ghunnah,Idgham Billa Ghunnah',
         ]);
 
         // Verify classroom ownership
@@ -76,7 +75,7 @@ class AssignmentController extends Controller
             'instructions' => $validated['instructions'],
             'total_marks' => $validated['total_marks'],
             'is_voice_submission' => $validated['is_voice_submission'],
-            'tajweed_rules' => [$validated['tajweed_rules']],
+            'tajweed_rules' => null,
             'expected_recitation' => $expectedRecitation,
             'reference_audio_url' => $referenceAudioUrl,
         ]);
@@ -168,7 +167,6 @@ class AssignmentController extends Controller
             'instructions' => 'required|string',
             'total_marks' => 'required|integer|min:1',
             'is_voice_submission' => 'required|boolean',
-            'tajweed_rules' => 'required|string|in:Madd,Idgham Bi Ghunnah,Idgham Billa Ghunnah',
         ]);
 
         $classroom = Classroom::findOrFail($assignment->class_id);
@@ -191,7 +189,7 @@ class AssignmentController extends Controller
             'instructions' => $validated['instructions'],
             'total_marks' => $validated['total_marks'],
             'is_voice_submission' => $validated['is_voice_submission'],
-            'tajweed_rules' => [$validated['tajweed_rules']],
+            'tajweed_rules' => null,
             'expected_recitation' => $expectedRecitation,
             'reference_audio_url' => $referenceAudioUrl,
         ]);

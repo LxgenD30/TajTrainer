@@ -469,7 +469,7 @@
             </div>
         </div>
         
-        @if(isset($analysis['text_accuracy']) || isset($analysis['madd_analysis']) || isset($analysis['noon_sakin_analysis']))
+        @if(isset($analysis['text_accuracy']) || isset($analysis['madd_analysis']) || isset($analysis['idgham_bila_ghunnah_analysis']) || isset($analysis['idgham_bi_ghunnah_analysis']))
         <div class="metrics-grid">
             @if(isset($analysis['text_accuracy']))
             <div class="metric-card">
@@ -480,27 +480,55 @@
             </div>
             @endif
             
-            @if(isset($analysis['madd_analysis']))
-            <div class="metric-card">
-                <div class="metric-icon">📏</div>
-                <div class="metric-title">Madd (Elongation)</div>
-                <div class="metric-value" style="color: #d4af37;">{{ $analysis['madd_analysis']['percentage'] ?? 0 }}%</div>
-                <div class="metric-subtitle">
-                    {{ $analysis['madd_analysis']['correct_elongations'] ?? 0 }}/{{ $analysis['madd_analysis']['total_elongations'] ?? 0 }} correct
-                </div>
-            </div>
-            @endif
-            
-            @if(isset($analysis['noon_sakin_analysis']))
-            <div class="metric-card">
-                <div class="metric-icon">🔤</div>
-                <div class="metric-title">Noon Sakin</div>
-                <div class="metric-value" style="color: #ff9800;">{{ $analysis['noon_sakin_analysis']['percentage'] ?? 0 }}%</div>
-                <div class="metric-subtitle">
-                    {{ $analysis['noon_sakin_analysis']['correct_pronunciation'] ?? 0 }}/{{ $analysis['noon_sakin_analysis']['total_occurrences'] ?? 0 }} correct
-                </div>
-            </div>
-            @endif
+            @php
+                $ruleCards = [
+                    [
+                        'key' => 'madd_analysis',
+                        'icon' => '📏',
+                        'title' => 'Madd (Elongation)',
+                        'color' => '#d4af37',
+                        'correct_key' => 'correct_elongations',
+                        'total_key' => 'total_elongations',
+                    ],
+                    [
+                        'key' => 'idgham_bila_ghunnah_analysis',
+                        'icon' => '🔡',
+                        'title' => 'Idgham Bila Ghunnah',
+                        'color' => '#ff9800',
+                        'correct_key' => 'correct_pronunciation',
+                        'total_key' => 'total_occurrences',
+                    ],
+                    [
+                        'key' => 'idgham_bi_ghunnah_analysis',
+                        'icon' => '🌀',
+                        'title' => 'Idgham Bi Ghunnah',
+                        'color' => '#1abc9c',
+                        'correct_key' => 'correct_pronunciation',
+                        'total_key' => 'total_occurrences',
+                    ],
+                ];
+            @endphp
+
+            @foreach($ruleCards as $ruleCard)
+                @if(isset($analysis[$ruleCard['key']]))
+                    @php
+                        $ruleData = $analysis[$ruleCard['key']];
+                        $isApplicable = $ruleData['rule_applicable'] ?? true;
+                    @endphp
+                    <div class="metric-card">
+                        <div class="metric-icon">{{ $ruleCard['icon'] }}</div>
+                        <div class="metric-title">{{ $ruleCard['title'] }}</div>
+                        <div class="metric-value" style="color: {{ $ruleCard['color'] }};">{{ $ruleData['percentage'] ?? 0 }}%</div>
+                        <div class="metric-subtitle">
+                            @if($isApplicable)
+                                {{ $ruleData[$ruleCard['correct_key']] ?? 0 }}/{{ $ruleData[$ruleCard['total_key']] ?? 0 }} correct
+                            @else
+                                Not present in the verse
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            @endforeach
         </div>
         @endif
     </div>
