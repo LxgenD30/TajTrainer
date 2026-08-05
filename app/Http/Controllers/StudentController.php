@@ -612,7 +612,6 @@ class StudentController extends Controller
             $chapter = $chapterResp->json('chapter');
             $verses  = $versesResp->json('verses') ?? [];
 
-            // Build clean ayah list with diacritized text (text_uthmani has full tashkeel, no HTML)
             $ayahs = collect($verses)->map(function ($verse) {
                 [, $verseNum] = explode(':', $verse['verse_key']);
                 return [
@@ -638,7 +637,6 @@ class StudentController extends Controller
     public function surahDetails($surah_number)
     {
         try {
-            // Two QuranCDN calls only — publicly accessible, no auth required
             $chapterResp = Http::timeout(15)->get(
                 "https://api.qurancdn.com/api/qdc/chapters/{$surah_number}",
                 ['language' => 'en']
@@ -668,12 +666,11 @@ class StudentController extends Controller
 
             $mergedAyahs = [];
             foreach ($verses as $verse) {
-                $verseKey = $verse['verse_key']; // e.g. "1:1"
+                $verseKey = $verse['verse_key']; 
                 [, $verseNum] = explode(':', $verseKey);
                 $surahPadded = str_pad($surah_number, 3, '0', STR_PAD_LEFT);
                 $versePadded = str_pad($verseNum, 3, '0', STR_PAD_LEFT);
 
-                // Translations are included in the same response
                 $translationText = strip_tags(
                     $verse['translations'][0]['text'] ?? ''
                 );
@@ -697,7 +694,6 @@ class StudentController extends Controller
                 'ayahs'                   => $mergedAyahs,
             ];
 
-            // Load existing memorization statuses for this student and surah
             $statuses = \App\Models\MemorizationStatus::where('student_id', Auth::id())
                 ->where('surah_number', $surah_number)
                 ->pluck('status', 'ayah_number')
@@ -2149,12 +2145,10 @@ class StudentController extends Controller
             }
 
             // Build Whisper prompt using the last portion of the transcript for context.
-            // Feeding back the previous diacritized text guides Whisper to continue in the same style.
             $context = trim($request->input('context', ''));
             $seed    = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ مَٰلِكِ يَوْمِ ٱلدِّينِ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ';
             $prompt  = $context ? mb_substr($context, -200) : $seed;
 
-            // Transcribe with Whisper (verbose_json gives us no_speech_prob for hallucination filtering)
             $whisperResp = Http::withHeaders(['Authorization' => 'Bearer ' . $apiKey])
                 ->attach('file', $audioBinary, 'audio.wav', ['Content-Type' => 'audio/wav'])
                 ->post('https://api.openai.com/v1/audio/transcriptions', [

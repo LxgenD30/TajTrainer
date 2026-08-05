@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -89,12 +92,136 @@ class GoogleAuthController extends Controller
         }
     }
 
+    public function loginWithGoogleToken(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'credential' => ['required', 'string'],
+        ]);
+
+        $googleClientId = config('services.google.client_id');
+        if (empty($googleClientId)) {
+            return response()->json([
+                'message' => 'Google login is not configured yet. Please set GOOGLE_CLIENT_ID in your environment.',
+            ], 500);
+        }
+
+        try {
+            $tokenInfoResponse = Http::timeout(10)
+                ->get('https://oauth2.googleapis.com/tokeninfo', [
+                    'id_token' => $validated['credential'],
+                ]);
+
+            if (!$tokenInfoResponse->ok()) {
+                return response()->json([
+                    'message' => 'Google credential is invalid or expired. Please try again.',
+                ], 422);
+            }
+
+            $tokenInfo = $tokenInfoResponse->json();
+            $audience = $tokenInfo['aud'] ?? null;
+            $email = isset($tokenInfo['email']) ? strtolower(trim((string) $tokenInfo['email'])) : null;
+            $googleId = $tokenInfo['sub'] ?? null;
+            $emailVerified = $tokenInfo['email_verified'] ?? false;
+
+            if ($audience !== $googleClientId) {
+                return response()->json([
+                    'message' => 'Google credential audience mismatch. Please use the configured Google app.',
+                ], 422);
+            }
+
+            if ($emailVerified !== true && $emailVerified !== 'true') {
+                return response()->json([
+                    'message' => 'Google email is not verified. Please verify your Google account first.',
+                ], 422);
+            }
+
+            if (empty($email) || empty($googleId)) {
+                return response()->json([
+                    'message' => 'Google did not return a valid account email.',
+                ], 422);
+            }
+
+            $linkedUser = User::where('google_id', $googleId)->first();
+            if ($linkedUser) {
+                Auth::login($linkedUser, true);
+
+                return response()->json([
+                    'message' => 'Login successful.',
+                    'redirect_url' => $this->redirectPathByRole($linkedUser),
+                    'user' => [
+                        'id' => $linkedUser->id,
+                        'email' => $linkedUser->email,
+                        'role_id' => $linkedUser->role_id,
+                    ],
+                ]);
+            }
+
+            $user = User::where('email', $email)->first();
+            if (!$user) {
+                return response()->json([
+                    'message' => 'No account exists with this Google email. Please register first.',
+                    'code' => 'NO_ACCOUNT',
+                    'email' => $email,
+                ], 422);
+            }
+
+            if (!empty($user->google_id) && $user->google_id !== $googleId) {
+                Log::warning('Google ID mismatch during token login', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                ]);
+
+                return response()->json([
+                    'message' => 'This account is already linked to a different Google account.',
+                ], 409);
+            }
+
+            $user->google_id = $googleId;
+
+            $picture = $tokenInfo['picture'] ?? null;
+            if (!$user->profile_picture && !empty($picture)) {
+                $user->profile_picture = $picture;
+            }
+
+            if (is_null($user->email_verified_at)) {
+                $user->email_verified_at = now();
+            }
+
+            $user->save();
+
+            Auth::login($user, true);
+
+            return response()->json([
+                'message' => 'Login successful.',
+                'redirect_url' => $this->redirectPathByRole($user),
+                'user' => [
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'role_id' => $user->role_id,
+                ],
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Google token login failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Google login failed. Please try again.',
+            ], 500);
+        }
+    }
+
     private function redirectByRole(User $user): RedirectResponse
     {
+        return redirect()->to($this->redirectPathByRole($user));
+    }
+
+    private function redirectPathByRole(User $user): string
+    {
         return match ((int) $user->role_id) {
-            2 => redirect()->to('/student/classes'),
-            3 => redirect()->to('/home'),
-            default => redirect()->to('/home'),
+            2 => '/student/classes',
+            3 => '/home',
+            default => '/home',
         };
     }
 

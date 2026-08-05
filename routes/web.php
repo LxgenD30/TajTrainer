@@ -16,6 +16,8 @@ Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoo
     ->name('auth.google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])
     ->name('auth.google.callback');
+Route::post('/auth/google/token', [GoogleAuthController::class, 'loginWithGoogleToken'])
+    ->name('auth.google.token');
 
 // Home route (authenticated)
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

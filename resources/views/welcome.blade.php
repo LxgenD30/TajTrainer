@@ -581,35 +581,25 @@
             font-family: 'El Messiri', sans-serif;
         }
 
-        .google-login-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+        .google-signin-wrapper {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            background: #fff;
-            color: #1f1f1f;
-            font-family: 'El Messiri', sans-serif;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s ease;
             margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
         }
 
-        .google-login-btn:hover {
-            border-color: #c6c6c6;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transform: translateY(-1px);
-            text-decoration: none;
+        .google-login-placeholder {
+            width: 100%;
+            max-width: 360px;
+            min-height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .google-login-btn i {
-            color: #db4437;
-            font-size: 1.1rem;
+        .google-login-error {
+            margin-bottom: 12px;
+            text-align: center;
         }
 
         .forgot-password-btn {
@@ -1154,15 +1144,16 @@
             @endif
 
             @error('google')
-                <div class="error-message" style="margin-bottom: 16px;">
+                <div class="error-message google-login-error" id="googleLoginErrorServer">
                     {{ $message }}
                 </div>
             @enderror
 
-            <a href="{{ route('auth.google.redirect') }}" class="google-login-btn">
-                <i class="fab fa-google"></i>
-                Continue with Google
-            </a>
+            <div class="error-message google-login-error" id="googleLoginError" style="display: none;"></div>
+
+            <div class="google-signin-wrapper">
+                <div id="googleSignInButton" class="google-login-placeholder"></div>
+            </div>
 
             <div class="login-divider">or login with email</div>
 
@@ -1392,11 +1383,134 @@
         const switchToLogin = document.getElementById('switchToLogin');
         const openForgotPassword = document.getElementById('openForgotPassword');
         const backToLoginFromForgot = document.getElementById('backToLoginFromForgot');
+        const googleSignInButton = document.getElementById('googleSignInButton');
+        const googleLoginError = document.getElementById('googleLoginError');
+        const googleClientId = @json(config('services.google.client_id'));
+        const googleTokenLoginUrl = @json(route('auth.google.token'));
+        let googleScriptPromise = null;
+        let googleButtonRendered = false;
+
+        function setGoogleError(message) {
+            if (!googleLoginError) return;
+            if (!message) {
+                googleLoginError.style.display = 'none';
+                googleLoginError.textContent = '';
+                return;
+            }
+            googleLoginError.textContent = message;
+            googleLoginError.style.display = 'block';
+        }
+
+        function loadGoogleIdentityScript() {
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                return Promise.resolve();
+            }
+
+            if (googleScriptPromise) {
+                return googleScriptPromise;
+            }
+
+            googleScriptPromise = new Promise(function(resolve, reject) {
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.onload = resolve;
+                script.onerror = function() {
+                    reject(new Error('Could not load Google sign-in script.'));
+                };
+                document.head.appendChild(script);
+            });
+
+            return googleScriptPromise;
+        }
+
+        async function loginWithGoogleCredential(credential) {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const response = await fetch(googleTokenLoginUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                },
+                body: JSON.stringify({ credential: credential }),
+            });
+
+            const data = await response.json().catch(function() {
+                return {};
+            });
+
+            if (!response.ok) {
+                throw data;
+            }
+
+            return data;
+        }
+
+        function openRegisterFromGoogle(email) {
+            loginModal.classList.remove('show');
+            registerModal.classList.add('show');
+
+            const registerEmail = document.getElementById('registerEmail');
+            if (registerEmail && email) {
+                registerEmail.value = email;
+            }
+
+            setGoogleError('No account found. Please complete registration to continue with Google.');
+        }
+
+        function renderGoogleButton() {
+            if (!googleSignInButton || googleButtonRendered) {
+                return;
+            }
+
+            if (!googleClientId) {
+                setGoogleError('Google login is not configured yet. Please contact admin.');
+                return;
+            }
+
+            loadGoogleIdentityScript()
+                .then(function() {
+                    window.google.accounts.id.initialize({
+                        client_id: googleClientId,
+                        callback: async function(response) {
+                            try {
+                                setGoogleError('');
+                                const data = await loginWithGoogleCredential(response.credential);
+                                window.location.href = data.redirect_url || '/home';
+                            } catch (errorData) {
+                                if (errorData && errorData.code === 'NO_ACCOUNT') {
+                                    openRegisterFromGoogle(errorData.email || '');
+                                    return;
+                                }
+
+                                setGoogleError((errorData && errorData.message) ? errorData.message : 'Google login failed. Please try again.');
+                            }
+                        },
+                        auto_select: false,
+                        ux_mode: 'popup'
+                    });
+
+                    window.google.accounts.id.renderButton(googleSignInButton, {
+                        theme: 'outline',
+                        size: 'large',
+                        text: 'signin_with',
+                        shape: 'pill',
+                        width: 320
+                    });
+
+                    googleButtonRendered = true;
+                })
+                .catch(function(error) {
+                    setGoogleError(error.message || 'Failed to initialize Google login.');
+                });
+        }
         
         // Open login modal
         if (loginBtn) {
             loginBtn.addEventListener('click', function() {
                 loginModal.classList.add('show');
+                renderGoogleButton();
             });
         }
         
@@ -1440,6 +1554,7 @@
             e.preventDefault();
             registerModal.classList.remove('show');
             loginModal.classList.add('show');
+            renderGoogleButton();
         });
 
         if (openForgotPassword) {
@@ -1455,6 +1570,7 @@
                 e.preventDefault();
                 forgotPasswordModal.classList.remove('show');
                 loginModal.classList.add('show');
+                renderGoogleButton();
             });
         }
         
@@ -1488,6 +1604,7 @@
             } else {
                 // This is a login form error
                 document.getElementById('loginModal').classList.add('show');
+                renderGoogleButton();
             }
         }
 
@@ -1516,6 +1633,8 @@
         if (hasForgotModalError) {
             document.getElementById('forgotPasswordModal').classList.add('show');
         }
+
+        renderGoogleButton();
         
         // Demo player functionality with Quran Cloud API (api.alquran.cloud)
         let audioElement = document.getElementById('quranAudio');
