@@ -104,11 +104,6 @@ Route::middleware('auth')->group(function () {
         [App\Http\Controllers\StudentController::class, 'viewSubmission'])
         ->name('student.assignment.view');
     
-    // AssemblyAI temporary token endpoint
-    Route::post('/api/assemblyai/token', 
-        [App\Http\Controllers\StudentController::class, 'getAssemblyAIToken'])
-        ->name('api.assemblyai.token');
-    
     // Teacher's student list view
     Route::get('/students-list', [App\Http\Controllers\StudentListController::class, 'index'])
         ->name('students.list');

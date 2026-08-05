@@ -113,63 +113,6 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Get AssemblyAI temporary token for real-time transcription
-     */
-    public function getAssemblyAIToken(Request $request)
-    {
-        $apiKey = config('services.assemblyai.api_key');
-        
-        Log::info('=== AssemblyAI Token Request ===');
-        Log::info('API Key configured: ' . ($apiKey ? 'Yes (length: ' . strlen($apiKey) . ')' : 'No'));
-        
-        if (!$apiKey) {
-            Log::error('AssemblyAI API key not configured');
-            return response()->json(['error' => 'AssemblyAI API key not configured'], 500);
-        }
-        
-        try {
-            Log::info('Requesting token from AssemblyAI (Universal Streaming)...');
-            
-            // Use the new Universal Streaming endpoint
-            $response = Http::withHeaders([
-                'authorization' => $apiKey,
-            ])->post('https://api.assemblyai.com/v2/realtime/token', [
-                'expires_in' => 3600
-            ]);
-            
-            Log::info('AssemblyAI Response Status: ' . $response->status());
-            Log::info('AssemblyAI Response Body: ' . $response->body());
-            
-            if ($response->successful()) {
-                Log::info('[OK] Token obtained successfully');
-                return response()->json($response->json());
-            } else {
-                Log::error('Failed to get AssemblyAI token: HTTP ' . $response->status());
-                Log::error('Response: ' . $response->body());
-                
-                // Check if it's a deprecation error
-                $body = $response->json();
-                if (isset($body['error']) && str_contains($body['error'], 'deprecated')) {
-                    Log::error('AssemblyAI streaming model is deprecated');
-                    return response()->json([
-                        'error' => 'Streaming feature temporarily unavailable',
-                        'message' => 'AssemblyAI streaming API has been updated. Please use file upload instead.'
-                    ], 503);
-                }
-                
-                return response()->json([
-                    'error' => 'Failed to get token',
-                    'details' => $body
-                ], $response->status());
-            }
-        } catch (\Exception $e) {
-            Log::error('Exception getting AssemblyAI token: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
-        }
-    }
-
     public function submitAssignment($assignmentId)
     {
         try {
@@ -233,7 +176,7 @@ class StudentController extends Controller
     public function storeSubmission(Request $request, $assignmentId)
     {
         set_time_limit(600); // Increase time limit to 10 minutes for audio processing
-        
+
         \Log::info('=== Assignment Submission Started ===');
         \Log::info('Assignment ID: ' . $assignmentId);
         \Log::info('Student ID: ' . Auth::id());
@@ -243,7 +186,7 @@ class StudentController extends Controller
         \Log::info('Has audio_file: ' . ($request->hasFile('audio_file') ? 'Yes' : 'No'));
         \Log::info('Has transcription: ' . ($request->has('transcription') ? 'Yes' : 'No'));
         \Log::info('All request keys: ' . implode(', ', array_keys($request->all())));
-        
+
         if ($request->hasFile('audio_file')) {
             $file = $request->file('audio_file');
             \Log::info('Upload file details:');
@@ -254,63 +197,58 @@ class StudentController extends Controller
             \Log::info('  - Is Valid: ' . ($file->isValid() ? 'Yes' : 'No'));
             \Log::info('  - Error: ' . $file->getError());
         }
-        
+
         if ($request->has('transcription')) {
             \Log::info('Transcription content: ' . substr($request->transcription, 0, 200));
         }
-        
+
         try {
             $assignment = \App\Models\Assignment::findOrFail($assignmentId);
-            
+
             $student = Student::find(Auth::id());
             if (!$student) {
                 \Log::error('Student not found: ' . Auth::id());
                 return back()->withErrors(['error' => 'Student account not found. Please contact administrator.'])->withInput();
             }
-            
+
             if (!$student->classrooms()->where('class_id', $assignment->class_id)->exists()) {
                 \Log::error('Student not enrolled in classroom: ' . $assignment->class_id);
                 return back()->withErrors(['error' => 'You are not enrolled in this class.'])->withInput();
             }
-            
-            // Validate the request
+
             try {
                 $validated = $request->validate([
                     'text_submission' => 'nullable|string',
                     'transcription' => 'nullable|string',
                     'recorded_audio' => 'nullable|string',
                 ]);
-                
-                // Custom validation for audio file - accept any audio/* or video/* MIME type
-                // (some audio recorders save as video/webm, video/mp4, etc.)
+
                 if ($request->hasFile('audio_file')) {
                     $file = $request->file('audio_file');
                     $mimeType = $file->getMimeType();
                     $size = $file->getSize();
-                    
+
                     \Log::info('Validating uploaded file:');
                     \Log::info('  MIME type: ' . $mimeType);
                     \Log::info('  Size: ' . $size . ' bytes (' . round($size / 1024 / 1024, 2) . ' MB)');
-                    
-                    // Check if it's an audio or video file
+
                     if (!str_starts_with($mimeType, 'audio/') && !str_starts_with($mimeType, 'video/')) {
                         \Log::error('Invalid file type: ' . $mimeType);
                         return back()->withErrors([
                             'audio_file' => 'The audio file must be an audio or video file (MP3, WAV, M4A, OGG, WEBM, MP4, etc.). Detected type: ' . $mimeType
                         ])->withInput();
                     }
-                    
-                    // Check size (10MB = 10485760 bytes)
+
                     if ($size > 10485760) {
                         \Log::error('File too large: ' . $size . ' bytes');
                         return back()->withErrors([
                             'audio_file' => 'The audio file must not be larger than 10MB. Your file is ' . round($size / 1024 / 1024, 2) . ' MB.'
                         ])->withInput();
                     }
-                    
+
                     \Log::info('[OK] File validation passed');
                 }
-                
+
                 \Log::info('[OK] All validation passed');
             } catch (\Illuminate\Validation\ValidationException $e) {
                 \Log::error('Validation failed: ' . json_encode($e->errors()));
@@ -321,148 +259,133 @@ class StudentController extends Controller
             \Log::error('Stack trace: ' . $e->getTraceAsString());
             return back()->withErrors(['error' => 'Submission failed: ' . $e->getMessage()])->withInput();
         }
-        
-        // Wrap all submission processing in try-catch to prevent 500 errors
+
         try {
             $submission = \App\Models\AssignmentSubmission::where('assignment_id', $assignmentId)
                 ->where('student_id', Auth::id())
                 ->first();
-        
-        if (!$submission) {
-            $submission = new \App\Models\AssignmentSubmission();
-            $submission->assignment_id = $assignmentId;
-            $submission->student_id = Auth::id();
-        }
-        
-        $submission->text_submission = $validated['text_submission'] ?? null;
-        $submission->status = 'submitted';
-        $submission->submitted_at = now();
-        
-        // Handle transcription from streaming API or form
-        if ($request->has('transcription') && !empty(trim($request->transcription))) {
-            $submission->transcription = trim($request->transcription);
-            \Log::info('[OK] Transcription saved from request: ' . substr($submission->transcription, 0, 150));
-        } else {
-            \Log::info('[WARN] No transcription received in request');
-        }
-        
-        // Handle live recording (base64 audio data)
-        if ($request->has('recorded_audio') && !empty($request->recorded_audio)) {
-            $audioData = $request->recorded_audio;
-            
-            \Log::info('Processing live recording audio data');
-            \Log::info('Audio data prefix: ' . substr($audioData, 0, 50));
-            
-            // Extract the base64 encoded binary data - now handles codecs parameter
-            if (preg_match('/^data:audio\/([^;,]+)(?:;codecs=[^;,]+)?;base64,(.+)$/', $audioData, $matches)) {
-                $extension = $matches[1];
-                $data = base64_decode($matches[2]);
-                
-                \Log::info('Audio format detected: ' . $extension . ', Data size: ' . strlen($data) . ' bytes');
-                
-                // Convert webm to a more compatible format if needed
-                if ($extension === 'webm') {
-                    $extension = 'webm'; // Keep as webm, AssemblyAI supports it
-                }
-                
-                $filename = time() . '_' . uniqid() . '.' . $extension;
-                $destinationPath = storage_path('app/public/submissions');
-                
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-                
-                $fullPath = $destinationPath . '/' . $filename;
-                
-                if (file_put_contents($fullPath, $data)) {
-                    $submission->audio_file_path = 'submissions/' . $filename;
-                    \Log::info('[OK] Live recording audio saved successfully: ' . $submission->audio_file_path . ' (Size: ' . strlen($data) . ' bytes)');
+
+            if (!$submission) {
+                $submission = new \App\Models\AssignmentSubmission();
+                $submission->assignment_id = $assignmentId;
+                $submission->student_id = Auth::id();
+            }
+
+            $submission->text_submission = $validated['text_submission'] ?? null;
+            $submission->status = 'submitted';
+            $submission->submitted_at = now();
+
+            if ($request->has('transcription') && !empty(trim($request->transcription))) {
+                $submission->transcription = trim($request->transcription);
+                \Log::info('[OK] Transcription saved from request: ' . substr($submission->transcription, 0, 150));
+            } else {
+                \Log::info('[WARN] No transcription received in request');
+            }
+
+            if ($request->has('recorded_audio') && !empty($request->recorded_audio)) {
+                $audioData = $request->recorded_audio;
+
+                \Log::info('Processing live recording audio data');
+                \Log::info('Audio data prefix: ' . substr($audioData, 0, 50));
+
+                if (preg_match('/^data:audio\/([^;,]+)(?:;codecs=[^;,]+)?;base64,(.+)$/', $audioData, $matches)) {
+                    $extension = $matches[1];
+                    $data = base64_decode($matches[2]);
+
+                    \Log::info('Audio format detected: ' . $extension . ', Data size: ' . strlen($data) . ' bytes');
+
+                    if ($extension === 'webm') {
+                        $extension = 'webm';
+                    }
+
+                    $filename = time() . '_' . uniqid() . '.' . $extension;
+                    $destinationPath = storage_path('app/public/submissions');
+
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+
+                    $fullPath = $destinationPath . '/' . $filename;
+
+                    if (file_put_contents($fullPath, $data)) {
+                        $submission->audio_file_path = 'submissions/' . $filename;
+                        \Log::info('[OK] Live recording audio saved successfully: ' . $submission->audio_file_path . ' (Size: ' . strlen($data) . ' bytes)');
+                    } else {
+                        \Log::error('Failed to save live recording audio file');
+                    }
                 } else {
-                    \Log::error('Failed to save live recording audio file');
+                    \Log::error('Invalid audio data format from live recording');
+                    \Log::error('Expected format: data:audio/TYPE;base64,DATA');
+                    \Log::error('Received format: ' . substr($audioData, 0, 100));
                 }
-            } else {
-                \Log::error('Invalid audio data format from live recording');
-                \Log::error('Expected format: data:audio/TYPE;base64,DATA');
-                \Log::error('Received format: ' . substr($audioData, 0, 100));
-            }
-        }
-        // Handle uploaded audio file
-        elseif ($request->hasFile('audio_file')) {
-            $file = $request->file('audio_file');
-            
-            \Log::info('Processing uploaded audio file');
-            \Log::info('File original name: ' . $file->getClientOriginalName());
-            \Log::info('File size: ' . $file->getSize() . ' bytes');
-            \Log::info('File mime type: ' . $file->getMimeType());
-            \Log::info('File extension: ' . $file->getClientOriginalExtension());
-            \Log::info('File is valid: ' . ($file->isValid() ? 'Yes' : 'No'));
-            
-            if ($file->isValid() && $file->getSize() > 0) {
-                $extension = $file->getClientOriginalExtension() ?: 'webm';
-                $filename = time() . '_' . uniqid() . '.' . $extension;
-                
-                // Use Laravel's storage method - it handles directory creation automatically
-                try {
-                    $path = $file->storeAs('submissions', $filename, 'public');
-                    $submission->audio_file_path = $path;
-                    \Log::info('[OK] Audio file uploaded successfully: ' . $path);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to store uploaded file: ' . $e->getMessage());
-                    throw new \Exception('Failed to upload audio file: ' . $e->getMessage());
+            } elseif ($request->hasFile('audio_file')) {
+                $file = $request->file('audio_file');
+
+                \Log::info('Processing uploaded audio file');
+                \Log::info('File original name: ' . $file->getClientOriginalName());
+                \Log::info('File size: ' . $file->getSize() . ' bytes');
+                \Log::info('File mime type: ' . $file->getMimeType());
+                \Log::info('File extension: ' . $file->getClientOriginalExtension());
+                \Log::info('File is valid: ' . ($file->isValid() ? 'Yes' : 'No'));
+
+                if ($file->isValid() && $file->getSize() > 0) {
+                    $extension = $file->getClientOriginalExtension() ?: 'webm';
+                    $filename = time() . '_' . uniqid() . '.' . $extension;
+
+                    try {
+                        $path = $file->storeAs('submissions', $filename, 'public');
+                        $submission->audio_file_path = $path;
+                        \Log::info('[OK] Audio file uploaded successfully: ' . $path);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to store uploaded file: ' . $e->getMessage());
+                        throw new \Exception('Failed to upload audio file: ' . $e->getMessage());
+                    }
+                } else {
+                    \Log::error('File is invalid or empty');
+                    throw new \Exception('Uploaded file is invalid or empty');
                 }
-            } else {
-                \Log::error('File is invalid or empty');
-                throw new \Exception('Uploaded file is invalid or empty');
             }
-        }
-        
-        try {
-            $submission->save();
-            \Log::info('[OK] Submission saved successfully with ID: ' . $submission->id);
-        } catch (\Exception $e) {
-            \Log::error('Failed to save submission: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            throw new \Exception('Failed to save submission: ' . $e->getMessage());
-        }
-        
-        // Process audio synchronously (no queue workers)
-        if ($submission->audio_file_path) {
+
             try {
-                \Log::info('Processing audio synchronously for submission #' . $submission->id);
-                
-                // Process immediately
-                ProcessSubmissionAudio::dispatchSync($submission->id);
-                
-                \Log::info('[OK] Audio processed successfully');
-                return redirect()->route('classroom.show', $assignment->class_id)
-                    ->with('success', 'Assignment submitted and analyzed successfully!');
-                    
+                $submission->save();
+                \Log::info('[OK] Submission saved successfully with ID: ' . $submission->id);
             } catch (\Exception $e) {
-                \Log::error('Audio processing failed: ' . $e->getMessage());
-                return redirect()->route('classroom.show', $assignment->class_id)
-                    ->with('warning', 'Assignment submitted but analysis failed. Teacher will grade manually.');
+                \Log::error('Failed to save submission: ' . $e->getMessage());
+                \Log::error('Stack trace: ' . $e->getTraceAsString());
+                throw new \Exception('Failed to save submission: ' . $e->getMessage());
             }
-        } else {
-            // No audio file - text submission only
+
+            if ($submission->audio_file_path) {
+                try {
+                    \Log::info('Processing audio synchronously for submission #' . $submission->id);
+
+                    ProcessSubmissionAudio::dispatchSync($submission->id);
+
+                    \Log::info('[OK] Audio processed successfully');
+                    return redirect()->route('classroom.show', $assignment->class_id)
+                        ->with('success', 'Assignment submitted and analyzed successfully!');
+                } catch (\Exception $e) {
+                    \Log::error('Audio processing failed: ' . $e->getMessage());
+                    return redirect()->route('classroom.show', $assignment->class_id)
+                        ->with('warning', 'Assignment submitted but analysis failed. Teacher will grade manually.');
+                }
+            }
+
             \Log::info('[OK] Text submission saved successfully (no audio)');
             return redirect()->route('classroom.show', $assignment->class_id)
                 ->with('success', 'Assignment submitted successfully!');
-        }
-            
         } catch (\Exception $e) {
             \Log::error('=== Assignment Submission FAILED ===');
             \Log::error('Error: ' . $e->getMessage());
             \Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
-            // Try to get assignment for redirect
+
             try {
                 $assignment = \App\Models\Assignment::findOrFail($assignmentId);
                 return redirect()->route('student.assignment.submit', $assignmentId)
                     ->withErrors(['error' => 'Submission processing failed: ' . $e->getMessage() . '. Please try again or contact support.'])
                     ->withInput();
             } catch (\Exception $innerE) {
-                // If we can't even find the assignment, go to home
                 return redirect()->route('home')
                     ->withErrors(['error' => 'Submission failed: ' . $e->getMessage()])
                     ->withInput();
@@ -470,124 +393,6 @@ class StudentController extends Controller
         }
     }
     
-    private function transcribeWithAssemblyAI($audioPath)
-    {
-        $apiKey = config('services.assemblyai.api_key');
-        $fullPath = storage_path('app/public/' . $audioPath);
-        
-        if (!file_exists($fullPath)) {
-            throw new \Exception('Audio file not found');
-        }
-
-        // Step 1: Upload audio file to AssemblyAI
-        $uploadUrl = $this->uploadAudioToAssemblyAI($fullPath, $apiKey);
-        
-        // Step 2: Request transcription
-        $transcriptId = $this->requestTranscription($uploadUrl, $apiKey);
-        
-        // Step 3: Poll for transcription result
-        $transcription = $this->pollTranscription($transcriptId, $apiKey);
-        
-        return $transcription;
-    }
-    
-    private function uploadAudioToAssemblyAI($filePath, $apiKey)
-    {
-        $audioData = file_get_contents($filePath);
-        
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => 'https://api.assemblyai.com/v2/upload',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'authorization: ' . $apiKey,
-                'Content-Type: application/octet-stream',
-            ],
-            CURLOPT_POSTFIELDS => $audioData,
-        ]);
-        
-        $response = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-        
-        if ($httpCode !== 200) {
-            throw new \Exception('AssemblyAI upload failed: ' . $response);
-        }
-        
-        $result = json_decode($response, true);
-        return $result['upload_url'];
-    }
-    
-    private function requestTranscription($audioUrl, $apiKey)
-    {
-        $requestBody = json_encode([
-            'audio_url' => $audioUrl,
-            'language_code' => 'ar',
-        ]);
-        
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => 'https://api.assemblyai.com/v2/transcript',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'authorization: ' . $apiKey,
-                'Content-Type: application/json',
-            ],
-            CURLOPT_POSTFIELDS => $requestBody,
-        ]);
-        
-        $response = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-        
-        if ($httpCode !== 200) {
-            throw new \Exception('AssemblyAI transcription request failed: ' . $response);
-        }
-        
-        $result = json_decode($response, true);
-        return $result['id'];
-    }
-    
-    private function pollTranscription($transcriptId, $apiKey)
-    {
-        $maxAttempts = 60; // 5 minutes timeout
-        $attempt = 0;
-        
-        while ($attempt < $maxAttempts) {
-            $curl = curl_init();
-            curl_setopt_array($curl, [
-                CURLOPT_URL => 'https://api.assemblyai.com/v2/transcript/' . $transcriptId,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => [
-                    'authorization: ' . $apiKey,
-                ],
-            ]);
-            
-            $response = curl_exec($curl);
-            $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            curl_close($curl);
-            
-            if ($httpCode !== 200) {
-                throw new \Exception('AssemblyAI polling failed: ' . $response);
-            }
-            
-            $result = json_decode($response, true);
-            
-            if ($result['status'] === 'completed') {
-                return $result['text'] ?? '';
-            } elseif ($result['status'] === 'error') {
-                throw new \Exception('Transcription failed: ' . ($result['error'] ?? 'Unknown error'));
-            }
-            
-            sleep(5); // Wait 5 seconds before next poll
-            $attempt++;
-        }
-        
-        throw new \Exception('Transcription timeout');
-    }
-
     public function viewSubmission($assignmentId)
     {
         $assignment = \App\Models\Assignment::with('material', 'classroom')->findOrFail($assignmentId);
