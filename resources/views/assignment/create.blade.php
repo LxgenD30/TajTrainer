@@ -273,21 +273,7 @@
     .verse-arabic tajweed.slnt { color: #6d4c41; }
     .verse-arabic tajweed.end { color: #555555; }
     .verse-arabic span.end {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 1.7em;
-        min-height: 1.7em;
-        padding: 0 0.35em;
-        margin: 0 0.15em;
-        border: 2px solid #d4af37;
-        border-radius: 999px;
-        background: rgba(212, 175, 55, 0.14);
-        color: #000000;
-        font-size: 0.78em;
-        line-height: 1;
-        vertical-align: middle;
-        white-space: nowrap;
+        display: none;
     }
     
     .verse-translation {
@@ -813,7 +799,9 @@
             verseTranslation.textContent = verse.translation || '';
             versePreview.style.display = 'block';
 
-            currentVerseData = `\n\n--- Quran Verse ---\nSurah: ${verse.surah_name || ''}${verse.surah_name_arabic ? ` (${verse.surah_name_arabic})` : ''}\nAyat: ${start}${requestedEnd !== start ? `-${requestedEnd}` : ''}\n\nArabic:\n${verse.arabic_plain || ''}\n\nTranslation:\n${verse.translation || ''}\n--- End Verse ---\n\n`;
+            const surahLabel = verse.surah_name || 'the selected surah';
+            const verseRangeLabel = requestedEnd !== start ? `${start} to ${requestedEnd}` : `${start}`;
+            currentVerseData = `Please read ${surahLabel} from verse ${verseRangeLabel}.`;
 
         } catch (error) {
             alert('Error fetching verse: ' + error.message);
