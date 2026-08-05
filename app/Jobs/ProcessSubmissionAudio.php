@@ -603,9 +603,60 @@ class ProcessSubmissionAudio implements ShouldQueue
         // Remove tatweel and punctuation so pauses/punctuations do not penalize score.
         $text = preg_replace('/[ـ]/u', '', $text);
         $text = preg_replace('/[^\p{Arabic}0-9\s]/u', ' ', $text);
+
+        // Normalize common Muqatta'at compact forms into canonical spoken names.
+        $text = $this->normalizeMuqattaatText($text);
+
         $text = preg_replace('/\s+/u', ' ', $text);
         
         return trim($text);
+    }
+
+    private function normalizeMuqattaatText(string $text): string
+    {
+        $sequences = [
+            'الم', 'المص', 'الر', 'المر', 'كهيعص', 'طه', 'طسم', 'طس',
+            'يس', 'ص', 'حم', 'عسق', 'حمعسق', 'ق', 'ن',
+        ];
+
+        $letterNames = [
+            'ا' => 'الف',
+            'ل' => 'لام',
+            'م' => 'ميم',
+            'ح' => 'حا',
+            'ي' => 'يا',
+            'ط' => 'طا',
+            'س' => 'سين',
+            'ك' => 'كاف',
+            'ه' => 'ها',
+            'ع' => 'عين',
+            'ر' => 'را',
+            'ص' => 'صاد',
+            'ق' => 'قاف',
+            'ن' => 'نون',
+        ];
+
+        foreach ($sequences as $sequence) {
+            $letters = preg_split('//u', $sequence, -1, PREG_SPLIT_NO_EMPTY);
+            $spoken = [];
+            foreach ($letters as $letter) {
+                if (isset($letterNames[$letter])) {
+                    $spoken[] = $letterNames[$letter];
+                }
+            }
+
+            if (empty($spoken)) {
+                continue;
+            }
+
+            $phrase = implode(' ', $spoken);
+            $compactPhrase = str_replace(' ', '', $phrase);
+
+            $text = preg_replace('/(?<!\S)' . preg_quote($sequence, '/') . '(?!\S)/u', $phrase, $text);
+            $text = preg_replace('/(?<!\S)' . preg_quote($compactPhrase, '/') . '(?!\S)/u', $phrase, $text);
+        }
+
+        return $text;
     }
     
     private function logTajweedErrors($submission, $analysis, $type)

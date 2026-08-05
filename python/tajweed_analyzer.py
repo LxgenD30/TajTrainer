@@ -28,7 +28,53 @@ import warnings
 import re
 import html
 import tempfile
+from difflib import SequenceMatcher
 warnings.filterwarnings('ignore')
+
+MUQATTAAT_LETTER_NAMES = {
+    'ا': 'الف',
+    'ل': 'لام',
+    'م': 'ميم',
+    'ح': 'حا',
+    'ي': 'يا',
+    'ط': 'طا',
+    'س': 'سين',
+    'ك': 'كاف',
+    'ه': 'ها',
+    'ع': 'عين',
+    'ر': 'را',
+    'ص': 'صاد',
+    'ق': 'قاف',
+    'ن': 'نون',
+}
+
+MUQATTAAT_SEQUENCES = (
+    'الم', 'المص', 'الر', 'المر', 'كهيعص', 'طه', 'طسم', 'طس',
+    'يس', 'ص', 'حم', 'عسق', 'حمعسق', 'ق', 'ن'
+)
+
+MUQATTAAT_CANONICAL = set(MUQATTAAT_LETTER_NAMES.values())
+
+
+def _muqattaat_sequence_to_phrase(sequence):
+    return ' '.join(MUQATTAAT_LETTER_NAMES[ch] for ch in sequence if ch in MUQATTAAT_LETTER_NAMES)
+
+
+def _build_muqattaat_phrase_patterns():
+    patterns = []
+    for sequence in MUQATTAAT_SEQUENCES:
+        phrase = _muqattaat_sequence_to_phrase(sequence)
+        if not phrase:
+            continue
+
+        compact_phrase = phrase.replace(' ', '')
+        patterns.append((rf'(?<!\S){re.escape(sequence)}(?!\S)', phrase))
+        patterns.append((rf'(?<!\S){re.escape(compact_phrase)}(?!\S)', phrase))
+
+    return patterns
+
+
+MUQATTAAT_PHRASE_PATTERNS = _build_muqattaat_phrase_patterns()
 
 # Import Parselmouth for advanced phonetic analysis
 try:
@@ -128,6 +174,7 @@ class TajweedAnalyzer:
         self.has_madd = self.detect_madd_in_text()
         self.has_idgham_bila = self.detect_idgham_bila_in_text()
         self.has_idgham_bi = self.detect_idgham_bi_in_text()
+        self.has_muqattaat = self.detect_muqattaat_in_expected_text()
     
     def load_whisper_model(self):
         """Load Tarteel AI's Whisper model for Arabic Quran ASR"""
@@ -193,6 +240,54 @@ class TajweedAnalyzer:
         if not self.whisper_model or not self.whisper_processor:
             return None
 
+        # Do not attempt transcription on silent or near-silent audio.
+        if self.is_silent:
+            print(json.dumps({
+                "status": "transcription_skipped",
+                "reason": "Audio is silent or too short - skipping Whisper to avoid hallucination"
+            }), file=sys.stderr)
+            return None
+
+        try:
+            import torch
+
+            # Prepare audio and move it to the same device as the model.
+            input_features = self.whisper_processor(
+                self.y,
+                sampling_rate=self.sr,
+                return_tensors="pt"
+            ).input_features
+
+            device = next(self.whisper_model.parameters()).device
+            input_features = input_features.to(device)
+
+            with torch.no_grad():
+                predicted_ids = self.whisper_model.generate(
+                    input_features,
+                    task='transcribe',
+                    language='ar',
+                    num_beams=3,
+                    do_sample=False,
+                )
+
+            transcription = self.whisper_processor.batch_decode(
+                predicted_ids,
+                skip_special_tokens=True
+            )[0].strip()
+
+            # Muqatta'at-heavy verses benefit from lexical canonicalization.
+            if transcription and self.has_muqattaat:
+                transcription = self.normalize_muqattaat_text(transcription)
+
+            return transcription
+
+        except Exception as e:
+            print(json.dumps({
+                "status": "transcription_failed",
+                "error": str(e)
+            }), file=sys.stderr)
+            return None
+
     def detect_pause_segments(self, min_pause_seconds=1.8, top_db=35):
         """Detect long silence segments to mark recitation pauses."""
         pauses = []
@@ -251,6 +346,128 @@ class TajweedAnalyzer:
 
         return ' '.join(rebuilt)
 
+    def detect_muqattaat_in_expected_text(self):
+        """Detect whether expected text contains Muqatta'at patterns."""
+        if not self.expected_text:
+            return False
+
+        probe = html.unescape(str(self.expected_text))
+        probe = re.sub(r'[\u0000-\u007F]+', ' ', probe)
+        probe = re.sub(r'<\|[^|]+\|>', ' ', probe)
+        probe = re.sub(r'<[^>]+>', ' ', probe)
+        probe = probe.replace('۝', ' ')
+        probe = re.sub(r'[\u064B-\u065F\u0670\u06D6-\u06ED]', '', probe)
+        probe = probe.replace('ـ', '')
+        probe = probe.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ٱ', 'ا')
+        probe = re.sub(r'[^\u0600-\u06FF\s]', ' ', probe)
+        probe = re.sub(r'\s+', ' ', probe).strip()
+
+        if not probe:
+            return False
+
+        tokens = probe.split()
+        if any(token in MUQATTAAT_SEQUENCES for token in tokens):
+            return True
+
+        compact = ''.join(tokens)
+        return any(sequence in compact for sequence in MUQATTAAT_SEQUENCES)
+
+    def expand_compact_muqattaat_token(self, token):
+        """Expand compact Muqatta'at forms such as الم or كهيعص into letter names."""
+        if not token:
+            return None
+
+        compact = re.sub(r'(.)\1{1,}', r'\1', token)
+        if compact in MUQATTAAT_SEQUENCES:
+            return [MUQATTAAT_LETTER_NAMES[ch] for ch in compact if ch in MUQATTAAT_LETTER_NAMES]
+
+        return None
+
+    def canonicalize_muqattaat_word(self, word):
+        """Map stretched/variant Muqatta'at letter names to canonical names."""
+        if not word:
+            return word
+
+        if word in MUQATTAAT_CANONICAL:
+            return word
+
+        condensed = re.sub(r'(.)\1{1,}', r'\1', word)
+        if condensed in MUQATTAAT_CANONICAL:
+            return condensed
+
+        # Guard against over-normalizing regular words.
+        if len(condensed) < 2 or len(condensed) > 5:
+            return condensed
+
+        best_match = None
+        best_ratio = 0.0
+        for candidate in MUQATTAAT_CANONICAL:
+            ratio = SequenceMatcher(None, condensed, candidate).ratio()
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_match = candidate
+
+        if best_match and best_ratio >= 0.80:
+            return best_match
+
+        return condensed
+
+    def normalize_muqattaat_text(self, text):
+        """Normalize Muqatta'at phrases for fair comparison in ASR scoring."""
+        if not text:
+            return ''
+
+        text = html.unescape(str(text))
+        text = re.sub(r'[\u064B-\u065F\u0670\u06D6-\u06ED]', '', text)
+        text = text.replace('ـ', '')
+        text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ٱ', 'ا')
+        text = re.sub(r'[^\u0600-\u06FF\s]', ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip()
+
+        if not text:
+            return ''
+
+        normalized_words = []
+        tokens = text.split()
+        idx = 0
+
+        while idx < len(tokens):
+            token = tokens[idx]
+
+            expanded = self.expand_compact_muqattaat_token(token)
+            if expanded:
+                normalized_words.extend(expanded)
+                idx += 1
+                continue
+
+            if len(token) == 1 and token in MUQATTAAT_LETTER_NAMES:
+                run = []
+                j = idx
+                while j < len(tokens) and len(tokens[j]) == 1 and tokens[j] in MUQATTAAT_LETTER_NAMES and len(run) < 6:
+                    run.append(tokens[j])
+                    j += 1
+
+                best_len = 0
+                for candidate_len in range(len(run), 1, -1):
+                    sequence = ''.join(run[:candidate_len])
+                    if sequence in MUQATTAAT_SEQUENCES:
+                        best_len = candidate_len
+                        break
+
+                if best_len > 0:
+                    normalized_words.extend(MUQATTAAT_LETTER_NAMES[ch] for ch in run[:best_len])
+                    idx += best_len
+                    continue
+
+            normalized_words.append(self.canonicalize_muqattaat_word(token))
+            idx += 1
+
+        normalized_text = ' '.join(normalized_words)
+        for pattern, replacement in MUQATTAAT_PHRASE_PATTERNS:
+            normalized_text = re.sub(pattern, replacement, normalized_text)
+
+        return re.sub(r'\s+', ' ', normalized_text).strip()
+
     def normalize_arabic_for_accuracy(self, text):
         """Normalize Arabic text for fair similarity scoring."""
         if not text:
@@ -267,10 +484,18 @@ class TajweedAnalyzer:
 
         # Normalize common alif forms.
         text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ٱ', 'ا')
+        text = text.replace('ى', 'ي')
+        text = text.replace('ة', 'ه')
+
+        # Normalize small Quranic glyph forms.
+        text = text.replace('\u06E5', 'و').replace('\u06E6', 'ي')
 
         # Keep Arabic letters, digits, and whitespace only.
         text = re.sub(r'[^\u0600-\u06FF0-9\s]', ' ', text)
         text = re.sub(r'\s+', ' ', text)
+
+        if self.has_muqattaat:
+            text = self.normalize_muqattaat_text(text)
 
         return text.strip()
 
@@ -282,49 +507,7 @@ class TajweedAnalyzer:
         if not expected_words:
             return 0.0
 
-        from difflib import SequenceMatcher
         return SequenceMatcher(None, trans_words, expected_words).ratio() * 100.0
-        
-        # Do not attempt transcription on silent or near-silent audio
-        if self.is_silent:
-            print(json.dumps({
-                "status": "transcription_skipped",
-                "reason": "Audio is silent or too short — skipping Whisper to avoid hallucination"
-            }), file=sys.stderr)
-            return None
-        
-        try:
-            import torch
-            
-            # Prepare audio
-            input_features = self.whisper_processor(
-                self.y, 
-                sampling_rate=self.sr, 
-                return_tensors="pt"
-            ).input_features
-            
-            # Move to same device as model
-            device = next(self.whisper_model.parameters()).device
-            input_features = input_features.to(device)
-            
-            # Generate transcription
-            with torch.no_grad():
-                predicted_ids = self.whisper_model.generate(input_features)
-            
-            # Decode transcription
-            transcription = self.whisper_processor.batch_decode(
-                predicted_ids, 
-                skip_special_tokens=True
-            )[0]
-            
-            return transcription.strip()
-            
-        except Exception as e:
-            print(json.dumps({
-                "status": "transcription_failed",
-                "error": str(e)
-            }), file=sys.stderr)
-            return None
     
     def detect_madd_in_text(self):
         """Check if expected text contains Madd elongation letters"""
@@ -1273,7 +1456,8 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
             'rules_detected': {
                 'madd': self.has_madd,
                 'idgham_bila_ghunnah': self.has_idgham_bila,
-                'idgham_bi_ghunnah': self.has_idgham_bi
+                'idgham_bi_ghunnah': self.has_idgham_bi,
+                'muqattaat': self.has_muqattaat,
             },
             'madd_analysis': madd,
             'idgham_bila_ghunnah_analysis': idgham_bila,

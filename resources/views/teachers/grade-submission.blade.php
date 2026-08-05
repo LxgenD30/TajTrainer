@@ -111,7 +111,22 @@
 
 <div style="padding: 0; max-width: 1600px; margin: 0 auto;">
 
-    <div style="display: grid; grid-template-columns: 320px 1fr 1fr 350px; gap: 25px; max-width: 1800px; margin: 0 auto;">
+    @php
+        $analysisForDetails = is_array($submission->tajweed_analysis)
+            ? $submission->tajweed_analysis
+            : json_decode($submission->tajweed_analysis ?? '[]', true);
+
+        $recitedText = trim((string) (
+            $submission->transcription
+            ?: ($analysisForDetails['whisper_transcription'] ?? '')
+            ?: ($analysisForDetails['transcribed_text'] ?? '')
+            ?: ($analysisForDetails['whisper_transcription_raw'] ?? '')
+        ));
+
+        $pauseMarkerCount = $analysisForDetails['pause_markers']['count'] ?? 0;
+    @endphp
+
+    <div style="display: grid; grid-template-columns: 320px minmax(300px, 1fr) minmax(320px, 1fr) 1fr 350px; gap: 25px; max-width: 2200px; margin: 0 auto;">
         <!-- Column 1: Grading Form (320px fixed width) -->
         <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a; height: fit-content; position: sticky; top: 20px;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
@@ -265,48 +280,6 @@
                 </div>
             </div>
 
-            @php
-                $analysisForDetails = is_array($submission->tajweed_analysis)
-                    ? $submission->tajweed_analysis
-                    : json_decode($submission->tajweed_analysis ?? '[]', true);
-
-                $recitedText = trim((string) (
-                    $submission->transcription
-                    ?: ($analysisForDetails['whisper_transcription'] ?? '')
-                    ?: ($analysisForDetails['transcribed_text'] ?? '')
-                    ?: ($analysisForDetails['whisper_transcription_raw'] ?? '')
-                ));
-
-                $pauseMarkerCount = $analysisForDetails['pause_markers']['count'] ?? 0;
-            @endphp
-
-            <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
-                    <div style="color: #0a5c36; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                        <i class="fas fa-wave-square"></i>
-                        <span>Student Recited Text</span>
-                    </div>
-                    <span style="font-size: 0.72rem; padding: 3px 8px; background: rgba(26, 188, 156, 0.15); border-radius: 12px; font-weight: 600; color: #0a5c36;">Whisper (Tarteel AI model)</span>
-                </div>
-
-                <div style="background: rgba(255, 255, 255, 0.85); padding: 16px; border-radius: 10px; border: 1px solid rgba(10, 92, 54, 0.12);">
-                    @if($recitedText !== '')
-                        <p style="color: #1a1a1a; margin: 0; line-height: 2.1; direction: rtl; text-align: right; font-size: 1.65rem; font-family: 'Amiri', 'Traditional Arabic', serif; letter-spacing: 0.4px;">
-                            {{ $recitedText }}
-                        </p>
-                        @if($pauseMarkerCount > 0)
-                            <div style="margin-top: 10px; font-size: 0.8rem; color: #0a5c36; opacity: 0.9;">
-                                Note: The symbol ۝ marks long pauses in recitation and is ignored in word-accuracy scoring.
-                            </div>
-                        @endif
-                    @else
-                        <div style="color: #666; font-size: 0.9rem; line-height: 1.5;">
-                            Recited text is not available yet for this submission.
-                        </div>
-                    @endif
-                </div>
-            </div>
-
             @if(!empty($expectedRecitationDisplay) || $submission->assignment->expected_recitation)
             @php
                 $expectedRecitation = $expectedRecitationDisplay ?: $submission->assignment->expected_recitation;
@@ -336,6 +309,45 @@
                     @endif
                 </div>
             </div>
+        </div>
+
+        <!-- Column 3: Recitation (1fr flexible) -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 3px solid #2a2a2a;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(10, 92, 54, 0.2);">
+                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0a5c36, #1abc9c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(10, 92, 54, 0.3);">🎙️</div>
+                    <div>
+                        <h3 style="color: #0a5c36; font-size: 1.3rem; margin-bottom: 5px; font-family: 'El Messiri', serif;">Recitation</h3>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">Student audio and transcript</p>
+                    </div>
+                </div>
+
+                <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
+                        <div style="color: #0a5c36; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-wave-square"></i>
+                            <span>Student Recited Text</span>
+                        </div>
+                        <span style="font-size: 0.72rem; padding: 3px 8px; background: rgba(26, 188, 156, 0.15); border-radius: 12px; font-weight: 600; color: #0a5c36;">Whisper (Tarteel AI model)</span>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.85); padding: 16px; border-radius: 10px; border: 1px solid rgba(10, 92, 54, 0.12);">
+                        @if($recitedText !== '')
+                            <p style="color: #1a1a1a; margin: 0; line-height: 2.1; direction: rtl; text-align: right; font-size: 1.65rem; font-family: 'Amiri', 'Traditional Arabic', serif; letter-spacing: 0.4px;">
+                                {{ $recitedText }}
+                            </p>
+                            @if($pauseMarkerCount > 0)
+                                <div style="margin-top: 10px; font-size: 0.8rem; color: #0a5c36; opacity: 0.9;">
+                                    Note: The symbol ۝ marks long pauses in recitation and is ignored in word-accuracy scoring.
+                                </div>
+                            @endif
+                        @else
+                            <div style="color: #666; font-size: 0.9rem; line-height: 1.5;">
+                                Recited text is not available yet for this submission.
+                            </div>
+                        @endif
+                    </div>
+                </div>
 
             @if($submission->audio_file_path)
             <!-- Audio Submission -->
@@ -407,7 +419,7 @@
             @endif
         </div>
 
-        <!-- Column 3: Tajweed Analysis (1fr flexible) -->
+        <!-- Column 4: Tajweed Analysis (1fr flexible) -->
         <div style="display: flex; flex-direction: column; gap: 20px;">
             @if($submission->tajweed_analysis)
             <!-- Tajweed Analysis -->
@@ -597,9 +609,9 @@
                 </div>
             </div>
             @endif
-        </div> <!-- End Column 3: Tajweed Analysis -->
+        </div> <!-- End Column 4: Tajweed Analysis -->
             
-        <!-- Column 4: AI Teaching Assistant (350px fixed width) -->
+        <!-- Column 5: AI Teaching Assistant (350px fixed width) -->
         <div style="display: flex; flex-direction: column; gap: 20px;">
             @if($submission->tajweed_analysis)
             @php
