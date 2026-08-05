@@ -142,7 +142,7 @@ class StudentController extends Controller
             Log::info('AssemblyAI Response Body: ' . $response->body());
             
             if ($response->successful()) {
-                Log::info('✓ Token obtained successfully');
+                Log::info('[OK] Token obtained successfully');
                 return response()->json($response->json());
             } else {
                 Log::error('Failed to get AssemblyAI token: HTTP ' . $response->status());
@@ -192,12 +192,18 @@ class StudentController extends Controller
             if ($assignment->surah && $assignment->start_verse) {
                 try {
                     \Log::info('Fetching Quran verses...');
-                    $verses = $this->getQuranText(
+                    $verseData = $this->fetchQuranVerseRange(
                         $assignment->surah, 
                         $assignment->start_verse, 
                         $assignment->end_verse ?? $assignment->start_verse
                     );
-                    \Log::info('Verses fetched successfully: ' . substr($verses, 0, 100));
+
+                    if (!empty($verseData['arabic_html']) || !empty($verseData['arabic_plain'])) {
+                        $verses = $verseData;
+                        \Log::info('Verses fetched successfully: ' . substr($verseData['arabic_plain'], 0, 100));
+                    } else {
+                        \Log::warning('No verses returned for assigned range');
+                    }
                 } catch (\Exception $e) {
                     \Log::error('Failed to fetch Quran verses: ' . $e->getMessage());
                     \Log::error('Stack trace: ' . $e->getTraceAsString());
@@ -293,10 +299,10 @@ class StudentController extends Controller
                         ])->withInput();
                     }
                     
-                    \Log::info('✓ File validation passed');
+                    \Log::info('[OK] File validation passed');
                 }
                 
-                \Log::info('✓ All validation passed');
+                \Log::info('[OK] All validation passed');
             } catch (\Illuminate\Validation\ValidationException $e) {
                 \Log::error('Validation failed: ' . json_encode($e->errors()));
                 return back()->withErrors($e->errors())->withInput();
@@ -326,9 +332,9 @@ class StudentController extends Controller
         // Handle transcription from streaming API or form
         if ($request->has('transcription') && !empty(trim($request->transcription))) {
             $submission->transcription = trim($request->transcription);
-            \Log::info('✓ Transcription saved from request: ' . substr($submission->transcription, 0, 150));
+            \Log::info('[OK] Transcription saved from request: ' . substr($submission->transcription, 0, 150));
         } else {
-            \Log::info('⚠️ No transcription received in request');
+            \Log::info('[WARN] No transcription received in request');
         }
         
         // Handle live recording (base64 audio data)
@@ -361,7 +367,7 @@ class StudentController extends Controller
                 
                 if (file_put_contents($fullPath, $data)) {
                     $submission->audio_file_path = 'submissions/' . $filename;
-                    \Log::info('✓ Live recording audio saved successfully: ' . $submission->audio_file_path . ' (Size: ' . strlen($data) . ' bytes)');
+                    \Log::info('[OK] Live recording audio saved successfully: ' . $submission->audio_file_path . ' (Size: ' . strlen($data) . ' bytes)');
                 } else {
                     \Log::error('Failed to save live recording audio file');
                 }
@@ -390,7 +396,7 @@ class StudentController extends Controller
                 try {
                     $path = $file->storeAs('submissions', $filename, 'public');
                     $submission->audio_file_path = $path;
-                    \Log::info('✓ Audio file uploaded successfully: ' . $path);
+                    \Log::info('[OK] Audio file uploaded successfully: ' . $path);
                 } catch (\Exception $e) {
                     \Log::error('Failed to store uploaded file: ' . $e->getMessage());
                     throw new \Exception('Failed to upload audio file: ' . $e->getMessage());
@@ -403,7 +409,7 @@ class StudentController extends Controller
         
         try {
             $submission->save();
-            \Log::info('✓ Submission saved successfully with ID: ' . $submission->id);
+            \Log::info('[OK] Submission saved successfully with ID: ' . $submission->id);
         } catch (\Exception $e) {
             \Log::error('Failed to save submission: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
@@ -418,7 +424,7 @@ class StudentController extends Controller
                 // Process immediately
                 ProcessSubmissionAudio::dispatchSync($submission->id);
                 
-                \Log::info('✓ Audio processed successfully');
+                \Log::info('[OK] Audio processed successfully');
                 return redirect()->route('classroom.show', $assignment->class_id)
                     ->with('success', 'Assignment submitted and analyzed successfully!');
                     
@@ -429,7 +435,7 @@ class StudentController extends Controller
             }
         } else {
             // No audio file - text submission only
-            \Log::info('✓ Text submission saved successfully (no audio)');
+            \Log::info('[OK] Text submission saved successfully (no audio)');
             return redirect()->route('classroom.show', $assignment->class_id)
                 ->with('success', 'Assignment submitted successfully!');
         }
@@ -844,7 +850,7 @@ class StudentController extends Controller
                     
                     if (file_put_contents($fullPath, $data)) {
                         $audioPath = 'practice_recordings/' . $filename;
-                        \Log::info('✓ Practice recording saved: ' . $audioPath);
+                        \Log::info('[OK] Practice recording saved: ' . $audioPath);
                     } else {
                         \Log::error('Failed to save practice recording');
                     }
@@ -881,7 +887,7 @@ class StudentController extends Controller
                     
                     if ($file->move($destinationPath, $filename)) {
                         $audioPath = 'practice_recordings/' . $filename;
-                        \Log::info('✓ Audio file stored: ' . $audioPath);
+                        \Log::info('[OK] Audio file stored: ' . $audioPath);
                     } else {
                         \Log::error('Failed to move uploaded file');
                     }
@@ -915,7 +921,7 @@ class StudentController extends Controller
                         
                         if (file_put_contents($referencePath, $referenceContent)) {
                             $referenceAudioPath = $referencePath;
-                            \Log::info('✓ Reference audio downloaded: ' . $referenceAudioPath);
+                            \Log::info('[OK] Reference audio downloaded: ' . $referenceAudioPath);
                         }
                     }
                 } catch (\Exception $e) {
@@ -1267,7 +1273,7 @@ class StudentController extends Controller
     }
 
     /**
-     * Analyze Tajweed rules using Quran Cloud API and Python audio analysis
+     * Analyze Tajweed rules using Qurancdn data and Python audio analysis.
      */
     private function analyzeTajweed($audioPath, $transcription, $surah, $startVerse, $endVerse)
     {
@@ -1277,7 +1283,7 @@ class StudentController extends Controller
             throw new \Exception('Audio file not found for Tajweed analysis: ' . $fullPath);
         }
 
-        // Get correct Quranic text from Quran Cloud API
+        // Get correct Quranic text from Qurancdn
         $correctText = $this->getQuranText($surah, $startVerse, $endVerse);
         
         // Get tajweed-colored text for display
@@ -1376,112 +1382,165 @@ class StudentController extends Controller
     }
     
     /**
-     * Get Quran text from Quran Cloud API
+     * Fetch a verse range from Qurancdn and normalize it for UI and analysis.
+     */
+    private function fetchQuranVerseRange($surah, $startVerse, $endVerse)
+    {
+        $surahNumber = (int) $this->getSurahNumber($surah);
+        $startVerse = max(1, (int) $startVerse);
+        $endVerse = max($startVerse, (int) ($endVerse ?? $startVerse));
+
+        try {
+            $response = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surahNumber}",
+                [
+                    'translations' => 131,
+                    'per_page' => 300,
+                    'page' => 1,
+                    'fields' => 'text_uthmani_tajweed,text_uthmani',
+                ]
+            );
+
+            if ($response->failed()) {
+                \Log::error("Failed to fetch verses from Qurancdn for Surah {$surahNumber}", [
+                    'status' => $response->status(),
+                    'body' => substr($response->body(), 0, 300),
+                ]);
+
+                return [
+                    'arabic_html' => '',
+                    'arabic_plain' => '',
+                    'translation' => '',
+                    'audio_urls' => [],
+                ];
+            }
+
+            $verses = collect($response->json('verses') ?? [])
+                ->filter(function ($verse) use ($surahNumber, $startVerse, $endVerse) {
+                    $parts = explode(':', $verse['verse_key'] ?? '0:0');
+                    $chapter = (int) ($parts[0] ?? 0);
+                    $verseNumber = (int) ($parts[1] ?? 0);
+
+                    return $chapter === $surahNumber
+                        && $verseNumber >= $startVerse
+                        && $verseNumber <= $endVerse;
+                })
+                ->sortBy(function ($verse) {
+                    $parts = explode(':', $verse['verse_key'] ?? '0:0');
+                    return (int) ($parts[1] ?? 0);
+                })
+                ->values();
+
+            if ($verses->isEmpty()) {
+                \Log::warning("No verses found for Surah {$surahNumber}, verses {$startVerse}-{$endVerse}");
+
+                return [
+                    'arabic_html' => '',
+                    'arabic_plain' => '',
+                    'translation' => '',
+                    'audio_urls' => [],
+                ];
+            }
+
+            $arabicHtml = $verses
+                ->map(function ($verse) {
+                    return $verse['text_uthmani_tajweed'] ?? $verse['text_uthmani'] ?? '';
+                })
+                ->filter()
+                ->implode(' ');
+
+            $arabicPlain = $verses
+                ->map(function ($verse) {
+                    if (!empty($verse['text_uthmani'])) {
+                        return $verse['text_uthmani'];
+                    }
+
+                    return trim(strip_tags($verse['text_uthmani_tajweed'] ?? ''));
+                })
+                ->filter()
+                ->implode(' ');
+
+            $translation = $verses
+                ->map(function ($verse) {
+                    return strip_tags($verse['translations'][0]['text'] ?? '');
+                })
+                ->filter()
+                ->implode(PHP_EOL);
+
+            $audioUrls = $verses
+                ->map(function ($verse) use ($surahNumber) {
+                    $parts = explode(':', $verse['verse_key'] ?? '0:0');
+                    $chapter = (int) ($parts[0] ?? $surahNumber);
+                    $verseNumber = (int) ($parts[1] ?? 0);
+
+                    if ($verseNumber < 1) {
+                        return null;
+                    }
+
+                    $surahPadded = str_pad((string) $chapter, 3, '0', STR_PAD_LEFT);
+                    $versePadded = str_pad((string) $verseNumber, 3, '0', STR_PAD_LEFT);
+
+                    return [
+                        'verse' => "{$chapter}:{$verseNumber}",
+                        'url' => "https://verses.quran.com/Alafasy/mp3/{$surahPadded}{$versePadded}.mp3",
+                        'number' => $verse['id'] ?? $verseNumber,
+                        'text' => $verse['text_uthmani'] ?? '',
+                    ];
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            return [
+                'arabic_html' => $arabicHtml,
+                'arabic_plain' => $arabicPlain,
+                'translation' => $translation,
+                'audio_urls' => $audioUrls,
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Error fetching Quran verse range: ' . $e->getMessage());
+
+            return [
+                'arabic_html' => '',
+                'arabic_plain' => '',
+                'translation' => '',
+                'audio_urls' => [],
+            ];
+        }
+    }
+
+    /**
+     * Get plain Quran text for analysis.
      */
     private function getQuranText($surah, $startVerse, $endVerse)
     {
-        $surahNumber = $this->getSurahNumber($surah);
-        $verses = [];
-        
-        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
-            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}";
-            
-            try {
-                $response = @file_get_contents($url);
-                if ($response === false) {
-                    \Log::error("Failed to fetch verse {$surahNumber}:{$verse}");
-                    continue;
-                }
-                
-                $data = json_decode($response, true);
-                
-                if ($data['code'] == 200 && isset($data['data']['text'])) {
-                    $verses[] = $data['data']['text'];
-                }
-            } catch (\Exception $e) {
-                \Log::error("Error fetching Quran text: " . $e->getMessage());
-            }
-        }
-        
-        return implode(' ۝ ', $verses);
+        $verseData = $this->fetchQuranVerseRange($surah, $startVerse, $endVerse);
+
+        return $verseData['arabic_plain'] ?? '';
     }
     
     /**
-     * Get tajweed-colored Quran text from AlQuran.cloud
-     * Returns text with tajweed markers for color-coding:
-     * [a = idgham-with-ghunnah (green)
-     * [u = idgham-without-ghunnah (blue)
-     * [n/p/m/o = madd types (red/yellow/green/purple)
-     * [h:X = hamza-wasl, [l = lam-shamsi, [s = lam-qamari, etc.
+     * Get tajweed-formatted Quran text for display.
      */
     private function getQuranTajweedText($surah, $startVerse, $endVerse)
     {
-        $surahNumber = $this->getSurahNumber($surah);
-        $verses = [];
-        
-        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
-            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/quran-tajweed";
-            
-            try {
-                $response = @file_get_contents($url);
-                if ($response === false) {
-                    \Log::error("Failed to fetch tajweed verse {$surahNumber}:{$verse}");
-                    continue;
-                }
-                
-                $data = json_decode($response, true);
-                
-                if ($data['code'] == 200 && isset($data['data']['text'])) {
-                    $verses[] = $data['data']['text'];
-                }
-            } catch (\Exception $e) {
-                \Log::error("Error fetching tajweed text: " . $e->getMessage());
-            }
-        }
-        
-        return implode(' ۝ ', $verses);
+        $verseData = $this->fetchQuranVerseRange($surah, $startVerse, $endVerse);
+
+        return $verseData['arabic_html'] ?? '';
     }
     
     /**
-     * Get reference audio URL from AlQuran.cloud
-     * Uses ar.alafasy (Mishary Rashid Alafasy) recitation
-     * Returns array of audio URLs for each verse
+     * Get reference audio URLs from quran.com Alafasy source.
      */
     private function getQuranAudioUrls($surah, $startVerse, $endVerse)
     {
-        $surahNumber = $this->getSurahNumber($surah);
-        $audioUrls = [];
-        
-        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
-            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/ar.alafasy";
-            
-            try {
-                $response = @file_get_contents($url);
-                if ($response === false) {
-                    \Log::error("Failed to fetch audio for {$surahNumber}:{$verse}");
-                    continue;
-                }
-                
-                $data = json_decode($response, true);
-                
-                if ($data['code'] == 200 && isset($data['data']['audio'])) {
-                    $audioUrls[] = [
-                        'verse' => "{$surahNumber}:{$verse}",
-                        'url' => $data['data']['audio'],
-                        'number' => $data['data']['number'] ?? $verse,
-                        'text' => $data['data']['text'] ?? ''
-                    ];
-                }
-            } catch (\Exception $e) {
-                \Log::error("Error fetching Quran audio: " . $e->getMessage());
-            }
-        }
-        
-        return $audioUrls;
+        $verseData = $this->fetchQuranVerseRange($surah, $startVerse, $endVerse);
+
+        return $verseData['audio_urls'] ?? [];
     }
     
     /**
-     * Download reference audio from AlQuran.cloud
+     * Download reference audio from a verse audio URL.
      */
     private function downloadReferenceAudio($audioUrl)
     {
@@ -1842,7 +1901,7 @@ class StudentController extends Controller
         }
         
         // Analyze Madd (elongation) - look for specific letters
-        $maddLetters = ['ا', 'و', 'ي'];
+        $maddLetters = ['╪º', '┘ê', '┘è'];
         $maddCount = 0;
         $maddCorrect = 0;
         $maddIssues = [];
@@ -1866,17 +1925,17 @@ class StudentController extends Controller
             }
         }
         
-        // Analyze Noon Sakin (ن with sukun) and Tanween
+        // Analyze Noon Sakin (┘å with sukun) and Tanween
         $noonSakinPositions = [];
         $noonSakinCorrect = 0;
         $noonSakinIssues = [];
         
         foreach ($correctWords as $index => $word) {
             // Look for noon with sukun or tanween markers
-            if (mb_strpos($word, 'ن') !== false || 
-                mb_strpos($word, 'ً') !== false || 
-                mb_strpos($word, 'ٌ') !== false || 
-                mb_strpos($word, 'ٍ') !== false) {
+            if (mb_strpos($word, '┘å') !== false || 
+                mb_strpos($word, '┘ï') !== false || 
+                mb_strpos($word, '┘î') !== false || 
+                mb_strpos($word, '┘ì') !== false) {
                 $noonSakinPositions[] = $index;
                 
                 if (isset($transcribedWords[$index]) && 
@@ -2212,7 +2271,7 @@ class StudentController extends Controller
             }
 
             if ($audioBinary === false || strlen($audioBinary) < 4096) {
-                // Too short / empty — skip silently
+                // Too short or empty; skip silently
                 return response()->json(['text' => '']);
             }
 
@@ -2224,7 +2283,7 @@ class StudentController extends Controller
 
             // Build Whisper prompt using the last portion of the transcript for context.
             $context = trim($request->input('context', ''));
-            $seed    = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ مَٰلِكِ يَوْمِ ٱلدِّينِ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ';
+            $seed    = '╪¿┘É╪│┘Æ┘à┘É ┘▒┘ä┘ä┘Ä┘æ┘ç┘É ┘▒┘ä╪▒┘Ä┘æ╪¡┘Æ┘à┘Ä┘░┘å┘É ┘▒┘ä╪▒┘Ä┘æ╪¡┘É┘è┘à┘É ┘▒┘ä┘Æ╪¡┘Ä┘à┘Æ╪»┘Å ┘ä┘É┘ä┘Ä┘æ┘ç┘É ╪▒┘Ä╪¿┘É┘æ ┘▒┘ä┘Æ╪╣┘Ä┘░┘ä┘Ä┘à┘É┘è┘å┘Ä ┘▒┘ä╪▒┘Ä┘æ╪¡┘Æ┘à┘Ä┘░┘å┘É ┘▒┘ä╪▒┘Ä┘æ╪¡┘É┘è┘à┘É ┘à┘Ä┘░┘ä┘É┘â┘É ┘è┘Ä┘ê┘Æ┘à┘É ┘▒┘ä╪»┘É┘æ┘è┘å┘É ╪Ñ┘É┘è┘Ä┘æ╪º┘â┘Ä ┘å┘Ä╪╣┘Æ╪¿┘Å╪»┘Å ┘ê┘Ä╪Ñ┘É┘è┘Ä┘æ╪º┘â┘Ä ┘å┘Ä╪│┘Æ╪¬┘Ä╪╣┘É┘è┘å┘Å';
             $prompt  = $context ? mb_substr($context, -200) : $seed;
 
             $whisperResp = Http::withHeaders(['Authorization' => 'Bearer ' . $apiKey])

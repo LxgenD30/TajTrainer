@@ -248,7 +248,7 @@
         font-family: 'Amiri', 'Traditional Arabic', serif;
         font-size: 1.5rem;
         line-height: 2;
-        color: #0a5c36;
+        color: #000000;
         margin-bottom: 12px;
     }
     
@@ -260,6 +260,26 @@
         background: white;
         border-radius: 8px;
         border-left: 4px solid #1abc9c;
+    }
+
+    .verse-arabic tajweed {
+        display: inline;
+        font-weight: 700;
+    }
+
+    .verse-arabic tajweed.ham_wasl { color: #2e7d32; }
+    .verse-arabic tajweed.laam_shamsiyah { color: #ef6c00; }
+    .verse-arabic tajweed.ikhafa { color: #1565c0; }
+    .verse-arabic tajweed.idgham_ghunnah { color: #7b1fa2; }
+    .verse-arabic tajweed.idgham_shafawi { color: #00897b; }
+    .verse-arabic tajweed.gunnah { color: #2e7d32; }
+    .verse-arabic tajweed.madda_obligatory,
+    .verse-arabic tajweed.madda_normal,
+    .verse-arabic tajweed.madda_permissible { color: #c62828; }
+    .verse-arabic tajweed.slnt { color: #6d4c41; }
+    .verse-arabic tajweed.end { display: none; }
+    .verse-arabic span.end {
+        display: none;
     }
     
     .btn-insert {
@@ -581,7 +601,7 @@
                         
                         <div>
                             <label class="form-label">Select Surah *</label>
-                            <select id="surahSelect" name="surah_number" class="form-select" required>
+                            <select id="surahSelect" name="surah_number" class="form-select" required data-selected-surah="{{ old('surah', $assignment->surah) }}">
                                 <option value="">Loading surahs...</option>
                             </select>
                             <input type="hidden" id="surah_name_hidden" name="surah" value="{{ old('surah', $assignment->surah) }}" required>
@@ -655,11 +675,11 @@
             const surahSelect = document.getElementById('surahSelect');
             const currentSurah = document.getElementById('currentSurah').value;
             try {
-                const response = await fetch('https://api.alquran.cloud/v1/surah');
+                const response = await fetch('{{ route('assignment.surahs') }}');
                 if (!response.ok) throw new Error('Failed to load surahs');
                 
                 const result = await response.json();
-                const surahs = result.data;
+                const surahs = result.data || [];
                 
                 // Clear loading option
                 surahSelect.innerHTML = '<option value="">-- Choose Surah --</option>';
@@ -742,48 +762,28 @@
             const verseTranslation = document.getElementById('verseTranslation');
 
             try {
-                // Fetch verse(s) from Al-Quran Cloud API
-                let verses = [];
                 const start = parseInt(ayahStart);
                 const end = ayahEnd ? parseInt(ayahEnd) : start;
+                const response = await fetch(`{{ route('assignment.preview-verse') }}?surah_number=${encodeURIComponent(surahNumber)}&start_verse=${encodeURIComponent(start)}&end_verse=${encodeURIComponent(end)}`);
 
-                // Fetch the entire surah first
-                const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/en.asad`);
-                
                 if (!response.ok) {
                     throw new Error(`Failed to fetch Surah ${surahNumber}`);
                 }
-                
+
                 const result = await response.json();
-                const surahData = result.data;
-                
-                // Get Arabic version
-                const arabicResponse = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`);
-                const arabicResult = await arabicResponse.json();
-                const arabicSurah = arabicResult.data;
+                const verseData = result.verse || {};
 
-                // Extract requested ayahs
-                let arabicTexts = [];
-                let translations = [];
-                
-                for (let i = start; i <= end && i <= surahData.ayahs.length; i++) {
-                    const ayahIndex = i - 1;
-                    arabicTexts.push(arabicSurah.ayahs[ayahIndex].text);
-                    translations.push(`[${i}] ${surahData.ayahs[ayahIndex].text}`);
-                }
-
-                // Display verses
-                let arabicText = arabicTexts.join(' ۝ ');
-                let translationText = translations.join('\n');
-
-                verseArabic.textContent = arabicText;
-                verseTranslation.textContent = translationText;
+                verseArabic.innerHTML = verseData.arabic_html || verseData.arabic_plain || '';
+                verseTranslation.textContent = verseData.translation || '';
                 verseDisplay.style.display = 'block';
                 insertBtn.style.display = 'inline-block';
 
                 // Store for insertion
-                const surahName = surahData.englishName;
-                currentVerseData = `\n\n--- Quran Verse ---\nSurah: ${surahName} (${surahData.name})\nAyat: ${ayahStart}${ayahEnd ? `-${ayahEnd}` : ''}\n\nArabic:\n${arabicText}\n\nTranslation:\n${translationText}\n--- End Verse ---\n\n`;
+                const surahName = verseData.surah_name || '';
+                const verseLabel = verseData.start_verse && verseData.end_verse
+                    ? `${verseData.start_verse}${verseData.end_verse > verseData.start_verse ? `-${verseData.end_verse}` : ''}`
+                    : `${ayahStart}${ayahEnd ? `-${ayahEnd}` : ''}`;
+                currentVerseData = `\n\nPlease read ${surahName} (${verseData.surah_name_arabic || ''}) ${verseLabel} with proper Tajweed.\n`;
 
             } catch (error) {
                 alert('Error fetching verse: ' + error.message);

@@ -132,7 +132,27 @@
         font-family: 'Amiri', serif;
         font-size: 1.8rem;
         line-height: 2.2;
-        color: #0a5c36;
+        color: #000000;
+    }
+
+    .verses-display tajweed {
+        display: inline;
+        font-weight: 700;
+    }
+
+    .verses-display tajweed.ham_wasl { color: #2e7d32; }
+    .verses-display tajweed.laam_shamsiyah { color: #ef6c00; }
+    .verses-display tajweed.ikhafa { color: #1565c0; }
+    .verses-display tajweed.idgham_ghunnah { color: #7b1fa2; }
+    .verses-display tajweed.idgham_shafawi { color: #00897b; }
+    .verses-display tajweed.gunnah { color: #2e7d32; }
+    .verses-display tajweed.madda_obligatory,
+    .verses-display tajweed.madda_normal,
+    .verses-display tajweed.madda_permissible { color: #c62828; }
+    .verses-display tajweed.slnt { color: #6d4c41; }
+    .verses-display tajweed.end { display: none; }
+    .verses-display span.end {
+        display: none;
     }
     
     .tajweed-rules-card {
@@ -419,14 +439,26 @@
         @endif
         
         @if($verses)
+        @php
+            $verseDisplay = is_array($verses) ? $verses : ['arabic_html' => (string) $verses, 'arabic_plain' => (string) $verses, 'translation' => ''];
+        @endphp
         <div class="info-card">
             <div class="info-card-title">
                 <i class="fas fa-book-quran"></i>
                 Verses to Recite
             </div>
             <div class="verses-display">
-                {!! nl2br(e($verses)) !!}
+                @if(!empty($verseDisplay['arabic_html']))
+                    {!! $verseDisplay['arabic_html'] !!}
+                @else
+                    {!! nl2br(e($verseDisplay['arabic_plain'] ?? '')) !!}
+                @endif
             </div>
+            @if(!empty($verseDisplay['translation']))
+            <div style="margin-top: 12px; color: #000000; font-size: 0.95rem; line-height: 1.7; white-space: pre-wrap;">
+                {!! nl2br(e($verseDisplay['translation'])) !!}
+            </div>
+            @endif
         </div>
         @endif
         

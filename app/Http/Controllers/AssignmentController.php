@@ -230,6 +230,51 @@ class AssignmentController extends Controller
     }
 
     /**
+     * Return the list of Qur'anic chapters for assignment forms.
+     */
+    public function surahs()
+    {
+        try {
+            $response = Http::timeout(15)->get('https://api.qurancdn.com/api/qdc/chapters', [
+                'language' => 'en',
+            ]);
+
+            if ($response->failed()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to load surah list right now.',
+                ], 502);
+            }
+
+            $chapters = $response->json('chapters')
+                ?? $response->json('chapter')
+                ?? $response->json('data')
+                ?? [];
+
+            $surahs = collect($chapters)->map(function ($chapter) {
+                return [
+                    'number' => (int) ($chapter['id'] ?? $chapter['number'] ?? 0),
+                    'englishName' => $chapter['name_simple'] ?? $chapter['english_name'] ?? $chapter['name'] ?? '',
+                    'arabicName' => $chapter['name_arabic'] ?? '',
+                    'ayahs' => (int) ($chapter['verses_count'] ?? $chapter['ayahs_count'] ?? 0),
+                ];
+            })->filter(fn ($surah) => $surah['number'] > 0)->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => $surahs,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to load surah list: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load surah list right now.',
+            ], 500);
+        }
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Assignment $assignment)
