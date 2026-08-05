@@ -187,17 +187,21 @@
         </div>
         @php
             $isImproving = $improvementTrends['is_improving'] ?? false;
+            $hasTrendData = $improvementTrends['has_data'] ?? false;
+            $trendDirection = $improvementTrends['trend_direction'] ?? ($isImproving ? 'improving' : 'stable');
             $trendValue = abs($improvementTrends['accuracy_change'] ?? 0);
-            $trend = $isImproving ? 'improving' : ($trendValue > 0 ? 'declining' : 'stable');
+            $trend = $hasTrendData ? $trendDirection : 'stable';
+            $trendColor = $trend === 'improving' ? '#2ecc71' : ($trend === 'declining' ? '#e74c3c' : '#7f8c8d');
+            $trendArrow = $trend === 'improving' ? '↗' : ($trend === 'declining' ? '↘' : '→');
         @endphp
         <div style="text-align: center; padding: 20px;">
-            <div class="trend-arrow" style="font-size: 4rem; color: {{ $isImproving ? '#2ecc71' : '#e74c3c' }};">
-                {{ $isImproving ? '↗' : ($trendValue > 0 ? '↘' : '→') }}
+            <div class="trend-arrow" style="font-size: 4rem; color: {{ $trendColor }};">
+                {{ $trendArrow }}
             </div>
-            <div class="trend-value" style="color: {{ $isImproving ? '#2ecc71' : '#e74c3c' }};">
+            <div class="trend-value" style="color: {{ $trendColor }};">
                 {{ number_format($trendValue, 1) }}%
             </div>
-            <div class="trend-label">{{ ucfirst($trend) }} this week</div>
+            <div class="trend-label">{{ $hasTrendData ? ucfirst($trend) . ' this week' : 'Not enough data yet' }}</div>
             <p style="font-size: 1.1rem; color: #666; margin-top: 15px;">
                 Current: <strong>{{ number_format($improvementTrends['current_week_accuracy'] ?? 0, 1) }}%</strong>
             </p>

@@ -10,6 +10,16 @@ use Illuminate\Support\Facades\DB;
 class ProgressTracker
 {
     /**
+     * Build base query for user's practice sessions with scored accuracy
+     */
+    private function getUserPracticeSessionsQuery($userId)
+    {
+        return DB::table('practice_sessions')
+            ->where('student_id', $userId)
+            ->whereNotNull('accuracy_score');
+    }
+
+    /**
      * Build base query for user's error logs through proper FK joins
      */
     private function getUserErrorLogsQuery($userId)
@@ -25,6 +35,54 @@ class ProgressTracker
             })
             ->whereNotNull(DB::raw('COALESCE(ps.id, asub.id)'));
     }
+
+    /**
+     * Compute normalized rule correctness.
+     *
+     * For practice logs, this normalizes correctness using the session accuracy score
+     * so historical logs are not skewed by old fallback/default behavior.
+     */
+    private function getNormalizedRuleStats($userId, $start = null, $end = null, $sessionType = null)
+    {
+        $query = $this->getUserErrorLogsQuery($userId);
+
+        if ($start && $end) {
+            $query->whereBetween('tel.created_at', [$start, $end]);
+        } elseif ($start) {
+            $query->where('tel.created_at', '>=', $start);
+        }
+
+        if ($sessionType === 'practice') {
+            $query->whereNotNull('tel.practice_session_id');
+        } elseif ($sessionType === 'assignment') {
+            $query->whereNotNull('tel.assignment_submission_id');
+        }
+
+        $stats = $query
+            ->selectRaw('COUNT(*) as total_rules')
+            ->selectRaw(
+                "SUM(CASE
+                    WHEN tel.practice_session_id IS NOT NULL THEN
+                        CASE
+                            WHEN ps.accuracy_score IS NULL THEN CASE WHEN tel.was_correct = 1 THEN 1 ELSE 0 END
+                            WHEN ps.accuracy_score >= 80 THEN 1
+                            ELSE 0
+                        END
+                    ELSE CASE WHEN tel.was_correct = 1 THEN 1 ELSE 0 END
+                END) as correct_rules"
+            )
+            ->first();
+
+        $total = (int) ($stats->total_rules ?? 0);
+        $correct = (int) ($stats->correct_rules ?? 0);
+
+        return [
+            'total' => $total,
+            'correct' => $correct,
+            'errors' => max(0, $total - $correct),
+            'accuracy' => $total > 0 ? round(($correct / $total) * 100, 2) : 0,
+        ];
+    }
     
     /**
      * Get user's overall progress statistics
@@ -33,62 +91,61 @@ class ProgressTracker
     {
         $startDate = Carbon::now()->subDays($days);
         
-        $totalLogs = $this->getUserErrorLogsQuery($userId)
-            ->where('tel.created_at', '>=', $startDate)
+        // Session-based practice performance (what users expect as attempts/performance)
+        $practiceAttempts = $this->getUserPracticeSessionsQuery($userId)
+            ->where('created_at', '>=', $startDate)
             ->count();
-            
-        $correctCount = $this->getUserErrorLogsQuery($userId)
-            ->where('tel.created_at', '>=', $startDate)
-            ->where('tel.was_correct', true)
-            ->count();
-            
-        $accuracy = $totalLogs > 0 ? round(($correctCount / $totalLogs) * 100, 2) : 0;
-        
-        // Get assignment-specific stats
-        $assignmentLogs = $this->getUserErrorLogsQuery($userId)
+
+        $practiceAccuracyRaw = $this->getUserPracticeSessionsQuery($userId)
+            ->where('created_at', '>=', $startDate)
+            ->avg('accuracy_score');
+
+        $practiceAccuracy = $practiceAttempts > 0
+            ? round((float) $practiceAccuracyRaw, 2)
+            : 0;
+
+        // Rule-level correctness (normalized for historical practice logs)
+        $ruleStats = $this->getNormalizedRuleStats($userId, $startDate);
+
+        // Assignment-specific rule stats
+        $assignmentRuleStats = $this->getNormalizedRuleStats($userId, $startDate, null, 'assignment');
+
+        // Assignment attempts are distinct submissions represented in logs
+        $assignmentAttempts = $this->getUserErrorLogsQuery($userId)
             ->where('tel.created_at', '>=', $startDate)
             ->whereNotNull('tel.assignment_submission_id')
-            ->count();
-            
-        $assignmentCorrect = $this->getUserErrorLogsQuery($userId)
-            ->where('tel.created_at', '>=', $startDate)
-            ->whereNotNull('tel.assignment_submission_id')
-            ->where('tel.was_correct', true)
-            ->count();
-            
-        $assignmentAccuracy = $assignmentLogs > 0 ? round(($assignmentCorrect / $assignmentLogs) * 100, 2) : 0;
-        
-        // Get practice-specific stats
-        $practiceLogs = $this->getUserErrorLogsQuery($userId)
-            ->where('tel.created_at', '>=', $startDate)
-            ->whereNotNull('tel.practice_session_id')
-            ->count();
-            
-        $practiceCorrect = $this->getUserErrorLogsQuery($userId)
-            ->where('tel.created_at', '>=', $startDate)
-            ->whereNotNull('tel.practice_session_id')
-            ->where('tel.was_correct', true)
-            ->count();
-            
-        $practiceAccuracy = $practiceLogs > 0 ? round(($practiceCorrect / $practiceLogs) * 100, 2) : 0;
+            ->distinct('tel.assignment_submission_id')
+            ->count('tel.assignment_submission_id');
+
+        // Blend practice-session and assignment-rule accuracy by attempt count
+        $totalAttempts = $practiceAttempts + $assignmentAttempts;
+        if ($totalAttempts > 0) {
+            $accuracy = round(
+                (($practiceAccuracy * $practiceAttempts) + ($assignmentRuleStats['accuracy'] * $assignmentAttempts)) / $totalAttempts,
+                2
+            );
+        } else {
+            // Fallback for legacy users with only rule logs
+            $accuracy = $ruleStats['accuracy'];
+        }
         
         return [
-            'total_attempts' => $totalLogs,
-            'correct_count' => $correctCount,
-            'error_count' => $totalLogs - $correctCount,
+            'total_attempts' => $totalAttempts,
+            'correct_count' => $ruleStats['correct'],
+            'error_count' => $ruleStats['errors'],
             'accuracy' => $accuracy,
             'period_days' => $days,
             
             // Assignment stats
-            'assignment_attempts' => $assignmentLogs,
-            'assignment_correct' => $assignmentCorrect,
-            'assignment_errors' => $assignmentLogs - $assignmentCorrect,
-            'assignment_accuracy' => $assignmentAccuracy,
+            'assignment_attempts' => $assignmentAttempts,
+            'assignment_correct' => $assignmentRuleStats['correct'],
+            'assignment_errors' => $assignmentRuleStats['errors'],
+            'assignment_accuracy' => $assignmentRuleStats['accuracy'],
             
             // Practice stats
-            'practice_attempts' => $practiceLogs,
-            'practice_correct' => $practiceCorrect,
-            'practice_errors' => $practiceLogs - $practiceCorrect,
+            'practice_attempts' => $practiceAttempts,
+            'practice_correct' => $practiceAccuracy >= 80 ? $practiceAttempts : 0,
+            'practice_errors' => $practiceAccuracy >= 80 ? 0 : $practiceAttempts,
             'practice_accuracy' => $practiceAccuracy,
         ];
     }
@@ -99,7 +156,10 @@ class ProgressTracker
     public function getTopWeaknesses($userId, $limit = 5)
     {
         $errors = $this->getUserErrorLogsQuery($userId)
-            ->where('tel.was_correct', false)
+            ->whereRaw("CASE
+                WHEN tel.practice_session_id IS NOT NULL AND ps.accuracy_score IS NOT NULL THEN ps.accuracy_score < 80
+                ELSE tel.was_correct = 0
+            END")
             ->select('tel.rule_name', 'tel.error_type', DB::raw('count(*) as error_count'))
             ->groupBy('tel.rule_name', 'tel.error_type')
             ->orderBy('error_count', 'desc')
@@ -137,6 +197,14 @@ class ProgressTracker
         $prevWeekStats = $this->getPeriodStats($userId, $prevWeekStart, $prevWeekEnd);
         
         $improvement = $currentWeekStats['accuracy'] - $prevWeekStats['accuracy'];
+        $hasData = ($currentWeekStats['total'] + $prevWeekStats['total']) > 0;
+
+        $trendDirection = 'stable';
+        if ($improvement > 0.01) {
+            $trendDirection = 'improving';
+        } elseif ($improvement < -0.01) {
+            $trendDirection = 'declining';
+        }
         
         return [
             'current_week_accuracy' => $currentWeekStats['accuracy'],
@@ -144,7 +212,9 @@ class ProgressTracker
             'previous_week_accuracy' => $prevWeekStats['accuracy'],
             'previous_week_total' => $prevWeekStats['total'],
             'accuracy_change' => round($improvement, 2),
-            'is_improving' => $improvement > 0,
+            'is_improving' => $trendDirection === 'improving',
+            'trend_direction' => $trendDirection,
+            'has_data' => $hasData,
         ];
     }
     
@@ -153,20 +223,45 @@ class ProgressTracker
      */
     private function getPeriodStats($userId, $start, $end)
     {
-        $total = $this->getUserErrorLogsQuery($userId)
-            ->whereBetween('tel.created_at', [$start, $end])
+        $practiceAttempts = $this->getUserPracticeSessionsQuery($userId)
+            ->whereBetween('created_at', [$start, $end])
             ->count();
-            
-        $correct = $this->getUserErrorLogsQuery($userId)
+
+        $practiceAccuracyRaw = $this->getUserPracticeSessionsQuery($userId)
+            ->whereBetween('created_at', [$start, $end])
+            ->avg('accuracy_score');
+
+        $practiceAccuracy = $practiceAttempts > 0
+            ? round((float) $practiceAccuracyRaw, 2)
+            : 0;
+
+        $assignmentRuleStats = $this->getNormalizedRuleStats($userId, $start, $end, 'assignment');
+
+        $assignmentAttempts = $this->getUserErrorLogsQuery($userId)
             ->whereBetween('tel.created_at', [$start, $end])
-            ->where('tel.was_correct', true)
-            ->count();
+            ->whereNotNull('tel.assignment_submission_id')
+            ->distinct('tel.assignment_submission_id')
+            ->count('tel.assignment_submission_id');
+
+        $total = $practiceAttempts + $assignmentAttempts;
+
+        if ($total > 0) {
+            $accuracy = round(
+                (($practiceAccuracy * $practiceAttempts) + ($assignmentRuleStats['accuracy'] * $assignmentAttempts)) / $total,
+                2
+            );
+        } else {
+            $accuracy = 0;
+        }
+
+        $ruleStats = $this->getNormalizedRuleStats($userId, $start, $end);
+        $correct = $ruleStats['correct'];
             
         return [
             'total' => $total,
             'correct' => $correct,
-            'errors' => $total - $correct,
-            'accuracy' => $total > 0 ? round(($correct / $total) * 100, 2) : 0,
+            'errors' => $ruleStats['errors'],
+            'accuracy' => $accuracy,
         ];
     }
     
@@ -260,7 +355,10 @@ class ProgressTracker
         $correctQuery = $this->getUserErrorLogsQuery($userId)
             ->where('tel.error_type', $errorType)
             ->whereBetween('tel.created_at', [$start, $end])
-            ->where('tel.was_correct', true);
+            ->whereRaw("CASE
+                WHEN tel.practice_session_id IS NOT NULL AND ps.accuracy_score IS NOT NULL THEN ps.accuracy_score >= 80
+                ELSE tel.was_correct = 1
+            END");
             
         if ($ruleName) {
             $correctQuery->where('tel.rule_name', $ruleName);
@@ -281,7 +379,10 @@ class ProgressTracker
     public function getRecurringErrors($userId, $threshold = 3)
     {
         return $this->getUserErrorLogsQuery($userId)
-            ->where('tel.was_correct', false)
+            ->whereRaw("CASE
+                WHEN tel.practice_session_id IS NOT NULL AND ps.accuracy_score IS NOT NULL THEN ps.accuracy_score < 80
+                ELSE tel.was_correct = 0
+            END")
             ->select('tel.rule_name', 'tel.error_type', 'tel.issue_description', DB::raw('count(*) as occurrences'))
             ->groupBy('tel.rule_name', 'tel.error_type', 'tel.issue_description')
             ->having('occurrences', '>=', $threshold)

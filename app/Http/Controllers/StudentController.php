@@ -1056,6 +1056,7 @@ class StudentController extends Controller
                         'pronunciation' => $analysisResult['overall_score']['pronunciation_accuracy'] ?? $overallScore,
                         'reference_similarity' => $analysisResult['overall_score']['reference_similarity'] ?? $overallScore,
                         'tajweed_rules' => $analysisResult['overall_score']['tajweed_rules_score'] ?? $maddScore,
+                        'makharij' => $analysisResult['overall_score']['makharij_score'] ?? $noonSakinScore,
                     ],
                     'feedback' => $feedback,
                     'python_analysis' => $analysisResult,
@@ -2116,21 +2117,22 @@ class StudentController extends Controller
     private function logPracticeErrors($sessionId, $practiceAnalysis)
     {
         $details = $practiceAnalysis['details'] ?? [];
+        $rulePassThreshold = 80;
         
         // Log Madd errors based on tajweed_rules score
-        $maddScore = $details['tajweed_rules'] ?? 80;
-        if ($maddScore < 90) {
+        $maddScore = $details['tajweed_rules'] ?? null;
+        if (is_numeric($maddScore) && (float) $maddScore < $rulePassThreshold) {
             \App\Models\TajweedErrorLog::create([
                 'practice_session_id' => $sessionId,
                 'error_type' => 'madd',
                 'rule_name' => 'Madd Elongation',
                 'timestamp_in_audio' => null,
-                'severity' => $maddScore < 70 ? 'major' : 'moderate',
+                'severity' => (float) $maddScore < 70 ? 'major' : 'moderate',
                 'was_correct' => false,
                 'issue_description' => 'Elongation accuracy: ' . $maddScore . '%',
                 'recommendation' => 'Practice Madd elongation rules',
             ]);
-        } else {
+        } elseif (is_numeric($maddScore)) {
             \App\Models\TajweedErrorLog::create([
                 'practice_session_id' => $sessionId,
                 'error_type' => 'madd',
@@ -2144,19 +2146,19 @@ class StudentController extends Controller
         }
         
         // Log Makharij (Noon Sakin) errors
-        $makharijScore = $details['makharij'] ?? 80;
-        if ($makharijScore < 90) {
+        $makharijScore = $details['makharij'] ?? null;
+        if (is_numeric($makharijScore) && (float) $makharijScore < $rulePassThreshold) {
             \App\Models\TajweedErrorLog::create([
                 'practice_session_id' => $sessionId,
                 'error_type' => 'noon_sakin',
                 'rule_name' => 'Makharij',
                 'timestamp_in_audio' => null,
-                'severity' => $makharijScore < 70 ? 'major' : 'moderate',
+                'severity' => (float) $makharijScore < 70 ? 'major' : 'moderate',
                 'was_correct' => false,
                 'issue_description' => 'Makharij accuracy: ' . $makharijScore . '%',
                 'recommendation' => 'Practice proper articulation points',
             ]);
-        } else {
+        } elseif (is_numeric($makharijScore)) {
             \App\Models\TajweedErrorLog::create([
                 'practice_session_id' => $sessionId,
                 'error_type' => 'noon_sakin',
