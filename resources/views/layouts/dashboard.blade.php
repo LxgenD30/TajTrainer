@@ -244,16 +244,23 @@
             font-weight: 600;
         }
         
-        /* Mobile nav toggle */
-        .mobile-nav-toggle {
+        /* Reactive Navigation Bar (rendered by the nav partials) */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .nav-bar-toggle {
             display: none;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.25);
             color: var(--white);
-            width: 46px;
-            height: 46px;
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             cursor: pointer;
             align-items: center;
             justify-content: center;
@@ -261,9 +268,16 @@
             flex-shrink: 0;
         }
 
-        .mobile-nav-toggle:hover {
+        .nav-bar-toggle:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: scale(1.05);
+        }
+
+        .nav-bar-links {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 5px;
         }
         
         /* Dashboard Content */
@@ -313,42 +327,45 @@
             color: white;
         }
         
-        /* Responsive Design - Reactive hamburger navigation */
+        /* Responsive Design - Reactive navigation bar lives in the nav partials */
         @media (max-width: 992px) {
             .header-container {
                 flex-wrap: wrap;
                 gap: 12px;
             }
 
-            .mobile-nav-toggle {
+            .main-nav {
+                flex-basis: 100%;
+            }
+
+            /* Collapsible nav links (the toggle is part of the partial) */
+            .nav-bar {
+                flex-wrap: wrap;
+            }
+
+            .nav-bar-toggle {
                 display: inline-flex;
             }
 
-            /* Collapsible navigation panel */
-            .main-nav {
-                flex-basis: 100%;
+            .nav-bar-links {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                width: 100%;
                 max-height: 0;
                 overflow: hidden;
-                padding: 0 10px;
                 opacity: 0;
                 visibility: hidden;
-                transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.3s ease;
+                transition: max-height 0.35s ease, opacity 0.3s ease;
             }
 
-            .main-nav.open {
+            .nav-bar.open .nav-bar-links {
                 max-height: 480px;
-                padding: 10px;
                 opacity: 1;
                 visibility: visible;
             }
 
-            .nav-container {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 6px;
-            }
-
-            .nav-item {
+            .nav-bar-links .nav-item {
                 width: 100%;
                 justify-content: flex-start;
                 padding: 12px 16px;
@@ -431,13 +448,8 @@
                     </div>
                 </div>
                 
-                <!-- Mobile Navigation Toggle -->
-                <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">
-                    <i class="fas fa-bars"></i>
-                </button>
-
-                <!-- Innovative Navigation Inside Header -->
-                <nav class="main-nav" id="mainNav">
+                <!-- Innovative Navigation Inside Header (reactive toggle comes from the nav partial) -->
+                <nav class="main-nav">
                     <div class="nav-container">
                         @hasSection('navigation')
                             @yield('navigation')
@@ -514,48 +526,6 @@
             });
         });
 
-        // Reactive mobile navigation (hamburger menu)
-        const mobileNavToggle = document.getElementById('mobileNavToggle');
-        const mainNav = document.getElementById('mainNav');
-
-        function closeMobileNav() {
-            if (!mainNav) return;
-            mainNav.classList.remove('open');
-            if (mobileNavToggle) {
-                const icon = mobileNavToggle.querySelector('i');
-                icon.classList.remove('fa-times');
-                icon.classList.add('fa-bars');
-            }
-        }
-
-        if (mobileNavToggle && mainNav) {
-            mobileNavToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const isOpen = mainNav.classList.toggle('open');
-                const icon = this.querySelector('i');
-                if (isOpen) {
-                    icon.classList.remove('fa-bars');
-                    icon.classList.add('fa-times');
-                } else {
-                    icon.classList.remove('fa-times');
-                    icon.classList.add('fa-bars');
-                }
-            });
-
-            // Close the menu when a navigation item is clicked
-            mainNav.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', closeMobileNav);
-            });
-        }
-
-        // Close the mobile menu when clicking outside the header
-        document.addEventListener('click', function(e) {
-            if (!mainNav || !mobileNavToggle) return;
-            if (!mainNav.contains(e.target) && !mobileNavToggle.contains(e.target)) {
-                closeMobileNav();
-            }
-        });
-        
         // Add animation to content on scroll
         document.addEventListener('DOMContentLoaded', function() {
             const observerOptions = {
