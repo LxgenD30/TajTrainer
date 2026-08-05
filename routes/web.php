@@ -66,6 +66,8 @@ Route::middleware('auth')->group(function () {
     // Student practice mode
     Route::get('/student/practice', [App\Http\Controllers\StudentController::class, 'practice'])
         ->name('student.practice');
+    Route::get('/student/practice/verse', [App\Http\Controllers\StudentController::class, 'practiceVerse'])
+        ->name('student.practice.verse');
     Route::post('/student/practice/submit', [App\Http\Controllers\StudentController::class, 'submitPractice'])
         ->name('student.practice.submit');
     Route::get('/student/memorization', [App\Http\Controllers\StudentController::class, 'memorization'])

@@ -88,6 +88,7 @@
     }
 
     .verse-arabic {
+        font-family: 'Amiri', serif;
         font-size: 2.5rem;
         text-align: center;
         direction: rtl;
@@ -99,6 +100,27 @@
         border-radius: 15px;
         min-height: 120px;
     }
+
+    /* Tajweed colour coding (same mapping as surah details) */
+    .verse-arabic tajweed, .verse-arabic [class] {
+        /* default: inherit (unstyled rules remain readable) */
+    }
+    .verse-arabic tajweed.ham_wasl,
+    .verse-arabic tajweed.laam_shamsiyah { color: #9b9b9b; }
+    .verse-arabic tajweed.madda_normal,
+    .verse-arabic tajweed.madda_permissible { color: #537fff; }
+    .verse-arabic tajweed.madda_necessary,
+    .verse-arabic tajweed.madda_obligatory,
+    .verse-arabic tajweed.madda_prolonged { color: #295eff; }
+    .verse-arabic tajweed.qalaqah { color: #169200; }
+    .verse-arabic tajweed.ghunnah { color: #06b6a0; }
+    .verse-arabic tajweed.ikhfa,
+    .verse-arabic tajweed.ikhfa_shafawi { color: #e36000; }
+    .verse-arabic tajweed.idgham_ghunnah,
+    .verse-arabic tajweed.idgham_no_ghunnah,
+    .verse-arabic tajweed.idgham_shafawi { color: #5d8a00; }
+    .verse-arabic tajweed.iqlab { color: #c0006e; }
+    .verse-arabic span.end { display: none; }
 
     .verse-info {
         display: flex;
@@ -370,20 +392,32 @@
                 </h4>
                 <div class="tajweed-colors">
                     <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #4CAF50;"></div>
-                        <span>Idgham</span>
+                        <div class="color-box" style="background: #9b9b9b;"></div>
+                        <span>Hamzat/Laam</span>
                     </div>
                     <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #2196F3;"></div>
-                        <span>Ikhfa</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #F44336;"></div>
+                        <div class="color-box" style="background: #537fff;"></div>
                         <span>Madd</span>
                     </div>
                     <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #FF9800;"></div>
+                        <div class="color-box" style="background: #169200;"></div>
                         <span>Qalqalah</span>
+                    </div>
+                    <div class="tajweed-color-item">
+                        <div class="color-box" style="background: #06b6a0;"></div>
+                        <span>Ghunnah</span>
+                    </div>
+                    <div class="tajweed-color-item">
+                        <div class="color-box" style="background: #e36000;"></div>
+                        <span>Ikhfa</span>
+                    </div>
+                    <div class="tajweed-color-item">
+                        <div class="color-box" style="background: #5d8a00;"></div>
+                        <span>Idgham</span>
+                    </div>
+                    <div class="tajweed-color-item">
+                        <div class="color-box" style="background: #c0006e;"></div>
+                        <span>Iqlab</span>
                     </div>
                 </div>
             </div>
@@ -470,6 +504,7 @@
     var recordingTimer = null;
     var recordingSeconds = 0;
     var recordedBlob = null;
+    var currentExpectedText = null;
 
     // Load random verse on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -487,70 +522,49 @@
         document.getElementById('surahInfo').textContent = '---';
         document.getElementById('ayahInfo').textContent = '---';
         
-        console.log('Step 2: Generate random surah');
-        currentSurah = Math.floor(Math.random() * 114) + 1;
-        console.log('Selected Surah:', currentSurah);
-            
-            var surahUrl = 'https://api.alquran.cloud/v1/surah/' + currentSurah;
-            console.log('Step 3: Fetching surah info from:', surahUrl);
-            
-            fetch(surahUrl)
+        console.log('Step 2: Fetch verse from backend QDC endpoint');
+        fetch('{{ route("student.practice.verse") }}', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
                 .then(function(response) {
-                    console.log('Step 4: Surah response received, status:', response.status);
+                    console.log('Step 3: Verse response received, status:', response.status);
                     if (!response.ok) {
-                        throw new Error('Surah API failed: ' + response.status);
+                        throw new Error('Practice verse API failed: ' + response.status);
                     }
                     return response.json();
                 })
-                .then(function(surahData) {
-                    console.log('Step 5: Surah data parsed:', surahData);
-                    
-                    if (surahData.code !== 200 || surahData.status !== 'OK') {
-                        throw new Error('Surah API returned error status');
+                .then(function(payload) {
+                    console.log('Step 4: Verse payload parsed:', payload);
+
+                    if (!payload.success || !payload.verse) {
+                        throw new Error(payload.message || 'Practice verse API returned invalid payload');
                     }
-                    
-                    var totalAyahs = surahData.data.numberOfAyahs;
-                    currentAyah = Math.floor(Math.random() * totalAyahs) + 1;
-                    console.log('Selected Ayah', currentAyah, 'of', totalAyahs);
-                    
-                    var ayahUrl = 'https://api.alquran.cloud/v1/ayah/' + currentSurah + ':' + currentAyah + '/editions/quran-uthmani,ar.alafasy,en.asad';
-                    console.log('Step 6: Fetching ayah from:', ayahUrl);
-                    
-                    return fetch(ayahUrl);
-                })
-                .then(function(response) {
-                    console.log('Step 7: Ayah response received, status:', response.status);
-                    if (!response.ok) {
-                        throw new Error('Ayah API failed: ' + response.status);
+
+                    var verse = payload.verse;
+                    currentSurah = verse.surahNumber;
+                    currentAyah = verse.ayahNumber;
+                    currentAudioUrl = verse.audio || null;
+                    currentExpectedText = (verse.textPlain || '').trim();
+
+                    document.getElementById('ayahArabic').innerHTML = verse.textTajweed || verse.textPlain || '';
+                    document.getElementById('surahInfo').textContent = verse.surahNameEnglish + (verse.surahNameArabic ? ' (' + verse.surahNameArabic + ')' : '');
+                    document.getElementById('ayahInfo').textContent = 'Ayah ' + verse.ayahNumber;
+                    document.getElementById('ayahTranslation').textContent = verse.translation || 'Translation unavailable.';
+
+                    if (!currentExpectedText) {
+                        currentExpectedText = (document.getElementById('ayahArabic').textContent || '').trim();
                     }
-                    return response.json();
-                })
-                .then(function(ayahData) {
-                    console.log('Step 8: Ayah data parsed:', ayahData);
-                    
-                    if (ayahData.code !== 200 || ayahData.status !== 'OK' || !ayahData.data) {
-                        throw new Error('Ayah API returned error');
-                    }
-                    
-                    console.log('Step 9: Extracting data from response');
-                    var arabicText = ayahData.data[0].text;
-                    var audioData = ayahData.data[1];
-                    var translationText = ayahData.data[2].text;
-                    
-                    console.log('Step 10: Updating display');
-                    document.getElementById('ayahArabic').textContent = arabicText;
-                    document.getElementById('surahInfo').textContent = audioData.surah.englishName;
-                    document.getElementById('ayahInfo').textContent = 'Ayah ' + currentAyah;
-                    document.getElementById('ayahTranslation').textContent = translationText;
-                    
-                    if (audioData.audio) {
-                        currentAudioUrl = audioData.audio;
+
+                    if (currentAudioUrl) {
                         document.getElementById('referenceAudio').src = currentAudioUrl;
-                        console.log('Step 11: Audio URL set:', currentAudioUrl);
+                        console.log('Step 5: Audio URL set:', currentAudioUrl);
                     } else {
+                        document.getElementById('referenceAudio').removeAttribute('src');
                         console.warn('No audio available for this ayah');
                     }
-                    
+
                     console.log('=== Verse loaded successfully! ===');
                 })
                 .catch(function(error) {
@@ -708,18 +722,20 @@
         
         console.log('Starting AI analysis...');
         document.getElementById('analyzingOverlay').classList.add('show');
+
+        var expectedText = (currentExpectedText || document.getElementById('ayahArabic').textContent || '').trim();
         
         console.log('Building request data:');
         console.log('  - Surah:', currentSurah);
         console.log('  - Ayah:', currentAyah);
-        console.log('  - Expected text:', document.getElementById('ayahArabic').textContent.substring(0, 50) + '...');
+        console.log('  - Expected text:', expectedText.substring(0, 50) + '...');
         console.log('  - Reference audio:', currentAudioUrl);
         
         var formData = new FormData();
         formData.append('audio_file', recordedBlob, 'recording.webm');
         formData.append('surah_number', currentSurah);
         formData.append('ayah_number', currentAyah);
-        formData.append('expected_text', document.getElementById('ayahArabic').textContent);
+        formData.append('expected_text', expectedText);
         formData.append('reference_audio_url', currentAudioUrl);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
         

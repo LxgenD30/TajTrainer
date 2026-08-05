@@ -588,6 +588,82 @@ class StudentController extends Controller
         return view('practice.index');
     }
 
+    public function practiceVerse()
+    {
+        try {
+            $surahNumber = (int) request()->query('surah_number', random_int(1, 114));
+            $surahNumber = max(1, min(114, $surahNumber));
+
+            $chapterResp = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/chapters/{$surahNumber}",
+                ['language' => 'en']
+            );
+            $versesResp = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surahNumber}",
+                [
+                    'translations' => 131,
+                    'per_page'     => 300,
+                    'page'         => 1,
+                    'fields'       => 'text_uthmani_tajweed,text_uthmani',
+                ]
+            );
+
+            if ($chapterResp->failed() || $versesResp->failed()) {
+                Log::error("Practice verse API failed for Surah {$surahNumber}", [
+                    'chapter_status' => $chapterResp->status(),
+                    'verses_status'  => $versesResp->status(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Could not load practice verse from API.',
+                ], 502);
+            }
+
+            $chapter = $chapterResp->json('chapter');
+            $verses = $versesResp->json('verses') ?? [];
+
+            if (empty($chapter) || empty($verses)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No verses found for this Surah.',
+                ], 404);
+            }
+
+            $selectedVerse = $verses[array_rand($verses)];
+            $verseParts = explode(':', $selectedVerse['verse_key'] ?? '0:1');
+            $verseNum = (int) ($verseParts[1] ?? 1);
+
+            $surahPadded = str_pad((string) $surahNumber, 3, '0', STR_PAD_LEFT);
+            $versePadded = str_pad((string) $verseNum, 3, '0', STR_PAD_LEFT);
+
+            $tajweedText = $selectedVerse['text_uthmani_tajweed'] ?? $selectedVerse['text_uthmani'] ?? '';
+            $plainText = $selectedVerse['text_uthmani'] ?? trim(strip_tags($tajweedText));
+            $translationText = strip_tags($selectedVerse['translations'][0]['text'] ?? '');
+
+            return response()->json([
+                'success' => true,
+                'verse' => [
+                    'surahNumber'      => (int) ($chapter['id'] ?? $surahNumber),
+                    'surahNameArabic'  => $chapter['name_arabic'] ?? '',
+                    'surahNameEnglish' => $chapter['name_simple'] ?? '',
+                    'ayahNumber'       => $verseNum,
+                    'textTajweed'      => $tajweedText,
+                    'textPlain'        => $plainText,
+                    'translation'      => $translationText,
+                    'audio'            => "https://verses.quran.com/Alafasy/mp3/{$surahPadded}{$versePadded}.mp3",
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to load practice verse: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not load practice verse. Please try again.',
+            ], 500);
+        }
+    }
+
     public function memorization()
     {
         return view('students.memorization');
