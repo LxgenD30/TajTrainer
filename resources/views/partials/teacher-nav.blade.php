@@ -1,4 +1,3 @@
-<div class="nav-section">Main</div>
 <a href="{{ route('home') }}" class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
     <div class="nav-icon"><i class="fas fa-home"></i></div>
     <div class="nav-label">Dashboard</div>
@@ -11,7 +10,6 @@
     <div class="nav-icon"><i class="fas fa-user-graduate"></i></div>
     <div class="nav-label">My Students</div>
 </a>
-<div class="nav-section">Resources</div>
 <a href="{{ route('materials.index') }}" class="nav-item {{ request()->routeIs('materials.*') ? 'active' : '' }}">
     <div class="nav-icon"><i class="fas fa-book-open"></i></div>
     <div class="nav-label">Materials</div>
