@@ -48,32 +48,60 @@
         margin-bottom: 15px;
     }
 
-    /* ── Tajweed colour coding ───────────────────────────────────────────── */
-    .ayah-text tajweed, .ayah-text [class] {
+    /* ── Universal Tajweed colour coding ─────────────────────────────────── */
+    .ayah-text tajweed,
+    .ayah-text [class] {
         /* default: inherit (unstyled rules remain readable) */
     }
-    /* Hamzat al-Wasl & Laam Shamsiyah — shown lighter (structurally silent) */
-    tajweed.ham_wasl,
-    tajweed.laam_shamsiyah    { color: #9b9b9b; }
-    /* Madd extensions — blue family */
-    tajweed.madda_normal,
-    tajweed.madda_permissible { color: #537fff; }
-    tajweed.madda_necessary,
-    tajweed.madda_obligatory,
-    tajweed.madda_prolonged   { color: #295eff; }
-    /* Qalaqah — green */
-    tajweed.qalaqah           { color: #169200; }
-    /* Ghunnah — teal */
-    tajweed.ghunnah           { color: #06b6a0; }
-    /* Ikhfa rules — orange */
-    tajweed.ikhfa,
-    tajweed.ikhfa_shafawi     { color: #e36000; }
-    /* Idgham rules — olive-green */
-    tajweed.idgham_ghunnah,
-    tajweed.idgham_no_ghunnah,
-    tajweed.idgham_shafawi    { color: #5d8a00; }
-    /* Iqlab — pink/rose */
-    tajweed.iqlab             { color: #c0006e; }
+
+    /* Silent/not pronounced in continuity (Lam Shamsiyah / Hamzat al-Wasl) */
+    .ayah-text tajweed.ham_wasl,
+    .ayah-text tajweed.laam_shamsiyah,
+    .ayah-text tajweed.lam_shamsiyah,
+    .ayah-text tajweed.silent,
+    .ayah-text tajweed.slnt {
+        color: #b5bec9;
+    }
+
+    /* Red: Ghunnah / nasal sounds */
+    .ayah-text tajweed.ghunnah,
+    .ayah-text tajweed.ghn,
+    .ayah-text tajweed.idgham_ghunnah,
+    .ayah-text tajweed.idgham_bi_ghunnah,
+    .ayah-text tajweed.ikhfa,
+    .ayah-text tajweed.ikhfa_shafawi,
+    .ayah-text tajweed.iqlab {
+        color: #d32f2f;
+    }
+
+    /* Green: Tafkheem / heavy letters */
+    .ayah-text tajweed.tafkheem,
+    .ayah-text tajweed.tafkhim,
+    .ayah-text tajweed.heavy,
+    .ayah-text tajweed.mufakham,
+    .ayah-text tajweed.full_mouth,
+    .ayah-text tajweed.isti_la {
+        color: #1f8f45;
+    }
+
+    /* Blue: Qalqalah (echoing/bouncing) */
+    .ayah-text tajweed.qalaqah,
+    .ayah-text tajweed.qalqalah {
+        color: #1f5fe0;
+    }
+
+    /* Additional rule colors kept for readability */
+    .ayah-text tajweed.madda_normal,
+    .ayah-text tajweed.madda_permissible,
+    .ayah-text tajweed.madda_necessary,
+    .ayah-text tajweed.madda_obligatory,
+    .ayah-text tajweed.madda_prolonged {
+        color: #8a63d2;
+    }
+    .ayah-text tajweed.idgham_no_ghunnah,
+    .ayah-text tajweed.idgham_shafawi {
+        color: #8b6b00;
+    }
     /* Verse-end circle already styled via .ayah-number; hide duplicate span */
     .ayah-text span.end       { display: none; }
     .ayah-number {

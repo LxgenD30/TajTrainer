@@ -101,25 +101,44 @@
         min-height: 120px;
     }
 
-    /* Tajweed colour coding (same mapping as surah details) */
-    .verse-arabic tajweed, .verse-arabic [class] {
+    /* Universal Tajweed colour coding */
+    .verse-arabic tajweed,
+    .verse-arabic [class] {
         /* default: inherit (unstyled rules remain readable) */
     }
     .verse-arabic tajweed.ham_wasl,
-    .verse-arabic tajweed.laam_shamsiyah { color: #9b9b9b; }
+    .verse-arabic tajweed.laam_shamsiyah,
+    .verse-arabic tajweed.lam_shamsiyah,
+    .verse-arabic tajweed.silent,
+    .verse-arabic tajweed.slnt { color: #b5bec9; }
+
+    .verse-arabic tajweed.ghunnah,
+    .verse-arabic tajweed.ghn,
+    .verse-arabic tajweed.idgham_ghunnah,
+    .verse-arabic tajweed.idgham_bi_ghunnah,
+    .verse-arabic tajweed.ikhfa,
+    .verse-arabic tajweed.ikhfa_shafawi,
+    .verse-arabic tajweed.iqlab { color: #d32f2f; }
+
+    .verse-arabic tajweed.tafkheem,
+    .verse-arabic tajweed.tafkhim,
+    .verse-arabic tajweed.heavy,
+    .verse-arabic tajweed.mufakham,
+    .verse-arabic tajweed.full_mouth,
+    .verse-arabic tajweed.isti_la { color: #1f8f45; }
+
+    .verse-arabic tajweed.qalaqah,
+    .verse-arabic tajweed.qalqalah { color: #1f5fe0; }
+
     .verse-arabic tajweed.madda_normal,
-    .verse-arabic tajweed.madda_permissible { color: #537fff; }
+    .verse-arabic tajweed.madda_permissible,
     .verse-arabic tajweed.madda_necessary,
     .verse-arabic tajweed.madda_obligatory,
-    .verse-arabic tajweed.madda_prolonged { color: #295eff; }
-    .verse-arabic tajweed.qalaqah { color: #169200; }
-    .verse-arabic tajweed.ghunnah { color: #06b6a0; }
-    .verse-arabic tajweed.ikhfa,
-    .verse-arabic tajweed.ikhfa_shafawi { color: #e36000; }
-    .verse-arabic tajweed.idgham_ghunnah,
+    .verse-arabic tajweed.madda_prolonged { color: #8a63d2; }
+
     .verse-arabic tajweed.idgham_no_ghunnah,
-    .verse-arabic tajweed.idgham_shafawi { color: #5d8a00; }
-    .verse-arabic tajweed.iqlab { color: #c0006e; }
+    .verse-arabic tajweed.idgham_shafawi { color: #8b6b00; }
+
     .verse-arabic span.end { display: none; }
 
     .verse-info {
@@ -392,32 +411,24 @@
                 </h4>
                 <div class="tajweed-colors">
                     <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #9b9b9b;"></div>
-                        <span>Hamzat/Laam</span>
+                        <div class="color-box" style="background: #d32f2f;"></div>
+                        <span>Ghunnah (Nasal)</span>
                     </div>
                     <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #537fff;"></div>
-                        <span>Madd</span>
+                        <div class="color-box" style="background: #1f8f45;"></div>
+                        <span>Tafkheem (Heavy)</span>
                     </div>
                     <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #169200;"></div>
+                        <div class="color-box" style="background: #1f5fe0;"></div>
                         <span>Qalqalah</span>
                     </div>
                     <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #06b6a0;"></div>
-                        <span>Ghunnah</span>
+                        <div class="color-box" style="background: #b5bec9;"></div>
+                        <span>Silent / Lam Shamsiyah</span>
                     </div>
                     <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #e36000;"></div>
-                        <span>Ikhfa</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #5d8a00;"></div>
-                        <span>Idgham</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #c0006e;"></div>
-                        <span>Iqlab</span>
+                        <div class="color-box" style="background: #8a63d2;"></div>
+                        <span>Madd</span>
                     </div>
                 </div>
             </div>
