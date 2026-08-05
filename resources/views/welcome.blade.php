@@ -573,6 +573,60 @@
         .form-footer a:hover {
             text-decoration: underline;
         }
+
+        .login-divider {
+            text-align: center;
+            margin: 16px 0;
+            color: #777;
+            font-family: 'El Messiri', sans-serif;
+        }
+
+        .google-login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fff;
+            color: #1f1f1f;
+            font-family: 'El Messiri', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .google-login-btn:hover {
+            border-color: #c6c6c6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+            text-decoration: none;
+        }
+
+        .google-login-btn i {
+            color: #db4437;
+            font-size: 1.1rem;
+        }
+
+        .forgot-password-btn {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(10, 92, 54, 0.08);
+            color: var(--primary-green);
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s ease;
+        }
+
+        .forgot-password-btn:hover {
+            background: rgba(10, 92, 54, 0.14);
+            text-decoration: none;
+        }
         
         .error-message {
             color: #e74c3c;
@@ -1092,6 +1146,26 @@
         <div class="modal-content">
             <span class="close-modal" id="closeLogin">&times;</span>
             <h2>Login to TajTrainer</h2>
+
+            @if (session('status'))
+                <div style="background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; font-family: 'El Messiri', sans-serif;">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            @error('google')
+                <div class="error-message" style="margin-bottom: 16px;">
+                    {{ $message }}
+                </div>
+            @enderror
+
+            <a href="{{ route('auth.google.redirect') }}" class="google-login-btn">
+                <i class="fab fa-google"></i>
+                Continue with Google
+            </a>
+
+            <div class="login-divider">or login with email</div>
+
             <form method="POST" action="{{ route('login') }}">
                 @csrf
                 
@@ -1119,9 +1193,11 @@
                 <button type="submit" class="submit-btn">Login</button>
                 
                 <div class="form-footer">
-<!--                     @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}">Forgot Password?</a> | 
-                    @endif -->
+                    @if (Route::has('password.request'))
+                        <p style="margin-bottom: 12px;">
+                            <a href="{{ route('password.request') }}" class="forgot-password-btn">Forgot Password</a>
+                        </p>
+                    @endif
                     <a href="#" id="switchToRegister">Register here</a>
                 </div>
             </form>
@@ -1330,20 +1406,31 @@
         });
         
         // Auto-open modal if there are validation errors
-        @if ($errors->has('email') || $errors->has('password'))
-            @if (old('password_confirmation') !== null || old('name') !== null || old('role_id') !== null)
+        let hasLoginModalError = false;
+        @error('email') hasLoginModalError = true; @enderror
+        @error('password') hasLoginModalError = true; @enderror
+        @error('google') hasLoginModalError = true; @enderror
+
+        if (hasLoginModalError) {
+            if ({{ old('password_confirmation') !== null || old('name') !== null || old('role_id') !== null ? 'true' : 'false' }}) {
                 // This is a register form error
                 document.getElementById('registerModal').classList.add('show');
-            @else
+            } else {
                 // This is a login form error
                 document.getElementById('loginModal').classList.add('show');
-            @endif
-        @endif
-        
-        @if ($errors->has('name') || $errors->has('role_id'))
-            // Register form errors
+            }
+        }
+
+        let hasRegisterModalError = false;
+        @error('name') hasRegisterModalError = true; @enderror
+        @error('role_id') hasRegisterModalError = true; @enderror
+        @error('current_level') hasRegisterModalError = true; @enderror
+        @error('title') hasRegisterModalError = true; @enderror
+        @error('phone') hasRegisterModalError = true; @enderror
+
+        if (hasRegisterModalError) {
             document.getElementById('registerModal').classList.add('show');
-        @endif
+        }
         
         // Demo player functionality with Quran Cloud API (api.alquran.cloud)
         let audioElement = document.getElementById('quranAudio');
