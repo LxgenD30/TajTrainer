@@ -9,6 +9,10 @@
 
 @section('content')
 <style>
+    :root {
+        --memorization-session-arabic-size: 2.3rem;
+    }
+
     .ms-wrap {
         max-width: 780px;
         margin: 0 auto;
@@ -41,7 +45,7 @@
     }
     .ms-back:hover { background: #e5e7eb; }
     .ms-surah-info { text-align: center; flex: 1; }
-    .ms-surah-ar   { font-family: 'Amiri', serif; font-size: 2rem; font-weight: 900; color: #1a1a1a; line-height: 1; }
+    .ms-surah-ar   { font-family: 'Amiri', serif; font-size: calc(var(--memorization-session-arabic-size) * 1.15); font-weight: 900; color: #000000; line-height: 1; }
     .ms-surah-en   { font-size: 0.9rem; color: #6b7280; font-weight: 600; margin-top: 2px; }
     .ms-ayah-badge {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
@@ -51,6 +55,32 @@
         font-weight: 800;
         font-size: 0.9rem;
         white-space: nowrap;
+    }
+
+    .ms-arabic-size-control {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 4px;
+        margin-bottom: 10px;
+    }
+    .ms-arabic-size-control label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #0a5c36;
+    }
+    .ms-arabic-size-control input[type="range"] {
+        width: 220px;
+        accent-color: #0a5c36;
+    }
+    .ms-arabic-size-value {
+        min-width: 52px;
+        text-align: right;
+        font-weight: 800;
+        color: #0a5c36;
+        font-size: 0.9rem;
     }
 
     /* ── Progress dots ───────────────────────────────────────────────────── */
@@ -152,12 +182,12 @@
         width: 100%;
         min-height: 120px;
         font-family: 'Amiri', serif;
-        font-size: 1.9rem;
+        font-size: var(--memorization-session-arabic-size);
         line-height: 2.4;
         direction: rtl;
         text-align: right;
         word-break: break-word;
-        color: #1a1a1a;
+        color: #000000;
     }
     .word-ok    { color: #16a34a; }
     .word-bad   { color: #dc2626; text-decoration: line-through; }
@@ -167,7 +197,7 @@
         direction: rtl;
         text-align: right;
         font-family: 'Amiri', serif;
-        font-size: 1.5rem;
+        font-size: calc(var(--memorization-session-arabic-size) * 0.78);
         color: #9ca3af;
         font-style: italic;
         min-height: 2rem;
@@ -188,7 +218,7 @@
     .err-ayah-display {
         width: 100%;
         font-family: 'Amiri', serif;
-        font-size: 1.75rem;
+        font-size: calc(var(--memorization-session-arabic-size) * 0.92);
         line-height: 2.6;
         direction: rtl;
         text-align: right;
@@ -309,6 +339,12 @@
         </div>
     </div>
 
+    <div class="ms-arabic-size-control">
+        <label for="memorizationSessionArabicSize">Arabic Text Size</label>
+        <input type="range" id="memorizationSessionArabicSize" min="1.9" max="4.2" step="0.1" value="2.3" aria-label="Adjust Arabic text size">
+        <span class="ms-arabic-size-value" id="memorizationSessionArabicSizeValue">2.3rem</span>
+    </div>
+
     {{-- Ayah dots --}}
     <div class="ms-dots" id="ms-dots">
         @foreach ($ayahs as $i => $ayah)
@@ -411,6 +447,27 @@
 <script>
 // ── Verse data ──────────────────────────────────────────────────────────────
 const VERSES = JSON.parse(document.getElementById('verse-data').textContent);
+
+// ── Arabic size control ─────────────────────────────────────────────────────
+const msSizeSlider = document.getElementById('memorizationSessionArabicSize');
+const msSizeValue = document.getElementById('memorizationSessionArabicSizeValue');
+if (msSizeSlider && msSizeValue) {
+    const saved = localStorage.getItem('memorizationArabicSizeRem');
+    const initial = saved ? parseFloat(saved) : parseFloat(msSizeSlider.value);
+    if (!isNaN(initial)) {
+        msSizeSlider.value = initial.toFixed(1);
+        document.documentElement.style.setProperty('--memorization-session-arabic-size', initial.toFixed(1) + 'rem');
+        msSizeValue.textContent = initial.toFixed(1) + 'rem';
+    }
+
+    msSizeSlider.addEventListener('input', function () {
+        const next = parseFloat(this.value);
+        if (isNaN(next)) return;
+        document.documentElement.style.setProperty('--memorization-session-arabic-size', next.toFixed(1) + 'rem');
+        msSizeValue.textContent = next.toFixed(1) + 'rem';
+        localStorage.setItem('memorizationArabicSizeRem', next.toFixed(1));
+    });
+}
 
 // ── Muqatta'at letter names ──────────────────────────────────────────────────
 const LETTER_NAMES = {

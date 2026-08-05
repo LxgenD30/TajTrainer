@@ -9,6 +9,10 @@
 
 @section('extra-styles')
 <style>
+    :root {
+        --practice-arabic-size: 3.2rem;
+    }
+
     .practice-container {
         max-width: 1400px;
         margin: 0 auto;
@@ -89,16 +93,48 @@
 
     .verse-arabic {
         font-family: 'Amiri', serif;
-        font-size: 2.5rem;
+        font-size: var(--practice-arabic-size);
         text-align: center;
         direction: rtl;
         line-height: 2.2;
-        color: var(--primary-green);
+        color: #000000;
         margin: 30px 0;
         padding: 25px;
         background: rgba(10, 92, 54, 0.05);
         border-radius: 15px;
         min-height: 120px;
+    }
+
+    .arabic-size-control {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin: 8px 0 16px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 2px solid rgba(10, 92, 54, 0.15);
+        background: rgba(10, 92, 54, 0.04);
+    }
+
+    .arabic-size-control label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0a5c36;
+        white-space: nowrap;
+    }
+
+    .arabic-size-control input[type="range"] {
+        flex: 1;
+        accent-color: #0a5c36;
+    }
+
+    .arabic-size-value {
+        min-width: 52px;
+        text-align: right;
+        font-weight: 800;
+        color: #0a5c36;
+        font-size: 0.95rem;
     }
 
     /* Tajweed colour key (requested scheme) */
@@ -386,6 +422,12 @@
         <!-- Verse Card -->
         <div class="card">
             <h3><i class="fas fa-book-quran"></i> Practice Verse</h3>
+
+            <div class="arabic-size-control">
+                <label for="practiceArabicSize">Arabic Text Size</label>
+                <input type="range" id="practiceArabicSize" min="2.2" max="4.6" step="0.1" value="3.2" aria-label="Adjust Arabic text size">
+                <span class="arabic-size-value" id="practiceArabicSizeValue">3.2rem</span>
+            </div>
             
             <div class="verse-arabic" id="ayahArabic">
                 <div class="loading">Loading verse...</div>
@@ -544,10 +586,33 @@
 
     // Load random verse on page load
     document.addEventListener('DOMContentLoaded', function() {
+        initArabicSizeControl();
         console.log('DOM Content Loaded');
         console.log('Starting to load verse...');
         loadNewVerse();
     });
+
+    function initArabicSizeControl() {
+        var slider = document.getElementById('practiceArabicSize');
+        var valueEl = document.getElementById('practiceArabicSizeValue');
+        if (!slider || !valueEl) return;
+
+        var savedSize = localStorage.getItem('practiceArabicSizeRem');
+        var initial = savedSize ? parseFloat(savedSize) : parseFloat(slider.value);
+        if (!isNaN(initial)) {
+            slider.value = initial.toFixed(1);
+            document.documentElement.style.setProperty('--practice-arabic-size', initial.toFixed(1) + 'rem');
+            valueEl.textContent = initial.toFixed(1) + 'rem';
+        }
+
+        slider.addEventListener('input', function() {
+            var size = parseFloat(this.value);
+            if (isNaN(size)) return;
+            document.documentElement.style.setProperty('--practice-arabic-size', size.toFixed(1) + 'rem');
+            valueEl.textContent = size.toFixed(1) + 'rem';
+            localStorage.setItem('practiceArabicSizeRem', size.toFixed(1));
+        });
+    }
 
     function loadNewVerse() {
         console.log('=== loadNewVerse() called ===');
@@ -849,7 +914,7 @@
             if (transcription) {
                 breakdownHtml += '<div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px; direction: rtl; border: 2px solid rgba(212, 175, 55, 0.3);">';
                 breakdownHtml += '<h5 style="color: #d4af37; margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;"><i class="fas fa-microphone"></i> Your Recitation (Transcribed):</h5>';
-                breakdownHtml += '<p style="font-size: 2rem; color: #333; text-align: center; line-height: 1.8;">' + transcription + '</p>';
+                breakdownHtml += '<p style="font-size: calc(var(--practice-arabic-size, 3.2rem) * 0.75); color: #000000; text-align: center; line-height: 1.8;">' + transcription + '</p>';
                 breakdownHtml += '</div>';
             }
         }

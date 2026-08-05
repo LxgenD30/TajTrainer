@@ -9,6 +9,10 @@
 
 @section('content')
 <style>
+    :root {
+        --memorization-arabic-size: 2.6rem;
+    }
+
     .surah-header {
         text-align: center;
         margin-bottom: 30px;
@@ -19,7 +23,7 @@
         border: 3px solid #2a2a2a;
     }
     .surah-title {
-        font-size: 3rem;
+        font-size: 3.4rem;
         font-weight: 800;
         font-family: 'Amiri', serif; /* A nice font for Arabic */
     }
@@ -41,11 +45,39 @@
         box-shadow: 0 8px 15px rgba(0,0,0,0.07);
     }
     .ayah-text {
-        font-size: 1.8rem;
+        font-size: var(--memorization-arabic-size);
         font-family: 'Amiri', serif;
         text-align: right;
         line-height: 2.5;
         margin-bottom: 15px;
+        color: #000000;
+    }
+
+    .arabic-size-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 2px solid rgba(255,255,255,0.5);
+        background: rgba(255,255,255,0.18);
+    }
+    .arabic-size-control label {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .arabic-size-control input[type="range"] {
+        width: 180px;
+        accent-color: #ffffff;
+    }
+    .arabic-size-value {
+        min-width: 52px;
+        text-align: right;
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: #ffffff;
     }
 
     /* ── Tajweed colour key (requested scheme) ───────────────────────────── */
@@ -223,6 +255,11 @@
             <i class="fas fa-play-circle"></i> Start Memorizing
         </a>
     </div>
+    <div class="arabic-size-control">
+        <label for="memorizationArabicSize">Arabic Text Size</label>
+        <input type="range" id="memorizationArabicSize" min="2.0" max="4.5" step="0.1" value="2.6" aria-label="Adjust Arabic text size">
+        <span class="arabic-size-value" id="memorizationArabicSizeValue">2.6rem</span>
+    </div>
 </div>
 
 <div class="ayah-grid">
@@ -253,6 +290,25 @@
 @section('extra-scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const sizeSlider = document.getElementById('memorizationArabicSize');
+    const sizeValue = document.getElementById('memorizationArabicSizeValue');
+    if (sizeSlider && sizeValue) {
+        const saved = localStorage.getItem('memorizationArabicSizeRem');
+        const initial = saved ? parseFloat(saved) : parseFloat(sizeSlider.value);
+        if (!isNaN(initial)) {
+            sizeSlider.value = initial.toFixed(1);
+            document.documentElement.style.setProperty('--memorization-arabic-size', initial.toFixed(1) + 'rem');
+            sizeValue.textContent = initial.toFixed(1) + 'rem';
+        }
+        sizeSlider.addEventListener('input', function() {
+            const next = parseFloat(this.value);
+            if (isNaN(next)) return;
+            document.documentElement.style.setProperty('--memorization-arabic-size', next.toFixed(1) + 'rem');
+            sizeValue.textContent = next.toFixed(1) + 'rem';
+            localStorage.setItem('memorizationArabicSizeRem', next.toFixed(1));
+        });
+    }
+
     const audio = new Audio();
     let currentPlayingButton = null;
 
