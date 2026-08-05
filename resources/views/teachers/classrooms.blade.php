@@ -8,661 +8,489 @@
 @endsection
 
 @section('content')
-@php
-    $totalClassrooms = $classrooms->count();
-    $totalStudents   = $classrooms->sum('students_count');
-    $totalAssignments = $classrooms->sum('assignments_count');
-    $totalPending    = $classrooms->sum('pending_assignments_count');
-@endphp
-
 <style>
-    /* ============ HERO ============ */
-    .cl-hero {
+    .welcome-banner {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        border: 3px solid #0a4a2b;
-        border-radius: 20px;
-        color: #fff;
-        padding: 28px 34px;
-        margin-bottom: 26px;
-        box-shadow: 0 14px 32px rgba(10, 92, 54, 0.24);
+        border-radius: 25px;
+        padding: 40px;
+        margin-bottom: 30px;
+        color: #ffffff;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.25);
+        border: 3px solid #2a2a2a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
     }
-
-    .cl-hero:before {
+    
+    .welcome-banner:before {
         content: '';
         position: absolute;
-        top: -100px;
-        right: -80px;
-        width: 320px;
-        height: 320px;
-        background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
-        pointer-events: none;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
     }
-
-    .cl-hero-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        flex-wrap: wrap;
+    
+    .welcome-content {
         position: relative;
         z-index: 2;
+        flex: 1;
     }
-
-    .cl-hero h1 {
-        margin: 0 0 4px;
-        font-size: 2.1rem;
-        line-height: 1.2;
-        color: #fff;
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    
+    .welcome-content h1 {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
-
-    .cl-hero p {
-        margin: 0;
-        opacity: 0.95;
+    
+    .welcome-content p {
         font-size: 1.05rem;
+        opacity: 0.95;
+        line-height: 1.6;
+        margin: 0;
     }
-
-    .cl-hero-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    .cl-btn-create {
+    
+    .btn-create {
+        position: relative;
+        z-index: 2;
         display: inline-flex;
         align-items: center;
-        gap: 9px;
-        background: linear-gradient(135deg, #d4af37, #f4d03f);
-        color: #111827;
-        padding: 12px 24px;
-        border-radius: 12px;
+        gap: 10px;
+        background: linear-gradient(135deg, #d4af37, #f1c40f);
+        color: #0a5c36;
+        padding: 15px 30px;
+        border-radius: 25px;
         text-decoration: none;
-        font-weight: 800;
-        font-size: 1rem;
-        border: 2px solid #3d3520;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        transition: all 0.25s ease;
-        font-family: 'Cairo', sans-serif;
-        white-space: nowrap;
-    }
-
-    .cl-btn-create:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 28px rgba(0,0,0,0.28);
-        background: linear-gradient(135deg, #f4d03f, #d4af37);
-    }
-
-    /* ============ STATS STRIP ============ */
-    .cl-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 18px;
-        margin-bottom: 28px;
-    }
-
-    .cl-stat {
-        background: #fff;
-        border: 2px solid #2a2a2a;
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 8px 20px rgba(14, 28, 18, 0.06);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        transition: all 0.25s ease;
-        animation: clFadeUp 0.5s ease both;
-    }
-
-    .cl-stat:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 26px rgba(10, 92, 54, 0.12);
-    }
-
-    .cl-stat:nth-child(2) { animation-delay: 0.06s; }
-    .cl-stat:nth-child(3) { animation-delay: 0.12s; }
-    .cl-stat:nth-child(4) { animation-delay: 0.18s; }
-
-    .cl-stat-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.35rem;
-        color: #fff;
-        flex-shrink: 0;
-    }
-
-    .cl-stat-icon.green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
-    .cl-stat-icon.blue { background: linear-gradient(135deg, #3498db, #2980b9); }
-    .cl-stat-icon.gold { background: linear-gradient(135deg, #d4af37, #b8860b); }
-    .cl-stat-icon.amber { background: linear-gradient(135deg, #f39c12, #e67e22); }
-
-    .cl-stat-value {
-        font-size: 1.9rem;
-        font-weight: 800;
-        color: #0a5c36;
-        line-height: 1;
-    }
-
-    .cl-stat-label {
-        color: #666;
-        font-size: 0.95rem;
-        font-weight: 600;
-        margin-top: 4px;
-    }
-
-    /* ============ TOOLBAR ============ */
-    .cl-toolbar {
-        background: #fff;
-        border: 2px solid #2a2a2a;
-        border-radius: 16px;
-        padding: 14px 18px;
-        margin-bottom: 26px;
-        box-shadow: 0 8px 20px rgba(14, 28, 18, 0.06);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        flex-wrap: wrap;
-    }
-
-    .cl-search {
-        position: relative;
-        flex: 1 1 240px;
-        min-width: 220px;
-    }
-
-    .cl-search i {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #0a5c36;
-        font-size: 0.9rem;
-    }
-
-    .cl-search input {
-        width: 100%;
-        padding: 11px 16px 11px 38px;
-        border: 2px solid #cfd9d0;
-        border-radius: 50px;
-        font-size: 0.98rem;
-        font-family: 'Cairo', sans-serif;
-        font-weight: 600;
-        color: #1f2937;
-        transition: all 0.2s ease;
-    }
-
-    .cl-search input:focus {
-        outline: none;
-        border-color: #0a5c36;
-        box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.12);
-    }
-
-    .cl-sort {
-        position: relative;
-        min-width: 200px;
-    }
-
-    .cl-sort i {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #0a5c36;
-        font-size: 0.9rem;
-        pointer-events: none;
-    }
-
-    .cl-sort select {
-        width: 100%;
-        padding: 11px 34px 11px 38px;
-        border: 2px solid #cfd9d0;
-        border-radius: 50px;
-        font-size: 0.98rem;
-        font-family: 'Cairo', sans-serif;
-        font-weight: 600;
-        color: #1f2937;
-        cursor: pointer;
-        background: #fff;
-        appearance: none;
-        -webkit-appearance: none;
-        transition: all 0.2s ease;
-    }
-
-    .cl-sort select:focus {
-        outline: none;
-        border-color: #0a5c36;
-        box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.12);
-    }
-
-    .cl-count {
-        font-size: 0.95rem;
-        color: #5f6f65;
         font-weight: 700;
-        white-space: nowrap;
+        font-size: 1rem;
+        border: 2px solid #b38f2d;
+        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
+        transition: all 0.3s ease;
     }
-
-    .cl-count span { color: #0a5c36; }
-
-    /* ============ CARDS ============ */
-    .cl-grid {
+    
+    .btn-create:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(212, 175, 55, 0.4);
+    }
+    
+    .classrooms-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 25px;
     }
-
-    .cl-card {
-        background: #fff;
-        border: 2px solid #2a2a2a;
-        border-radius: 18px;
-        box-shadow: 0 10px 24px rgba(14, 28, 18, 0.07);
-        padding: 24px;
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.28s ease, box-shadow 0.28s ease;
-        animation: clFadeUp 0.5s ease both;
-        display: flex;
-        flex-direction: column;
+    
+    .classroom-card {
+        background: white;
+        border: 2px solid #000000;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+        transition: all 0.3s ease;
     }
-
-    .cl-card:nth-child(2n) { animation-delay: 0.06s; }
-    .cl-card:nth-child(3n) { animation-delay: 0.12s; }
-    .cl-card:nth-child(4n) { animation-delay: 0.18s; }
-
-    .cl-card:hover {
+    
+    .classroom-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 18px 38px rgba(10, 92, 54, 0.16);
+        box-shadow: 0 15px 35px rgba(10, 92, 54, 0.15);
     }
-
-    .cl-card::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 6px;
-        background: linear-gradient(180deg, #1abc9c, #0a5c36);
-        border-radius: 18px 0 0 18px;
-    }
-
-    .cl-card-header {
+    
+    .classroom-header {
         display: flex;
         align-items: flex-start;
         gap: 15px;
-        margin-bottom: 14px;
+        margin-bottom: 15px;
     }
-
-    .cl-card-icon {
-        width: 54px;
-        height: 54px;
-        border-radius: 14px;
+    
+    .classroom-icon {
+        width: 50px;
+        height: 50px;
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        color: #fff;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.4rem;
+        font-size: 1.5rem;
+        color: white;
         flex-shrink: 0;
-        box-shadow: 0 6px 14px rgba(10, 92, 54, 0.25);
+        border: 2px solid #2a2a2a;
     }
-
-    .cl-card-title {
-        font-size: 1.3rem;
+    
+    .classroom-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .classroom-title {
+        color: #000;
+        font-size: 1.2rem;
+        margin: 0 0 8px 0;
         font-weight: 800;
-        color: #0a5c36;
-        margin: 0 0 5px;
-        font-family: 'El Messiri', serif;
-        line-height: 1.3;
     }
-
-    .cl-card-desc {
-        color: #5f6f65;
-        font-size: 0.95rem;
-        line-height: 1.55;
+    
+    .classroom-description {
+        color: #666;
+        font-size: 1.05rem;
+        font-weight: 600;
+        line-height: 1.6;
         margin: 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
         display: -webkit-box;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        min-height: 2.9em;
     }
-
-    /* Access code */
-    .cl-code {
-        background: #f8f1d5;
-        border: 2px solid #e5d699;
-        border-radius: 12px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 16px;
+    
+    .access-code-section {
+        background: rgba(212, 175, 55, 0.1);
+        border: 2px solid #2a2a2a;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 15px 0;
     }
-
-    .cl-code-label {
-        font-size: 0.78rem;
-        font-weight: 800;
-        color: #8a6d0b;
+    
+    .access-code-label {
+        font-size: 1.05rem;
+        color: #666;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        margin-bottom: 8px;
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 5px;
     }
-
-    .cl-code-value {
+    
+    .access-code-display {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .code-value {
         font-family: 'Courier New', monospace;
-        font-size: 1.35rem;
-        font-weight: 800;
-        color: #0a5c36;
-        letter-spacing: 5px;
-        background: #fff;
-        padding: 4px 12px;
-        border-radius: 8px;
-        border: 1px solid #e5d699;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #d4af37;
+        letter-spacing: 4px;
     }
-
-    .cl-code-toggle {
+    
+    .toggle-code-btn {
+        padding: 8px 12px;
         background: #0a5c36;
-        color: #fff;
+        color: white;
         border: none;
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
+        border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s ease;
-        flex-shrink: 0;
+        font-size: 1.05rem;
     }
-
-    .cl-code-toggle:hover {
+    
+    .toggle-code-btn:hover {
         background: #1abc9c;
-        transform: scale(1.08);
+        transform: scale(1.05);
     }
-
-    /* Stats row */
-    .cl-stats-row {
+    
+    .classroom-stats {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        margin-bottom: 18px;
+        gap: 12px;
+        margin: 15px 0;
+        padding: 15px 0;
+        border-top: 1px solid rgba(10, 92, 54, 0.1);
+        border-bottom: 1px solid rgba(10, 92, 54, 0.1);
     }
-
-    .cl-mini-stat {
+    
+    .stat-box {
         text-align: center;
-        padding: 12px 6px;
-        background: #f8fcf8;
-        border: 2px solid #deeadf;
-        border-radius: 12px;
-        transition: all 0.2s ease;
     }
-
-    .cl-mini-stat:hover { background: #edf8ef; }
-
-    .cl-mini-stat .v {
-        font-size: 1.35rem;
+    
+    .stat-box-label {
+        font-size: 1.05rem;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        font-weight: 700;
+    }
+    
+    .stat-box-value {
+        font-size: 1.5rem;
         font-weight: 800;
         color: #0a5c36;
-        line-height: 1.1;
     }
-
-    .cl-mini-stat .v.amber { color: #f39c12; }
-    .cl-mini-stat .v.green { color: #2ecc71; }
-
-    .cl-mini-stat .k {
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: #5f6f65;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        margin-top: 3px;
+    
+    .stat-box-value.pending {
+        color: #ff9800;
     }
-
-    /* Actions */
-    .cl-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr auto;
+    
+    .stat-box-value.completed {
+        color: #4caf50;
+    }
+    
+    .classroom-actions {
+        display: flex;
         gap: 10px;
-        margin-top: auto;
     }
-
-    .cl-btn {
+    
+    .btn-action {
+        flex: 1;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 7px;
-        padding: 11px 16px;
-        border-radius: 11px;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 25px;
         text-decoration: none;
-        font-weight: 800;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
-        border: 2px solid transparent;
-        font-family: 'Cairo', sans-serif;
-        cursor: pointer;
-    }
-
-    .cl-btn.view {
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        color: #fff;
-        box-shadow: 0 6px 14px rgba(10, 92, 54, 0.22);
-    }
-
-    .cl-btn.view:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(10, 92, 54, 0.3); }
-
-    .cl-btn.edit {
-        background: #fff;
-        color: #0a5c36;
-        border-color: #0a5c36;
-    }
-
-    .cl-btn.edit:hover { background: #0a5c36; color: #fff; }
-
-    .cl-btn.delete {
-        background: #fff;
-        color: #e74c3c;
-        border-color: #e74c3c;
-        padding: 11px 14px;
-    }
-
-    .cl-btn.delete:hover { background: #e74c3c; color: #fff; }
-
-    /* Empty state */
-    .cl-empty {
-        background: #fff;
-        border: 2px dashed #b7c6ba;
-        border-radius: 18px;
-        padding: 70px 30px;
-        text-align: center;
-        color: #5f6f65;
-        animation: clFadeUp 0.5s ease both;
-    }
-
-    .cl-empty i {
-        font-size: 4rem;
-        opacity: 0.3;
-        margin-bottom: 16px;
-        display: block;
-        color: #0a5c36;
-    }
-
-    .cl-empty h3 {
-        color: #0a5c36;
-        font-size: 1.5rem;
-        margin: 0 0 8px;
-        font-family: 'El Messiri', serif;
-    }
-
-    .cl-empty p {
-        margin: 0 0 24px;
+        font-weight: 700;
         font-size: 1.05rem;
+        transition: all 0.3s ease;
     }
-
-    .cl-hidden { display: none !important; }
-
-    /* Keyframes */
-    @keyframes clFadeUp {
-        from { opacity: 0; transform: translateY(22px); }
-        to { opacity: 1; transform: translateY(0); }
+    
+    .btn-view {
+        background: #0a5c36;
+        color: white;
     }
-
-    @media (max-width: 720px) {
-        .cl-hero { padding: 22px; }
-        .cl-hero-content { flex-direction: column; align-items: flex-start; }
-        .cl-btn-create { width: 100%; justify-content: center; }
-        .cl-grid { grid-template-columns: 1fr; }
+    
+    .btn-view:hover {
+        background: #1abc9c;
+        transform: scale(1.02);
+    }
+    
+    .btn-edit {
+        background: transparent;
+        color: #0a5c36;
+        border: 2px solid #0a5c36;
+    }
+    
+    .btn-edit:hover {
+        background: #0a5c36;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: transparent;
+        color: #e74c3c;
+        border: 2px solid #e74c3c;
+        flex: 0.3;
+    }
+    
+    .btn-delete:hover {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .empty-state {
+        background: white;
+        border-radius: 15px;
+        padding: 80px 40px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
+        border: 3px solid #2a2a2a;
+    }
+    
+    .empty-state i {
+        font-size: 5rem;
+        color: rgba(10, 92, 54, 0.2);
+        margin-bottom: 20px;
+    }
+    
+    .empty-state h3 {
+        color: #000;
+        font-size: 1.6rem;
+        margin-bottom: 10px;
+        font-weight: 800;
+    }
+    
+    .empty-state p {
+        color: #666;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 30px;
+    }
+    
+    .filter-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    
+    .search-input, .filter-select {
+        padding: 12px 15px;
+        background: #1a1a1a;
+        border: 2px solid #2a2a2a;
+        border-radius: 12px;
+        color: white;
+        font-size: 0.95rem;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input {
+        padding-left: 40px;
+        width: 250px;
+    }
+    
+    .filter-select {
+        padding-left: 40px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        min-width: 180px;
+    }
+    
+    .search-wrapper, .filter-wrapper {
+        position: relative;
+    }
+    
+    .search-wrapper i, .filter-wrapper i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #d4af37;
+        pointer-events: none;
+    }
+    
+    @media (max-width: 768px) {
+        .classrooms-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .search-input, .filter-select {
+            width: 100%;
+        }
+        
+        .welcome-banner {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .btn-create {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .classroom-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 </style>
 
-<!-- ============ HERO ============ -->
-<div class="cl-hero">
-    <div class="cl-hero-content">
-        <div>
-            <h1><i class="fas fa-chalkboard-teacher"></i> My Classrooms</h1>
-            <p>Create and manage virtual classrooms for your Tajweed students</p>
-        </div>
-        <div class="cl-hero-actions">
-            <a href="{{ route('classroom.create') }}" class="cl-btn-create">
-                <i class="fas fa-plus-circle"></i> Create New Class
-            </a>
-        </div>
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="welcome-content">
+        <h1><i class="fas fa-chalkboard-teacher"></i> My Classrooms</h1>
+        <p>Create and manage virtual classrooms for your Tajweed students</p>
+    </div>
+    
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        @if($classrooms->count() > 0)
+            <!-- Search and Filter Controls -->
+            <div class="filter-controls" style="margin-bottom: 0;">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input 
+                        type="text" 
+                        id="classroomSearch" 
+                        class="search-input"
+                        placeholder="Search classrooms..."
+                        onkeyup="filterClassrooms()"
+                    >
+                </div>
+                
+                <div class="filter-wrapper">
+                    <i class="fas fa-filter"></i>
+                    <select id="classroomSort" class="filter-select" onchange="sortClassrooms()">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="students">Most Students</option>
+                        <option value="assignments">Most Assignments</option>
+                    </select>
+                </div>
+            </div>
+        @endif
+        
+        <a href="{{ route('classroom.create') }}" class="btn-create">
+            <i class="fas fa-plus-circle"></i> Create New Class
+        </a>
     </div>
 </div>
 
-@if($classrooms->isEmpty())
-    <!-- ============ EMPTY STATE ============ -->
-    <div class="cl-empty">
-        <i class="fas fa-chalkboard"></i>
-        <h3>No Classrooms Yet</h3>
-        <p>Create your first classroom to start teaching and managing students</p>
-        <a href="{{ route('classroom.create') }}" class="cl-btn-create" style="display: inline-flex;">
-            <i class="fas fa-plus-circle"></i> Create Your First Classroom
-        </a>
-    </div>
-@else
-    <!-- ============ STATS STRIP ============ -->
-    <div class="cl-stats">
-        <div class="cl-stat">
-            <div class="cl-stat-icon blue"><i class="fas fa-chalkboard"></i></div>
-            <div>
-                <div class="cl-stat-value">{{ $totalClassrooms }}</div>
-                <div class="cl-stat-label">Classrooms</div>
-            </div>
-        </div>
-        <div class="cl-stat">
-            <div class="cl-stat-icon green"><i class="fas fa-user-graduate"></i></div>
-            <div>
-                <div class="cl-stat-value">{{ $totalStudents }}</div>
-                <div class="cl-stat-label">Total Students</div>
-            </div>
-        </div>
-        <div class="cl-stat">
-            <div class="cl-stat-icon gold"><i class="fas fa-tasks"></i></div>
-            <div>
-                <div class="cl-stat-value">{{ $totalAssignments }}</div>
-                <div class="cl-stat-label">Assignments</div>
-            </div>
-        </div>
-        <div class="cl-stat">
-            <div class="cl-stat-icon amber"><i class="fas fa-hourglass-half"></i></div>
-            <div>
-                <div class="cl-stat-value">{{ $totalPending }}</div>
-                <div class="cl-stat-label">Pending Tasks</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============ TOOLBAR ============ -->
-    <div class="cl-toolbar">
-        <div class="cl-search">
-            <i class="fas fa-search"></i>
-            <input type="text" id="clSearch" placeholder="Search classrooms..." onkeyup="filterClassrooms()">
-        </div>
-        <div class="cl-sort">
-            <i class="fas fa-filter"></i>
-            <select id="clSort" onchange="sortClassrooms()">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="students">Most Students</option>
-                <option value="assignments">Most Assignments</option>
-            </select>
-        </div>
-        <div class="cl-count"><span id="clCount">{{ $totalClassrooms }}</span> classroom{{ $totalClassrooms != 1 ? 's' : '' }}</div>
-    </div>
-
-    <!-- ============ CARDS ============ -->
-    <div class="cl-grid" id="clGrid">
+@if($classrooms->count() > 0)
+    <div class="classrooms-grid" id="classroomsContainer">
         @foreach($classrooms as $classroom)
-            <div class="cl-card"
+            <div class="classroom-card" 
                  data-name="{{ strtolower($classroom->class_name) }}"
-                 data-desc="{{ strtolower($classroom->description ?? '') }}"
+                 data-description="{{ strtolower($classroom->description ?? '') }}"
                  data-created="{{ $classroom->created_at }}"
                  data-students="{{ $classroom->students_count ?? 0 }}"
                  data-assignments="{{ $classroom->assignments_count ?? 0 }}">
-
-                <div class="cl-card-header">
-                    <div class="cl-card-icon"><i class="fas fa-book-quran"></i></div>
-                    <div>
-                        <h3 class="cl-card-title">{{ $classroom->class_name }}</h3>
-                        <p class="cl-card-desc">{{ $classroom->description ?: 'No description provided' }}</p>
+                <div class="classroom-header">
+                    <div class="classroom-icon">
+                        <i class="fas fa-book-quran"></i>
+                    </div>
+                    <div class="classroom-info">
+                        <h3 class="classroom-title">{{ $classroom->class_name }}</h3>
+                        <p class="classroom-description">{{ Str::limit($classroom->description ?? 'No description provided', 80) }}</p>
                     </div>
                 </div>
-
+                
                 <!-- Access Code -->
-                <div class="cl-code">
-                    <div>
-                        <div class="cl-code-label"><i class="fas fa-key"></i> Access Code</div>
+                <div class="access-code-section">
+                    <div class="access-code-label">
+                        <i class="fas fa-key"></i> Access Code
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="cl-code-value" id="code-{{ $classroom->id }}">••••••</span>
-                        <span style="display: none;" id="real-{{ $classroom->id }}">{{ $classroom->access_code }}</span>
-                        <button class="cl-code-toggle" onclick="toggleCode({{ $classroom->id }})" title="Show/Hide access code">
+                    <div class="access-code-display">
+                        <span class="code-value" id="code-{{ $classroom->id }}">••••••</span>
+                        <span style="display: none;" id="real-code-{{ $classroom->id }}">{{ $classroom->access_code }}</span>
+                        <button class="toggle-code-btn" onclick="toggleCode({{ $classroom->id }})">
                             <i class="fas fa-eye" id="icon-{{ $classroom->id }}"></i>
                         </button>
                     </div>
                 </div>
-
+                
                 <!-- Stats -->
-                <div class="cl-stats-row">
-                    <div class="cl-mini-stat">
-                        <div class="v">{{ $classroom->students_count ?? 0 }}</div>
-                        <div class="k">Students</div>
+                <div class="classroom-stats">
+                    <div class="stat-box">
+                        <div class="stat-box-label">Students</div>
+                        <div class="stat-box-value">{{ $classroom->students_count ?? 0 }}</div>
                     </div>
-                    <div class="cl-mini-stat">
-                        <div class="v">{{ $classroom->assignments_count ?? 0 }}</div>
-                        <div class="k">Tasks</div>
+                    <div class="stat-box">
+                        <div class="stat-box-label">Assignments</div>
+                        <div class="stat-box-value">{{ $classroom->assignments_count ?? 0 }}</div>
                     </div>
-                    <div class="cl-mini-stat">
-                        <div class="v amber">{{ $classroom->pending_assignments_count ?? 0 }}</div>
-                        <div class="k">Pending</div>
+                    <div class="stat-box">
+                        <div class="stat-box-label">Pending</div>
+                        <div class="stat-box-value pending">{{ $classroom->pending_assignments_count ?? 0 }}</div>
                     </div>
-                    <div class="cl-mini-stat">
-                        <div class="v green">{{ $classroom->completed_assignments_count ?? 0 }}</div>
-                        <div class="k">Done</div>
+                    <div class="stat-box">
+                        <div class="stat-box-label">Completed</div>
+                        <div class="stat-box-value completed">{{ $classroom->completed_assignments_count ?? 0 }}</div>
                     </div>
                 </div>
-
+                
                 <!-- Actions -->
-                <div class="cl-actions">
-                    <a href="{{ route('classroom.show', $classroom->id) }}" class="cl-btn view">
+                <div class="classroom-actions">
+                    <a href="{{ route('classroom.show', $classroom->id) }}" class="btn-action btn-view">
                         <i class="fas fa-eye"></i> View
                     </a>
-                    <a href="{{ route('classroom.edit', $classroom->id) }}" class="cl-btn edit">
+                    <a href="{{ route('classroom.edit', $classroom->id) }}" class="btn-action btn-edit">
                         <i class="fas fa-edit"></i> Edit
                     </a>
-                    <form action="{{ route('classroom.destroy', $classroom->id) }}" method="POST"
-                          onsubmit="return confirm('Delete this classroom? This cannot be undone.');" style="display: contents;">
+                    <form action="{{ route('classroom.destroy', $classroom->id) }}" method="POST" style="flex: 0.3; display: contents;" onsubmit="return confirm('Are you sure you want to delete this classroom? This action cannot be undone.');">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="cl-btn delete" title="Delete classroom">
+                        <button type="submit" class="btn-action btn-delete">
                             <i class="fas fa-trash"></i>
                         </button>
                     </form>
@@ -670,59 +498,73 @@
             </div>
         @endforeach
     </div>
+@else
+    <div class="empty-state">
+        <i class="fas fa-chalkboard"></i>
+        <h3>No Classrooms Yet</h3>
+        <p>Create your first classroom to start teaching and managing students</p>
+        <a href="{{ route('classroom.create') }}" class="btn-create">
+            <i class="fas fa-plus-circle"></i> Create Your First Classroom
+        </a>
+    </div>
 @endif
 
-@endsection
-
-@section('extra-scripts')
 <script>
-    function toggleCode(id) {
-        const el = document.getElementById('code-' + id);
-        const real = document.getElementById('real-' + id).textContent.trim();
-        const icon = document.getElementById('icon-' + id);
-
-        if (el.textContent.indexOf('•') !== -1) {
-            el.textContent = real;
+    function toggleCode(classroomId) {
+        const codeElement = document.getElementById('code-' + classroomId);
+        const realCode = document.getElementById('real-code-' + classroomId).textContent;
+        const icon = document.getElementById('icon-' + classroomId);
+        
+        if (codeElement.textContent === '••••••') {
+            codeElement.textContent = realCode;
             icon.classList.remove('fa-eye');
             icon.classList.add('fa-eye-slash');
         } else {
-            el.textContent = '••••••';
+            codeElement.textContent = '••••••';
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');
         }
     }
-
+    
     function filterClassrooms() {
-        const q = document.getElementById('clSearch').value.toLowerCase().trim();
-        let visible = 0;
-
-        document.querySelectorAll('.cl-card').forEach(function (card) {
-            const name = card.dataset.name;
-            const desc = card.dataset.desc;
-            const show = q === '' || name.includes(q) || desc.includes(q);
-            card.classList.toggle('cl-hidden', !show);
-            if (show) visible++;
-        });
-
-        document.getElementById('clCount').textContent = visible;
-    }
-
-    function sortClassrooms() {
-        const value = document.getElementById('clSort').value;
-        const grid = document.getElementById('clGrid');
-        const cards = Array.from(document.querySelectorAll('.cl-card'));
-
-        cards.sort(function (a, b) {
-            switch (value) {
-                case 'newest': return new Date(b.dataset.created) - new Date(a.dataset.created);
-                case 'oldest': return new Date(a.dataset.created) - new Date(b.dataset.created);
-                case 'students': return parseInt(b.dataset.students) - parseInt(a.dataset.students);
-                case 'assignments': return parseInt(b.dataset.assignments) - parseInt(a.dataset.assignments);
-                default: return 0;
+        const searchInput = document.getElementById('classroomSearch').value.toLowerCase();
+        const cards = document.querySelectorAll('.classroom-card');
+        let visibleCount = 0;
+        
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const description = card.getAttribute('data-description');
+            
+            if (name.includes(searchInput) || description.includes(searchInput)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
             }
         });
-
-        cards.forEach(function (card) { grid.appendChild(card); });
+        
+        document.getElementById('classCount').textContent = visibleCount;
+    }
+    
+    function sortClassrooms() {
+        const sortValue = document.getElementById('classroomSort').value;
+        const container = document.getElementById('classroomsContainer');
+        const cards = Array.from(document.querySelectorAll('.classroom-card'));
+        
+        cards.sort((a, b) => {
+            switch(sortValue) {
+                case 'newest':
+                    return new Date(b.getAttribute('data-created')) - new Date(a.getAttribute('data-created'));
+                case 'oldest':
+                    return new Date(a.getAttribute('data-created')) - new Date(b.getAttribute('data-created'));
+                case 'students':
+                    return parseInt(b.getAttribute('data-students')) - parseInt(a.getAttribute('data-students'));
+                case 'assignments':
+                    return parseInt(b.getAttribute('data-assignments')) - parseInt(a.getAttribute('data-assignments'));
+            }
+        });
+        
+        cards.forEach(card => container.appendChild(card));
     }
 </script>
 @endsection

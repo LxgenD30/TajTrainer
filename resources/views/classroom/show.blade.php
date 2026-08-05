@@ -14,6 +14,7 @@
 @section('content')
 @php
     $isTeacher = auth()->user()->role_id == 3;
+    $isStudent = !$isTeacher;
     $studentCount = $classroom->students->count();
     $assignmentCount = $assignments->count();
     $submissionsByAssignment = $submissions ?? collect();
