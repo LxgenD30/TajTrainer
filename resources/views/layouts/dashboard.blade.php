@@ -244,6 +244,28 @@
             font-weight: 600;
         }
         
+        /* Mobile nav toggle */
+        .mobile-nav-toggle {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: var(--white);
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .mobile-nav-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
         /* Dashboard Content */
         .dashboard-content {
             padding: 20px 0 60px;
@@ -291,74 +313,70 @@
             color: white;
         }
         
-        /* Responsive Design */
+        /* Responsive Design - Reactive hamburger navigation */
         @media (max-width: 992px) {
-            .nav-container {
-                justify-content: center;
-            }
-            
-            .nav-item {
-                min-width: 100px;
-            }
-        }
-        
-        @media (max-width: 768px) {
             .header-container {
-                flex-direction: column;
-                gap: 15px;
+                flex-wrap: wrap;
+                gap: 12px;
             }
-            
-            .nav-item {
-                min-width: 80px;
-                padding: 10px 5px;
+
+            .mobile-nav-toggle {
+                display: inline-flex;
             }
-            
-            .nav-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.5rem;
+
+            /* Collapsible navigation panel */
+            .main-nav {
+                flex-basis: 100%;
+                max-height: 0;
+                overflow: hidden;
+                padding: 0 10px;
+                opacity: 0;
+                visibility: hidden;
+                transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.3s ease;
             }
-            
-            .nav-label {
-                font-size: 0.9rem;
+
+            .main-nav.open {
+                max-height: 480px;
+                padding: 10px;
+                opacity: 1;
+                visibility: visible;
             }
-        }
-        
-        @media (max-width: 576px) {
+
             .nav-container {
                 flex-direction: column;
-                align-items: center;
+                align-items: stretch;
+                gap: 6px;
             }
-            
+
             .nav-item {
                 width: 100%;
-                max-width: 300px;
-                display: flex;
-                align-items: center;
                 justify-content: flex-start;
-                text-align: left;
-                padding: 15px;
+                padding: 12px 16px;
             }
-            
-            .nav-icon {
-                margin: 0 15px 0 0;
-                flex-shrink: 0;
-            }
-            
-            .nav-item.active:before {
+
+            /* Compact user profile on mobile to save space */
+            .user-info {
                 display: none;
             }
-            
-            .nav-item.active:after {
-                content: '';
-                position: absolute;
-                right: 20px;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 10px;
-                height: 10px;
-                background-color: var(--gold);
-                border-radius: 50%;
+
+            .user-profile {
+                padding: 5px;
+            }
+
+            .user-avatar {
+                width: 42px;
+                height: 42px;
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .logo-icon {
+                font-size: 2rem;
+            }
+
+            .logo-text {
+                font-size: 1.4rem;
             }
         }
 
@@ -413,8 +431,13 @@
                     </div>
                 </div>
                 
+                <!-- Mobile Navigation Toggle -->
+                <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+
                 <!-- Innovative Navigation Inside Header -->
-                <nav class="main-nav">
+                <nav class="main-nav" id="mainNav">
                     <div class="nav-container">
                         @hasSection('navigation')
                             @yield('navigation')
@@ -489,6 +512,48 @@
                 // The browser will handle the navigation
                 console.log('Nav item clicked:', this.querySelector('.nav-label')?.textContent);
             });
+        });
+
+        // Reactive mobile navigation (hamburger menu)
+        const mobileNavToggle = document.getElementById('mobileNavToggle');
+        const mainNav = document.getElementById('mainNav');
+
+        function closeMobileNav() {
+            if (!mainNav) return;
+            mainNav.classList.remove('open');
+            if (mobileNavToggle) {
+                const icon = mobileNavToggle.querySelector('i');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        }
+
+        if (mobileNavToggle && mainNav) {
+            mobileNavToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isOpen = mainNav.classList.toggle('open');
+                const icon = this.querySelector('i');
+                if (isOpen) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+
+            // Close the menu when a navigation item is clicked
+            mainNav.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', closeMobileNav);
+            });
+        }
+
+        // Close the mobile menu when clicking outside the header
+        document.addEventListener('click', function(e) {
+            if (!mainNav || !mobileNavToggle) return;
+            if (!mainNav.contains(e.target) && !mobileNavToggle.contains(e.target)) {
+                closeMobileNav();
+            }
         });
         
         // Add animation to content on scroll
