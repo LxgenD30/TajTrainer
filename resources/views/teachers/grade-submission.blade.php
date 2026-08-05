@@ -265,9 +265,9 @@
                 </div>
             </div>
 
-            @if($submission->assignment->expected_recitation)
+            @if(!empty($expectedRecitationDisplay) || $submission->assignment->expected_recitation)
             @php
-                $expectedRecitation = $submission->assignment->expected_recitation;
+                $expectedRecitation = $expectedRecitationDisplay ?: $submission->assignment->expected_recitation;
                 $hasTajweedMarkup = str_contains($expectedRecitation, '<tajweed') || str_contains($expectedRecitation, '<span class=end');
             @endphp
             <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">

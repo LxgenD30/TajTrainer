@@ -7,6 +7,7 @@ use App\Models\Assignment;
 use App\Models\Score;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -388,82 +389,131 @@ class ProcessSubmissionAudio implements ShouldQueue
     private function getQuranText($surah, $startVerse, $endVerse)
     {
         $surahNumber = $this->getSurahNumber($surah);
-        $verses = [];
-        
-        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
-            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/quran-uthmani";
-            
-            try {
-                $response = @file_get_contents($url);
-                if ($response !== false) {
-                    $data = json_decode($response, true);
-                    if ($data['code'] == 200 && isset($data['data']['text'])) {
-                        $verses[] = $data['data']['text'];
-                    }
-                }
-            } catch (\Exception $e) {
-                Log::error("Error fetching Quran text: " . $e->getMessage());
-            }
+
+        if (!$surahNumber) {
+            Log::warning('Unable to resolve surah number for expected text fetch', ['surah' => $surah]);
+            return '';
         }
-        
-        return implode("\n", $verses);
+
+        $verseData = $this->fetchQuranVerseRange($surahNumber, (int) $startVerse, (int) $endVerse);
+
+        return $verseData['arabic_plain'] ?? '';
     }
     
     private function getTajweedFormattedText($surah, $startVerse, $endVerse)
     {
         $surahNumber = $this->getSurahNumber($surah);
-        $verses = [];
-        
-        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
-            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/quran-tajweed";
-            
-            try {
-                $response = @file_get_contents($url);
-                if ($response !== false) {
-                    $data = json_decode($response, true);
-                    if ($data['code'] == 200 && isset($data['data']['text'])) {
-                        $verses[] = $data['data']['text'];
-                    }
-                }
-            } catch (\Exception $e) {
-                Log::error("Error fetching tajweed text: " . $e->getMessage());
-            }
+
+        if (!$surahNumber) {
+            return '';
         }
-        
-        return implode(' ۝ ', $verses);
+
+        $verseData = $this->fetchQuranVerseRange($surahNumber, (int) $startVerse, (int) $endVerse);
+
+        return $verseData['arabic_html'] ?? '';
     }
-    
-    private function getReferenceAudio($surah, $startVerse, $endVerse)
+
+    private function fetchQuranVerseRange($surahNumber, $startVerse, $endVerse = null)
     {
-        $surahNumber = $this->getSurahNumber($surah);
-        $audioUrls = [];
-        
-        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
-            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/ar.alafasy";
-            
-            try {
-                $response = @file_get_contents($url);
-                if ($response !== false) {
-                    $data = json_decode($response, true);
-                    if ($data['code'] == 200 && isset($data['data']['audio'])) {
-                        $audioUrls[] = [
-                            'verse' => "{$surahNumber}:{$verse}",
-                            'url' => $data['data']['audio'],
-                            'number' => $data['data']['number'] ?? $verse,
-                            'text' => $data['data']['text'] ?? ''
-                        ];
-                    }
-                }
-            } catch (\Exception $e) {
-                Log::error("Error fetching reference audio: " . $e->getMessage());
+        $endVerse = $endVerse ?? $startVerse;
+
+        try {
+            $chapterResponse = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/chapters/{$surahNumber}",
+                ['language' => 'en']
+            );
+
+            $versesResponse = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surahNumber}",
+                [
+                    'translations' => 131,
+                    'per_page' => 300,
+                    'page' => 1,
+                    'fields' => 'text_uthmani,text_uthmani_tajweed',
+                ]
+            );
+
+            if ($chapterResponse->failed() || $versesResponse->failed()) {
+                Log::warning("Qurancdn verse API failed for surah {$surahNumber}", [
+                    'chapter_status' => $chapterResponse->status(),
+                    'verses_status' => $versesResponse->status(),
+                ]);
+
+                return null;
             }
+
+            $verses = $versesResponse->json('verses') ?? [];
+
+            if (empty($verses)) {
+                return null;
+            }
+
+            $selectedVerses = [];
+            foreach ($verses as $verse) {
+                $verseKey = $verse['verse_key'] ?? '';
+                $verseParts = explode(':', $verseKey);
+                $verseNumber = (int) ($verseParts[1] ?? 0);
+
+                if ($verseNumber >= $startVerse && $verseNumber <= $endVerse) {
+                    $selectedVerses[] = $verse;
+                }
+            }
+
+            if (empty($selectedVerses)) {
+                return null;
+            }
+
+            $arabicHtml = [];
+            $arabicPlain = [];
+
+            foreach ($selectedVerses as $verse) {
+                $tajweedText = $verse['text_uthmani_tajweed'] ?? $verse['text_uthmani'] ?? '';
+                $plainText = trim(strip_tags($tajweedText));
+
+                if ($tajweedText !== '') {
+                    $arabicHtml[] = $tajweedText;
+                }
+
+                if ($plainText !== '') {
+                    $arabicPlain[] = $plainText;
+                }
+            }
+
+            return [
+                'surah_number' => (int) $surahNumber,
+                'start_verse' => (int) $startVerse,
+                'end_verse' => (int) $endVerse,
+                'arabic_html' => implode(' ۝ ', $arabicHtml),
+                'arabic_plain' => implode(' ۝ ', $arabicPlain),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error fetching Qurancdn verses in audio job: ' . $e->getMessage());
+
+            return null;
         }
-        
-        return $audioUrls;
     }
     
     private function getSurahNumber($surahName)
     {
+        if (is_numeric($surahName)) {
+            $value = (int) $surahName;
+            if ($value >= 1 && $value <= 114) {
+                return $value;
+            }
+        }
+
+        $surahName = trim((string) $surahName);
+        if ($surahName === '') {
+            return null;
+        }
+
+        if (preg_match('/^(\d{1,3})\b/', $surahName, $matches)) {
+            $value = (int) $matches[1];
+            if ($value >= 1 && $value <= 114) {
+                return $value;
+            }
+        }
+
         $surahs = [
             'Al-Faatiha' => 1, 'Al-Baqara' => 2, 'Aal-i-Imraan' => 3, 'An-Nisaa' => 4,
             'Al-Maaida' => 5, 'Al-An\'aam' => 6, 'Al-A\'raaf' => 7, 'Al-Anfaal' => 8,
@@ -493,10 +543,33 @@ class ProcessSubmissionAudio implements ShouldQueue
             'Al-Qaari\'a' => 101, 'At-Takaathur' => 102, 'Al-Asr' => 103, 'Al-Humaza' => 104,
             'Al-Fil' => 105, 'Quraish' => 106, 'Al-Maa\'un' => 107, 'Al-Kawthar' => 108,
             'Al-Kaafiroon' => 109, 'An-Nasr' => 110, 'Al-Masad' => 111, 'Al-Ikhlaas' => 112,
-            'Al-Falaq' => 113, 'An-Naas' => 114
+            'Al-Falaq' => 113, 'An-Naas' => 114,
+            'Al-Fatiha' => 1, 'Al-Baqarah' => 2, 'Ali Imran' => 3, 'An-Nisa' => 4,
+            'Al-Ma\'idah' => 5, 'Al-An\'am' => 6, 'Al-A\'raf' => 7, 'Al-Anfal' => 8,
+            'Tawbah' => 9, 'Ya-Sin' => 36, 'Yasin' => 36, 'Qaf' => 50,
+            'Rahman' => 55, 'Mulk' => 67, 'Ikhlas' => 112, 'Falaq' => 113, 'Nas' => 114,
         ];
-        
-        return $surahs[$surahName] ?? 1;
+
+        if (isset($surahs[$surahName])) {
+            return (int) $surahs[$surahName];
+        }
+
+        $normalize = static function (string $value): string {
+            $value = strtolower($value);
+            $value = preg_replace('/[^a-z0-9]+/', '', $value);
+            return $value ?? '';
+        };
+
+        $normalizedInput = $normalize($surahName);
+        if ($normalizedInput !== '') {
+            foreach ($surahs as $name => $number) {
+                if ($normalize((string) $name) === $normalizedInput) {
+                    return (int) $number;
+                }
+            }
+        }
+
+        return null;
     }
     
     private function calculateTextAccuracy($transcribed, $expected)
