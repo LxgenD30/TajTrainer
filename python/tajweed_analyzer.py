@@ -236,16 +236,30 @@ class TajweedAnalyzer:
             return webm_path
     
     def transcribe_with_whisper(self):
-        """Transcribe audio using Tarteel AI's Whisper model"""
-        if not self.whisper_model or not self.whisper_processor:
-            return None
-
+        """Transcribe audio using Tarteel AI's Whisper model, with OpenAI API fallback."""
         # Do not attempt transcription on silent or near-silent audio.
         if self.is_silent:
             print(json.dumps({
                 "status": "transcription_skipped",
                 "reason": "Audio is silent or too short - skipping Whisper to avoid hallucination"
             }), file=sys.stderr)
+            return None
+
+        # 1) Try the local Tarteel Whisper model first.
+        transcription = self._transcribe_local_whisper()
+        if transcription:
+            return transcription
+
+        # 2) Fallback to OpenAI Whisper API if the local model is unavailable.
+        print(json.dumps({
+            "status": "transcription_fallback",
+            "message": "Local Whisper model unavailable or empty - falling back to OpenAI Whisper API"
+        }), file=sys.stderr)
+        return self._transcribe_with_openai_api()
+
+    def _transcribe_local_whisper(self):
+        """Transcribe using the locally loaded Tarteel Whisper model."""
+        if not self.whisper_model or not self.whisper_processor:
             return None
 
         try:
@@ -279,11 +293,55 @@ class TajweedAnalyzer:
             if transcription and self.has_muqattaat:
                 transcription = self.normalize_muqattaat_text(transcription)
 
-            return transcription
+            return transcription if transcription else None
 
         except Exception as e:
             print(json.dumps({
                 "status": "transcription_failed",
+                "error": str(e)
+            }), file=sys.stderr)
+            return None
+
+    def _transcribe_with_openai_api(self):
+        """Transcribe using OpenAI's hosted Whisper API (whisper-1)."""
+        try:
+            api_key = os.environ.get('OPENAI_API_KEY')
+            if not api_key:
+                print(json.dumps({
+                    "status": "openai_transcription_skipped",
+                    "reason": "OPENAI_API_KEY not set - cannot use Whisper API fallback"
+                }), file=sys.stderr)
+                return None
+
+            from openai import OpenAI
+
+            client = OpenAI(api_key=api_key)
+            audio_file = self.converted_audio_path if self.converted_audio_path else self.audio_path
+
+            with open(audio_file, 'rb') as f:
+                response = client.audio.transcriptions.create(
+                    model='whisper-1',
+                    file=f,
+                    language='ar',
+                    response_format='verbose_json',
+                    temperature=0,
+                )
+
+            transcription = (response.text or '').strip()
+
+            if transcription and self.has_muqattaat:
+                transcription = self.normalize_muqattaat_text(transcription)
+
+            print(json.dumps({
+                "status": "openai_transcription_success",
+                "length": len(transcription)
+            }), file=sys.stderr)
+
+            return transcription if transcription else None
+
+        except Exception as e:
+            print(json.dumps({
+                "status": "openai_transcription_failed",
                 "error": str(e)
             }), file=sys.stderr)
             return None

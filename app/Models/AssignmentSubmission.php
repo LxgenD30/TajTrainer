@@ -58,12 +58,67 @@ class AssignmentSubmission extends Model
                     ->where('assignment_id', $this->attributes['assignment_id'])
                     ->first();
     }
-    
+
     /**
      * Get the tajweed error logs for this submission
      */
     public function tajweedErrorLogs(): HasMany
     {
         return $this->hasMany(TajweedErrorLog::class, 'assignment_submission_id');
+    }
+
+    /**
+     * Get the overall tajweed score (percentage) from the stored analysis.
+     * Note: 'tajweed_score' is NOT a real DB column in the active schema,
+     * it is derived from the tajweed_analysis JSON (overall_score.score).
+     */
+    public function getTajweedScoreAttribute()
+    {
+        $analysis = $this->tajweed_analysis;
+
+        if (is_array($analysis) && isset($analysis['overall_score']['score'])) {
+            return round((float) $analysis['overall_score']['score'], 1);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the overall tajweed grade from the stored analysis.
+     * Derived from the tajweed_analysis JSON (overall_score.grade).
+     */
+    public function getTajweedGradeAttribute()
+    {
+        $analysis = $this->tajweed_analysis;
+
+        if (is_array($analysis) && isset($analysis['overall_score']['grade'])) {
+            return $analysis['overall_score']['grade'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the transcribed recitation text.
+     * Falls back to the tajweed_analysis JSON when the column is empty
+     * (e.g. Whisper transcription stored only inside the analysis payload).
+     */
+    public function getTranscriptionAttribute($value)
+    {
+        if (!empty(trim((string) $value))) {
+            return $value;
+        }
+
+        $analysis = $this->tajweed_analysis;
+
+        if (is_array($analysis)) {
+            foreach (['whisper_transcription', 'transcribed_text', 'whisper_transcription_raw'] as $key) {
+                if (isset($analysis[$key]) && !empty(trim((string) $analysis[$key]))) {
+                    return $analysis[$key];
+                }
+            }
+        }
+
+        return $value;
     }
 }
