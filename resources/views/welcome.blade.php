@@ -1195,10 +1195,47 @@
                 <div class="form-footer">
                     @if (Route::has('password.request'))
                         <p style="margin-bottom: 12px;">
-                            <a href="{{ route('password.request') }}" class="forgot-password-btn">Forgot Password</a>
+                            <a href="#" id="openForgotPassword" class="forgot-password-btn">Forgot Password</a>
                         </p>
                     @endif
                     <a href="#" id="switchToRegister">Register here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeForgotPassword">&times;</span>
+            <h2>Reset Password</h2>
+
+            @if (session('status'))
+                <div style="background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; font-family: 'El Messiri', sans-serif;">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            <p style="margin-bottom: 16px; color: #555;">Enter your registered email and we will send password reset options.</p>
+
+            <form method="POST" action="{{ route('password.email') }}">
+                @csrf
+                <input type="hidden" name="auth_form" value="forgot_password">
+
+                <div class="form-group">
+                    <label for="forgotEmail">Email Address</label>
+                    <input type="email" id="forgotEmail" name="email" value="{{ old('auth_form') === 'forgot_password' ? old('email') : '' }}" placeholder="Enter your registered email" required>
+                    @if (old('auth_form') === 'forgot_password')
+                        @error('email')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    @endif
+                </div>
+
+                <button type="submit" class="submit-btn">Send Password Reset Link</button>
+
+                <div class="form-footer">
+                    <a href="#" id="backToLoginFromForgot">Back to Login</a>
                 </div>
             </form>
         </div>
@@ -1347,10 +1384,14 @@
         const heroRegisterBtn = document.getElementById('heroRegisterBtn');
         const loginModal = document.getElementById('loginModal');
         const registerModal = document.getElementById('registerModal');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
         const closeLogin = document.getElementById('closeLogin');
         const closeRegister = document.getElementById('closeRegister');
+        const closeForgotPassword = document.getElementById('closeForgotPassword');
         const switchToRegister = document.getElementById('switchToRegister');
         const switchToLogin = document.getElementById('switchToLogin');
+        const openForgotPassword = document.getElementById('openForgotPassword');
+        const backToLoginFromForgot = document.getElementById('backToLoginFromForgot');
         
         // Open login modal
         if (loginBtn) {
@@ -1381,6 +1422,12 @@
         closeRegister.addEventListener('click', function() {
             registerModal.classList.remove('show');
         });
+
+        if (closeForgotPassword) {
+            closeForgotPassword.addEventListener('click', function() {
+                forgotPasswordModal.classList.remove('show');
+            });
+        }
         
         // Switch between login and register modals
         switchToRegister.addEventListener('click', function(e) {
@@ -1394,6 +1441,22 @@
             registerModal.classList.remove('show');
             loginModal.classList.add('show');
         });
+
+        if (openForgotPassword) {
+            openForgotPassword.addEventListener('click', function(e) {
+                e.preventDefault();
+                loginModal.classList.remove('show');
+                forgotPasswordModal.classList.add('show');
+            });
+        }
+
+        if (backToLoginFromForgot) {
+            backToLoginFromForgot.addEventListener('click', function(e) {
+                e.preventDefault();
+                forgotPasswordModal.classList.remove('show');
+                loginModal.classList.add('show');
+            });
+        }
         
         // Close modal when clicking outside
         window.addEventListener('click', function(e) {
@@ -1403,11 +1466,18 @@
             if (e.target === registerModal) {
                 registerModal.classList.remove('show');
             }
+            if (e.target === forgotPasswordModal) {
+                forgotPasswordModal.classList.remove('show');
+            }
         });
         
         // Auto-open modal if there are validation errors
         let hasLoginModalError = false;
-        @error('email') hasLoginModalError = true; @enderror
+        @error('email')
+            if ({{ old('auth_form') !== 'forgot_password' ? 'true' : 'false' }}) {
+                hasLoginModalError = true;
+            }
+        @enderror
         @error('password') hasLoginModalError = true; @enderror
         @error('google') hasLoginModalError = true; @enderror
 
@@ -1430,6 +1500,21 @@
 
         if (hasRegisterModalError) {
             document.getElementById('registerModal').classList.add('show');
+        }
+
+        let hasForgotModalError = false;
+        @error('email')
+            if ({{ old('auth_form') === 'forgot_password' ? 'true' : 'false' }}) {
+                hasForgotModalError = true;
+            }
+        @enderror
+
+        if ({{ session('status') ? 'true' : 'false' }}) {
+            hasForgotModalError = true;
+        }
+
+        if (hasForgotModalError) {
+            document.getElementById('forgotPasswordModal').classList.add('show');
         }
         
         // Demo player functionality with Quran Cloud API (api.alquran.cloud)
