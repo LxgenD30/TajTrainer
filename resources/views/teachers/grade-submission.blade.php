@@ -370,12 +370,23 @@
                 <div style="display: flex; align-items: center; gap: 8px; color: #0a5c36; font-weight: 600; margin-bottom: 12px; font-size: 0.9rem;">
                     <i class="fas fa-robot"></i>
                     <span>AI Transcription</span>
-                    <span style="font-size: 0.75rem; padding: 3px 8px; background: rgba(26, 188, 156, 0.2); border-radius: 12px; font-weight: 500; color: #0a5c36;">AssemblyAI</span>
+                    <span style="font-size: 0.75rem; padding: 3px 8px; background: rgba(26, 188, 156, 0.2); border-radius: 12px; font-weight: 500; color: #0a5c36;">Whisper (Tarteel AI model)</span>
                 </div>
                 <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid rgba(10, 92, 54, 0.1);">
                     <p style="color: #1a1a1a; margin: 0; line-height: 2.2; direction: rtl; text-align: right; font-size: 1.8rem; font-family: 'Amiri', 'Traditional Arabic', serif; letter-spacing: 0.5px;">
                         {{ $submission->transcription }}
                     </p>
+                    @php
+                        $analysisForTranscription = is_array($submission->tajweed_analysis)
+                            ? $submission->tajweed_analysis
+                            : json_decode($submission->tajweed_analysis ?? '[]', true);
+                        $pauseMarkerCount = $analysisForTranscription['pause_markers']['count'] ?? 0;
+                    @endphp
+                    @if($pauseMarkerCount > 0)
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: #0a5c36; opacity: 0.9;">
+                            Note: The symbol ۝ marks long pauses in recitation and is ignored in word-accuracy scoring.
+                        </div>
+                    @endif
                 </div>
             </div>
             @endif
@@ -407,7 +418,37 @@
 
                 @php
                     $analysis = is_array($submission->tajweed_analysis) ? $submission->tajweed_analysis : json_decode($submission->tajweed_analysis, true);
+                    $overall = $analysis['overall_score'] ?? [];
+                    $tajweedComponent = $overall['tajweed_rules_score'] ?? null;
+                    $wordComponent = $overall['word_accuracy'] ?? ($analysis['text_accuracy'] ?? null);
+                    $referenceComponent = $overall['reference_similarity'] ?? null;
+                    $pronunciationComponent = $overall['pronunciation_accuracy'] ?? null;
                 @endphp
+
+                <div style="background: rgba(10, 92, 54, 0.05); border: 2px solid rgba(10, 92, 54, 0.2); padding: 20px; border-radius: 14px; margin-bottom: 20px;">
+                    <div style="color: #0a5c36; font-weight: 800; font-size: 1rem; margin-bottom: 12px;">Overall Score Breakdown</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 12px;">
+                        <div style="background: white; border: 2px solid #0a5c36; border-radius: 10px; padding: 12px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: #666; margin-bottom: 6px;">Tajweed Rules (75%)</div>
+                            <div style="font-size: 1.3rem; font-weight: 800; color: #0a5c36;">{{ $tajweedComponent !== null ? number_format($tajweedComponent, 2) . '%' : 'N/A' }}</div>
+                        </div>
+                        <div style="background: white; border: 2px solid #1abc9c; border-radius: 10px; padding: 12px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: #666; margin-bottom: 6px;">Word Accuracy (20%)</div>
+                            <div style="font-size: 1.3rem; font-weight: 800; color: #1abc9c;">{{ $wordComponent !== null ? number_format($wordComponent, 2) . '%' : 'N/A' }}</div>
+                        </div>
+                        <div style="background: white; border: 2px solid #8e44ad; border-radius: 10px; padding: 12px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: #666; margin-bottom: 6px;">Reference Similarity (5%)</div>
+                            <div style="font-size: 1.3rem; font-weight: 800; color: #8e44ad;">{{ $referenceComponent !== null ? number_format($referenceComponent, 2) . '%' : 'N/A' }}</div>
+                        </div>
+                        <div style="background: white; border: 2px solid #f39c12; border-radius: 10px; padding: 12px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: #666; margin-bottom: 6px;">Pronunciation (display)</div>
+                            <div style="font-size: 1.3rem; font-weight: 800; color: #f39c12;">{{ $pronunciationComponent !== null ? number_format($pronunciationComponent, 2) . '%' : 'N/A' }}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; color: #666;">
+                        Final score is intentionally tajweed-dominant so the grade tracks tajweed quality more closely.
+                    </div>
+                </div>
 
                 @php
                     $ruleCards = [

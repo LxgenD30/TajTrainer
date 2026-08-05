@@ -279,13 +279,20 @@ class ProcessSubmissionAudio implements ShouldQueue
         $result['tajweed_text'] = $tajweedText;
         $result['reference_audio'] = $referenceAudioPath;
         
-        // Use transcription from Python (Whisper) if available
-        $pythonTranscription = $result['whisper_transcription'] ?? $result['transcribed_text'] ?? '';
+        // Use transcription from Python (Whisper) if available.
+        // Prefer marker-enriched transcription for display while preserving raw fallback.
+        $pythonTranscription = $result['whisper_transcription']
+            ?? $result['whisper_transcription_raw']
+            ?? $result['transcribed_text']
+            ?? '';
+
         $result['transcribed_text'] = $pythonTranscription;
+        $result['transcribed_text_raw'] = $result['whisper_transcription_raw'] ?? $pythonTranscription;
         
-        // Calculate text accuracy
+        // Calculate text accuracy (marker-safe normalization).
         if (!empty($pythonTranscription)) {
-            $textAccuracy = $this->calculateTextAccuracy($pythonTranscription, $expectedText);
+            $textAccuracy = $result['overall_score']['word_accuracy']
+                ?? $this->calculateTextAccuracy($pythonTranscription, $expectedText);
             $result['text_accuracy'] = $textAccuracy;
             Log::info('Text accuracy: ' . number_format($textAccuracy, 2) . '%');
         }
@@ -622,9 +629,26 @@ class ProcessSubmissionAudio implements ShouldQueue
     
     private function normalizeArabicText($text)
     {
-        $text = preg_replace('/[\x{064B}-\x{065F}]/u', '', $text);
-        $text = str_replace(['أ', 'إ', 'آ'], 'ا', $text);
-        $text = preg_replace('/\s+/', ' ', $text);
+        $text = html_entity_decode((string) $text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Remove legacy tajweed tags and HTML markup.
+        $text = preg_replace('/<\|[^|]+\|>/u', ' ', $text);
+        $text = preg_replace('/<[^>]+>/u', ' ', $text);
+
+        // Keep pause marker for display only; exclude it from accuracy.
+        $text = str_replace('۝', ' ', $text);
+
+        // Remove diacritics and Qur'anic annotation marks.
+        $text = preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', '', $text);
+
+        // Normalize Arabic letter variants.
+        $text = str_replace(['أ', 'إ', 'آ', 'ٱ'], 'ا', $text);
+        $text = str_replace(['ى'], 'ي', $text);
+
+        // Remove tatweel and punctuation so pauses/punctuations do not penalize score.
+        $text = preg_replace('/[ـ]/u', '', $text);
+        $text = preg_replace('/[^\p{Arabic}0-9\s]/u', ' ', $text);
+        $text = preg_replace('/\s+/u', ' ', $text);
         
         return trim($text);
     }

@@ -443,9 +443,20 @@
     <div class="transcription-box">
         <div class="transcription-header">
             <span class="transcription-title">📝 AI Transcription</span>
-            <span class="ai-badge">Powered by AssemblyAI</span>
+            <span class="ai-badge">Whisper (Tarteel AI model)</span>
         </div>
         <p class="transcription-text">{{ $submission->transcription }}</p>
+        @php
+            $analysisForTranscription = is_string($submission->tajweed_analysis)
+                ? json_decode($submission->tajweed_analysis, true)
+                : ($submission->tajweed_analysis ?? []);
+            $pauseMarkerCount = $analysisForTranscription['pause_markers']['count'] ?? 0;
+        @endphp
+        @if($pauseMarkerCount > 0)
+            <div style="margin-top: 10px; font-size: 0.85rem; color: #0a5c36;">
+                Note: The symbol ۝ marks a pause in your recitation and does not reduce word accuracy.
+            </div>
+        @endif
     </div>
     @endif
 </div>
@@ -460,6 +471,12 @@
     @endphp
     
     @if(isset($analysis['overall_score']))
+    @php
+        $overall = $analysis['overall_score'];
+        $wordAccuracy = $overall['word_accuracy'] ?? ($analysis['text_accuracy'] ?? null);
+        $referenceSimilarity = $overall['reference_similarity'] ?? null;
+        $tajweedRulesScore = $overall['tajweed_rules_score'] ?? null;
+    @endphp
     <div class="analysis-section">
         <div class="analysis-header">
             <div class="score-badge">{{ $analysis['overall_score']['score'] ?? 0 }}%</div>
@@ -469,14 +486,32 @@
             </div>
         </div>
         
-        @if(isset($analysis['text_accuracy']) || isset($analysis['madd_analysis']) || isset($analysis['idgham_bila_ghunnah_analysis']) || isset($analysis['idgham_bi_ghunnah_analysis']))
+        @if($wordAccuracy !== null || $tajweedRulesScore !== null || $referenceSimilarity !== null || isset($analysis['madd_analysis']) || isset($analysis['idgham_bila_ghunnah_analysis']) || isset($analysis['idgham_bi_ghunnah_analysis']))
         <div class="metrics-grid">
-            @if(isset($analysis['text_accuracy']))
+            @if($tajweedRulesScore !== null)
+            <div class="metric-card">
+                <div class="metric-icon">📘</div>
+                <div class="metric-title">Tajweed Rules Score</div>
+                <div class="metric-value">{{ number_format($tajweedRulesScore, 2) }}%</div>
+                <div class="metric-subtitle">Main grading component (75%)</div>
+            </div>
+            @endif
+
+            @if($wordAccuracy !== null)
             <div class="metric-card">
                 <div class="metric-icon">📖</div>
-                <div class="metric-title">Text Accuracy</div>
-                <div class="metric-value">{{ $analysis['text_accuracy'] }}%</div>
-                <div class="metric-subtitle">Word-level precision</div>
+                <div class="metric-title">Word Accuracy</div>
+                <div class="metric-value">{{ number_format($wordAccuracy, 2) }}%</div>
+                <div class="metric-subtitle">Word-level precision (20%)</div>
+            </div>
+            @endif
+
+            @if($referenceSimilarity !== null)
+            <div class="metric-card">
+                <div class="metric-icon">🎵</div>
+                <div class="metric-title">Reference Similarity</div>
+                <div class="metric-value">{{ number_format($referenceSimilarity, 2) }}%</div>
+                <div class="metric-subtitle">Rhythm/tone alignment (5%)</div>
             </div>
             @endif
             

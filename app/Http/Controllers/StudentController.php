@@ -2077,10 +2077,25 @@ class StudentController extends Controller
      */
     private function normalizeArabicText($text)
     {
+        $text = html_entity_decode((string) $text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Remove tajweed markup and HTML wrappers used by verse APIs.
+        $text = preg_replace('/<\|[^|]+\|>/u', ' ', $text);
+        $text = preg_replace('/<[^>]+>/u', ' ', $text);
+
+        // Keep pause marker for display only, not for scoring.
+        $text = str_replace('۝', ' ', $text);
+
         // Remove diacritics (Harakat)
-        $text = preg_replace('/[\x{064B}-\x{065F}]/u', '', $text);
+        $text = preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', '', $text);
         // Remove tatweel
         $text = preg_replace('/\x{0640}/u', '', $text);
+        // Normalize alif variants
+        $text = str_replace(['أ', 'إ', 'آ', 'ٱ'], 'ا', $text);
+        // Normalize yaa variants
+        $text = str_replace(['ى'], 'ي', $text);
+        // Remove punctuation and non-Arabic symbols
+        $text = preg_replace('/[^\p{Arabic}0-9\s]/u', ' ', $text);
         // Normalize spaces
         $text = preg_replace('/\s+/u', ' ', $text);
         return trim($text);

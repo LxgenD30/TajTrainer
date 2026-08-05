@@ -26,6 +26,7 @@ import numpy as np
 from scipy.signal import find_peaks
 import warnings
 import re
+import html
 import tempfile
 warnings.filterwarnings('ignore')
 
@@ -191,6 +192,98 @@ class TajweedAnalyzer:
         """Transcribe audio using Tarteel AI's Whisper model"""
         if not self.whisper_model or not self.whisper_processor:
             return None
+
+    def detect_pause_segments(self, min_pause_seconds=1.8, top_db=35):
+        """Detect long silence segments to mark recitation pauses."""
+        pauses = []
+
+        try:
+            intervals = librosa.effects.split(self.y, top_db=top_db)
+            if len(intervals) < 2:
+                return pauses
+
+            for idx in range(len(intervals) - 1):
+                end_current = intervals[idx][1]
+                start_next = intervals[idx + 1][0]
+                pause_duration = (start_next - end_current) / float(self.sr)
+
+                if pause_duration >= min_pause_seconds:
+                    pause_midpoint = ((end_current + start_next) / 2.0) / float(self.sr)
+                    pauses.append({
+                        'time': round(float(pause_midpoint), 2),
+                        'duration': round(float(pause_duration), 2),
+                    })
+        except Exception as e:
+            print(json.dumps({
+                "status": "pause_detection_failed",
+                "error": str(e)
+            }), file=sys.stderr)
+
+        return pauses
+
+    def add_pause_markers_to_transcription(self, transcription, pause_segments):
+        """Insert ۝ between words at detected long pause positions."""
+        if not transcription:
+            return transcription
+
+        words = transcription.split()
+        if len(words) < 2 or not pause_segments or self.duration <= 0:
+            return transcription
+
+        boundaries = len(words) - 1
+        marker_positions = set()
+
+        for pause in pause_segments:
+            pause_time = float(pause.get('time', 0) or 0)
+            ratio = max(0.0, min(1.0, pause_time / float(self.duration)))
+            position = int(round(ratio * boundaries))
+            position = max(1, min(boundaries, position))
+            marker_positions.add(position)
+
+        if not marker_positions:
+            return transcription
+
+        rebuilt = []
+        for idx, word in enumerate(words):
+            if idx in marker_positions:
+                rebuilt.append('۝')
+            rebuilt.append(word)
+
+        return ' '.join(rebuilt)
+
+    def normalize_arabic_for_accuracy(self, text):
+        """Normalize Arabic text for fair similarity scoring."""
+        if not text:
+            return ''
+
+        text = html.unescape(str(text))
+        text = re.sub(r'<\|[^|]+\|>', ' ', text)
+        text = re.sub(r'<[^>]+>', ' ', text)
+        text = text.replace('۝', ' ')
+
+        # Remove harakat and Quran annotation marks.
+        text = re.sub(r'[\u064B-\u065F\u0670\u06D6-\u06ED]', '', text)
+        text = text.replace('ـ', '')
+
+        # Normalize common alif forms.
+        text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ٱ', 'ا')
+
+        # Keep Arabic letters, digits, and whitespace only.
+        text = re.sub(r'[^\u0600-\u06FF0-9\s]', ' ', text)
+        text = re.sub(r'\s+', ' ', text)
+
+        return text.strip()
+
+    def calculate_word_accuracy(self, transcription, expected):
+        """Calculate word-level similarity percentage."""
+        trans_words = transcription.split()
+        expected_words = expected.split()
+
+        if not expected_words:
+            return 0.0
+
+        from difflib import SequenceMatcher
+        return SequenceMatcher(None, trans_words, expected_words).ratio() * 100.0
         
         # Do not attempt transcription on silent or near-silent audio
         if self.is_silent:
@@ -1148,9 +1241,19 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         idgham_bi = self.analyze_idgham_bi_ghunnah()
         
         # Get Whisper transcription if available
+        whisper_transcription_raw = None
         whisper_transcription = None
+        pause_segments = []
         if self.whisper_model:
-            whisper_transcription = self.transcribe_with_whisper()
+            whisper_transcription_raw = self.transcribe_with_whisper()
+            if whisper_transcription_raw:
+                pause_segments = self.detect_pause_segments()
+                whisper_transcription = self.add_pause_markers_to_transcription(
+                    whisper_transcription_raw,
+                    pause_segments
+                )
+            else:
+                whisper_transcription = whisper_transcription_raw
         
         # Compare with reference audio if provided
         reference_comparison = None
@@ -1161,7 +1264,12 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
             'audio_file': self.audio_path,
             'duration': round(float(self.duration), 2),
             'whisper_transcription': whisper_transcription,
+            'whisper_transcription_raw': whisper_transcription_raw,
             'expected_text': self.expected_text,
+            'pause_markers': {
+                'count': len(pause_segments),
+                'segments': pause_segments,
+            },
             'rules_detected': {
                 'madd': self.has_madd,
                 'idgham_bila_ghunnah': self.has_idgham_bila,
@@ -1187,7 +1295,7 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         return results
     
     def calculate_overall_score(self, madd, idgham_bila, idgham_bi, transcription=None, ref_comparison=None):
-        """Calculate overall Tajweed score based on applicable rules + pronunciation accuracy"""
+        """Calculate overall score with Tajweed as the primary factor."""
         scores = []
         
         # Add Tajweed rule scores
@@ -1198,32 +1306,51 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         if self.has_idgham_bi:
             scores.append(idgham_bi['percentage'])
         
-        # Calculate pronunciation accuracy from transcription
-        pronunciation_accuracy = 100.0
+        tajweed_score = (sum(scores) / len(scores)) if scores else None
+
+        # Calculate pronunciation/word accuracy from normalized transcription.
+        pronunciation_accuracy = None
+        word_accuracy = None
         if transcription and self.expected_text:
-            from difflib import SequenceMatcher
-            pronunciation_accuracy = SequenceMatcher(None, transcription, self.expected_text).ratio() * 100
-        
-        # Get reference similarity if available
-        reference_similarity = 100.0
+            normalized_transcription = self.normalize_arabic_for_accuracy(transcription)
+            normalized_expected = self.normalize_arabic_for_accuracy(self.expected_text)
+
+            if normalized_transcription and normalized_expected:
+                from difflib import SequenceMatcher
+                pronunciation_accuracy = SequenceMatcher(
+                    None,
+                    normalized_transcription,
+                    normalized_expected
+                ).ratio() * 100.0
+                word_accuracy = self.calculate_word_accuracy(
+                    normalized_transcription,
+                    normalized_expected
+                )
+
+        reference_similarity = None
         if ref_comparison and isinstance(ref_comparison, dict):
-            reference_similarity = ref_comparison.get('overall_similarity', 100.0)
-        
-        components = [
-            ('pronunciation_accuracy', pronunciation_accuracy, 0.4),
-            ('reference_similarity', reference_similarity, 0.3),
-        ]
-        
-        # Weight the scores:
-        # - Pronunciation accuracy: 40% (most important - saying the right words!)
-        # - Reference similarity: 30% (matching sheikh's pitch/rhythm)
-        # - Tajweed rules: 30% (elongation, Idgham correctness)
-        
-        if scores:
-            tajweed_score = sum(scores) / len(scores)
-            components.append(('tajweed_rules_score', tajweed_score, 0.3))
-        else:
-            tajweed_score = None
+            reference_similarity = ref_comparison.get('overall_similarity')
+
+        # If transcription is unavailable, keep scoring centered around available signals.
+        if word_accuracy is None:
+            if tajweed_score is not None:
+                word_accuracy = tajweed_score
+            elif reference_similarity is not None:
+                word_accuracy = reference_similarity
+            else:
+                word_accuracy = 0.0
+        if pronunciation_accuracy is None:
+            pronunciation_accuracy = word_accuracy
+
+        components = []
+        # Keep overall grade mostly aligned with Tajweed rule analysis.
+        if tajweed_score is not None:
+            components.append(('tajweed_rules_score', tajweed_score, 0.75))
+
+        components.append(('word_accuracy', word_accuracy, 0.20))
+
+        if reference_similarity is not None:
+            components.append(('reference_similarity', reference_similarity, 0.05))
         
         # Weighted overall score using only applicable components.
         weight_total = sum(weight for _, _, weight in components)
@@ -1235,7 +1362,8 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         return {
             'score': round(final_score, 2),
             'pronunciation_accuracy': round(pronunciation_accuracy, 2),
-            'reference_similarity': round(reference_similarity, 2),
+            'word_accuracy': round(word_accuracy, 2),
+            'reference_similarity': round(reference_similarity, 2) if reference_similarity is not None else None,
             'tajweed_rules_score': round(tajweed_score, 2) if tajweed_score is not None else None,
             'grade': self.get_grade(final_score),
             'feedback': self.get_feedback(final_score)
