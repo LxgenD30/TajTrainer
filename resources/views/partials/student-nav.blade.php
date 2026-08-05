@@ -4,7 +4,6 @@
     </button>
 
     <div class="nav-bar-links" data-navbar-links>
-        <div class="nav-section">Main</div>
         <a href="{{ route('home') }}" class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
             <div class="nav-icon"><i class="fas fa-home"></i></div>
             <div class="nav-label">Dashboard</div>
@@ -17,7 +16,6 @@
             <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
             <div class="nav-label">Progress</div>
         </a>
-        <div class="nav-section">Learning</div>
         <a href="{{ route('materials.index') }}" class="nav-item {{ request()->routeIs('materials.*') ? 'active' : '' }}">
             <div class="nav-icon"><i class="fas fa-book-open"></i></div>
             <div class="nav-label">Materials</div>
