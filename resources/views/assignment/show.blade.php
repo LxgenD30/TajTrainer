@@ -13,6 +13,10 @@
 
 @section('content')
 <style>
+    html {
+        font-size: 16.5px;
+    }
+
     .page-header {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
         border-radius: 20px;
@@ -556,6 +560,15 @@
                     <div class="info-label" style="margin-bottom: 12px; font-size: 1rem;">📝 Transcription</div>
                     <div class="instructions-box">
                         <p class="instructions-text" style="font-size: 1.25rem; font-family: 'Amiri', serif; direction: rtl; text-align: right;">{{ $submission->transcription }}</p>
+                    </div>
+                </div>
+            @endif
+
+            @if($submission->score && !empty($submission->score->feedback))
+                <div style="margin-bottom: 25px;">
+                    <div class="info-label" style="margin-bottom: 12px; font-size: 1rem;">💬 Teacher Feedback</div>
+                    <div class="instructions-box" style="background: rgba(212, 175, 55, 0.12); border-color: #d4af37;">
+                        <p class="instructions-text" style="font-size: 1.05rem; line-height: 1.9;">{{ $submission->score->feedback }}</p>
                     </div>
                 </div>
             @endif

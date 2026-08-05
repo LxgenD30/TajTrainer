@@ -9,6 +9,10 @@
 
 @section('content')
 <style>
+    html {
+        font-size: 16.5px;
+    }
+
     /* Welcome Banner */
     .welcome-banner {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
