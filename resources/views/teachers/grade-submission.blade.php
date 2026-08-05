@@ -265,6 +265,48 @@
                 </div>
             </div>
 
+            @php
+                $analysisForDetails = is_array($submission->tajweed_analysis)
+                    ? $submission->tajweed_analysis
+                    : json_decode($submission->tajweed_analysis ?? '[]', true);
+
+                $recitedText = trim((string) (
+                    $submission->transcription
+                    ?: ($analysisForDetails['whisper_transcription'] ?? '')
+                    ?: ($analysisForDetails['transcribed_text'] ?? '')
+                    ?: ($analysisForDetails['whisper_transcription_raw'] ?? '')
+                ));
+
+                $pauseMarkerCount = $analysisForDetails['pause_markers']['count'] ?? 0;
+            @endphp
+
+            <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(10, 92, 54, 0.1);">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
+                    <div style="color: #0a5c36; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-wave-square"></i>
+                        <span>Student Recited Text</span>
+                    </div>
+                    <span style="font-size: 0.72rem; padding: 3px 8px; background: rgba(26, 188, 156, 0.15); border-radius: 12px; font-weight: 600; color: #0a5c36;">Whisper (Tarteel AI model)</span>
+                </div>
+
+                <div style="background: rgba(255, 255, 255, 0.85); padding: 16px; border-radius: 10px; border: 1px solid rgba(10, 92, 54, 0.12);">
+                    @if($recitedText !== '')
+                        <p style="color: #1a1a1a; margin: 0; line-height: 2.1; direction: rtl; text-align: right; font-size: 1.65rem; font-family: 'Amiri', 'Traditional Arabic', serif; letter-spacing: 0.4px;">
+                            {{ $recitedText }}
+                        </p>
+                        @if($pauseMarkerCount > 0)
+                            <div style="margin-top: 10px; font-size: 0.8rem; color: #0a5c36; opacity: 0.9;">
+                                Note: The symbol ۝ marks long pauses in recitation and is ignored in word-accuracy scoring.
+                            </div>
+                        @endif
+                    @else
+                        <div style="color: #666; font-size: 0.9rem; line-height: 1.5;">
+                            Recited text is not available yet for this submission.
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             @if(!empty($expectedRecitationDisplay) || $submission->assignment->expected_recitation)
             @php
                 $expectedRecitation = $expectedRecitationDisplay ?: $submission->assignment->expected_recitation;
@@ -333,13 +375,13 @@
                 </div>
                 @endif
                 <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
-                    <div style="font-size: 0.75rem; color: var(--light-green); opacity: 0.6; flex: 1;">
+                    <div style="font-size: 0.75rem; color: #6b6b6b; opacity: 0.9; flex: 1;">
                         📁 File: {{ basename($submission->audio_file_path) }}
                     </div>
                     <a href="{{ $audioUrl }}" download="{{ basename($submission->audio_file_path) }}" 
-                       style="padding: 6px 12px; background: rgba(227, 216, 136, 0.2); color: var(--gold); border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease; border: 1px solid rgba(227, 216, 136, 0.3);"
-                       onmouseover="this.style.background='var(--gold)'; this.style.color='var(--dark-green)'"
-                       onmouseout="this.style.background='rgba(227, 216, 136, 0.2)'; this.style.color='var(--gold)'">
+                       style="padding: 6px 12px; background: rgba(227, 216, 136, 0.2); color: #8f6f10; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease; border: 1px solid rgba(227, 216, 136, 0.3);"
+                       onmouseover="this.style.background='#d4af37'; this.style.color='#12351f'"
+                       onmouseout="this.style.background='rgba(227, 216, 136, 0.2)'; this.style.color='#8f6f10'">
                         ⬇️ Download
                     </a>
                 </div>
@@ -361,33 +403,6 @@
                         });
                     }
                 </script>
-            </div>
-            @endif
-
-            @if($submission->transcription)
-            <!-- AI Transcription -->
-            <div style="background: rgba(26, 188, 156, 0.1); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(26, 188, 156, 0.3);">
-                <div style="display: flex; align-items: center; gap: 8px; color: #0a5c36; font-weight: 600; margin-bottom: 12px; font-size: 0.9rem;">
-                    <i class="fas fa-robot"></i>
-                    <span>AI Transcription</span>
-                    <span style="font-size: 0.75rem; padding: 3px 8px; background: rgba(26, 188, 156, 0.2); border-radius: 12px; font-weight: 500; color: #0a5c36;">Whisper (Tarteel AI model)</span>
-                </div>
-                <div style="background: rgba(10, 92, 54, 0.05); padding: 18px; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid rgba(10, 92, 54, 0.1);">
-                    <p style="color: #1a1a1a; margin: 0; line-height: 2.2; direction: rtl; text-align: right; font-size: 1.8rem; font-family: 'Amiri', 'Traditional Arabic', serif; letter-spacing: 0.5px;">
-                        {{ $submission->transcription }}
-                    </p>
-                    @php
-                        $analysisForTranscription = is_array($submission->tajweed_analysis)
-                            ? $submission->tajweed_analysis
-                            : json_decode($submission->tajweed_analysis ?? '[]', true);
-                        $pauseMarkerCount = $analysisForTranscription['pause_markers']['count'] ?? 0;
-                    @endphp
-                    @if($pauseMarkerCount > 0)
-                        <div style="margin-top: 10px; font-size: 0.8rem; color: #0a5c36; opacity: 0.9;">
-                            Note: The symbol ۝ marks long pauses in recitation and is ignored in word-accuracy scoring.
-                        </div>
-                    @endif
-                </div>
             </div>
             @endif
         </div>

@@ -671,6 +671,13 @@
 <script>
     let currentVerseData = '';
 
+    function normalizeSurahName(value) {
+        return (value || '')
+            .toString()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '');
+    }
+
     async function loadSurahs() {
             const surahSelect = document.getElementById('surahSelect');
             const currentSurah = document.getElementById('currentSurah').value;
@@ -679,29 +686,40 @@
                 if (!response.ok) throw new Error('Failed to load surahs');
                 
                 const result = await response.json();
-                const surahs = result.data || [];
+                const surahs = result.data || result.surahs || [];
+
+                if (!Array.isArray(surahs) || surahs.length === 0) {
+                    throw new Error(result.message || 'No surah data returned');
+                }
                 
                 // Clear loading option
                 surahSelect.innerHTML = '<option value="">-- Choose Surah --</option>';
                 
                 // Populate dropdown with surahs
                 surahs.forEach(surah => {
+                    const ayahCount = surah.ayahs ?? surah.numberOfAyahs ?? surah.verses_count ?? '';
                     const option = document.createElement('option');
                     option.value = surah.number;
-                    option.textContent = `${surah.number}. ${surah.englishName} (${surah.numberOfAyahs})`;
+                    option.textContent = `${surah.number}. ${surah.englishName} (${ayahCount})`;
                     option.setAttribute('data-name', surah.englishName);
-                    option.setAttribute('data-ayahs', surah.numberOfAyahs);
+                    option.setAttribute('data-ayahs', ayahCount);
                     surahSelect.appendChild(option);
                 });
                 
-                // Set current surah by matching the name
+                // Set current surah by matching exact and normalized names.
                 if (currentSurah) {
                     const options = surahSelect.options;
+                    const normalizedCurrent = normalizeSurahName(currentSurah);
+
                     for (let i = 0; i < options.length; i++) {
-                        if (options[i].getAttribute('data-name') === currentSurah) {
+                        const optionName = options[i].getAttribute('data-name') || '';
+                        const isNameMatch = optionName === currentSurah;
+                        const isNormalizedMatch = normalizeSurahName(optionName) === normalizedCurrent;
+
+                        if (isNameMatch || isNormalizedMatch) {
                             surahSelect.selectedIndex = i;
                             // Update hidden field with the selected surah name
-                            document.getElementById('surah_name_hidden').value = currentSurah;
+                            document.getElementById('surah_name_hidden').value = optionName;
                             // Trigger the verse preview
                             fetchQuranVerse();
                             break;
@@ -771,6 +789,9 @@
                 }
 
                 const result = await response.json();
+                if (!result.success || !result.verse) {
+                    throw new Error(result.message || 'Unable to load verse preview');
+                }
                 const verseData = result.verse || {};
 
                 verseArabic.innerHTML = verseData.arabic_html || verseData.arabic_plain || '';
