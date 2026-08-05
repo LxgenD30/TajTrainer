@@ -7,6 +7,7 @@ use App\Models\AssignmentSubmission;
 use App\Models\Material;
 use App\Models\Classroom;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 
 class AssignmentController extends Controller
@@ -223,26 +224,52 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Get Quran text from API
+     * Get Quran text from the Qurancdn memorization API model.
      */
     private function getQuranText($surahNumber, $startVerse, $endVerse)
     {
         $verses = [];
-        
-        for ($verse = $startVerse; $verse <= ($endVerse ?? $startVerse); $verse++) {
-            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/quran-uthmani";
-            
-            try {
-                $response = @file_get_contents($url);
-                if ($response !== false) {
-                    $data = json_decode($response, true);
-                    if ($data['code'] == 200 && isset($data['data']['text'])) {
-                        $verses[] = $data['data']['text'];
+        $endVerse = $endVerse ?? $startVerse;
+
+        try {
+            $response = Http::timeout(15)->get(
+                "https://api.qurancdn.com/api/qdc/verses/by_chapter/{$surahNumber}",
+                [
+                    'per_page' => 300,
+                    'page' => 1,
+                    'fields' => 'text_uthmani',
+                ]
+            );
+
+            if ($response->successful()) {
+                $chapterVerses = $response->json('verses') ?? [];
+
+                foreach ($chapterVerses as $verse) {
+                    $verseKey = $verse['verse_key'] ?? '';
+                    $verseParts = explode(':', $verseKey);
+                    $verseNumber = (int) ($verseParts[1] ?? 0);
+
+                    if ($verseNumber >= $startVerse && $verseNumber <= $endVerse) {
+                        $text = $verse['text_uthmani'] ?? '';
+                        if ($text !== '') {
+                            $verses[] = $text;
+                        }
                     }
                 }
-            } catch (\Exception $e) {
-                \Log::error("Error fetching Quran text: " . $e->getMessage());
+            } else {
+                \Log::warning("Qurancdn verse API failed for surah {$surahNumber}", [
+                    'status' => $response->status(),
+                ]);
             }
+        } catch (\Exception $e) {
+            \Log::error('Error fetching Qurancdn verses: ' . $e->getMessage());
+        }
+
+        if (empty($verses)) {
+            \Log::warning("No verses returned from Qurancdn for surah {$surahNumber}", [
+                'start_verse' => $startVerse,
+                'end_verse' => $endVerse,
+            ]);
         }
         
         // Join verses with Arabic verse separator ۝
@@ -250,27 +277,17 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Get reference audio - downloads and concatenates multiple verses into one audio file
+     * Get reference audio from the memorization-style quran.com audio model.
      */
     private function getReferenceAudioUrl($surahNumber, $startVerse, $endVerse)
     {
         $audioUrls = [];
+        $endVerse = $endVerse ?? $startVerse;
         
-        // Fetch audio URLs for each verse in the range
-        for ($verse = $startVerse; $verse <= ($endVerse ?? $startVerse); $verse++) {
-            $url = "https://api.alquran.cloud/v1/ayah/{$surahNumber}:{$verse}/ar.alafasy";
-            
-            try {
-                $response = @file_get_contents($url);
-                if ($response !== false) {
-                    $data = json_decode($response, true);
-                    if ($data['code'] == 200 && isset($data['data']['audio'])) {
-                        $audioUrls[] = $data['data']['audio'];
-                    }
-                }
-            } catch (\Exception $e) {
-                \Log::error("Error fetching reference audio for verse {$verse}: " . $e->getMessage());
-            }
+        for ($verse = $startVerse; $verse <= $endVerse; $verse++) {
+            $surahPadded = str_pad((string) $surahNumber, 3, '0', STR_PAD_LEFT);
+            $versePadded = str_pad((string) $verse, 3, '0', STR_PAD_LEFT);
+            $audioUrls[] = "https://verses.quran.com/Alafasy/mp3/{$surahPadded}{$versePadded}.mp3";
         }
         
         if (count($audioUrls) === 0) {

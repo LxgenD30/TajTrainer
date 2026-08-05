@@ -236,7 +236,7 @@ class TajweedAnalyzer:
     def detect_madd_in_text(self):
         """Check if expected text contains Madd elongation letters"""
         if not self.expected_text:
-            return True
+            return False
         # Madd letters: ا (alif), و (waw), ي (ya)
         madd_letters = ['ا', 'و', 'ي', 'آ', 'ى']
         return any(letter in self.expected_text for letter in madd_letters)
@@ -244,25 +244,26 @@ class TajweedAnalyzer:
     def detect_idgham_bila_in_text(self):
         """Check if text has Noon Sakin/Tanween followed by ر or ل"""
         if not self.expected_text:
-            return True
-        # Look for patterns: نْ or tanween (ً ٌ ٍ) followed by ر or ل
-        # Also check for ن followed directly by ر or ل
+            return False
+        # Look for Noon Sakin or tanween immediately before ر or ل.
         patterns = [
-            r'[نً ٌٍ][رل]',  # Tanween or noon sakin before ra/lam
-            r'نْ[رل]',  # Noon with sukun before ra/lam
-            r'ن\s*[رل]',  # Noon followed by ra/lam (with optional space)
+            r'نْ\s*[رل]',
+            r'نۢ\s*[رل]',
+            r'ن(?:[\u064B-\u065F\u0670\u06D6-\u06ED]*)\s*[رل]',
+            r'[\u064B\u064C\u064D](?:[\u064B-\u065F\u0670\u06D6-\u06ED\s]*)[رل]',
         ]
         return any(re.search(pattern, self.expected_text) for pattern in patterns)
     
     def detect_idgham_bi_in_text(self):
         """Check if text has Noon Sakin/Tanween followed by و م ن ي"""
         if not self.expected_text:
-            return True
-        # Look for patterns: نْ or tanween followed by و م ن ي
+            return False
+        # Look for Noon Sakin or tanween immediately before و م ن ي.
         patterns = [
-            r'[نً ٌٍ][ومني]',  # Tanween or noon sakin before letters
-            r'نْ[ومني]',  # Noon with sukun
-            r'ن\s*[ومني]',  # Noon followed by letters
+            r'نْ\s*[ومني]',
+            r'نۢ\s*[ومني]',
+            r'ن(?:[\u064B-\u065F\u0670\u06D6-\u06ED]*)\s*[ومني]',
+            r'[\u064B\u064C\u064D](?:[\u064B-\u065F\u0670\u06D6-\u06ED\s]*)[ومني]',
         ]
         return any(re.search(pattern, self.expected_text) for pattern in patterns)
     
@@ -1208,6 +1209,11 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         if ref_comparison and isinstance(ref_comparison, dict):
             reference_similarity = ref_comparison.get('overall_similarity', 100.0)
         
+        components = [
+            ('pronunciation_accuracy', pronunciation_accuracy, 0.4),
+            ('reference_similarity', reference_similarity, 0.3),
+        ]
+        
         # Weight the scores:
         # - Pronunciation accuracy: 40% (most important - saying the right words!)
         # - Reference similarity: 30% (matching sheikh's pitch/rhythm)
@@ -1215,17 +1221,22 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
         
         if scores:
             tajweed_score = sum(scores) / len(scores)
+            components.append(('tajweed_rules_score', tajweed_score, 0.3))
         else:
-            tajweed_score = 100.0  # No specific rules to check
+            tajweed_score = None
         
-        # Weighted overall score
-        final_score = (pronunciation_accuracy * 0.4) + (reference_similarity * 0.3) + (tajweed_score * 0.3)
+        # Weighted overall score using only applicable components.
+        weight_total = sum(weight for _, _, weight in components)
+        if weight_total > 0:
+            final_score = sum(value * weight for _, value, weight in components) / weight_total
+        else:
+            final_score = 0
         
         return {
             'score': round(final_score, 2),
             'pronunciation_accuracy': round(pronunciation_accuracy, 2),
             'reference_similarity': round(reference_similarity, 2),
-            'tajweed_rules_score': round(tajweed_score, 2),
+            'tajweed_rules_score': round(tajweed_score, 2) if tajweed_score is not None else None,
             'grade': self.get_grade(final_score),
             'feedback': self.get_feedback(final_score)
         }

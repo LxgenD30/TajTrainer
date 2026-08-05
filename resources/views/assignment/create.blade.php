@@ -610,11 +610,44 @@
                         <p class="section-desc">
                             Students will practice these specific verses
                         </p>
+
+                        @php
+                            $surahs = [
+                                1=>'Al-Fatiha',2=>'Al-Baqarah',3=>"Ali 'Imran",4=>"An-Nisa",5=>"Al-Ma'idah",
+                                6=>"Al-An'am",7=>"Al-A'raf",8=>'Al-Anfal',9=>'At-Tawbah',10=>'Yunus',
+                                11=>'Hud',12=>'Yusuf',13=>"Ar-Ra'd",14=>'Ibrahim',15=>'Al-Hijr',
+                                16=>'An-Nahl',17=>"Al-Isra",18=>'Al-Kahf',19=>'Maryam',20=>'Ta-Ha',
+                                21=>"Al-Anbiya",22=>'Al-Hajj',23=>"Al-Mu'minun",24=>'An-Nur',25=>'Al-Furqan',
+                                26=>"Ash-Shu'ara",27=>'An-Naml',28=>'Al-Qasas',29=>"Al-'Ankabut",30=>'Ar-Rum',
+                                31=>'Luqman',32=>'As-Sajdah',33=>'Al-Ahzab',34=>'Saba',35=>'Fatir',
+                                36=>'Ya-Sin',37=>"As-Saffat",38=>'Sad',39=>'Az-Zumar',40=>'Ghafir',
+                                41=>'Fussilat',42=>"Ash-Shura",43=>'Az-Zukhruf',44=>'Ad-Dukhan',45=>'Al-Jathiyah',
+                                46=>'Al-Ahqaf',47=>'Muhammad',48=>'Al-Fath',49=>'Al-Hujurat',50=>'Qaf',
+                                51=>'Adh-Dhariyat',52=>'At-Tur',53=>'An-Najm',54=>'Al-Qamar',55=>'Ar-Rahman',
+                                56=>"Al-Waqi'ah",57=>'Al-Hadid',58=>'Al-Mujadila',59=>'Al-Hashr',60=>'Al-Mumtahanah',
+                                61=>'As-Saf',62=>"Al-Jumu'ah",63=>'Al-Munafiqun',64=>'At-Taghabun',65=>'At-Talaq',
+                                66=>'At-Tahrim',67=>'Al-Mulk',68=>'Al-Qalam',69=>'Al-Haqqah',70=>"Al-Ma'arij",
+                                71=>'Nuh',72=>'Al-Jinn',73=>'Al-Muzzammil',74=>'Al-Muddaththir',75=>'Al-Qiyamah',
+                                76=>'Al-Insan',77=>'Al-Mursalat',78=>"An-Naba",79=>"An-Nazi'at",80=>"'Abasa",
+                                81=>'At-Takwir',82=>'Al-Infitar',83=>'Al-Mutaffifin',84=>'Al-Inshiqaq',85=>'Al-Buruj',
+                                86=>'At-Tariq',87=>"Al-A'la",88=>'Al-Ghashiyah',89=>'Al-Fajr',90=>'Al-Balad',
+                                91=>'Ash-Shams',92=>'Al-Layl',93=>'Ad-Duha',94=>'Ash-Sharh',95=>'At-Tin',
+                                96=>"Al-'Alaq",97=>'Al-Qadr',98=>'Al-Bayyinah',99=>'Az-Zalzalah',100=>"Al-'Adiyat",
+                                101=>"Al-Qari'ah",102=>'At-Takathur',103=>"Al-'Asr",104=>'Al-Humazah',105=>'Al-Fil',
+                                106=>'Quraysh',107=>"Al-Ma'un",108=>'Al-Kawthar',109=>'Al-Kafirun',110=>'An-Nasr',
+                                111=>'Al-Masad',112=>'Al-Ikhlas',113=>'Al-Falaq',114=>'An-Nas',
+                            ];
+                        @endphp
                         
                         <div style="margin-bottom: 16px;">
                             <label class="form-label">Select Surah *</label>
                             <select name="surah_number" id="surahSelect" class="form-select" required>
                                 <option value="">-- Choose a Surah --</option>
+                                @foreach($surahs as $number => $name)
+                                    <option value="{{ $number }}" data-name="{{ $name }}" {{ old('surah_number') == $number ? 'selected' : '' }}>
+                                        {{ $number }}. {{ $name }}
+                                    </option>
+                                @endforeach
                             </select>
                             @error('surah')
                                 <span class="error-text">{{ $message }}</span>
@@ -702,32 +735,6 @@
         }
     }
 
-    // Load Surahs from API
-    async function loadSurahs() {
-        const surahSelect = document.getElementById('surahSelect');
-        try {
-            const response = await fetch('https://api.alquran.cloud/v1/surah');
-            if (!response.ok) throw new Error('Failed to load surahs');
-            
-            const result = await response.json();
-            const surahs = result.data;
-            
-            surahSelect.innerHTML = '<option value="">-- Choose Surah --</option>';
-            
-            surahs.forEach(surah => {
-                const option = document.createElement('option');
-                option.value = surah.number;
-                option.textContent = `${surah.number}. ${surah.englishName} (${surah.numberOfAyahs} verses)`;
-                option.setAttribute('data-name', surah.englishName);
-                option.setAttribute('data-ayahs', surah.numberOfAyahs);
-                surahSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading surahs:', error);
-            surahSelect.innerHTML = '<option value="">Error loading surahs. Please refresh.</option>';
-        }
-    }
-
     // Fetch and display Quran verses
     async function fetchQuranVerse() {
         const surahNumber = document.getElementById('surahSelect').value;
@@ -746,29 +753,47 @@
 
         try {
             const start = parseInt(ayahStart);
-            const end = ayahEnd ? parseInt(ayahEnd) : start;
+            const requestedEnd = ayahEnd ? parseInt(ayahEnd) : start;
 
-            const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/en.asad`);
-            
-            if (!response.ok) {
+            const chapterResponse = await fetch(`https://api.qurancdn.com/api/qdc/chapters/${surahNumber}?language=en`);
+            const versesResponse = await fetch(`https://api.qurancdn.com/api/qdc/verses/by_chapter/${surahNumber}?translations=131&per_page=300&page=1&fields=text_uthmani,text_uthmani_tajweed`);
+
+            if (!chapterResponse.ok || !versesResponse.ok) {
                 throw new Error(`Failed to fetch Surah ${surahNumber}`);
             }
-            
-            const result = await response.json();
-            const surahData = result.data;
-            
-            const arabicResponse = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`);
-            const arabicResult = await arabicResponse.json();
-            const arabicSurah = arabicResult.data;
 
-            let arabicTexts = [];
-            let translations = [];
-            
-            for (let i = start; i <= end && i <= surahData.ayahs.length; i++) {
-                const ayahIndex = i - 1;
-                arabicTexts.push(arabicSurah.ayahs[ayahIndex].text);
-                translations.push(`[${i}] ${surahData.ayahs[ayahIndex].text}`);
+            const chapterResult = await chapterResponse.json();
+            const versesResult = await versesResponse.json();
+            const chapter = chapterResult.chapter;
+            const verses = versesResult.verses || [];
+            const maxAyah = verses.length;
+            const end = Math.min(requestedEnd, maxAyah);
+
+            if (start > maxAyah) {
+                throw new Error(`Verse ${start} is not available in this Surah`);
             }
+
+            const selectedVerses = verses.filter(verse => {
+                const verseKey = verse.verse_key || '';
+                const verseNumber = parseInt((verseKey.split(':')[1] || '0'), 10);
+                return verseNumber >= start && verseNumber <= end;
+            });
+
+            if (!selectedVerses.length) {
+                throw new Error('No verses found for the selected range');
+            }
+
+            const stripHtml = (text) => String(text || '').replace(/<[^>]*>/g, '').trim();
+            const selectedOption = document.querySelector(`#surahSelect option[value="${surahNumber}"]`);
+            const surahName = selectedOption ? selectedOption.getAttribute('data-name') : (chapter && chapter.name_simple) ? chapter.name_simple : '';
+            const surahArabic = chapter && chapter.name_arabic ? chapter.name_arabic : '';
+
+            const arabicTexts = selectedVerses.map(verse => verse.text_uthmani_tajweed || verse.text_uthmani || '');
+            const translations = selectedVerses.map(verse => {
+                const verseNumber = parseInt((verse.verse_key || '').split(':')[1] || '0', 10);
+                const translationText = stripHtml(verse.translations && verse.translations[0] ? verse.translations[0].text : '');
+                return `[${verseNumber}] ${translationText}`;
+            });
 
             const arabicText = arabicTexts.join(' ۝ ');
             const translationText = translations.join('\n\n');
@@ -777,8 +802,7 @@
             verseTranslation.textContent = translationText;
             versePreview.style.display = 'block';
 
-            const surahName = surahData.englishName;
-            currentVerseData = `\n\n--- Quran Verse ---\nSurah: ${surahName} (${surahData.name})\nAyat: ${ayahStart}${ayahEnd ? `-${ayahEnd}` : ''}\n\nArabic:\n${arabicText}\n\nTranslation:\n${translationText}\n--- End Verse ---\n\n`;
+            currentVerseData = `\n\n--- Quran Verse ---\nSurah: ${surahName}${surahArabic ? ` (${surahArabic})` : ''}\nAyat: ${start}${end !== start ? `-${end}` : ''}\n\nArabic:\n${arabicText}\n\nTranslation:\n${translationText}\n--- End Verse ---\n\n`;
 
         } catch (error) {
             alert('Error fetching verse: ' + error.message);
@@ -895,14 +919,17 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadSurahs();
-        
         const surahSelect = document.getElementById('surahSelect');
         surahSelect.addEventListener('change', () => {
             updateSurahName();
             fetchQuranVerse();
         });
         
+        updateSurahName();
+        if (surahSelect.value && document.getElementById('ayahStart').value) {
+            fetchQuranVerse();
+        }
+
         document.getElementById('ayahStart').addEventListener('input', debounce(fetchQuranVerse, 800));
         document.getElementById('ayahEnd').addEventListener('input', debounce(fetchQuranVerse, 800));
     });
