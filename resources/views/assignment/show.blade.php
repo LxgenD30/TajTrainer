@@ -14,7 +14,7 @@
 @section('content')
 <style>
     html {
-        font-size: 16.5px;
+        font-size: 18px;
     }
 
     .page-header {
@@ -107,7 +107,7 @@
     
     .section-title {
         color: #0a5c36;
-        font-size: 1.3rem;
+        font-size: 1.5rem;
         font-weight: 700;
         margin-bottom: 15px;
         display: flex;
@@ -116,7 +116,7 @@
     }
     
     .section-title.gold {
-        color: #d4af37;
+        color: #8a6d1a;
     }
     
     .info-grid {
@@ -131,14 +131,14 @@
     }
     
     .info-label {
-        color: #666;
-        font-size: 0.9rem;
+        color: #555;
+        font-size: 1rem;
         margin-bottom: 5px;
     }
     
     .info-value {
         color: #0a5c36;
-        font-size: 1.1rem;
+        font-size: 1.25rem;
         font-weight: 600;
     }
     
@@ -150,13 +150,13 @@
     
     .rule-badge {
         display: inline-block;
-        background: rgba(212, 175, 55, 0.2);
-        color: #d4af37;
-        padding: 6px 15px;
+        background: rgba(212, 175, 55, 0.18);
+        color: #8a6d1a;
+        padding: 7px 16px;
         border-radius: 15px;
-        font-size: 0.9rem;
+        font-size: 1rem;
         font-weight: 600;
-        border: 2px solid #d4af37;
+        border: 2px solid #8a6d1a;
     }
     
     .material-info {
@@ -210,12 +210,12 @@
 
     .quran-verse-display {
         background: rgba(0, 0, 0, 0.05);
-        padding: 20px;
+        padding: 24px;
         border-radius: 10px;
         direction: rtl;
         text-align: center;
         font-family: 'Amiri', serif;
-        font-size: 2rem;
+        font-size: 2.3rem;
         font-weight: bold;
         color: #000000;
         line-height: 2.8;
@@ -247,10 +247,10 @@
         gap: 8px;
         padding: 10px 20px;
         background: rgba(212, 175, 55, 0.15);
-        border: 2px solid #d4af37;
+        border: 2px solid #8a6d1a;
         border-radius: 20px;
-        color: #d4af37;
-        font-weight: 600;
+        color: #8a6d1a;
+        font-weight: 700;
     }
 </style>
 
@@ -309,7 +309,7 @@
     <div class="detail-card">
     <!-- Quran Verse Section -->
     <div class="detail-section gold">
-        <h4 class="section-title gold" style="font-size: 1.4rem;">
+        <h4 class="section-title gold" style="font-size: 1.5rem;">
             <span>📖</span> Assigned Quran Verse
         </h4>
         <div class="info-grid">
@@ -405,7 +405,7 @@
     <!-- Reference Materials -->
     @if($assignment->material)
         <div class="detail-section">
-            <h4 class="section-title" style="font-size: 1.4rem;">
+            <h4 class="section-title" style="font-size: 1.5rem;">
                 <span>📚</span> Reference Materials
             </h4>
             <div class="material-info">
@@ -491,11 +491,11 @@
     <!-- Instructions -->
     <div class="detail-card">
         <div class="detail-section">
-            <h4 class="section-title" style="font-size: 1.4rem;">
+            <h4 class="section-title" style="font-size: 1.5rem;">
                 <span>📋</span> Instructions
             </h4>
             <div class="instructions-box">
-                <p class="instructions-text" style="font-size: 1rem; line-height: 1.8;">{{ $assignment->instructions }}</p>
+                <p class="instructions-text" style="font-size: 1.1rem; line-height: 1.9;">{{ $assignment->instructions }}</p>
             </div>
         </div>
     </div>
@@ -505,7 +505,7 @@
     @if(auth()->user()->role_id == 3)
         <!-- Teacher View: Student Submission List -->
         <div class="detail-section">
-            <h4 class="section-title" style="font-size: 1.4rem; margin-bottom: 20px;">
+            <h4 class="section-title" style="font-size: 1.5rem; margin-bottom: 20px;">
                 <span>📋</span> Student Submissions Overview
             </h4>
             
@@ -524,7 +524,7 @@
                                         <i class="fas fa-user-check" style="color: #27ae60; font-size: 1.1rem;"></i>
                                         <span style="flex: 1; color: #333; font-size: 1.05rem;">{{ $submission->student->name ?? 'Unknown' }}</span>
                                         @if($submission->score)
-                                            <span style="color: #d4af37; font-weight: 600; font-size: 1rem;">{{ $submission->score->score }}/{{ $assignment->total_marks }}</span>
+                                            <span style="color: #8a6d1a; font-weight: 700; font-size: 1.05rem;">{{ $submission->score->score }}/{{ $assignment->total_marks }}</span>
                                         @else
                                             <span style="color: #999; font-size: 0.9rem; font-style: italic;">Not graded</span>
                                         @endif
@@ -561,7 +561,7 @@
     @elseif(auth()->user()->role_id == 2 && isset($submission))
         <!-- Student View: Their Own Submission -->
         <div class="detail-section" style="background: rgba(46, 204, 113, 0.1); border-color: #27ae60;">
-            <h4 class="section-title" style="color: #27ae60; font-size: 1.4rem;">
+            <h4 class="section-title" style="color: #27ae60; font-size: 1.5rem;">
                 <span>✅</span> Your Submission
             </h4>
             
@@ -581,7 +581,7 @@
                 @if($submission->score)
                     <div class="info-item">
                         <div class="info-label" style="font-size: 1rem;">🎯 Score</div>
-                        <div class="info-value" style="color: #d4af37; font-size: 1.2rem;">{{ $submission->score->score ?? 'Not graded' }} / {{ $assignment->total_marks }}</div>
+                        <div class="info-value" style="color: #8a6d1a; font-size: 1.3rem;">{{ $submission->score->score ?? 'Not graded' }} / {{ $assignment->total_marks }}</div>
                     </div>
                 @endif
             </div>
@@ -608,8 +608,8 @@
             @if($submission->score && !empty($submission->score->feedback))
                 <div style="margin-bottom: 25px;">
                     <div class="info-label" style="margin-bottom: 12px; font-size: 1rem;">💬 Teacher Feedback</div>
-                    <div class="instructions-box" style="background: rgba(212, 175, 55, 0.12); border-color: #d4af37;">
-                        <p class="instructions-text" style="font-size: 1.05rem; line-height: 1.9;">{{ $submission->score->feedback }}</p>
+                    <div class="instructions-box" style="background: rgba(212, 175, 55, 0.12); border-color: #8a6d1a;">
+                        <p class="instructions-text" style="font-size: 1.1rem; line-height: 1.9;">{{ $submission->score->feedback }}</p>
                     </div>
                 </div>
             @endif

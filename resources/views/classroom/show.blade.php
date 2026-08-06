@@ -82,10 +82,17 @@
             
             <!-- Stats Grid (Like Student Stats) -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                @if(auth()->user()->role_id == 3)
                 <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
                     <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{ $classroom->students->count() }}</div>
                     <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Students</div>
                 </div>
+                @else
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; line-height: 1.35;">{{ $classroom->teacher->name ?? '—' }}</div>
+                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Teacher</div>
+                </div>
+                @endif
                 <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
                     <div style="font-size: 2.5rem; font-weight: 700; line-height: 1; color: #ffd700;">{{ $assignments->count() }}</div>
                     <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Assignments</div>
