@@ -13,24 +13,75 @@
         --memorization-arabic-size: 2.6rem;
     }
 
+    /* ── Card Heading ──────────────────────────────────────────────────── */
     .surah-header {
-        text-align: center;
-        margin-bottom: 30px;
-        padding: 20px;
-        background: linear-gradient(135deg, #0a5c36, #1abc9c);
-        color: white;
-        border-radius: 15px;
+        background: #fff;
         border: 3px solid #2a2a2a;
+        border-radius: 18px;
+        padding: 26px 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+    .sd-header-main {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+        padding-bottom: 18px;
+        border-bottom: 3px solid #f5f5dc;
+    }
+    .sd-header-icon {
+        width: 62px;
+        height: 62px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #0a5c36, #2e8b57);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        box-shadow: 0 8px 18px rgba(10, 92, 54, 0.28);
+        flex-shrink: 0;
+    }
+    .sd-header-text {
+        flex: 1;
+        min-width: 220px;
     }
     .surah-title {
-        font-size: 3.4rem;
+        font-size: 2.6rem;
         font-weight: 800;
         font-family: 'Amiri', serif; /* A nice font for Arabic */
+        color: #0a5c36;
+        margin: 0;
+        line-height: 1.2;
+        text-align: left;
     }
     .surah-meta {
         font-size: 1.1rem;
-        color: rgba(255,255,255,0.9);
-        margin-bottom: 16px;
+        color: #333;
+        margin: 6px 0 0;
+        font-weight: 600;
+    }
+    .sd-start-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 26px;
+        background: linear-gradient(135deg, #f4d03f, #d4af37);
+        color: #1a1a1a;
+        border: 2px solid #b8860b;
+        border-radius: 50px;
+        font-weight: 800;
+        font-size: 1.05rem;
+        text-decoration: none;
+        box-shadow: 0 8px 20px rgba(180, 130, 20, 0.25);
+        transition: all 0.22s ease;
+        font-family: 'Cairo', sans-serif;
+        white-space: nowrap;
+    }
+    .sd-start-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(180, 130, 20, 0.35);
     }
     .ayah-grid {
         display: grid;
@@ -54,30 +105,31 @@
     }
 
     .arabic-size-control {
-        display: inline-flex;
+        display: flex;
         align-items: center;
-        gap: 10px;
-        margin-top: 14px;
-        padding: 10px 14px;
+        gap: 12px;
+        margin-top: 16px;
+        padding: 12px 16px;
         border-radius: 12px;
-        border: 2px solid rgba(255,255,255,0.5);
-        background: rgba(255,255,255,0.18);
+        border: 2px solid #deeadf;
+        background: #f8fcf8;
+        flex-wrap: wrap;
     }
     .arabic-size-control label {
-        font-size: 0.92rem;
-        font-weight: 700;
-        color: #ffffff;
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #0a5c36;
     }
     .arabic-size-control input[type="range"] {
-        width: 180px;
-        accent-color: #ffffff;
+        width: 200px;
+        accent-color: #0a5c36;
     }
     .arabic-size-value {
         min-width: 52px;
         text-align: right;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 800;
-        color: #ffffff;
+        color: #0a5c36;
     }
 
     /* ── Tajweed colour key (requested scheme) ───────────────────────────── */
@@ -245,18 +297,18 @@
 </style>
 
 <div class="surah-header">
-    <h1 class="surah-title">{{ $surahData['name'] }}</h1>
-    <p class="surah-meta">{{ $surahData['englishName'] }} • {{ $surahData['revelationType'] }} • {{ $surahData['numberOfAyahs'] }} Ayahs</p>
-    <div class="record-section">
-        <a href="{{ route('student.memorization.start', $surahData['number']) }}"
-           style="display:inline-flex; align-items:center; gap:10px; padding:12px 28px; background:rgba(255,255,255,0.15); color:white; border:2px solid rgba(255,255,255,0.5); border-radius:50px; font-weight:700; font-size:1rem; text-decoration:none; transition:all 0.25px; backdrop-filter:blur(4px);"
-           onmouseover="this.style.background='rgba(255,255,255,0.25)'; this.style.transform='translateY(-2px)';"
-           onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='';">
+    <div class="sd-header-main">
+        <div class="sd-header-icon"><i class="fas fa-book-quran"></i></div>
+        <div class="sd-header-text">
+            <h1 class="surah-title">{{ $surahData['name'] }}</h1>
+            <p class="surah-meta">{{ $surahData['englishName'] }} • {{ $surahData['revelationType'] }} • {{ $surahData['numberOfAyahs'] }} Ayahs</p>
+        </div>
+        <a href="{{ route('student.memorization.start', $surahData['number']) }}" class="sd-start-btn">
             <i class="fas fa-play-circle"></i> Start Memorizing
         </a>
     </div>
     <div class="arabic-size-control">
-        <label for="memorizationArabicSize">Arabic Text Size</label>
+        <label for="memorizationArabicSize"><i class="fas fa-text-height"></i> Arabic Text Size</label>
         <input type="range" id="memorizationArabicSize" min="2.0" max="4.5" step="0.1" value="2.6" aria-label="Adjust Arabic text size">
         <span class="arabic-size-value" id="memorizationArabicSizeValue">2.6rem</span>
     </div>

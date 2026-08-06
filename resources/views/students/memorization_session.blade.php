@@ -22,17 +22,19 @@
 
     /* ── Card Heading ───────────────────────────────────────────────────── */
     .ms-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         padding: 16px 20px;
         margin: 0 0 14px;
-        gap: 14px;
-        flex-wrap: wrap;
         background: #ffffff;
         border: 3px solid #2a2a2a;
         border-radius: 18px;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
+    .ms-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
     }
     .ms-back {
         display: inline-flex;
@@ -94,13 +96,18 @@
         align-items: center;
         justify-content: center;
         gap: 10px;
-        margin-top: 4px;
-        margin-bottom: 10px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 2px solid #f5f5dc;
+        flex-wrap: wrap;
     }
     .ms-arabic-size-control label {
-        font-size: 0.9rem;
-        font-weight: 700;
+        font-size: 0.92rem;
+        font-weight: 800;
         color: #0a5c36;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
     .ms-arabic-size-control input[type="range"] {
         width: 220px;
@@ -111,7 +118,7 @@
         text-align: right;
         font-weight: 800;
         color: #0a5c36;
-        font-size: 0.9rem;
+        font-size: 0.92rem;
     }
 
     /* ── Progress dots ───────────────────────────────────────────────────── */
@@ -358,25 +365,27 @@
 
     {{-- Card Heading --}}
     <div class="ms-header">
-        <a href="{{ route('student.memorization.surah', $surahData['number']) }}" class="ms-back">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
-        <div class="ms-surah-info">
-            <div class="ms-surah-icon"><i class="fas fa-book-quran"></i></div>
-            <div>
-                <div class="ms-surah-ar">{{ $surahData['name'] }}</div>
-                <div class="ms-surah-en">{{ $surahData['englishName'] }}</div>
+        <div class="ms-header-row">
+            <a href="{{ route('student.memorization.surah', $surahData['number']) }}" class="ms-back">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <div class="ms-surah-info">
+                <div class="ms-surah-icon"><i class="fas fa-book-quran"></i></div>
+                <div>
+                    <div class="ms-surah-ar">{{ $surahData['name'] }}</div>
+                    <div class="ms-surah-en">{{ $surahData['englishName'] }}</div>
+                </div>
+            </div>
+            <div class="ms-ayah-badge">
+                Ayah <span id="hdr-ayah">1</span> / {{ $surahData['totalAyahs'] }}
             </div>
         </div>
-        <div class="ms-ayah-badge">
-            Ayah <span id="hdr-ayah">1</span> / {{ $surahData['totalAyahs'] }}
-        </div>
-    </div>
 
-    <div class="ms-arabic-size-control">
-        <label for="memorizationSessionArabicSize">Arabic Text Size</label>
-        <input type="range" id="memorizationSessionArabicSize" min="1.9" max="4.2" step="0.1" value="2.3" aria-label="Adjust Arabic text size">
-        <span class="ms-arabic-size-value" id="memorizationSessionArabicSizeValue">2.3rem</span>
+        <div class="ms-arabic-size-control">
+            <label for="memorizationSessionArabicSize"><i class="fas fa-text-height"></i> Arabic Text Size</label>
+            <input type="range" id="memorizationSessionArabicSize" min="1.9" max="4.2" step="0.1" value="2.3" aria-label="Adjust Arabic text size">
+            <span class="ms-arabic-size-value" id="memorizationSessionArabicSizeValue">2.3rem</span>
+        </div>
     </div>
 
     {{-- Ayah dots --}}
