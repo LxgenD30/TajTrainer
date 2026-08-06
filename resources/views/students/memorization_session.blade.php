@@ -20,41 +20,72 @@
         font-family: 'Cairo', sans-serif;
     }
 
-    /* ── Header ─────────────────────────────────────────────────────────── */
+    /* ── Card Heading ───────────────────────────────────────────────────── */
     .ms-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 18px 0 14px;
-        gap: 12px;
+        padding: 16px 20px;
+        margin: 0 0 14px;
+        gap: 14px;
         flex-wrap: wrap;
+        background: #ffffff;
+        border: 3px solid #2a2a2a;
+        border-radius: 18px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
     }
     .ms-back {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        color: #374151;
+        gap: 8px;
+        color: #0a5c36;
         text-decoration: none;
-        font-weight: 700;
-        font-size: 0.95rem;
-        padding: 8px 16px;
+        font-weight: 800;
+        font-size: 1rem;
+        padding: 10px 18px;
         border-radius: 50px;
-        border: 2px solid #e5e7eb;
-        background: #f9fafb;
-        transition: all 0.2s;
+        border: 2px solid #0a5c36;
+        background: #fff;
+        transition: all 0.22s ease;
     }
-    .ms-back:hover { background: #e5e7eb; }
-    .ms-surah-info { text-align: center; flex: 1; }
-    .ms-surah-ar   { font-family: 'Amiri', serif; font-size: calc(var(--memorization-session-arabic-size) * 1.15); font-weight: 900; color: #000000; line-height: 1; }
-    .ms-surah-en   { font-size: 0.9rem; color: #6b7280; font-weight: 600; margin-top: 2px; }
+    .ms-back:hover {
+        background: #0a5c36;
+        color: #fff;
+        transform: translateX(-3px);
+    }
+    .ms-surah-info {
+        text-align: center;
+        flex: 1;
+        min-width: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+    }
+    .ms-surah-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #0a5c36, #2e8b57);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        box-shadow: 0 8px 18px rgba(10, 92, 54, 0.28);
+        flex-shrink: 0;
+    }
+    .ms-surah-ar   { font-family: 'Amiri', serif; font-size: calc(var(--memorization-session-arabic-size) * 1.15); font-weight: 900; color: #0a5c36; line-height: 1; }
+    .ms-surah-en   { font-size: 0.95rem; color: #333; font-weight: 700; margin-top: 3px; }
     .ms-ayah-badge {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
         color: white;
-        padding: 8px 18px;
+        padding: 10px 20px;
         border-radius: 50px;
         font-weight: 800;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         white-space: nowrap;
+        box-shadow: 0 6px 14px rgba(10, 92, 54, 0.25);
     }
 
     .ms-arabic-size-control {
@@ -325,14 +356,17 @@
 
 <div class="ms-wrap">
 
-    {{-- Header --}}
+    {{-- Card Heading --}}
     <div class="ms-header">
         <a href="{{ route('student.memorization.surah', $surahData['number']) }}" class="ms-back">
             <i class="fas fa-arrow-left"></i> Back
         </a>
         <div class="ms-surah-info">
-            <div class="ms-surah-ar">{{ $surahData['name'] }}</div>
-            <div class="ms-surah-en">{{ $surahData['englishName'] }}</div>
+            <div class="ms-surah-icon"><i class="fas fa-book-quran"></i></div>
+            <div>
+                <div class="ms-surah-ar">{{ $surahData['name'] }}</div>
+                <div class="ms-surah-en">{{ $surahData['englishName'] }}</div>
+            </div>
         </div>
         <div class="ms-ayah-badge">
             Ayah <span id="hdr-ayah">1</span> / {{ $surahData['totalAyahs'] }}

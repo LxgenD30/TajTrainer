@@ -42,23 +42,75 @@
     }
     .section-card {
         background: white;
-        border-radius: 15px;
-        padding: 25px;
+        border-radius: 18px;
+        padding: 28px;
         border: 3px solid #2a2a2a;
         box-shadow: 0 10px 25px rgba(0,0,0,0.05);
     }
-    .section-title {
+
+    /* Card Heading */
+    .mem-card-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 18px;
+        border-bottom: 3px solid #f5f5dc;
+        flex-wrap: wrap;
+    }
+    .mem-header-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #0a5c36, #2e8b57);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: 0 8px 18px rgba(10, 92, 54, 0.28);
+        flex-shrink: 0;
+    }
+    .mem-header-text {
+        flex: 1;
+        min-width: 200px;
+    }
+    .mem-header-title {
         font-size: 1.6rem;
-        color: #000 !important;
+        color: #0a5c36 !important;
         font-weight: 800;
-        margin-bottom: 20px;
+        margin: 0;
+        font-family: 'El Messiri', serif;
+        line-height: 1.2;
+    }
+    .mem-header-sub {
+        color: #333;
+        font-size: 1.05rem;
+        margin: 5px 0 0;
+        font-weight: 600;
+    }
+    .mem-header-count {
+        background: linear-gradient(135deg, #0a5c36, #2e8b57);
+        color: #fff;
+        padding: 9px 20px;
+        border-radius: 50px;
+        font-weight: 800;
+        font-size: 0.98rem;
+        box-shadow: 0 6px 14px rgba(10, 92, 54, 0.22);
+        white-space: nowrap;
     }
 </style>
 
 <div class="section-card">
-    <div style="margin-bottom:20px;">
-        <h2 class="section-title" style="margin-bottom:4px;">Surah Status</h2>
-        <p class="text-gray-500">Click on a Surah to view ayahs and start memorizing.</p>
+    <div class="mem-card-header">
+        <div class="mem-header-icon">
+            <i class="fas fa-brain"></i>
+        </div>
+        <div class="mem-header-text">
+            <h2 class="mem-header-title">Surah Status</h2>
+            <p class="mem-header-sub">Click on a Surah to view ayahs and start memorizing</p>
+        </div>
+        <span class="mem-header-count">114 Surahs</span>
     </div>
     <div class="memorization-grid">
         @php
