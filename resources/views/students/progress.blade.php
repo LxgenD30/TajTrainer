@@ -35,7 +35,7 @@
     }
 
     .card-description {
-        color: #444; 
+        color: #000;
         font-size: 1.2rem;
         margin: 0;
         font-family: 'Cairo', sans-serif;
@@ -86,14 +86,14 @@
     
     .ring-label {
         font-size: 1.2rem;
-        color: #444;
+        color: #000;
         font-weight: 600;
     }
     
     .weakness-name {
         font-size: 1.2rem;
-        font-weight: 700;
-        color: #e74c3c;
+        font-weight: 800;
+        color: #000;
     }
     
     .weakness-count {
@@ -103,6 +103,7 @@
         border-radius: 20px;
         font-weight: bold;
         font-size: 1.05rem;
+        border: 2px solid #2a2a2a;
     }
 
     .trend-value {
@@ -112,7 +113,7 @@
 
     .trend-label {
         font-size: 1.2rem;
-        color: #444;
+        color: #000;
         font-weight: 600;
     }
 
@@ -195,7 +196,7 @@
                 <div class="ring-label">Accuracy</div>
             </div>
         </div>
-        <p style="text-align: center; color: #666; font-size: 1.1rem; font-weight: 600;">Last 30 Days Activity</p>
+        <p style="text-align: center; color: #000; font-size: 1.1rem; font-weight: 600;">Last 30 Days Activity</p>
     </div>
 
     <div class="modern-card">
@@ -220,7 +221,7 @@
                 {{ number_format($trendValue, 1) }}%
             </div>
             <div class="trend-label">{{ $hasTrendData ? ucfirst($trend) . ' this week' : 'Not enough data yet' }}</div>
-            <p style="font-size: 1.1rem; color: #666; margin-top: 15px;">
+            <p style="font-size: 1.1rem; color: #000; margin-top: 15px;">
                 Current: <strong>{{ number_format($improvementTrends['current_week_accuracy'] ?? 0, 1) }}%</strong>
             </p>
         </div>
@@ -234,18 +235,31 @@
         
         @if(isset($topWeaknesses) && count($topWeaknesses) > 0)
             @foreach($topWeaknesses as $weakness)
-                <div style="background: #fffafa; border: 2px solid #ffebeb; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                @php
+                    $attempts = (int) ($weakness->total_attempts ?? 0);
+                    $failRate = (float) ($weakness->fail_rate ?? 0);
+                    $score = $attempts > 0 ? round(100 - $failRate, 1) : 0;
+                    $scoreColor = $score >= 70 ? '#2e7d32' : ($score >= 50 ? '#ef6c00' : '#c62828');
+                @endphp
+                <div style="background: #fffafa; border: 2px solid #2a2a2a; border-radius: 12px; padding: 16px 18px; margin-bottom: 15px; width: fit-content; min-width: 300px; max-width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 6px;">
                         <span class="weakness-name">{{ $weakness->rule_name }}</span>
-                        <span class="weakness-count">{{ $weakness->error_count }}</span>
+                        <span style="font-size: 1.5rem; font-weight: 800; line-height: 1; color: {{ $scoreColor }};">{{ $score }}%</span>
                     </div>
-                    <div style="font-size: 1.1rem; color: #666; font-weight: 500;">
-                        Type: {{ ucfirst($weakness->error_type) }}
+                    <div style="font-size: 1rem; color: #000; font-weight: 600; margin-bottom: 12px;">
+                        Type: {{ ucfirst($weakness->error_type ?? '—') }}
+                    </div>
+                    <div style="height: 12px; border-radius: 999px; background: #f0f0f0; border: 1px solid #2a2a2a; overflow: hidden;">
+                        <div style="height: 100%; width: {{ max(0, min(100, $score)) }}%; background: {{ $scoreColor }}; border-radius: 999px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; gap: 20px; margin-top: 8px; font-size: 0.92rem; color: #000; font-weight: 700;">
+                        <span><i class="fas fa-tasks"></i> {{ $attempts }} attempts</span>
+                        <span><i class="fas fa-times-circle"></i> {{ round($failRate, 1) }}% error rate</span>
                     </div>
                 </div>
             @endforeach
         @else
-            <div style="text-align: center; padding: 40px; color: #999;">
+            <div style="text-align: center; padding: 40px; color: #000;">
                 <i class="fas fa-smile-beam" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
                 <p style="font-size: 1.2rem;">No significant weaknesses detected!<br>Keep up the excellent work!</p>
             </div>
@@ -262,19 +276,19 @@
         <h3 class="section-title">Recurring Errors</h3>
     </div>
     
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
         @foreach($recurringErrors as $error)
-            <div style="background: linear-gradient(135deg, rgba(230, 126, 34, 0.05), rgba(211, 84, 0, 0.05)); border: 2px solid rgba(230, 126, 34, 0.2); border-radius: 15px; padding: 25px; text-align: center;">
-                <div style="font-size: 2.5rem; color: #e67e22; margin-bottom: 10px;">
-                    <i class="fas fa-sync-alt"></i>
+            <div style="background: #fffbf0; border: 2px solid #2a2a2a; border-radius: 12px; padding: 18px; width: fit-content; min-width: 300px; max-width: 100%;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <i class="fas fa-sync-alt" style="color: #e67e22; font-size: 1.3rem;"></i>
+                    <div style="font-size: 1.15rem; font-weight: 700; color: #000;">
+                        {{ $error->rule_name ?? 'Unknown Rule' }}
+                    </div>
                 </div>
-                <div style="font-size: 1.3rem; font-weight: 600; color: #e67e22; margin-bottom: 8px;">
-                    {{ $error->rule_name ?? 'Unknown Rule' }}
+                <div style="font-size: 0.95rem; color: #000; margin-bottom: 12px; font-weight: 700;">
+                    Occurred <strong style="color: #e67e22;">{{ $error->occurrences ?? 0 }}</strong> times
                 </div>
-                <div style="font-size: 0.95rem; color: #666; margin-bottom: 12px;">
-                    Occurred <strong>{{ $error->occurrences ?? 0 }} times</strong>
-                </div>
-                <div style="font-size: 0.85rem; color: #999; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                <div style="font-size: 0.9rem; color: #000; padding: 10px; background: rgba(0,0,0,0.04); border: 1px solid #2a2a2a; border-radius: 8px; line-height: 1.6;">
                     {{ $error->issue_description ?? 'Practice this rule more' }}
                 </div>
             </div>
