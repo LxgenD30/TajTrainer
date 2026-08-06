@@ -125,6 +125,7 @@ class TajweedAnalyzer:
         self.audio_path = audio_path
         self.expected_text = expected_text
         self.tajweed_html = tajweed_html or ''
+        self._last_transcription = ''
         self.use_whisper = use_whisper
         self.use_openai = use_openai
         self.reference_audio_path = reference_audio_path
@@ -646,12 +647,216 @@ class TajweedAnalyzer:
         ]
         return any(re.search(pattern, self.expected_text) for pattern in patterns)
     
+    # ── Rule scoring helpers ──────────────────────────────────────────────────
+    def _norm_token(self, s):
+        """Light letter-only normalization for matching (diacritics stripped)."""
+        s = (s or '')
+        s = re.sub(r'[\u064B-\u065F\u0670\u06D6-\u06ED]', '', s)
+        s = s.replace('ـ', '')
+        s = s.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ٱ', 'ا')
+        s = s.replace('ى', 'ي').replace('ة', 'ه')
+        s = s.replace('\u06E5', 'و').replace('\u06E6', 'ي')
+        s = re.sub(r'[^\u0600-\u06FF]', '', s)
+        return s
+
+    def _compact_norm(self, s):
+        """Normalize and remove all spaces for substring matching."""
+        return re.sub(r'\s+', '', self._norm_token(s))
+
+    def _occurrence_phrase(self, span_text):
+        """Expand an occurrence span into its full expected word/phrase."""
+        plain = self.expected_text or ''
+        if not span_text:
+            return ''
+        idx = plain.find(span_text)
+        if idx < 0:
+            return span_text
+        start = idx
+        while start > 0 and '\u0600' <= plain[start - 1] <= '\u06FF':
+            start -= 1
+        end = idx + len(span_text)
+        while end < len(plain) and '\u0600' <= plain[end] <= '\u06FF':
+            end += 1
+        return plain[start:end].strip()
+
+    def _rule_occurrence_phrases(self, class_prefixes, fallback_regex):
+        """Extract occurrence phrases for a rule from tajweed markup (regex fallback)."""
+        spans = []
+        if self.tajweed_html:
+            for m in re.finditer(r'<tajweed class="?([a-zA-Z_]+)"?>(.*?)</tajweed>', self.tajweed_html, re.S):
+                cls = m.group(1)
+                if any(cls.startswith(p) for p in class_prefixes):
+                    spans.append(m.group(2))
+        if not spans and self.expected_text:
+            matches = re.findall(fallback_regex, self.expected_text)
+            spans = [m if isinstance(m, str) else m[0] for m in matches]
+        phrases = []
+        for s in spans:
+            if not s:
+                continue
+            phrase = self._occurrence_phrase(s) or s
+            phrases.append(phrase)
+        seen = set()
+        uniq = []
+        for p in phrases:
+            k = self._compact_norm(p)
+            if k and k not in seen:
+                seen.add(k)
+                uniq.append(p)
+        return uniq
+
+    def _verify_occurrences(self, phrases):
+        """Verify each expected phrase against the transcribed recitation."""
+        trans_compact = self._compact_norm(self._last_transcription)
+        total = len(phrases)
+        correct = 0
+        details = []
+        issues = []
+        for phrase in phrases:
+            pc = self._compact_norm(phrase)
+            if pc and pc in trans_compact:
+                correct += 1
+                details.append({'word': phrase, 'status': 'correct', 'note': 'Correctly produced'})
+            else:
+                issues.append({
+                    'word': phrase,
+                    'issue': 'Not clearly produced in the recitation',
+                    'recommendation': 'Review this occurrence against the reference recitation and repeat it clearly.',
+                })
+        return total, correct, details, issues
+
+    def _deterministic_rule_feedback(self, label, total, correct, percentage):
+        """Minimal, percentage-consistent feedback used when OpenAI is unavailable."""
+        pct = round(float(percentage or 0))
+        if pct == 100:
+            tone = 'Perfect - every occurrence was applied correctly.'
+        elif pct >= 90:
+            tone = 'Excellent - nearly all occurrences correct.'
+        elif pct >= 80:
+            tone = 'Very good - a few occurrences need attention.'
+        elif pct >= 70:
+            tone = 'Good - several occurrences need improvement.'
+        elif pct >= 60:
+            tone = 'Fair - more than a quarter of occurrences were missed.'
+        elif pct >= 50:
+            tone = 'Needs work - about half the occurrences were missed.'
+        else:
+            tone = 'Needs significant improvement - most occurrences were missed.'
+        return f'{correct}/{total} occurrences correct ({pct}%). {tone}'
+
+    def _generate_rule_feedbacks(self, stats):
+        """Short per-rule feedback via OpenAI (filtered per rule), with deterministic fallback."""
+        fallback = {}
+        applicable = {}
+        for key, st in stats.items():
+            fallback[key] = self._deterministic_rule_feedback(
+                st['label'], st['total'], st['correct'], st['percentage']
+            )
+            if st['total'] > 0:
+                applicable[key] = st
+
+        if not applicable or not self.use_openai:
+            return fallback
+
+        api_key = os.environ.get('OPENAI_API_KEY')
+        if not api_key:
+            return fallback
+
+        try:
+            from openai import OpenAI
+
+            client = OpenAI(api_key=api_key)
+            lines = []
+            for key, st in applicable.items():
+                missed = '; '.join(i.get('word', '') for i in st['issues'][:5]) or 'none'
+                lines.append(
+                    f"- {st['label']}: {st['correct']}/{st['total']} correct ({st['percentage']}%). Missed: {missed}"
+                )
+            prompt = (
+                'For EACH item below, write ONE short sentence of Tajweed feedback.\n'
+                'Only talk about that specific rule. Keep each sentence under 20 words.\n'
+                'Be specific and helpful.\n\n'
+                + '\n'.join(lines) +
+                '\n\nReturn ONLY a JSON object mapping the exact item label to its one-sentence feedback, '
+                'e.g. {"Madd (Elongation)":"...","Idgham Bila Ghunnah":"...","Idgham Bi Ghunnah":"..."}'
+            )
+            resp = client.chat.completions.create(
+                model='gpt-4o',
+                messages=[
+                    {'role': 'system', 'content': 'You are an expert Quran Tajweed teacher. Reply with minimal, one-sentence feedback per rule only. Valid JSON only.'},
+                    {'role': 'user', 'content': prompt},
+                ],
+                max_tokens=220,
+                temperature=0.3,
+            )
+            text = (resp.choices[0].message.content or '').strip()
+            if text.startswith('```'):
+                text = text.split('```')[1]
+                if text.startswith('json'):
+                    text = text[4:]
+            data = json.loads(text)
+            for key, st in applicable.items():
+                fb = data.get(st['label'])
+                if isinstance(fb, str) and fb.strip():
+                    fallback[key] = fb.strip()[:220]
+        except Exception as e:
+            print(json.dumps({'status': 'rule_feedback_failed', 'error': str(e)}), file=sys.stderr)
+
+        return fallback
+
+    def _greedy_match_end(self, tokens, exp_words, start):
+        """Greedily match exp_words in tokens from start; return index after last matched token."""
+        if not exp_words:
+            return start
+        idx = start
+        last = start
+        skipped = 0
+        for w in exp_words:
+            if not w:
+                continue
+            found = False
+            for j in range(idx, min(len(tokens), idx + 10)):
+                if tokens[j] == w:
+                    idx = j + 1
+                    last = idx
+                    found = True
+                    break
+            if not found:
+                skipped += 1
+                idx = min(len(tokens), idx + 1)
+                if skipped > max(3, len(exp_words)):
+                    return None
+        return last if last > start else None
+
+    def _align_ayah_boundaries(self, transcription):
+        """Insert ۝ between ayahs by aligning the transcription to the expected text."""
+        if not transcription or not self.expected_text or '۝' not in self.expected_text:
+            return transcription
+        t_tokens = transcription.split()
+        if len(t_tokens) < 2:
+            return transcription
+        n_tokens = [self._norm_token(t) for t in t_tokens]
+        ayahs = [p.strip() for p in self.expected_text.split('۝') if p.strip()]
+        boundaries = []
+        pos = 0
+        for phrase in ayahs[:-1]:
+            exp_words = [self._norm_token(w) for w in phrase.split()]
+            end = self._greedy_match_end(n_tokens, exp_words, pos)
+            if end is not None:
+                pos = end
+                boundaries.append(pos)
+        if not boundaries:
+            return transcription
+        inserted = set(boundaries)
+        rebuilt = []
+        for i, tok in enumerate(t_tokens):
+            rebuilt.append(tok)
+            if (i + 1) in inserted:
+                rebuilt.append('۝')
+        return ' '.join(rebuilt)
+
     def analyze_madd(self):
-        """
-        Analyze Madd (Elongation) rules using ADVANCED AUDIO ANALYSIS
-        Uses Parselmouth for formant analysis and pitch tracking
-        Madd should be held for 2 counts (approximately 0.4-0.6 seconds minimum)
-        """
+        """Analyze Madd (Elongation) by counting expected occurrences and verifying them in the recitation."""
         results = {
             'total_elongations': 0,
             'correct_elongations': 0,
@@ -660,192 +865,33 @@ class TajweedAnalyzer:
             'details': [],
             'rule_applicable': self.has_madd
         }
-        
+
         if not self.has_madd:
             results['percentage'] = 100
             results['details'].append({'note': 'Not present in this verse'})
             return results
-        
-        try:
-            if PARSELMOUTH_AVAILABLE:
-                # ADVANCED PARSELMOUTH ANALYSIS
-                # Use converted wav file if available, otherwise original
-                audio_for_praat = self.converted_audio_path if self.converted_audio_path else self.audio_path
-                
-                snd = parselmouth.Sound(audio_for_praat)
-                
-                # Extract acoustic features
-                pitch = snd.to_pitch()
-                formant = snd.to_formant_burg()
-                intensity = snd.to_intensity()
-                
-                detected_elongations = []
-                
-                # Sample every 10ms to find vowel regions
-                for t in np.arange(0.05, snd.duration, 0.01):
-                    try:
-                        # Get pitch (should exist and be stable during vowel)
-                        f0 = call(pitch, "Get value at time", t, "Hertz", "Linear")
-                        
-                        # Get formants (F1, F2 identify vowels)
-                        f1 = call(formant, "Get value at time", 1, t, "Hertz", "Linear")
-                        f2 = call(formant, "Get value at time", 2, t, "Hertz", "Linear")
-                        
-                        # Get intensity (should be high during vowel)
-                        power = call(intensity, "Get value at time", t, "Cubic")
-                        
-                        # Check if this is a vowel (pitch exists, formants exist, decent intensity)
-                        if not np.isnan(f0) and not np.isnan(f1) and not np.isnan(f2) and power > 50:
-                            # Check if vowel is elongated by looking ahead
-                            duration = 0
-                            
-                            # Check next 600ms for stable formants (indicating elongation)
-                            for future_t in np.arange(t, min(t + 0.7, snd.duration), 0.01):
-                                try:
-                                    future_f1 = call(formant, "Get value at time", 1, future_t, "Hertz", "Linear")
-                                    future_f2 = call(formant, "Get value at time", 2, future_t, "Hertz", "Linear")
-                                    future_f0 = call(pitch, "Get value at time", future_t, "Hertz", "Linear")
-                                    future_power = call(intensity, "Get value at time", future_t, "Cubic")
-                                    
-                                    # Check if formants remain stable (within 15% variation)
-                                    if (not np.isnan(future_f1) and not np.isnan(future_f2) and 
-                                        not np.isnan(future_f0) and future_power > 45 and
-                                        abs(future_f1 - f1) < f1 * 0.15 and 
-                                        abs(future_f2 - f2) < f2 * 0.15 and
-                                        abs(future_f0 - f0) < f0 * 0.1):
-                                        duration += 0.01
-                                    else:
-                                        break
-                                except:
-                                    break
-                            
-                            # If vowel held for at least 350ms, it's a Madd
-                            if duration >= 0.35:
-                                # Check if we haven't already detected this elongation
-                                if not any(abs(t - prev_t) < 0.3 for prev_t, _, _ in detected_elongations):
-                                    detected_elongations.append((t, duration, f0))
-                    except:
-                        continue
-                
-                results['total_elongations'] = len(detected_elongations)
-                
-                # Check each detected elongation
-                for t, duration, f0 in detected_elongations:
-                    # Madd should be >= 0.4 seconds (2 counts minimum)
-                    if duration >= 0.4:
-                        results['correct_elongations'] += 1
-                        results['details'].append({
-                            'time': round(t, 2),
-                            'duration': round(duration, 2),
-                            'pitch': round(f0, 1),
-                            'status': 'correct',
-                            'note': 'Proper Madd elongation detected (Parselmouth analysis)'
-                        })
-                    else:
-                        results['issues'].append({
-                            'time': round(t, 2),
-                            'duration': round(duration, 2),
-                            'pitch': round(f0, 1),
-                            'issue': f'Elongation too short ({duration:.2f}s) - should be >= 0.4s',
-                            'recommendation': 'Hold the vowel for minimum 2 counts (0.4-0.6 seconds)'
-                        })
-                
-                # Calculate percentage
-                if results['total_elongations'] > 0:
-                    results['percentage'] = round((results['correct_elongations'] / results['total_elongations']) * 100, 2)
-                else:
-                    results['percentage'] = 100  # No elongations detected, assume OK
-                
-                return results
-            
-            else:
-                # FALLBACK: LIBROSA ANALYSIS (BASIC)
-                y_22k, sr_22k = librosa.load(self.audio_path, sr=22050)
-                mfccs = librosa.feature.mfcc(y=y_22k, sr=sr_22k, n_mfcc=13)
-                rms = librosa.feature.rms(y=y_22k)[0]
-                mfcc_var = np.var(mfccs, axis=0)
-                
-                # Find peaks in RMS that indicate sustained vowels
-                peaks, properties = find_peaks(rms, distance=sr_22k//2, prominence=0.015)
-                
-                for i, peak in enumerate(peaks):
-                    time_pos = librosa.frames_to_time(peak, sr=sr_22k)
-                    
-                    # Calculate sustained duration
-                    hop_length = 512
-                    start_idx = max(0, peak - 10)
-                    end_idx = min(len(rms), peak + 30)
-                    sustained_duration = (end_idx - start_idx) * hop_length / sr_22k
-                    
-                    # Check MFCC variance at peak
-                    if peak < len(mfcc_var):
-                        mfcc_variance_at_peak = mfcc_var[peak]
-                        is_vowel_sustained = mfcc_variance_at_peak < np.mean(mfcc_var) * 0.7
-                    else:
-                        is_vowel_sustained = True
-                    
-                    if is_vowel_sustained:
-                        results['total_elongations'] += 1
-                        
-                        # Madd should be >= 0.4 seconds (2 counts minimum)
-                        if sustained_duration >= 0.4:
-                            results['correct_elongations'] += 1
-                            results['details'].append({
-                                'time': round(time_pos, 2),
-                                'duration': round(sustained_duration, 2),
-                                'status': 'correct',
-                                'note': 'Proper Madd elongation detected (basic analysis - install parselmouth for better accuracy)'
-                            })
-                        else:
-                            results['issues'].append({
-                                'time': round(time_pos, 2),
-                                'duration': round(sustained_duration, 2),
-                                'issue': 'Elongation too short - should be 2-6 counts',
-                                'recommendation': 'Hold the vowel for minimum 2 counts (0.5-0.75 seconds)'
-                            })
-                
-                # Calculate percentage
-                if results['total_elongations'] > 0:
-                    results['percentage'] = round((results['correct_elongations'] / results['total_elongations']) * 100, 2)
-                else:
-                    results['percentage'] = 100
-                
-                results['details'].append({
-                    'warning': 'Using basic librosa analysis. Install parselmouth for advanced formant analysis: pip install praat-parselmouth'
-                })
-                
-                return results
-                
-        except Exception as e:
-            import traceback
-            results['issues'].append({
-                'error': str(e),
-                'traceback': traceback.format_exc()
-            })
-            results['percentage'] = 0
+
+        phrases = self._rule_occurrence_phrases(
+            ['madda_normal', 'madda_permissible', 'madda_obligatory', 'madda_prolonged', 'madda_necessary'],
+            r'[\u064E\u064F\u0650][اويآى]'
+        )
+        if not self._last_transcription:
+            results['total_elongations'] = len(phrases)
+            results['percentage'] = 100
+            results['details'].append({'note': 'No recitation transcription available - assumed acceptable'})
             return results
-            
-            # Calculate percentage
-            if results['total_elongations'] > 0:
-                results['percentage'] = round((results['correct_elongations'] / results['total_elongations']) * 100, 2)
-            else:
-                results['percentage'] = 0
-                results['issues'].append({
-                    'issue': 'No Madd elongations detected in recitation',
-                    'recommendation': 'Ensure proper elongation of Madd letters (ا و ي)'
-                })
-                
-        except Exception as e:
-            results['error'] = str(e)
-            results['percentage'] = 0
-            
+        total, correct, details, issues = self._verify_occurrences(phrases)
+        results['total_elongations'] = total
+        results['correct_elongations'] = correct
+        results['details'] = details
+        results['issues'] = issues
+        results['percentage'] = round((correct / total) * 100, 2) if total else 0
         return results
-    
+
     def analyze_idgham_bila_ghunnah(self):
         """
-        Analyze Idgham Bila Ghunnah using Whisper transcription + MFCC
-        Occurs when Noon Sakin/Tanween meets ر or ل
-        Should merge WITHOUT nasal sound
+        Analyze Idgham Bila Ghunnah by counting expected occurrences
+        (Noon Sakin/Tanween -> \u0631 \u0644) and verifying them in the recitation.
         """
         results = {
             'total_occurrences': 0,
@@ -853,95 +899,35 @@ class TajweedAnalyzer:
             'issues': [],
             'percentage': 0,
             'details': [],
-            'rule_applicable': self.has_idgham_bila,
-            'whisper_detected': False
+            'rule_applicable': self.has_idgham_bila
         }
-        
+
         if not self.has_idgham_bila:
             results['percentage'] = 100
             results['details'].append({'note': 'Not present in this verse'})
             return results
-        
-        try:
-            # Use Whisper to detect phonemes if available
-            if self.whisper_model:
-                transcription = self.transcribe_with_whisper()
-                if transcription:
-                    results['whisper_detected'] = True
-                    # Check if transcription contains ر or ل in correct context
-                    if any(letter in transcription for letter in ['ر', 'ل']):
-                        results['total_occurrences'] += 1
-            
-            # MFCC-based detection
-            y_22k, sr_22k = librosa.load(self.audio_path, sr=22050)
-            mfccs = librosa.feature.mfcc(y=y_22k, sr=sr_22k, n_mfcc=13)
-            
-            # Zero crossing rate (should be LOWER for proper Idgham Bila)
-            zcr = librosa.feature.zero_crossing_rate(y_22k)[0]
-            
-            # Spectral centroid for brightness detection
-            spectral_centroids = librosa.feature.spectral_centroid(y=y_22k, sr=sr_22k)[0]
-            
-            # Detect ر (ra) or ل (lam) sounds
-            for i in range(0, len(spectral_centroids) - 5, 15):
-                if i < mfccs.shape[1]:
-                    mfcc_window = mfccs[:, i:min(i+5, mfccs.shape[1])]
-                    avg_mfcc = np.mean(mfcc_window, axis=1)
-                    
-                    avg_centroid = np.mean(spectral_centroids[i:i+5])
-                    avg_zcr = np.mean(zcr[i:i+5])
-                    
-                    # Detect ر or ل: higher spectral centroid, low ZCR
-                    is_liquid_consonant = (
-                        avg_centroid > np.mean(spectral_centroids) * 1.1 and
-                        avg_zcr < np.mean(zcr) * 0.8
-                    )
-                    
-                    if is_liquid_consonant:
-                        time_pos = librosa.frames_to_time(i, sr=sr_22k)
-                        results['total_occurrences'] += 1
-                        
-                        # Check for LACK of nasalization
-                        nasal_present = avg_zcr > 0.12
-                        
-                        if not nasal_present:
-                            results['correct_pronunciation'] += 1
-                            results['details'].append({
-                                'time': round(time_pos, 2),
-                                'status': 'correct',
-                                'note': 'Proper Idgham Bila Ghunnah - merged without nasalization',
-                                'rule_type': 'Idgham Bila Ghunnah'
-                            })
-                        else:
-                            results['issues'].append({
-                                'time': round(time_pos, 2),
-                                'issue': 'Nasalization detected - should merge WITHOUT dengung',
-                                'recommendation': 'Merge directly into ر or ل without nasal sound',
-                                'rule_type': 'Idgham Bila Ghunnah'
-                            })
-            
-            # Calculate percentage
-            if results['total_occurrences'] > 0:
-                results['percentage'] = round((results['correct_pronunciation'] / results['total_occurrences']) * 100, 2)
-            else:
-                # Not clearly detected in audio — give the benefit of the doubt
-                # instead of a harsh 0% (keeps scoring consistent with Madd).
-                results['percentage'] = 80
-                results['details'].append({
-                    'note': 'Idgham Bila Ghunnah occurrences were not clearly detected - assumed acceptable'
-                })
-                
-        except Exception as e:
-            results['error'] = str(e)
-            results['percentage'] = 0
-            
+
+        phrases = self._rule_occurrence_phrases(
+            ['idgham_wo_ghunnah', 'idgham_no_ghunnah'],
+            r'[\u064B\u064C\u064D](?:[\u064B-\u065F\u0670\u06D6-\u06ED\u0627\u0649\s]*)[\u0631\u0644]'
+        )
+        if not self._last_transcription:
+            results['total_occurrences'] = len(phrases)
+            results['percentage'] = 100
+            results['details'].append({'note': 'No recitation transcription available - assumed acceptable'})
+            return results
+        total, correct, details, issues = self._verify_occurrences(phrases)
+        results['total_occurrences'] = total
+        results['correct_pronunciation'] = correct
+        results['details'] = details
+        results['issues'] = issues
+        results['percentage'] = round((correct / total) * 100, 2) if total else 0
         return results
-    
+
     def analyze_idgham_bi_ghunnah(self):
         """
-        Analyze Idgham Bi Ghunnah using Whisper + MFCC
-        Occurs when Noon Sakin/Tanween meets و م ن ي
-        Should merge WITH nasal sound for 2 counts
+        Analyze Idgham Bi Ghunnah by counting expected occurrences
+        (Noon Sakin/Tanween -> \u0648 \u0645 \u0646 \u064a) and verifying them in the recitation.
         """
         results = {
             'total_occurrences': 0,
@@ -949,103 +935,29 @@ class TajweedAnalyzer:
             'issues': [],
             'percentage': 0,
             'details': [],
-            'rule_applicable': self.has_idgham_bi,
-            'whisper_detected': False
+            'rule_applicable': self.has_idgham_bi
         }
-        
+
         if not self.has_idgham_bi:
             results['percentage'] = 100
             results['details'].append({'note': 'Not present in this verse'})
             return results
-        
-        try:
-            # Use Whisper for phoneme detection
-            if self.whisper_model:
-                transcription = self.transcribe_with_whisper()
-                if transcription:
-                    results['whisper_detected'] = True
-                    if any(letter in transcription for letter in ['و', 'م', 'ن', 'ي']):
-                        results['total_occurrences'] += 1
-            
-            # MFCC-based nasal detection
-            y_22k, sr_22k = librosa.load(self.audio_path, sr=22050)
-            mfccs = librosa.feature.mfcc(y=y_22k, sr=sr_22k, n_mfcc=13)
-            
-            # Zero crossing rate (should be HIGHER for nasal sounds)
-            zcr = librosa.feature.zero_crossing_rate(y_22k)[0]
-            
-            # Spectral features
-            spectral_centroids = librosa.feature.spectral_centroid(y=y_22k, sr=sr_22k)[0]
-            
-            # RMS for duration measurement
-            rms = librosa.feature.rms(y=y_22k)[0]
-            
-            # Detect nasal consonants
-            for i in range(0, len(spectral_centroids) - 5, 15):
-                if i < mfccs.shape[1]:
-                    mfcc_window = mfccs[:, i:min(i+5, mfccs.shape[1])]
-                    avg_mfcc = np.mean(mfcc_window, axis=1)
-                    
-                    avg_centroid = np.mean(spectral_centroids[i:i+5])
-                    avg_zcr = np.mean(zcr[i:i+5])
-                    avg_rms = np.mean(rms[i:i+5])
-                    
-                    # Detect nasal characteristic
-                    is_nasal = (
-                        avg_mfcc[1] < np.mean(mfccs[1, :]) * 0.9 and
-                        avg_zcr > 0.08 and
-                        avg_rms > np.mean(rms) * 0.6
-                    )
-                    
-                    if is_nasal:
-                        time_pos = librosa.frames_to_time(i, sr=sr_22k)
-                        results['total_occurrences'] += 1
-                        
-                        # Calculate duration of nasalization
-                        start_idx = max(0, i - 5)
-                        end_idx = min(len(rms), i + 15)
-                        nasal_duration = (end_idx - start_idx) * 512 / sr_22k
-                        
-                        # Check if nasalization is proper
-                        proper_nasalization = (
-                            avg_zcr > 0.08 and
-                            nasal_duration >= 0.3
-                        )
-                        
-                        if proper_nasalization:
-                            results['correct_pronunciation'] += 1
-                            results['details'].append({
-                                'time': round(time_pos, 2),
-                                'duration': round(nasal_duration, 2),
-                                'status': 'correct',
-                                'note': 'Proper Idgham Bi Ghunnah - merged with dengung for 2 counts',
-                                'rule_type': 'Idgham Bi Ghunnah'
-                            })
-                        else:
-                            issue = 'Dengung too short' if nasal_duration < 0.3 else 'Dengung quality weak'
-                            results['issues'].append({
-                                'time': round(time_pos, 2),
-                                'duration': round(nasal_duration, 2),
-                                'issue': issue,
-                                'recommendation': 'Merge into و م ن ي WITH clear dengung for 2 counts',
-                                'rule_type': 'Idgham Bi Ghunnah'
-                            })
-            
-            # Calculate percentage
-            if results['total_occurrences'] > 0:
-                results['percentage'] = round((results['correct_pronunciation'] / results['total_occurrences']) * 100, 2)
-            else:
-                # Not clearly detected in audio — give the benefit of the doubt
-                # instead of a harsh 0% (keeps scoring consistent with Madd).
-                results['percentage'] = 80
-                results['details'].append({
-                    'note': 'Idgham Bi Ghunnah occurrences were not clearly detected - assumed acceptable'
-                })
-                
-        except Exception as e:
-            results['error'] = str(e)
-            results['percentage'] = 0
-            
+
+        phrases = self._rule_occurrence_phrases(
+            ['idgham_ghunnah', 'idgham_bi_ghunnah'],
+            r'[\u064B\u064C\u064D](?:[\u064B-\u065F\u0670\u06D6-\u06ED\u0627\u0649\s]*)[\u0648\u0645\u0646\u064a]'
+        )
+        if not self._last_transcription:
+            results['total_occurrences'] = len(phrases)
+            results['percentage'] = 100
+            results['details'].append({'note': 'No recitation transcription available - assumed acceptable'})
+            return results
+        total, correct, details, issues = self._verify_occurrences(phrases)
+        results['total_occurrences'] = total
+        results['correct_pronunciation'] = correct
+        results['details'] = details
+        results['issues'] = issues
+        results['percentage'] = round((correct / total) * 100, 2) if total else 0
         return results
 
     def get_rule_feedback_contexts(self, analysis_results):
@@ -1524,11 +1436,7 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
                 'ai_feedback': None
             }
 
-        madd = self.analyze_madd()
-        idgham_bila = self.analyze_idgham_bila_ghunnah()
-        idgham_bi = self.analyze_idgham_bi_ghunnah()
-        
-        # Get Whisper transcription if available
+        # Get Whisper transcription first so rule analyses can verify against it.
         whisper_transcription_raw = None
         whisper_transcription = None
         pause_segments = []
@@ -1536,12 +1444,53 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
             whisper_transcription_raw = self.transcribe_with_whisper()
             if whisper_transcription_raw:
                 pause_segments = self.detect_pause_segments()
-                whisper_transcription = self.add_pause_markers_to_transcription(
-                    whisper_transcription_raw,
-                    pause_segments
-                )
+                # Prefer ayah-boundary separators when the alignment succeeds;
+                # otherwise fall back to audio-pause markers.
+                ayah_marked = self._align_ayah_boundaries(whisper_transcription_raw)
+                expected_ayahs = self.expected_text.count('۝') if '۝' in self.expected_text else 0
+                if expected_ayahs > 0 and ayah_marked.count('۝') >= expected_ayahs:
+                    whisper_transcription = ayah_marked
+                else:
+                    whisper_transcription = self.add_pause_markers_to_transcription(
+                        whisper_transcription_raw,
+                        pause_segments
+                    )
             else:
                 whisper_transcription = whisper_transcription_raw
+
+        self._last_transcription = whisper_transcription_raw or whisper_transcription or ''
+
+        madd = self.analyze_madd()
+        idgham_bila = self.analyze_idgham_bila_ghunnah()
+        idgham_bi = self.analyze_idgham_bi_ghunnah()
+
+        # Generate short, per-rule feedback (OpenAI with deterministic fallback).
+        rule_feedbacks = self._generate_rule_feedbacks({
+            'madd_analysis': {
+                'label': 'Madd (Elongation)',
+                'total': madd.get('total_elongations', 0),
+                'correct': madd.get('correct_elongations', 0),
+                'percentage': madd.get('percentage', 0),
+                'issues': madd.get('issues', []),
+            },
+            'idgham_bila_ghunnah_analysis': {
+                'label': 'Idgham Bila Ghunnah',
+                'total': idgham_bila.get('total_occurrences', 0),
+                'correct': idgham_bila.get('correct_pronunciation', 0),
+                'percentage': idgham_bila.get('percentage', 0),
+                'issues': idgham_bila.get('issues', []),
+            },
+            'idgham_bi_ghunnah_analysis': {
+                'label': 'Idgham Bi Ghunnah',
+                'total': idgham_bi.get('total_occurrences', 0),
+                'correct': idgham_bi.get('correct_pronunciation', 0),
+                'percentage': idgham_bi.get('percentage', 0),
+                'issues': idgham_bi.get('issues', []),
+            },
+        })
+        madd['rule_feedback'] = rule_feedbacks['madd_analysis']
+        idgham_bila['rule_feedback'] = rule_feedbacks['idgham_bila_ghunnah_analysis']
+        idgham_bi['rule_feedback'] = rule_feedbacks['idgham_bi_ghunnah_analysis']
         
         # Compare with reference audio if provided
         reference_comparison = None

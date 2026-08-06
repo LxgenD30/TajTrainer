@@ -405,7 +405,7 @@
         gap: 16px;
         padding: 8px 0;
         border-bottom: 1px solid rgba(10, 92, 54, 0.1);
-        font-size: 1.05rem;
+        font-size: 1.15rem;
     }
 
     .legend-row:last-child { border-bottom: none; }
@@ -443,17 +443,17 @@
     .rule-head h4 {
         margin: 0 0 4px;
         color: var(--grade-heading);
-        font-size: 1.25rem;
+        font-size: 1.45rem;
     }
 
     .rule-head p {
         margin: 0;
         color: var(--grade-muted);
-        font-size: 1rem;
+        font-size: 1.08rem;
     }
 
     .rule-percent {
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 800;
         white-space: nowrap;
     }
@@ -491,14 +491,14 @@
     .rule-stat p { margin: 0; }
 
     .rule-stat .k {
-        font-size: 0.85rem;
+        font-size: 0.95rem;
         color: var(--grade-muted);
         font-weight: 700;
     }
 
     .rule-stat .v {
         margin-top: 4px;
-        font-size: 1.5rem;
+        font-size: 1.7rem;
         font-weight: 800;
         color: #0a5c36;
     }
@@ -509,8 +509,29 @@
         background: #fff8ec;
         color: #8a5d11;
         padding: 14px 16px;
-        font-size: 1rem;
+        font-size: 1.1rem;
         line-height: 1.7;
+    }
+
+    .rule-feedback {
+        border-radius: 10px;
+        border: 2px solid #a7d7ae;
+        background: #edf8ef;
+        color: #15803d;
+        padding: 12px 16px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        line-height: 1.6;
+        margin-bottom: 12px;
+    }
+
+    .rule-feedback i { color: #d4af37; margin-right: 6px; }
+
+    .arabic-word {
+        font-family: 'Amiri', serif;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #0a5c36;
     }
 
     .rule-alert .issue-item {
@@ -708,7 +729,7 @@
         margin: 0;
         color: #3f51b5;
         font-family: 'El Messiri', serif;
-        font-size: 1.3rem;
+        font-size: 1.5rem;
         display: flex;
         align-items: center;
         gap: 10px;
@@ -718,14 +739,14 @@
         border-radius: 10px;
         border: 1px solid #e5e7eb;
         background: #fafbff;
-        padding: 14px;
+        padding: 16px;
         margin-bottom: 12px;
     }
 
     .ai-block h4 {
         margin: 0 0 8px;
         color: #3f51b5;
-        font-size: 1rem;
+        font-size: 1.15rem;
     }
 
     .ai-block p,
@@ -733,7 +754,7 @@
         margin: 0;
         color: #374151;
         line-height: 1.7;
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
 
     .ai-block ul {
@@ -999,6 +1020,7 @@
                                 $isApplicable = $ruleData['rule_applicable'] ?? true;
                                 $rulePercentage = $ruleData['percentage'] ?? 0;
                                 $ruleIssues = $ruleData['issues'] ?? [];
+                                $ruleFeedback = $ruleData['rule_feedback'] ?? '';
                                 $ruleColor = !$isApplicable ? '#6b7280' : ($rulePercentage >= 90 ? '#2e7d32' : ($rulePercentage >= 70 ? '#558b2f' : '#ef6c00'));
                             @endphp
 
@@ -1031,20 +1053,27 @@
                                         </div>
                                     </div>
 
+                                    @if(!empty($ruleFeedback))
+                                        <div class="rule-feedback">
+                                            <i class="fas fa-star"></i> {{ $ruleFeedback }}
+                                        </div>
+                                    @endif
+
                                     @if(count($ruleIssues) > 0)
                                         <div class="rule-alert">
                                             @foreach($ruleIssues as $index => $issue)
                                                 <div class="issue-item">
-                                                    <strong>Issue {{ $index + 1 }}:</strong>
-                                                    {{ $issue['note'] ?? $issue['issue'] ?? 'Issue detected' }}
+                                                    <strong>Occurrence {{ $index + 1 }}:</strong>
+                                                    @if(!empty($issue['word']))
+                                                        <span class="arabic-word">{{ $issue['word'] }}</span> —
+                                                    @endif
+                                                    {{ $issue['issue'] ?? 'Not clearly produced in the recitation' }}
                                                     @if(!empty($issue['recommendation']))
-                                                        - {{ $issue['recommendation'] }}
+                                                        <br><em style="color:#8a5d11;">{{ $issue['recommendation'] }}</em>
                                                     @endif
                                                 </div>
                                             @endforeach
                                         </div>
-                                    @else
-                                        <div class="rule-ok">{{ $ruleCard['success_message'] }}</div>
                                     @endif
                                 @else
                                     <div class="rule-ok" style="background: #f4f5f7; border-color: #d1d5db; color: #4b5563;">
