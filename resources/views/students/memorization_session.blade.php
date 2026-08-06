@@ -607,11 +607,12 @@ const processed = VERSES.map(v => {
             const norm = normalizeAr(w);
             if (norm) {
                 const unit = { isMuqattaat: false, disp: w, phrase: [norm], rawPhrase: [w] };
-                // Hamzat al-wasl (ٱ) is a "dead" alef: when continuing (wasl) the
-                // alef is elided, so also allow the word WITHOUT the leading alef.
-                if (w.charAt(0) === '\u0671' && norm.charAt(0) === 'ا') {
-                    const elided = norm.slice(1);
-                    if (elided) unit.alternatives = [elided];
+                // Hamzat al-wasl (ٱ) is a "dead" alef: when continuing (wasl) it is
+                // elided, whether it leads the word (ٱلْحَكِيمِ) or follows a
+                // connector (وَٱلْقُرْءَانِ). Also allow the form without it.
+                if (w.includes('\u0671')) {
+                    const elided = normalizeAr(w.replace(/\u0671/g, ''));
+                    if (elided && elided !== norm) unit.alternatives = [elided];
                 }
                 units.push(unit);
             }
@@ -677,7 +678,7 @@ function matchUnit(unit, spoken, start) {
 
 // ── Arabic normalization (diacritics stripped for comparison) ───────────────
 function normalizeAr(s) {
-    return s
+    let t = s
         .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0671) — also strips the maddah \u0653
         .replace(/\u0640/g, '')              // tatweel
         .replace(/\u0670/g, '')              // strip dagger alef (long vowel handled by medial-alef strip below)
@@ -687,8 +688,15 @@ function normalizeAr(s) {
         .replace(/ة/g,  'ه')                // ta marbuta
         .replace(/ى/g,  'ي')                // alef maqsura
         .replace(/[\u06E5\u06E6]/g, '')     // ۥ Small Waw / ۦ Small Ya → removed (optional long vowel, not interrupted by matching)
-        .replace(/[\u06D6-\u06E4\u06E7-\u06FF]/g, '') // strip Quranic annotation marks
-        .replace(/([؀-ۿ])ا([؀-ۿ])/g, '$1$2') // strip medial alef (ذالك→ذلك, عالمين→علمين, كتاب→كتب)
+        .replace(/[\u06D6-\u06E4\u06E7-\u06FF]/g, ''); // strip Quranic annotation marks
+    // Strip medial alef repeatedly. An alef is an optional long vowel; repeated
+    // passes also collapse adjacent alefs from hamzah→alef (قرءان and قران both → قرن).
+    let prev;
+    do {
+        prev = t;
+        t = t.replace(/([\u0600-\u06FF])ا([\u0600-\u06FF])/g, '$1$2');
+    } while (t !== prev);
+    return t
         .replace(/^([وبفلك])ال(?=[تثدذرزسشصضطظن])/, '$1') // strip ال after connector before sun letter
         .replace(/ط/g, 'ت')                 // ط often transcribed as ت
         .replace(/[^\u0600-\u06FF]/g, '')   // keep Arabic only

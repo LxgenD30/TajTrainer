@@ -89,9 +89,14 @@ def normalize_arabic(text: str) -> str:
     text = text.replace('\u0629', '\u0647')
     # alef maqsura -> ya
     text = text.replace('\u0649', '\u064A')
-    # Strip medial alef: handles dagger-alef long vowels (\u0630\u0627\u0644\u0643 \u2192 \u0630\u0644\u0643, \u0639\u0627\u0644\u0645\u064a\u0646 \u2192 \u0639\u0644\u0645\u064a\u0646, \u0643\u062a\u0627\u0628 \u2192 \u0643\u062a\u0628)
-    # Alef surrounded by two Arabic chars = optional long vowel, strip from both sides
-    text = re.sub(r'([\u0600-\u06FF])\u0627([\u0600-\u06FF])', r'\1\2', text)
+    # Strip medial alef repeatedly. An alef is an optional long vowel; repeated
+    # passes also collapse adjacent alefs from hamzah->alef so \u0642\u0631\u0621\u0627\u0646
+    # and \u0642\u0631\u0627\u0646 both normalize to \u0642\u0631\u0646.
+    while True:
+        new_text = re.sub(r'([\u0600-\u06FF])\u0627([\u0600-\u06FF])', r'\1\2', text)
+        if new_text == text:
+            break
+        text = new_text
     # Strip \u0627\u0644 after word-initial connector before sun letter (assimilation)
     text = re.sub(r'(?<=[\u0648\u0628\u0641\u0644\u0643])\u0627\u0644(?=[\u062a\u062b\u062f\u0630\u0631\u0632\u0633\u0634\u0635\u0636\u0637\u0638\u0646])', '', text)
     # \u0637 -> \u062a (emphatic ta misrecognised by speech engines)
@@ -239,7 +244,7 @@ def _compare(transcribed_words: List[Dict], target_text: str) -> List[Dict]:
     # so allow the word with OR without the leading alef to match.
     target_variants = []
     for raw, norm in zip(target_tokens_raw, target_tokens):
-        if raw.startswith('\u0671') and norm.startswith('\u0627') and len(norm) > 1:
+        if '\u0671' in raw and norm.startswith('\u0627') and len(norm) > 1:
             target_variants.append({norm, norm[1:]})
         else:
             target_variants.append({norm})
