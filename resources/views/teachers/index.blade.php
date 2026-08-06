@@ -101,7 +101,7 @@
         padding: 25px;
         box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
         border: 3px solid #2a2a2a;
-        max-height: calc(100vh - 150px);
+        max-height: 540px;
         overflow-y: auto;
     }
     
@@ -129,7 +129,7 @@
         }
         
         .grading-queue-card {
-            max-height: 500px;
+            max-height: 540px;
         }
     }
     
