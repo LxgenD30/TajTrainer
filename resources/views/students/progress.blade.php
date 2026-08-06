@@ -151,6 +151,25 @@
     .welcome-content { position: relative; z-index: 2; }
     .welcome-content h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); display: flex; align-items: center; gap: 12px; }
     .welcome-content p { font-size: 1.25rem; opacity: 0.95; line-height: 1.6; }
+
+    /* Progress 3-column layout */
+    .progress-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        align-items: start;
+    }
+    .progress-col {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        min-width: 0;
+    }
+    @media (max-width: 1100px) {
+        .progress-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <section class="welcome-banner">
@@ -179,7 +198,7 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px;">
+<div class="progress-grid">
     
     <div class="modern-card">
         <div class="section-header">
@@ -198,6 +217,8 @@
         </div>
         <p style="text-align: center; color: #000; font-size: 1.1rem; font-weight: 600;">Last 30 Days Activity</p>
     </div>
+
+    <div class="progress-col">
 
     <div class="modern-card">
         <div class="section-header">
@@ -225,6 +246,37 @@
                 Current: <strong>{{ number_format($improvementTrends['current_week_accuracy'] ?? 0, 1) }}%</strong>
             </p>
         </div>
+    </div>
+
+    @if(isset($recurringErrors) && count($recurringErrors) > 0)
+    <div class="modern-card">
+        <div class="section-header">
+            <div class="icon-badge orange">
+                <i class="fas fa-redo"></i>
+            </div>
+            <h3 class="section-title">Recurring Errors</h3>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+            @foreach($recurringErrors as $error)
+                <div style="background: #fffbf0; border: 2px solid #2a2a2a; border-radius: 12px; padding: 18px; width: 100%; box-sizing: border-box;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <i class="fas fa-sync-alt" style="color: #e67e22; font-size: 1.3rem;"></i>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: #000;">
+                            {{ $error->rule_name ?? 'Unknown Rule' }}
+                        </div>
+                    </div>
+                    <div style="font-size: 0.95rem; color: #000; margin-bottom: 12px; font-weight: 700;">
+                        Occurred <strong style="color: #e67e22;">{{ $error->occurrences ?? 0 }}</strong> times
+                    </div>
+                    <div style="font-size: 0.9rem; color: #000; padding: 10px; background: rgba(0,0,0,0.04); border: 1px solid #2a2a2a; border-radius: 8px; line-height: 1.6;">
+                        {{ $error->issue_description ?? 'Practice this rule more' }}
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
     </div>
 
     <div class="modern-card">
@@ -267,36 +319,6 @@
             </div>
         @endif
     </div>
-
-    @if(isset($recurringErrors) && count($recurringErrors) > 0)
-    <div class="modern-card">
-        <div class="section-header">
-            <div class="icon-badge orange">
-                <i class="fas fa-redo"></i>
-            </div>
-            <h3 class="section-title">Recurring Errors</h3>
-        </div>
-
-        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
-            @foreach($recurringErrors as $error)
-                <div style="background: #fffbf0; border: 2px solid #2a2a2a; border-radius: 12px; padding: 18px; width: 100%; box-sizing: border-box;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                        <i class="fas fa-sync-alt" style="color: #e67e22; font-size: 1.3rem;"></i>
-                        <div style="font-size: 1.15rem; font-weight: 700; color: #000;">
-                            {{ $error->rule_name ?? 'Unknown Rule' }}
-                        </div>
-                    </div>
-                    <div style="font-size: 0.95rem; color: #000; margin-bottom: 12px; font-weight: 700;">
-                        Occurred <strong style="color: #e67e22;">{{ $error->occurrences ?? 0 }}</strong> times
-                    </div>
-                    <div style="font-size: 0.9rem; color: #000; padding: 10px; background: rgba(0,0,0,0.04); border: 1px solid #2a2a2a; border-radius: 8px; line-height: 1.6;">
-                        {{ $error->issue_description ?? 'Practice this rule more' }}
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
-    @endif
 </div>
 
 <script>

@@ -72,7 +72,9 @@ def normalize_arabic(text: str) -> str:
     text = unicodedata.normalize('NFC', text)
     text = _TASHKEEL.sub('', text)
     text = _TATWEEL.sub('', text)
-    text = text.replace('\u0670', '')          # strip dagger alef (long vowel handled by medial-alef strip below)
+    # ىٰ / يٰ (alif maqsura/ya + superscript alef) is read as a long "aa", so map it to alef.
+    text = re.sub(r'[\u0649\u064A]\u0670', '\u0627', text)
+    text = text.replace('\u0670', '')          # strip remaining dagger alef (long vowel handled by medial-alef strip below)
     for variant, canon in _ALEF_MAP.items():
         text = text.replace(variant, canon)
     # Hamza on ya / waw -> base letter (Madd Wajib Muttasil: a maddah followed by
