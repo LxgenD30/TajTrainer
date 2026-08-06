@@ -40,7 +40,7 @@ QURAN_MODEL_IDS = [
 ]
 
 # â”€â”€ Hukum detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-_HUKUM_RE = re.compile(r'[\u06D6-\u06E6\u0653]')
+_HUKUM_RE = re.compile(r'[\u06D6-\u06E4\u06E7-\u06FF]')
 
 def has_hukum(word: str) -> bool:
     """True if word contains special Tajweed/Hukum markers (Small Waw \u06e5, Small Ya \u06e6, Maddah etc.)."""
@@ -53,7 +53,7 @@ def has_hukum(word: str) -> bool:
 #       represents a phonetic long-vowel alef in Uthmani script, e.g. \u0639\u064e\u0640\u0670 -> \u0639\u0627).
 _TASHKEEL  = re.compile(r'[\u0610-\u061A\u064B-\u065F]')
 _TATWEEL   = re.compile(r'\u0640')
-_ALEF_MAP  = {'\u0622': '\u0627', '\u0623': '\u0627', '\u0625': '\u0627', '\u0671': '\u0627'}
+_ALEF_MAP  = {'\u0622': '\u0627', '\u0623': '\u0627', '\u0625': '\u0627', '\u0671': '\u0627', '\u0621': '\u0627'}
 
 
 def normalize_arabic(text: str) -> str:
@@ -75,9 +75,10 @@ def normalize_arabic(text: str) -> str:
     text = text.replace('\u0670', '')          # strip dagger alef (long vowel handled by medial-alef strip below)
     for variant, canon in _ALEF_MAP.items():
         text = text.replace(variant, canon)
-    # Small Waw / Small Ya (Madd Silah markers) -> base letters
-    text = text.replace('\u06E5', '\u0648')   # \u06e5 -> \u0648
-    text = text.replace('\u06E6', '\u064A')   # \u06e6 -> \u064a
+    # Small Waw / Small Ya (Madd Silah markers) -> removed (optional long vowels,
+    # so words like \u0631\u064e\u0628\u0651\u0650\u0647\u0650\u06e5 still match when recited without them)
+    text = text.replace('\u06E5', '')
+    text = text.replace('\u06E6', '')
     # Strip Quranic annotation marks (small high letters, stops, sajda signs, etc.)
     text = re.sub(r'[\u06D6-\u06E4\u06E7-\u06FF]', '', text)
     # ta marbuta -> ha
@@ -217,47 +218,6 @@ def _transcribe(model: Any, whisper_mod: Any, backend: str,
                 })
 
     return words
-        # whisper_timestamped: each word has a "confidence" key directly
-        result = whisper_mod.transcribe(
-            model, audio,
-            language="ar",
-            initial_prompt=target_text,
-            verbose=False,
-        )
-        for segment in result.get("segments", []):
-            for w in segment.get("words", []):
-                text = w.get("text", "").strip()
-                if not text:
-                    continue
-                words.append({
-                    "word":       text,
-                    "start":      round(float(w.get("start", 0.0)), 3),
-                    "end":        round(float(w.get("end", 0.0)), 3),
-                    "confidence": round(float(w.get("confidence", 0.0)), 4),
-                })
-    else:
-        # openai-whisper: word-level probability via word_timestamps=True
-        result = whisper_mod.transcribe(
-            model, audio_path,
-            language="ar",
-            initial_prompt=target_text,
-            word_timestamps=True,
-            verbose=False,
-        )
-        for segment in result.get("segments", []):
-            for w in segment.get("words", []):
-                text = w.get("word", "").strip()
-                if not text:
-                    continue
-                # openai-whisper stores per-word prob as "probability"
-                conf = float(w.get("probability", 0.0))
-                words.append({
-                    "word":       text,
-                    "start":      round(float(w.get("start", 0.0)), 3),
-                    "end":        round(float(w.get("end", 0.0)), 3),
-                    "confidence": round(conf, 4),
-                })
-
     return words
 
 

@@ -566,7 +566,11 @@ function expandIfMuqattaat(word) {
     if (!word.includes('\u0653')) return null;
     const base = word
         .replace(/[\u064B-\u065F\u0610-\u061A\u0640\u0653\u0670]/g, '')
-        .replace(/[\u0671أإآٱ]/g, 'ا');
+        .replace(/[\u0671أإآٱء]/g, 'ا');
+    // Only treat this as a Muqatta'at phrase if it is a KNOWN disjoint-letter
+    // sequence (e.g. المٓ, يسٓ, حمٓ). Ordinary words also contain the maddah
+    // above (لَآ, مَآ) and must be matched as normal words instead.
+    if (!MUQATTAAT_CANONICAL.has(base)) return null;
     const names = [...base].map(c => LETTER_NAMES[c]);
     if (names.length > 0 && names.every(n => n !== undefined)) {
         return {
@@ -662,11 +666,10 @@ function normalizeAr(s) {
         .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0671)
         .replace(/\u0640/g, '')              // tatweel
         .replace(/\u0670/g, '')              // strip dagger alef (long vowel handled by medial-alef strip below)
-        .replace(/[\u0671أإآٱ]/g, 'ا')      // alef wasla + variants → plain alef
+        .replace(/[\u0671أإآٱء]/g, 'ا')      // alef wasla + variants + bare hamza → plain alef (hamzah recited as "aa" still matches)
         .replace(/ة/g,  'ه')                // ta marbuta
         .replace(/ى/g,  'ي')                // alef maqsura
-        .replace(/\u06E5/g, 'و')            // ۥ Small Waw → و
-        .replace(/\u06E6/g, 'ي')            // ۦ Small Ya  → ي
+        .replace(/[\u06E5\u06E6]/g, '')     // ۥ Small Waw / ۦ Small Ya → removed (optional long vowel, not interrupted by matching)
         .replace(/[\u06D6-\u06E4\u06E7-\u06FF]/g, '') // strip Quranic annotation marks
         .replace(/([؀-ۿ])ا([؀-ۿ])/g, '$1$2') // strip medial alef (ذالك→ذلك, عالمين→علمين, كتاب→كتب)
         .replace(/^([وبفلك])ال(?=[تثدذرزسشصضطظن])/, '$1') // strip ال after connector before sun letter
