@@ -29,12 +29,7 @@
         body {
             font-family: 'Amiri', serif;
             color: #333;
-            background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22180%22%20height%3D%22180%22%20viewBox%3D%220%200%20180%20180%22%3E%0A%3Cg%20fill%3D%22none%22%20stroke%3D%22%237fd29a%22%20stroke-opacity%3D%220.12%22%20stroke-width%3D%221.6%22%3E%0A%3Crect%20x%3D%2250%22%20y%3D%2250%22%20width%3D%2280%22%20height%3D%2280%22%20transform%3D%22rotate%2845%2090%2090%29%22/%3E%0A%3Crect%20x%3D%2250%22%20y%3D%2250%22%20width%3D%2280%22%20height%3D%2280%22/%3E%0A%3Ccircle%20cx%3D%2290%22%20cy%3D%2290%22%20r%3D%2240%22/%3E%0A%3C/g%3E%0A%3Cg%20fill%3D%22%23d4af37%22%20fill-opacity%3D%220.05%22%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%2290%22%20r%3D%225%22/%3E%3C/g%3E%0A%3Cg%20fill%3D%22none%22%20stroke%3D%22%23d4af37%22%20stroke-opacity%3D%220.08%22%20stroke-width%3D%221%22%3E%0A%3Cpath%20d%3D%22M90%200v180M0%2090h180%22/%3E%0A%3C/g%3E%0A%3C/svg%3E"), linear-gradient(160deg, #0b2417 0%, #123522 45%, #081b10 100%);
-            background-size: 180px 180px, cover;
-            background-repeat: repeat, no-repeat;
-            background-position: center, center;
-            background-attachment: fixed;
-            background-color: #081b10;
+            background-color: var(--cream);
             line-height: 1.6;
             overflow-x: hidden;
         }
