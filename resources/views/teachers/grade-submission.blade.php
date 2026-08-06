@@ -24,6 +24,67 @@
         ?: ($analysisForDetails['whisper_transcription_raw'] ?? '')
     ));
 
+    // Restore diacritics for display only (does not affect scoring) by aligning
+    // the transcription words to the diacritized expected text.
+    $recitedTextDisplay = $recitedText;
+    $expectedForRestore = $analysisForDetails['expected_text'] ?? '';
+    if ($expectedForRestore === '') {
+        $expectedForRestore = preg_replace('/<[^>]+>/u', ' ', (string) ($submission->assignment->expected_recitation ?? ''));
+    }
+    $expectedForRestore = html_entity_decode($expectedForRestore, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $expectedForRestore = preg_replace('/[\x{0660}-\x{0669}0-9]/u', '', $expectedForRestore);
+    $expectedForRestore = preg_replace('/\s+/u', ' ', trim($expectedForRestore));
+
+    if ($recitedText !== '' && $expectedForRestore !== '') {
+        $normForMatch = static function ($s) {
+            $s = html_entity_decode((string) $s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $s = preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', '', $s);
+            $s = str_replace('ـ', '', $s);
+            $s = str_replace(['أ', 'إ', 'آ', 'ٱ'], 'ا', $s);
+            $s = str_replace(['ى'], 'ي', $s);
+            $s = str_replace('ة', 'ه', $s);
+            return preg_replace('/[^\p{Arabic}]/u', '', $s);
+        };
+
+        $diacritizedByNorm = [];
+        foreach (preg_split('/\s+/u', trim($expectedForRestore)) as $ew) {
+            if ($ew === '') {
+                continue;
+            }
+            $n = $normForMatch($ew);
+            if ($n !== '' && !isset($diacritizedByNorm[$n])) {
+                $diacritizedByNorm[$n] = $ew;
+            }
+        }
+
+        $restored = [];
+        foreach (preg_split('/\s+/u', trim($recitedText)) as $tok) {
+            if ($tok === '') {
+                continue;
+            }
+            if ($tok === '۝' || str_contains($tok, '۝')) {
+                $restored[] = $tok;
+                continue;
+            }
+            $n = $normForMatch($tok);
+            if (isset($diacritizedByNorm[$n])) {
+                $restored[] = $diacritizedByNorm[$n];
+                continue;
+            }
+            $best = '';
+            $bestScore = 0;
+            foreach ($diacritizedByNorm as $en => $ew) {
+                similar_text($n, $en, $p);
+                if ($p > $bestScore && $p >= 60) {
+                    $bestScore = $p;
+                    $best = $ew;
+                }
+            }
+            $restored[] = $best !== '' ? $best : $tok;
+        }
+        $recitedTextDisplay = implode(' ', $restored);
+    }
+
     $pauseMarkerCount = $analysisForDetails['pause_markers']['count'] ?? 0;
     $overall = $analysisForDetails['overall_score'] ?? [];
 
@@ -902,8 +963,8 @@
                 </div>
 
                 <div class="recited-text">
-                    @if($recitedText !== '')
-                        <p>{{ $recitedText }}</p>
+                    @if($recitedTextDisplay !== '')
+                        <p>{{ $recitedTextDisplay }}</p>
                         @if($pauseMarkerCount > 0)
                             <p class="recited-note">Symbol ۝ marks long pauses and does not reduce word-accuracy score.</p>
                         @endif

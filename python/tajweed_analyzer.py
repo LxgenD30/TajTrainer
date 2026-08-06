@@ -203,8 +203,6 @@ class TajweedAnalyzer:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             self.whisper_model = self.whisper_model.to(device)
 
-            self._prepare_generation_config()
-
             print(json.dumps({
                 "status": "model_loaded",
                 "device": device
@@ -219,41 +217,23 @@ class TajweedAnalyzer:
             self.whisper_model = None
             self.whisper_processor = None
     
-    def _prepare_generation_config(self):
-        """Reset an outdated generation config so generate(language=...) works.
-
-        Tarteel Whisper ships a legacy generation_config.json whose fields are
-        rejected by newer transformers ("generation config is outdated"), which
-        used to force every transcription onto the OpenAI fallback.
-        """
-        try:
-            from transformers import GenerationConfig
-            if getattr(self, 'whisper_model', None) is None:
-                return
-            config = getattr(self.whisper_model, 'config', None)
-            if config is None:
-                return
-            # Fresh config drops the legacy forced_decoder_ids/suppress_tokens
-            # fields; generate() rebuilds decoder ids from the language arg.
-            self.whisper_model.generation_config = GenerationConfig.from_model_config(config)
-        except Exception as e:
-            print(json.dumps({
-                "status": "generation_config_fallback",
-                "error": str(e)
-            }), file=sys.stderr)
-
     def convert_webm_to_wav(self, webm_path):
         """Convert webm to wav for Parselmouth compatibility"""
         try:
             import subprocess
-            
+
             # Create temp wav file
             wav_path = webm_path.rsplit('.', 1)[0] + '_converted.wav'
-            
-            # Convert using ffmpeg
-            cmd = ['ffmpeg', '-i', webm_path, '-ar', '16000', '-ac', '1', '-y', wav_path]
+
+            # Convert using ffmpeg. -fflags +genpts +avoid_negative_ts handle
+            # MediaRecorder webm files that lack duration metadata, which can
+            # otherwise cause decoders to read only part of the recording.
+            cmd = [
+                'ffmpeg', '-fflags', '+genpts', '-avoid_negative_ts', 'make_zero',
+                '-i', webm_path, '-ar', '16000', '-ac', '1', '-y', wav_path,
+            ]
             subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-            
+
             return wav_path
         except Exception as e:
             print(json.dumps({
@@ -299,13 +279,23 @@ class TajweedAnalyzer:
             input_features = input_features.to(device)
 
             with torch.no_grad():
-                predicted_ids = self.whisper_model.generate(
-                    input_features,
-                    task='transcribe',
-                    language='ar',
-                    num_beams=3,
-                    do_sample=False,
-                )
+                try:
+                    predicted_ids = self.whisper_model.generate(
+                        input_features,
+                        task='transcribe',
+                        language='ar',
+                        num_beams=3,
+                        do_sample=False,
+                    )
+                except Exception:
+                    # Older generation configs are incompatible with the
+                    # `language` argument on newer transformers; retry without
+                    # it so the model's stored Arabic decoder ids are used.
+                    predicted_ids = self.whisper_model.generate(
+                        input_features,
+                        num_beams=3,
+                        do_sample=False,
+                    )
 
             transcription = self.whisper_processor.batch_decode(
                 predicted_ids,

@@ -440,18 +440,77 @@
     </div>
     
     @if($submission->transcription)
+    @php
+        $analysisForTranscription = is_string($submission->tajweed_analysis)
+            ? json_decode($submission->tajweed_analysis, true)
+            : ($submission->tajweed_analysis ?? []);
+
+        // Restore diacritics for display only by aligning to the expected text.
+        $transcriptionDisplay = $submission->transcription;
+        $expectedRestore = $analysisForTranscription['expected_text'] ?? '';
+        if ($expectedRestore === '') {
+            $expectedRestore = preg_replace('/<[^>]+>/u', ' ', (string) ($submission->assignment->expected_recitation ?? ''));
+        }
+        $expectedRestore = html_entity_decode($expectedRestore, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $expectedRestore = preg_replace('/[\x{0660}-\x{0669}0-9]/u', '', $expectedRestore);
+        $expectedRestore = preg_replace('/\s+/u', ' ', trim($expectedRestore));
+
+        if ($expectedRestore !== '') {
+            $normRestore = static function ($s) {
+                $s = html_entity_decode((string) $s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $s = preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', '', $s);
+                $s = str_replace('ـ', '', $s);
+                $s = str_replace(['أ', 'إ', 'آ', 'ٱ'], 'ا', $s);
+                $s = str_replace(['ى'], 'ي', $s);
+                $s = str_replace('ة', 'ه', $s);
+                return preg_replace('/[^\p{Arabic}]/u', '', $s);
+            };
+            $diacByNorm = [];
+            foreach (preg_split('/\s+/u', trim($expectedRestore)) as $ew) {
+                if ($ew === '') {
+                    continue;
+                }
+                $n = $normRestore($ew);
+                if ($n !== '' && !isset($diacByNorm[$n])) {
+                    $diacByNorm[$n] = $ew;
+                }
+            }
+            $restoredTokens = [];
+            foreach (preg_split('/\s+/u', trim($transcriptionDisplay)) as $tok) {
+                if ($tok === '') {
+                    continue;
+                }
+                if ($tok === '۝' || str_contains($tok, '۝')) {
+                    $restoredTokens[] = $tok;
+                    continue;
+                }
+                $n = $normRestore($tok);
+                if (isset($diacByNorm[$n])) {
+                    $restoredTokens[] = $diacByNorm[$n];
+                    continue;
+                }
+                $best = '';
+                $bestScore = 0;
+                foreach ($diacByNorm as $en => $ew) {
+                    similar_text($n, $en, $p);
+                    if ($p > $bestScore && $p >= 60) {
+                        $bestScore = $p;
+                        $best = $ew;
+                    }
+                }
+                $restoredTokens[] = $best !== '' ? $best : $tok;
+            }
+            $transcriptionDisplay = implode(' ', $restoredTokens);
+        }
+
+        $pauseMarkerCount = $analysisForTranscription['pause_markers']['count'] ?? 0;
+    @endphp
     <div class="transcription-box">
         <div class="transcription-header">
             <span class="transcription-title">📝 AI Transcription</span>
             <span class="ai-badge">Whisper (Tarteel AI model)</span>
         </div>
-        <p class="transcription-text">{{ $submission->transcription }}</p>
-        @php
-            $analysisForTranscription = is_string($submission->tajweed_analysis)
-                ? json_decode($submission->tajweed_analysis, true)
-                : ($submission->tajweed_analysis ?? []);
-            $pauseMarkerCount = $analysisForTranscription['pause_markers']['count'] ?? 0;
-        @endphp
+        <p class="transcription-text">{{ $transcriptionDisplay }}</p>
         @if($pauseMarkerCount > 0)
             <div style="margin-top: 10px; font-size: 0.85rem; color: #0a5c36;">
                 Note: The symbol ۝ marks a pause in your recitation and does not reduce word accuracy.
