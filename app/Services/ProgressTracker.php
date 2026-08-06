@@ -155,11 +155,11 @@ class ProgressTracker
      */
     public function getTopWeaknesses($userId, $limit = 5)
     {
+        // A rule is a weakness when its logged `was_correct` flag is false.
+        // (Per-rule correctness is recorded directly; using the overall session
+        // accuracy here would mis-attribute rules across a session.)
         $errors = $this->getUserErrorLogsQuery($userId)
-            ->whereRaw("CASE
-                WHEN tel.practice_session_id IS NOT NULL AND ps.accuracy_score IS NOT NULL THEN ps.accuracy_score < 80
-                ELSE tel.was_correct = 0
-            END")
+            ->where('tel.was_correct', false)
             ->select('tel.rule_name', 'tel.error_type', DB::raw('count(*) as error_count'))
             ->groupBy('tel.rule_name', 'tel.error_type')
             ->orderBy('error_count', 'desc')
@@ -379,10 +379,7 @@ class ProgressTracker
     public function getRecurringErrors($userId, $threshold = 3)
     {
         return $this->getUserErrorLogsQuery($userId)
-            ->whereRaw("CASE
-                WHEN tel.practice_session_id IS NOT NULL AND ps.accuracy_score IS NOT NULL THEN ps.accuracy_score < 80
-                ELSE tel.was_correct = 0
-            END")
+            ->where('tel.was_correct', false)
             ->select('tel.rule_name', 'tel.error_type', 'tel.issue_description', DB::raw('count(*) as occurrences'))
             ->groupBy('tel.rule_name', 'tel.error_type', 'tel.issue_description')
             ->having('occurrences', '>=', $threshold)
