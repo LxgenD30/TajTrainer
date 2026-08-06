@@ -663,10 +663,12 @@ function matchUnit(unit, spoken, start) {
 // ── Arabic normalization (diacritics stripped for comparison) ───────────────
 function normalizeAr(s) {
     return s
-        .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0671)
+        .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0671) — also strips the maddah \u0653
         .replace(/\u0640/g, '')              // tatweel
         .replace(/\u0670/g, '')              // strip dagger alef (long vowel handled by medial-alef strip below)
         .replace(/[\u0671أإآٱء]/g, 'ا')      // alef wasla + variants + bare hamza → plain alef (hamzah recited as "aa" still matches)
+        .replace(/ئ/g, 'ي')                 // hamza on ya → ya (Madd Wajib Muttasil: مَدّ followed by hamzah in one word)
+        .replace(/ؤ/g, 'و')                 // hamza on waw → waw
         .replace(/ة/g,  'ه')                // ta marbuta
         .replace(/ى/g,  'ي')                // alef maqsura
         .replace(/[\u06E5\u06E6]/g, '')     // ۥ Small Waw / ۦ Small Ya → removed (optional long vowel, not interrupted by matching)

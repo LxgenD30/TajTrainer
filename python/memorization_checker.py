@@ -75,6 +75,10 @@ def normalize_arabic(text: str) -> str:
     text = text.replace('\u0670', '')          # strip dagger alef (long vowel handled by medial-alef strip below)
     for variant, canon in _ALEF_MAP.items():
         text = text.replace(variant, canon)
+    # Hamza on ya / waw -> base letter (Madd Wajib Muttasil: a maddah followed by
+    # a hamzah in the same word is read as a long vowel, so \u0626 / \u0624 collapse)
+    text = text.replace('\u0626', '\u064A')   # \u0626 -> \u064a
+    text = text.replace('\u0624', '\u0648')   # \u0624 -> \u0648
     # Small Waw / Small Ya (Madd Silah markers) -> removed (optional long vowels,
     # so words like \u0631\u064e\u0628\u0651\u0650\u0647\u0650\u06e5 still match when recited without them)
     text = text.replace('\u06E5', '')
