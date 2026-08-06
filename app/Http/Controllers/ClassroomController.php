@@ -115,7 +115,7 @@ class ClassroomController extends Controller
                 abort(403, 'You are not enrolled in this classroom.');
             }
             
-            $classroom->load('teacher');
+            $classroom->load('teacher.user');
             $assignments = \App\Models\Assignment::where('class_id', $classroom->id)
                 ->with(['material'])
                 ->orderBy('due_date', 'asc')
