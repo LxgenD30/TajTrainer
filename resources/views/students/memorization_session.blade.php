@@ -606,7 +606,14 @@ const processed = VERSES.map(v => {
         } else {
             const norm = normalizeAr(w);
             if (norm) {
-                units.push({ isMuqattaat: false, disp: w, phrase: [norm], rawPhrase: [w] });
+                const unit = { isMuqattaat: false, disp: w, phrase: [norm], rawPhrase: [w] };
+                // Hamzat al-wasl (ٱ) is a "dead" alef: when continuing (wasl) the
+                // alef is elided, so also allow the word WITHOUT the leading alef.
+                if (w.charAt(0) === '\u0671' && norm.charAt(0) === 'ا') {
+                    const elided = norm.slice(1);
+                    if (elided) unit.alternatives = [elided];
+                }
+                units.push(unit);
             }
         }
     });
@@ -619,6 +626,14 @@ function matchUnit(unit, spoken, start) {
     const expected = unit.phrase;
     const rem = spoken.slice(start);
     const normFn = unit.isMuqattaat ? normLetter : normalizeAr;
+
+    // A word with a leading wasl alef may be recited with the alef elided
+    // (continuation/wasl), so match the whole unit against that form too.
+    if (unit.alternatives && unit.alternatives.length && rem.length > 0) {
+        const spokenNorm = normFn(rem[0]);
+        if (unit.alternatives.indexOf(spokenNorm) !== -1) return 1;
+    }
+
     let e = 0;
     let used = 0;
 

@@ -235,6 +235,14 @@ def _compare(transcribed_words: List[Dict], target_text: str) -> List[Dict]:
     """
     target_tokens_raw = target_text.split()
     target_tokens     = [normalize_arabic(t) for t in target_tokens_raw]
+    # Hamzat al-wasl (\u0671) is a "dead" alef: when continuing (wasl) it is elided,
+    # so allow the word with OR without the leading alef to match.
+    target_variants = []
+    for raw, norm in zip(target_tokens_raw, target_tokens):
+        if raw.startswith('\u0671') and norm.startswith('\u0627') and len(norm) > 1:
+            target_variants.append({norm, norm[1:]})
+        else:
+            target_variants.append({norm})
     trans_norm        = [normalize_arabic(w["word"]) for w in transcribed_words]
 
     flagged: List[Dict] = []
@@ -259,7 +267,7 @@ def _compare(transcribed_words: List[Dict], target_text: str) -> List[Dict]:
         lo = max(0, ti - WINDOW)
         hi = min(len(trans_norm), ti + WINDOW + 1)
         for ri in range(lo, hi):
-            if not used_trans[ri] and trans_norm[ri] == tword:
+            if not used_trans[ri] and trans_norm[ri] in target_variants[ti]:
                 matched_tgt[ti] = ri
                 used_trans[ri]  = True
                 break
