@@ -253,6 +253,7 @@
         .nav-bar {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
             width: 100%;
         }
