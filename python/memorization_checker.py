@@ -74,8 +74,7 @@ def normalize_arabic(text: str) -> str:
     text = _TATWEEL.sub('', text)
     # ىٰ / يٰ (alif maqsura/ya + superscript alef) is read as a long "aa", so map it to alef.
     text = re.sub(r'[\u0649\u064A]\u0670', '\u0627', text)
-    # Any other small/superscript alif (\u0670) is also a long "aa" → map it to a real alef.
-    text = text.replace('\u0670', '\u0627')
+    text = text.replace('\u0670', '')          # strip other small/superscript alif (ٰ)
     for variant, canon in _ALEF_MAP.items():
         text = text.replace(variant, canon)
     # Hamza on ya / waw -> base letter (Madd Wajib Muttasil: a maddah followed by
@@ -247,10 +246,18 @@ def _compare(transcribed_words: List[Dict], target_text: str) -> List[Dict]:
     # so allow the word with OR without the leading alef to match.
     target_variants = []
     for raw, norm in zip(target_tokens_raw, target_tokens):
+        variants = {norm}
+        # Hamzat al-wasl (\u0671) is a "dead" alef: allow the word with OR without it.
         if '\u0671' in raw and norm.startswith('\u0627') and len(norm) > 1:
-            target_variants.append({norm, norm[1:]})
-        else:
-            target_variants.append({norm})
+            variants.add(norm[1:])
+        # Small/superscript alif (\u0670) is read as a long "aa"; accept the common
+        # transcriptions (alif maqsura kept as ya, or an explicit alef) so it is
+        # never wrongly flagged.
+        if '\u0670' in raw:
+            as_ya = re.sub(r'[\u0649\u064A]\u0670', lambda m: m.group(0)[0], raw)
+            variants.add(normalize_arabic(as_ya))
+            variants.add(normalize_arabic(raw.replace('\u0670', '\u0627')))
+        target_variants.append(variants)
     trans_norm        = [normalize_arabic(w["word"]) for w in transcribed_words]
 
     flagged: List[Dict] = []

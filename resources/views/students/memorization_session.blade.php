@@ -607,13 +607,24 @@ const processed = VERSES.map(v => {
             const norm = normalizeAr(w);
             if (norm) {
                 const unit = { isMuqattaat: false, disp: w, phrase: [norm], rawPhrase: [w] };
+                const alts = [];
                 // Hamzat al-wasl (ٱ) is a "dead" alef: when continuing (wasl) it is
                 // elided, whether it leads the word (ٱلْحَكِيمِ) or follows a
                 // connector (وَٱلْقُرْءَانِ). Also allow the form without it.
                 if (w.includes('\u0671')) {
                     const elided = normalizeAr(w.replace(/\u0671/g, ''));
-                    if (elided && elided !== norm) unit.alternatives = [elided];
+                    if (elided && elided !== norm) alts.push(elided);
                 }
+                // Small alif (superscript alef ٰ) is read as a long "aa". Accept the
+                // common transcriptions so it is never wrongly flagged: the alif
+                // maqsura kept as a plain ya (عَلَىٰ → على → علي) and an explicit alef.
+                if (w.includes('\u0670')) {
+                    const asYa = normalizeAr(w.replace(/[ىي]\u0670/g, function (m) { return m.charAt(0); }));
+                    if (asYa && asYa !== norm && alts.indexOf(asYa) === -1) alts.push(asYa);
+                    const withAlef = normalizeAr(w.replace(/\u0670/g, 'ا'));
+                    if (withAlef && withAlef !== norm && alts.indexOf(withAlef) === -1) alts.push(withAlef);
+                }
+                if (alts.length) unit.alternatives = alts;
                 units.push(unit);
             }
         }
@@ -682,7 +693,7 @@ function normalizeAr(s) {
         .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0671) — also strips the maddah \u0653
         .replace(/\u0640/g, '')              // tatweel
         .replace(/[ىي]\u0670/g, 'ا')         // ىٰ / يٰ (alif maqsura/ya with superscript alef) = long "aa" → ا
-        .replace(/\u0670/g, 'ا')             // any other small/superscript alif (ٰ) = long "aa" → ا
+        .replace(/\u0670/g, '')              // strip other small/superscript alif (ٰ)
         .replace(/[\u0671أإآٱء]/g, 'ا')      // alef wasla + variants + bare hamza → plain alef (hamzah recited as "aa" still matches)
         .replace(/ئ/g, 'ي')                 // hamza on ya → ya (Madd Wajib Muttasil: مَدّ followed by hamzah in one word)
         .replace(/ؤ/g, 'و')                 // hamza on waw → waw
