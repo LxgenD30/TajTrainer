@@ -16,6 +16,8 @@
         border: 3px solid #2a2a2a;
         transition: all 0.3s ease;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
     }
     .student-card:hover {
         border-color: #0a5c36;
@@ -180,11 +182,16 @@
                         </p>
                         @if($student->classrooms->count() > 0)
                             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                @foreach($student->classrooms as $classroom)
+                                @foreach($student->classrooms->take(4) as $classroom)
                                     <span style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 15px; font-size: 1.05rem; font-weight: 700; font-family: 'Cairo', sans-serif;">
                                         <i class="fas fa-chalkboard-teacher"></i> {{ $classroom->class_name }}
                                     </span>
                                 @endforeach
+                                @if($student->classrooms->count() > 4)
+                                    <span style="display: inline-flex; align-items: center; padding: 6px 12px; background: rgba(10, 92, 54, 0.1); color: #0a5c36; border-radius: 15px; font-size: 1.05rem; font-weight: 700; font-family: 'Cairo', sans-serif;">
+                                        +{{ $student->classrooms->count() - 4 }} more
+                                    </span>
+                                @endif
                             </div>
                         @else
                             <p class="student-info-text" style="margin: 0; font-style: italic;">Not enrolled in any classes</p>
@@ -193,7 +200,7 @@
 
                     <!-- Action Button -->
                     <a href="{{ route('teacher.student.profile', $student->id) }}" 
-                       style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1.05rem; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; border: 2px solid #2a2a2a;"
+                       style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: linear-gradient(135deg, #0a5c36, #1abc9c); color: white; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 1.05rem; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; border: 2px solid #2a2a2a; margin-top: auto;"
                        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 5px 20px rgba(10, 92, 54, 0.4)'"
                        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
                         <i class="fas fa-user-circle"></i> View Profile
