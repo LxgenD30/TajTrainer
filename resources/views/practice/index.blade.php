@@ -14,9 +14,9 @@
     }
 
     .practice-container {
-        max-width: 1400px;
+        max-width: 1800px;
         margin: 0 auto;
-        padding: 30px 20px;
+        padding: 14px 10px;
     }
 
     .practice-header {
@@ -64,21 +64,38 @@
 
     .practice-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 25px;
-        margin-bottom: 30px;
+        grid-template-columns: 0.9fr 1fr 1fr 1fr;
+        gap: 18px;
+        margin-bottom: 26px;
+        align-items: start;
     }
 
-    @media (max-width: 1200px) {
+    @media (max-width: 1500px) {
+        .practice-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 992px) {
         .practice-grid { grid-template-columns: 1fr; }
     }
 
     .card {
         background: white;
         border-radius: 20px;
-        padding: 35px;
+        padding: 22px;
         box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
         border: 2px solid rgba(10, 92, 54, 0.1);
+    }
+
+    /* Reference column (leftmost, always visible) */
+    .reference-card .tajweed-colors {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .reference-card .tajweed-color-item {
+        font-size: 0.9rem;
+    }
+    .reference-card .audio-player {
+        margin: 10px 0 0;
     }
 
     .card h3 {
@@ -212,16 +229,6 @@
         font-size: 1.4rem;
         font-weight: 700;
         color: var(--primary-green);
-    }
-
-    .verse-translation {
-        font-size: 1.2rem;
-        color: #333;
-        line-height: 1.9;
-        padding: 25px;
-        background: rgba(212, 175, 55, 0.05);
-        border-radius: 10px;
-        border-left: 4px solid var(--gold);
     }
 
     .btn {
@@ -419,6 +426,55 @@
 
     <!-- Practice Grid -->
     <div class="practice-grid">
+        <!-- Reference Column (leftmost, always visible) -->
+        <div class="card reference-card">
+            <h3><i class="fas fa-headphones"></i> Reference</h3>
+
+            <h4 style="color: var(--primary-green); margin-bottom: 10px;">
+                <i class="fas fa-volume-up"></i> Reference Audio
+            </h4>
+            <p style="color: #444; margin-bottom: 10px; font-size: 0.95rem;">Sheikh Mishary Alafasy</p>
+            <audio id="referenceAudio" controls class="audio-player"></audio>
+
+            <h4 style="color: var(--primary-green); margin: 20px 0 10px;">
+                <i class="fas fa-palette"></i> Tajweed Colors
+            </h4>
+            <div class="tajweed-colors">
+                <div class="tajweed-color-item">
+                    <div class="color-box" style="background: #9e9e9e;"></div>
+                    <span>Silent Letter</span>
+                </div>
+                <div class="tajweed-color-item">
+                    <div class="color-box" style="background: #9cad32;"></div>
+                    <span>Normal Madd (2)</span>
+                </div>
+                <div class="tajweed-color-item">
+                    <div class="color-box" style="background: #f39c12;"></div>
+                    <span>Separated Madd (2/4/6)</span>
+                </div>
+                <div class="tajweed-color-item">
+                    <div class="color-box" style="background: #e53935;"></div>
+                    <span>Connected Madd (4/5)</span>
+                </div>
+                <div class="tajweed-color-item">
+                    <div class="color-box" style="background: #7b1f1f;"></div>
+                    <span>Necessary Madd (6)</span>
+                </div>
+                <div class="tajweed-color-item">
+                    <div class="color-box" style="background: #1f8f45;"></div>
+                    <span>Ghunnah / Ikhfa'</span>
+                </div>
+                <div class="tajweed-color-item">
+                    <div class="color-box" style="background: #5bc0eb;"></div>
+                    <span>Qalqalah (Echo)</span>
+                </div>
+                <div class="tajweed-color-item">
+                    <div class="color-box" style="background: #0f3d91;"></div>
+                    <span>Tafkhim (Heavy)</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Verse Card -->
         <div class="card">
             <h3><i class="fas fa-book-quran"></i> Practice Verse</h3>
@@ -448,63 +504,6 @@
                 <button class="btn btn-primary" onclick="loadNewVerse()">
                     <i class="fas fa-sync-alt"></i> New Verse
                 </button>
-                <button class="btn btn-secondary" onclick="toggleReference()">
-                    <i class="fas fa-headphones"></i> <span id="refBtnText">Show Reference</span>
-                </button>
-            </div>
-
-            <!-- Reference Section -->
-            <div class="reference-section" id="referenceSection">
-                <h4 style="color: var(--primary-green); margin-bottom: 15px;">
-                    <i class="fas fa-volume-up"></i> Reference Audio
-                </h4>
-                <p style="color: #666; margin-bottom: 10px;">Sheikh Mishary Alafasy</p>
-                <audio id="referenceAudio" controls class="audio-player"></audio>
-                
-                <h4 style="color: var(--primary-green); margin: 20px 0 10px;">
-                    <i class="fas fa-palette"></i> Tajweed Colors
-                </h4>
-                <div class="tajweed-colors">
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #9e9e9e;"></div>
-                        <span>Silent Letter</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #9cad32;"></div>
-                        <span>Normal Madd (2)</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #f39c12;"></div>
-                        <span>Separated Madd (2/4/6)</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #e53935;"></div>
-                        <span>Connected Madd (4/5)</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #7b1f1f;"></div>
-                        <span>Necessary Madd (6)</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #1f8f45;"></div>
-                        <span>Ghunnah / Ikhfa'</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #5bc0eb;"></div>
-                        <span>Qalqalah (Echo)</span>
-                    </div>
-                    <div class="tajweed-color-item">
-                        <div class="color-box" style="background: #0f3d91;"></div>
-                        <span>Tafkhim (Heavy)</span>
-                    </div>
-                </div>
-            </div>
-
-            <h4 style="color: var(--primary-green); margin: 20px 0 10px;">
-                <i class="fas fa-language"></i> Translation
-            </h4>
-            <div class="verse-translation" id="ayahTranslation">
-                <div class="loading">Loading translation...</div>
             </div>
         </div>
 
@@ -619,7 +618,6 @@
         
         console.log('Step 1: Show loading state');
         document.getElementById('ayahArabic').innerHTML = '<div class="loading">Loading verse...</div>';
-        document.getElementById('ayahTranslation').innerHTML = '<div class="loading">Loading translation...</div>';
         document.getElementById('surahInfo').textContent = '---';
         document.getElementById('ayahInfo').textContent = '---';
         
@@ -652,7 +650,6 @@
                     document.getElementById('ayahArabic').innerHTML = verse.textTajweed || verse.textPlain || '';
                     document.getElementById('surahInfo').textContent = verse.surahNameEnglish + (verse.surahNameArabic ? ' (' + verse.surahNameArabic + ')' : '');
                     document.getElementById('ayahInfo').textContent = 'Ayah ' + verse.ayahNumber;
-                    document.getElementById('ayahTranslation').textContent = verse.translation || 'Translation unavailable.';
 
                     if (!currentExpectedText) {
                         currentExpectedText = (document.getElementById('ayahArabic').textContent || '').trim();
@@ -679,27 +676,10 @@
                     
                     document.getElementById('ayahArabic').innerHTML = '';
                     document.getElementById('ayahArabic').appendChild(errorDiv);
-                    document.getElementById('ayahTranslation').innerHTML = '<div class="error">Failed to load translation</div>';
                 });
     }
 
     window.loadNewVerse = loadNewVerse;
-
-    function toggleReference() {
-        console.log('toggleReference() called');
-        var section = document.getElementById('referenceSection');
-        var btnText = document.getElementById('refBtnText');
-        
-        if (section.classList.contains('show')) {
-            section.classList.remove('show');
-            btnText.textContent = 'Show Reference';
-        } else {
-            section.classList.add('show');
-            btnText.textContent = 'Hide Reference';
-        }
-    }
-
-    window.toggleReference = toggleReference;
 
     function toggleRecording() {
         console.log('toggleRecording() called');
@@ -1005,7 +985,6 @@
     console.log('Available functions:', Object.keys(window).filter(function(key) {
         return typeof window[key] === 'function' && (
             key === 'loadNewVerse' || 
-            key === 'toggleReference' || 
             key === 'toggleRecording' ||
             key === 'deleteRecording' ||
             key === 'analyzeRecording'
