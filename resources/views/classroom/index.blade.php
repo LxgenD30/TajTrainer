@@ -12,7 +12,7 @@
     .modern-card {
         background: #ffffff;
         border-radius: 15px;
-        padding: 25px;
+        padding: 22px;
         box-shadow: 0 10px 25px rgba(10, 92, 54, 0.1);
         border: 3px solid #2a2a2a;
         transition: all 0.3s ease;
@@ -239,7 +239,7 @@
         </div>
     @endif
 
-    <div class="classes-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px;">
+    <div class="classes-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
         <!-- My Enrolled Classes Section -->
         <div class="modern-card">
             <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f5f5dc; padding-bottom: 20px; margin-bottom: 25px;">
@@ -286,7 +286,7 @@
                     <p style="color: #666; font-size: 1.25rem; line-height: 1.6;">Use the access code from your teacher to enroll in your first class</p>
                 </div>
             @else
-                <div style="display: grid; gap: 20px; max-height: 680px; overflow-y: auto; padding-right: 6px;" id="classesContainer">
+                <div style="display: grid; gap: 20px; max-height: 620px; overflow-y: auto; padding-right: 6px;" id="classesContainer">
                     @foreach($student->classrooms as $classroom)
                         <div class="class-card" data-classroom-name="{{ strtolower($classroom->class_name) }}" data-teacher-name="{{ strtolower($classroom->teacher->name ?? '') }}" data-enrolled-date="{{ $classroom->pivot->created_at ?? now() }}">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
@@ -328,7 +328,7 @@
         </div>
 
         <!-- Enroll in Class Section -->
-        <div class="modern-card" style="height: fit-content;">
+        <div class="modern-card" style="display: flex; flex-direction: column; justify-content: center;">
             <div class="section-header">
                 <div class="icon-badge">
                     <i class="fas fa-plus-circle" style="color: #d4af37;"></i>
