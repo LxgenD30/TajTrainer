@@ -286,7 +286,7 @@
                     <p style="color: #666; font-size: 1.25rem; line-height: 1.6;">Use the access code from your teacher to enroll in your first class</p>
                 </div>
             @else
-                <div style="display: grid; gap: 20px;" id="classesContainer">
+                <div style="display: grid; gap: 20px; max-height: 680px; overflow-y: auto; padding-right: 6px;" id="classesContainer">
                     @foreach($student->classrooms as $classroom)
                         <div class="class-card" data-classroom-name="{{ strtolower($classroom->class_name) }}" data-teacher-name="{{ strtolower($classroom->teacher->name ?? '') }}" data-enrolled-date="{{ $classroom->pivot->created_at ?? now() }}">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
