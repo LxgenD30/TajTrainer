@@ -269,6 +269,8 @@
             cursor: pointer;
             align-items: center;
             justify-content: center;
+            line-height: 1;
+            padding: 0;
             transition: all 0.25s ease;
             flex-shrink: 0;
         }
@@ -346,6 +348,7 @@
             /* Collapsible nav links (the toggle is part of the partial) */
             .nav-bar {
                 flex-wrap: wrap;
+                justify-content: center;
             }
 
             .nav-bar-toggle {
@@ -372,7 +375,7 @@
 
             .nav-bar-links .nav-item {
                 width: 100%;
-                justify-content: flex-start;
+                justify-content: center;
                 padding: 12px 16px;
             }
 
