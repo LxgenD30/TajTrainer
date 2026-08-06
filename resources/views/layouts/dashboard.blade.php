@@ -413,8 +413,8 @@
                 </a>
                 
                 <div class="user-profile" id="userProfile">
-                    @if(Auth::user()->profile_picture)
-                        <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gold);">
+                    @if(Auth::user()->profile_picture_url)
+                        <img src="{{ Auth::user()->profile_picture_url }}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gold);">
                     @else
                         <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}</div>
                     @endif

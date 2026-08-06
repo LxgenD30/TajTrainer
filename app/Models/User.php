@@ -50,6 +50,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Resolve the profile picture to a renderable URL. Handles both locally
+     * stored paths (storage/...) and remote URLs (e.g. legacy Google avatars).
+     */
+    public function getProfilePictureUrlAttribute(): ?string
+    {
+        if (empty($this->profile_picture)) {
+            return null;
+        }
+
+        return str_starts_with($this->profile_picture, 'http')
+            ? $this->profile_picture
+            : asset('storage/' . $this->profile_picture);
+    }
+
+    /**
      * Get the role that owns the user.
      */
     public function role()

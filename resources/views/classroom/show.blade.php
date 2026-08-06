@@ -89,17 +89,19 @@
                 </div>
                 @else
                 @php $classTeacher = $classroom->teacher; @endphp
-                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
-                    @if($classTeacher && $classTeacher->user && $classTeacher->user->profile_picture)
-                        <img src="{{ asset('storage/' . $classTeacher->user->profile_picture) }}" alt="{{ $classTeacher->name }}"
-                             style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #ffd700; margin: 0 auto 10px; display: block;">
+                <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 18px 22px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); display: flex; align-items: center; gap: 16px; min-height: 100%;">
+                    @if($classTeacher && $classTeacher->user && $classTeacher->user->profile_picture_url)
+                        <img src="{{ $classTeacher->user->profile_picture_url }}" alt="{{ $classTeacher->name }}"
+                             style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #ffd700; flex-shrink: 0;">
                     @else
-                        <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #ffed4e); border: 3px solid #ffd700; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; font-weight: 800; color: #0a5c36; margin: 0 auto 10px;">
+                        <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #1abc9c); border: 3px solid #ffd700; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; font-weight: 800; color: #fff; flex-shrink: 0;">
                             {{ strtoupper(substr($classTeacher->name ?? 'T', 0, 1)) }}
                         </div>
                     @endif
-                    <div style="font-size: 1.15rem; font-weight: 700; line-height: 1.35;">{{ $classTeacher->name ?? '—' }}</div>
-                    <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 6px;">Teacher</div>
+                    <div style="min-width: 0;">
+                        <div style="font-size: 1.25rem; font-weight: 800; line-height: 1.3; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">{{ $classTeacher->name ?? '—' }}</div>
+                        <div style="font-size: 1rem; opacity: 0.9; margin-top: 4px; color: #fff;">Teacher</div>
+                    </div>
                 </div>
                 @endif
                 <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">

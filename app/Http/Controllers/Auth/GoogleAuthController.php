@@ -71,8 +71,9 @@ class GoogleAuthController extends Controller
             }
 
             $user->google_id = $googleId;
-            if (!$user->profile_picture && $googleUser->getAvatar()) {
-                $user->profile_picture = $googleUser->getAvatar();
+            $avatarPath = $this->storeGoogleAvatar($googleUser->getAvatar(), $user->profile_picture);
+            if ($avatarPath) {
+                $user->profile_picture = $avatarPath;
             }
             if (is_null($user->email_verified_at)) {
                 $user->email_verified_at = now();
@@ -178,9 +179,9 @@ class GoogleAuthController extends Controller
 
             $user->google_id = $googleId;
 
-            $picture = $tokenInfo['picture'] ?? null;
-            if (!$user->profile_picture && !empty($picture)) {
-                $user->profile_picture = $picture;
+            $avatarPath = $this->storeGoogleAvatar($tokenInfo['picture'] ?? null, $user->profile_picture);
+            if ($avatarPath) {
+                $user->profile_picture = $avatarPath;
             }
 
             if (is_null($user->email_verified_at)) {
@@ -214,6 +215,56 @@ class GoogleAuthController extends Controller
     private function redirectByRole(User $user): RedirectResponse
     {
         return redirect()->to($this->redirectPathByRole($user));
+    }
+
+    /**
+     * Download the Google avatar into local storage and return the stored path.
+     * Keeps an existing locally-stored picture untouched; replaces stale URLs
+     * stored by earlier versions of this controller.
+     */
+    private function storeGoogleAvatar(?string $avatarUrl, ?string $existing = null): ?string
+    {
+        if (empty($avatarUrl)) {
+            return null;
+        }
+
+        // Keep an existing locally-stored picture.
+        if (!empty($existing) && !str_starts_with($existing, 'http')) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout(15)->get($avatarUrl);
+            if (!$response->ok()) {
+                return null;
+            }
+
+            $contentType = strtolower((string) $response->header('Content-Type', ''));
+            $ext = 'jpg';
+            if (str_contains($contentType, 'png')) {
+                $ext = 'png';
+            } elseif (str_contains($contentType, 'webp')) {
+                $ext = 'webp';
+            } elseif (str_contains($contentType, 'gif')) {
+                $ext = 'gif';
+            }
+
+            $filename = 'profile_pictures/google_' . md5($avatarUrl . uniqid('', true)) . '.' . $ext;
+            \Storage::disk('public')->put($filename, $response->body());
+
+            // Remove the old local file it replaced.
+            if (!empty($existing) && !str_starts_with($existing, 'http') && \Storage::disk('public')->exists($existing)) {
+                \Storage::disk('public')->delete($existing);
+            }
+
+            return $filename;
+        } catch (Throwable $e) {
+            Log::warning('Failed to download Google profile picture', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function redirectPathByRole(User $user): string
