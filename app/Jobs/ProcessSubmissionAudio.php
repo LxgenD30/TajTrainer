@@ -155,12 +155,11 @@ class ProcessSubmissionAudio implements ShouldQueue
     
     private function analyzeTajweed($audioPath, $transcription, $surah, $startVerse, $endVerse, $referenceAudioPath = null, $storedExpectedRecitation = null)
     {
-        // Prefer the stored expected recitation (fetched correctly at creation)
-        // so the analyzer always receives complete, correct text without relying
-        // on surah-name resolution. Fall back to re-fetching from the API.
-        $expectedText = $this->storedToPlainText($storedExpectedRecitation);
+        // Prefer a fresh clean fetch (whole words, ۝-separated) so accuracy
+        // matching is reliable; fall back to the stored expected recitation.
+        $expectedText = $this->getQuranText($surah, $startVerse, $endVerse);
         if ($expectedText === '') {
-            $expectedText = $this->getQuranText($surah, $startVerse, $endVerse);
+            $expectedText = $this->storedToPlainText($storedExpectedRecitation);
         }
         $tajweedText = $this->getTajweedFormattedText($surah, $startVerse, $endVerse);
         
@@ -209,9 +208,9 @@ class ProcessSubmissionAudio implements ShouldQueue
         $plain = preg_replace('/<[^>]+>/u', ' ', $html);
         $plain = html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-        // Remove isolated ayah-end marker digits (e.g. ٥, ١٧٣) and the ۝ separator.
+        // Remove isolated ayah-end marker digits (e.g. ٥, ١٧٣). Keep ۝ as the
+        // ayah separator so the Python analyzer can align ayah boundaries.
         $plain = preg_replace('/(?<=\s)[\x{0660}-\x{0669}0-9]+(?=\s|$)/u', ' ', $plain);
-        $plain = str_replace('۝', ' ', $plain);
 
         return trim(preg_replace('/\s+/u', ' ', $plain));
     }
@@ -506,7 +505,8 @@ class ProcessSubmissionAudio implements ShouldQueue
 
             foreach ($selectedVerses as $verse) {
                 $tajweedText = $verse['text_uthmani_tajweed'] ?? $verse['text_uthmani'] ?? '';
-                $plainText = trim(strip_tags($tajweedText));
+                // Use the clean Uthmani text so words stay whole for accuracy matching.
+                $plainText = trim($verse['text_uthmani'] ?? strip_tags($tajweedText));
 
                 if ($tajweedText !== '') {
                     $arabicHtml[] = $tajweedText;
@@ -582,6 +582,8 @@ class ProcessSubmissionAudio implements ShouldQueue
             'Al-Fil' => 105, 'Quraish' => 106, 'Al-Maa\'un' => 107, 'Al-Kawthar' => 108,
             'Al-Kaafiroon' => 109, 'An-Nasr' => 110, 'Al-Masad' => 111, 'Al-Ikhlaas' => 112,
             'Al-Falaq' => 113, 'An-Naas' => 114,
+            'Az-Zalzalah' => 99, 'Al-Zalzalah' => 99, 'Az-Zalzala' => 99,
+            'Al-Lahab' => 111,
             'Al-Fatiha' => 1, 'Al-Baqarah' => 2, 'Ali Imran' => 3, 'An-Nisa' => 4,
             'Al-Ma\'idah' => 5, 'Al-An\'am' => 6, 'Al-A\'raf' => 7, 'Al-Anfal' => 8,
             'Tawbah' => 9, 'Ya-Sin' => 36, 'Yasin' => 36, 'Qaf' => 50,
@@ -630,10 +632,38 @@ class ProcessSubmissionAudio implements ShouldQueue
     {
         $transcribed = $this->normalizeArabicText($transcribed);
         $expected = $this->normalizeArabicText($expected);
-        
-        similar_text($transcribed, $expected, $percent);
-        
-        return round($percent, 2);
+
+        $transWords = preg_split('/\s+/u', trim($transcribed));
+        $expectedWords = preg_split('/\s+/u', trim($expected));
+
+        if (empty($expectedWords) || empty($transWords)) {
+            return 0.0;
+        }
+
+        // Lenient, order-independent word matching (mirrors the Python scorer).
+        $used = array_fill(0, count($transWords), false);
+        $matched = 0;
+
+        foreach ($expectedWords as $expectedWord) {
+            $best = 0;
+            $bestIndex = -1;
+            foreach ($transWords as $index => $transWord) {
+                if ($used[$index]) {
+                    continue;
+                }
+                similar_text($expectedWord, $transWord, $percent);
+                if ($percent > $best) {
+                    $best = $percent;
+                    $bestIndex = $index;
+                }
+            }
+            if ($bestIndex >= 0 && $best >= 60) {
+                $used[$bestIndex] = true;
+                $matched++;
+            }
+        }
+
+        return round($matched / count($expectedWords) * 100, 2);
     }
     
     private function normalizeArabicText($text)

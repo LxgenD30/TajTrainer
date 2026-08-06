@@ -202,7 +202,9 @@ class TajweedAnalyzer:
             # Use GPU if available
             device = "cuda" if torch.cuda.is_available() else "cpu"
             self.whisper_model = self.whisper_model.to(device)
-            
+
+            self._prepare_generation_config()
+
             print(json.dumps({
                 "status": "model_loaded",
                 "device": device
@@ -217,6 +219,29 @@ class TajweedAnalyzer:
             self.whisper_model = None
             self.whisper_processor = None
     
+    def _prepare_generation_config(self):
+        """Reset an outdated generation config so generate(language=...) works.
+
+        Tarteel Whisper ships a legacy generation_config.json whose fields are
+        rejected by newer transformers ("generation config is outdated"), which
+        used to force every transcription onto the OpenAI fallback.
+        """
+        try:
+            from transformers import GenerationConfig
+            if getattr(self, 'whisper_model', None) is None:
+                return
+            config = getattr(self.whisper_model, 'config', None)
+            if config is None:
+                return
+            # Fresh config drops the legacy forced_decoder_ids/suppress_tokens
+            # fields; generate() rebuilds decoder ids from the language arg.
+            self.whisper_model.generation_config = GenerationConfig.from_model_config(config)
+        except Exception as e:
+            print(json.dumps({
+                "status": "generation_config_fallback",
+                "error": str(e)
+            }), file=sys.stderr)
+
     def convert_webm_to_wav(self, webm_path):
         """Convert webm to wav for Parselmouth compatibility"""
         try:
@@ -595,14 +620,41 @@ class TajweedAnalyzer:
         return text.strip()
 
     def calculate_word_accuracy(self, transcription, expected):
-        """Calculate word-level similarity percentage."""
+        """Lenient, order-independent word accuracy.
+
+        Each expected word is fuzzy-matched against the remaining transcription
+        words (SequenceMatcher ratio >= 0.6), tolerating Whisper word splits,
+        extra words, and minor letter differences. Returns (hit_rate, avg_ratio).
+        """
         trans_words = transcription.split()
         expected_words = expected.split()
 
-        if not expected_words:
-            return 0.0
+        if not expected_words or not trans_words:
+            return 0.0, 0.0
 
-        return SequenceMatcher(None, trans_words, expected_words).ratio() * 100.0
+        from difflib import SequenceMatcher
+
+        used = [False] * len(trans_words)
+        matched = 0
+        total_ratio = 0.0
+        for ew in expected_words:
+            best = 0.0
+            best_j = -1
+            for j, tw in enumerate(trans_words):
+                if used[j]:
+                    continue
+                r = SequenceMatcher(None, ew, tw).ratio()
+                if r > best:
+                    best = r
+                    best_j = j
+            if best_j >= 0 and best >= 0.6:
+                used[best_j] = True
+                matched += 1
+                total_ratio += best
+
+        hit_rate = matched / len(expected_words) * 100.0
+        avg_ratio = total_ratio / len(expected_words) * 100.0
+        return hit_rate, avg_ratio
     
     def detect_madd_in_text(self):
         """Check if expected text contains Madd rules."""
@@ -1052,9 +1104,14 @@ class TajweedAnalyzer:
             applicable_rules = [rule for rule in rule_contexts if rule.get('applicable', True)]
             non_applicable_rules = [rule for rule in rule_contexts if not rule.get('applicable', True)]
             
-            # Calculate text similarity
-            from difflib import SequenceMatcher
-            text_accuracy = SequenceMatcher(None, transcription, expected).ratio() * 100 if transcription and expected else 0
+            # Use the stored, lenient accuracy metrics so the AI feedback always
+            # agrees with the numbers shown on the grade page.
+            overall = analysis_results.get('overall_score', {}) or {}
+            word_accuracy = overall.get('word_accuracy')
+            pronunciation_accuracy = overall.get('pronunciation_accuracy')
+            text_accuracy = pronunciation_accuracy if pronunciation_accuracy is not None \
+                else (word_accuracy if word_accuracy is not None else 0.0)
+            word_accuracy_display = word_accuracy if word_accuracy is not None else text_accuracy
             
             # Get reference comparison if available
             ref_comparison = analysis_results.get('reference_comparison', {})
@@ -1082,6 +1139,7 @@ CRITICAL: Base your feedback on ALL metrics below, especially pronunciation accu
 Expected Quranic Text: {expected}
 Student's Transcription: {transcription}
 Pronunciation Accuracy: {text_accuracy:.1f}%
+Word Accuracy: {word_accuracy_display:.1f}%
 
 Reference Audio Comparison:
 - Overall Similarity: {ref_similarity:.1f}%
@@ -1094,7 +1152,9 @@ Tajweed Rules Analysis:
 Overall Score: {analysis_results['overall_score']['score']}%
 
 IMPORTANT GUIDELINES:
-- If pronunciation accuracy < 70%, flag MAJOR pronunciation/articulation errors
+- If pronunciation/word accuracy < 50%, flag MAJOR pronunciation/articulation errors
+- If pronunciation/word accuracy is 50-70%, note moderate pronunciation issues
+- If pronunciation/word accuracy > 70%, acknowledge correct articulation as a strength
 - If reference similarity < 50%, mention pitch/rhythm issues
 - If Tajweed scores are low, explain WHICH rules need work and WHY
 - Be specific about what letters/sounds are mispronounced
@@ -1554,13 +1614,7 @@ Be honest, specific, and constructive. Students need ACCURATE feedback to improv
             normalized_expected = self.normalize_arabic_for_accuracy(self.expected_text)
 
             if normalized_transcription and normalized_expected:
-                from difflib import SequenceMatcher
-                pronunciation_accuracy = SequenceMatcher(
-                    None,
-                    normalized_transcription,
-                    normalized_expected
-                ).ratio() * 100.0
-                word_accuracy = self.calculate_word_accuracy(
+                word_accuracy, pronunciation_accuracy = self.calculate_word_accuracy(
                     normalized_transcription,
                     normalized_expected
                 )

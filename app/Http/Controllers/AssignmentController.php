@@ -370,7 +370,8 @@ class AssignmentController extends Controller
                 $verseParts = explode(':', $verse['verse_key'] ?? '0:0');
                 $verseNumber = (int) ($verseParts[1] ?? 0);
                 $tajweedText = $verse['text_uthmani_tajweed'] ?? $verse['text_uthmani'] ?? '';
-                $plainText = trim(strip_tags($tajweedText));
+                // Use the clean Uthmani text (no tajweed markup) so words stay whole.
+                $plainText = trim($verse['text_uthmani'] ?? strip_tags($tajweedText));
                 $translationText = trim(strip_tags($verse['translations'][0]['text'] ?? ''));
 
                 if ($tajweedText !== '') {
@@ -532,7 +533,7 @@ class AssignmentController extends Controller
             'Al-Burooj' => 85, 'At-Taariq' => 86, 'Al-A\'laa' => 87, 'Al-Ghaashiya' => 88,
             'Al-Fajr' => 89, 'Al-Balad' => 90, 'Ash-Shams' => 91, 'Al-Lail' => 92,
             'Ad-Dhuhaa' => 93, 'Ash-Sharh' => 94, 'At-Tin' => 95, 'Al-Alaq' => 96,
-            'Al-Qadr' => 97, 'Al-Bayyina' => 98, 'Az-Zalzala' => 99, 'Al-Aadiyaat' => 100,
+            'Al-Qadr' => 97, 'Al-Bayyina' => 98, 'Az-Zalzala' => 99, 'Az-Zalzalah' => 99, 'Al-Zalzalah' => 99, 'Al-Aadiyaat' => 100,
             'Al-Qaari\'a' => 101, 'At-Takaathur' => 102, 'Al-Asr' => 103, 'Al-Humaza' => 104,
             'Al-Fil' => 105, 'Quraish' => 106, 'Al-Maa\'un' => 107, 'Al-Kawthar' => 108,
             'Al-Kaafiroon' => 109, 'An-Nasr' => 110, 'Al-Masad' => 111, 'Al-Ikhlaas' => 112,
