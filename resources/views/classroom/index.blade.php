@@ -239,7 +239,7 @@
         </div>
     @endif
 
-    <div class="classes-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+    <div class="classes-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px;">
         <!-- My Enrolled Classes Section -->
         <div class="modern-card">
             <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f5f5dc; padding-bottom: 20px; margin-bottom: 25px;">
@@ -328,7 +328,7 @@
         </div>
 
         <!-- Enroll in Class Section -->
-        <div class="modern-card" style="display: flex; flex-direction: column; justify-content: center;">
+        <div class="modern-card">
             <div class="section-header">
                 <div class="icon-badge">
                     <i class="fas fa-plus-circle" style="color: #d4af37;"></i>
