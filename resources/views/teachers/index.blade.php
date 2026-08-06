@@ -401,21 +401,35 @@
                     $q->where('teacher_id', Auth::id());
                 })
                 ->where('status', 'submitted')
-                ->with('student', 'assignment')
+                ->with('student', 'assignment.material', 'assignment.classroom')
                 ->latest()
                 ->take(10)
                 ->get();
             @endphp
             
             @forelse($recentSubmissions as $submission)
+                @php
+                    $queueAssignment = $submission->assignment;
+                    $queueAssignmentName = $queueAssignment
+                        ? trim(($queueAssignment->surah ?? '') . ' ' . ($queueAssignment->start_verse ?? '') . ($queueAssignment->end_verse ? '-' . $queueAssignment->end_verse : ''))
+                        : '';
+                    if ($queueAssignmentName === '') {
+                        $queueAssignmentName = $queueAssignment && $queueAssignment->material
+                            ? $queueAssignment->material->title
+                            : 'Assignment';
+                    }
+                    $queueStudentName = $submission->student?->name
+                        ?? $submission->student?->user?->name
+                        ?? 'Student';
+                @endphp
                 <div class="submission-item">
                     <div class="submission-header">
                         <div class="submission-icon">
                             <i class="fas fa-user-graduate"></i>
                         </div>
                         <div class="submission-details">
-                            <h4>{{ $submission->student->name }}</h4>
-                            <p><i class="fas fa-file-alt"></i> {{ Str::limit($submission->assignment->title, 25) }}</p>
+                            <h4>{{ $queueStudentName }}</h4>
+                            <p><i class="fas fa-file-alt"></i> {{ Str::limit($queueAssignmentName, 25) }}</p>
                         </div>
                     </div>
                     <div class="submission-footer">
