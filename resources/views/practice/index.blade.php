@@ -14,9 +14,9 @@
     }
 
     .practice-container {
-        max-width: 1800px;
+        max-width: 1920px;
         margin: 0 auto;
-        padding: 14px 10px;
+        padding: 14px 12px;
     }
 
     .practice-header {
@@ -67,7 +67,7 @@
         grid-template-columns: 0.9fr 1fr 1fr 1fr;
         gap: 18px;
         margin-bottom: 26px;
-        align-items: start;
+        align-items: stretch;
     }
 
     @media (max-width: 1500px) {
@@ -84,15 +84,25 @@
         padding: 22px;
         box-shadow: 0 10px 30px rgba(10, 92, 54, 0.1);
         border: 2px solid rgba(10, 92, 54, 0.1);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 
     /* Reference column (leftmost, always visible) */
     .reference-card .tajweed-colors {
         grid-template-columns: 1fr;
-        gap: 8px;
+        gap: 10px;
+        margin-top: 16px;
     }
     .reference-card .tajweed-color-item {
-        font-size: 0.9rem;
+        font-size: 1.05rem;
+        gap: 10px;
+    }
+    .reference-card .color-box {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
     }
     .reference-card .audio-player {
         margin: 10px 0 0;
