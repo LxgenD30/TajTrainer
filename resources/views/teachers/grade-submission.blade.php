@@ -161,29 +161,34 @@
     .grade-hero {
         background: linear-gradient(135deg, #0a5c36, #1abc9c);
         border: 3px solid #0a4a2b;
-        border-radius: 20px;
+        border-radius: 18px;
         color: #fff;
-        padding: 30px 34px;
+        padding: 20px 26px;
         margin-bottom: 28px;
-        box-shadow: 0 14px 32px rgba(10, 92, 54, 0.24);
+        box-shadow: var(--grade-shadow);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
+        gap: 16px;
         flex-wrap: wrap;
     }
 
     .grade-hero h1 {
-        margin: 0 0 6px;
-        font-size: 2.2rem;
-        line-height: 1.2;
+        margin: 0 0 4px;
+        font-size: 1.45rem;
+        line-height: 1.3;
         color: #fff;
+        font-family: 'El Messiri', serif;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .grade-hero p {
         margin: 0;
         opacity: 0.95;
-        font-size: 1.1rem;
+        font-size: 0.95rem;
     }
 
     .hero-highlight {
@@ -196,13 +201,13 @@
         gap: 8px;
         text-decoration: none;
         border: 2px solid #3d3520;
-        border-radius: 12px;
+        border-radius: 10px;
         background: linear-gradient(135deg, #d4af37, #f4d03f);
         color: #111827;
         font-weight: 700;
-        padding: 12px 20px;
+        padding: 9px 16px;
         white-space: nowrap;
-        font-size: 1.05rem;
+        font-size: 0.92rem;
         transition: all 0.2s ease;
     }
 
