@@ -90,10 +90,12 @@
                     <div style="font-size: 2.5rem; font-weight: 700; line-height: 1; color: #ffd700;">{{ $assignments->count() }}</div>
                     <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Assignments</div>
                 </div>
+                @if(auth()->user()->role_id == 3)
                 <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.3); text-align: center;">
                     <div style="font-size: 1.6rem; font-weight: 700; line-height: 1; letter-spacing: 3px; font-family: 'JetBrains Mono', monospace;">{{ $classroom->access_code }}</div>
                     <div style="font-size: 0.95rem; opacity: 0.9; margin-top: 8px;">Access Code</div>
                 </div>
+                @endif
             </div>
 
         </div>
@@ -179,13 +181,23 @@
                                 <h4 style="margin: 0 0 8px 0;">{{ $assignment->surah }} ({{ $assignment->start_verse }}{{ $assignment->end_verse ? '-' . $assignment->end_verse : '' }})</h4>
                                 <p style="display: flex; align-items: center; gap: 15px; font-size: 1.05rem;">
                                     <span><i class="far fa-calendar"></i> Due: {{ \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y') }}</span>
-                                    @php
-                                        $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->assignment_id)->count();
-                                    @endphp
-                                    <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}</span>
+                                    @if(auth()->user()->role_id == 3)
+                                        @php
+                                            $submissionCount = \App\Models\AssignmentSubmission::where('assignment_id', $assignment->assignment_id)->count();
+                                        @endphp
+                                        <span><i class="fas fa-file-alt"></i> {{ $submissionCount }} submission{{ $submissionCount != 1 ? 's' : '' }}</span>
+                                    @else
+                                        @php
+                                            $studentSubmitted = isset($submissions[$assignment->assignment_id]);
+                                        @endphp
+                                        <span style="color: {{ $studentSubmitted ? '#2e7d32' : '#a93226' }}; font-weight: 600;">
+                                            <i class="fas {{ $studentSubmitted ? 'fa-check-circle' : 'fa-hourglass-half' }}"></i>
+                                            {{ $studentSubmitted ? 'Submitted' : 'Not submitted' }}
+                                        </span>
+                                    @endif
                                 </p>
                             </div>
-                            <span style="padding: 8px 16px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border-radius: 12px; font-size: 1.05rem; font-weight: 700; white-space: nowrap;">
+                            <span style="padding: 8px 16px; background: rgba(212, 175, 55, 0.15); color: #8a6d1a; border-radius: 12px; font-size: 1.05rem; font-weight: 700; white-space: nowrap;">
                                 {{ $assignment->total_marks }} pts
                             </span>
                             <div style="display: flex; gap: 10px; margin-left: auto;">
