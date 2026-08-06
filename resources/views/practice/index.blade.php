@@ -914,6 +914,7 @@
             breakdownHtml += '<div style="display: grid; grid-template-columns: 1fr; gap: 15px;">';
             
             for (var key in analysis.details) {
+                if (key === 'makharij') continue; // Makharij metric removed
                 var label = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase() });
                 var value = Math.round(analysis.details[key]);
                 breakdownHtml += '<div style="background: rgba(26, 188, 156, 0.1); padding: 20px; border-radius: 10px; text-align: center; border: 2px solid rgba(26, 188, 156, 0.2);">';

@@ -876,7 +876,6 @@ class StudentController extends Controller
                         'pronunciation' => $analysisResult['overall_score']['pronunciation_accuracy'] ?? $overallScore,
                         'reference_similarity' => $analysisResult['overall_score']['reference_similarity'] ?? $overallScore,
                         'tajweed_rules' => $analysisResult['overall_score']['tajweed_rules_score'] ?? $maddScore,
-                        'makharij' => $analysisResult['overall_score']['makharij_score'] ?? $noonSakinScore,
                     ],
                     'feedback' => $feedback,
                     'python_analysis' => $analysisResult,
@@ -893,10 +892,9 @@ class StudentController extends Controller
                 
                 $pronunciation = max(60, min(100, $baseScore + $variation));
                 $tajweedRules = max(60, min(100, $baseScore + rand(-3, 3)));
-                $makharij = max(60, min(100, $baseScore + rand(-4, 4)));
                 $fluency = max(60, min(100, $baseScore + rand(-2, 6)));
                 
-                $overallScore = round(($pronunciation + $tajweedRules + $makharij + $fluency) / 4);
+                $overallScore = round(($pronunciation + $tajweedRules + $fluency) / 3);
                 
                 $feedback = 'Analysis completed. ';
                 if ($overallScore >= 90) {
@@ -914,7 +912,6 @@ class StudentController extends Controller
                     'details' => [
                         'pronunciation' => $pronunciation,
                         'tajweed_rules' => $tajweedRules,
-                        'makharij' => $makharij,
                         'fluency' => $fluency,
                     ],
                     'feedback' => $feedback,

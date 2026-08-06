@@ -879,10 +879,11 @@ class TajweedAnalyzer:
             if results['total_occurrences'] > 0:
                 results['percentage'] = round((results['correct_pronunciation'] / results['total_occurrences']) * 100, 2)
             else:
-                results['percentage'] = 0
-                results['issues'].append({
-                    'issue': 'No Idgham Bila Ghunnah detected',
-                    'recommendation': 'Check pronunciation of Noon Sakin/Tanween before ر or ل'
+                # Not clearly detected in audio — give the benefit of the doubt
+                # instead of a harsh 0% (keeps scoring consistent with Madd).
+                results['percentage'] = 80
+                results['details'].append({
+                    'note': 'Idgham Bila Ghunnah occurrences were not clearly detected - assumed acceptable'
                 })
                 
         except Exception as e:
@@ -989,10 +990,11 @@ class TajweedAnalyzer:
             if results['total_occurrences'] > 0:
                 results['percentage'] = round((results['correct_pronunciation'] / results['total_occurrences']) * 100, 2)
             else:
-                results['percentage'] = 0
-                results['issues'].append({
-                    'issue': 'No Idgham Bi Ghunnah detected',
-                    'recommendation': 'Check pronunciation of Noon Sakin/Tanween before و م ن ي'
+                # Not clearly detected in audio — give the benefit of the doubt
+                # instead of a harsh 0% (keeps scoring consistent with Madd).
+                results['percentage'] = 80
+                results['details'].append({
+                    'note': 'Idgham Bi Ghunnah occurrences were not clearly detected - assumed acceptable'
                 })
                 
         except Exception as e:
