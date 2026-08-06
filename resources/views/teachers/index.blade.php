@@ -63,6 +63,10 @@
         flex-direction: column;
         gap: 30px;
     }
+
+    .main-content .section-card {
+        flex: 1 1 auto;
+    }
     
     .stats-grid {
         display: grid;
@@ -229,6 +233,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    .submission-details p.submission-class {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #000;
+        margin-top: 3px;
+    }
     
     .submission-footer {
         display: flex;
@@ -239,8 +250,9 @@
     }
     
     .submission-time {
-        font-size: 0.7rem;
-        color: #999;
+        font-size: 0.8rem;
+        color: #000;
+        font-weight: 600;
     }
     
     .grade-btn {
@@ -401,7 +413,7 @@
                     $q->where('teacher_id', Auth::id());
                 })
                 ->where('status', 'pending_review')
-                ->with('student', 'assignment.material', 'assignment.classroom')
+                ->with('student.user', 'assignment.material', 'assignment.classroom')
                 ->latest()
                 ->take(10)
                 ->get();
@@ -421,15 +433,24 @@
                     $queueStudentName = $submission->student?->name
                         ?? $submission->student?->user?->name
                         ?? 'Student';
+                    $queueClassroomName = $queueAssignment?->classroom?->class_name ?? '';
                 @endphp
                 <div class="submission-item">
                     <div class="submission-header">
-                        <div class="submission-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
+                        @if($submission->student?->user?->profile_picture_url)
+                            <img src="{{ $submission->student->user->profile_picture_url }}" alt="{{ $queueStudentName }}"
+                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2a2a2a; flex-shrink: 0;">
+                        @else
+                            <div class="submission-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                        @endif
                         <div class="submission-details">
                             <h4>{{ $queueStudentName }}</h4>
                             <p><i class="fas fa-file-alt"></i> {{ Str::limit($queueAssignmentName, 25) }}</p>
+                            @if($queueClassroomName !== '')
+                                <p class="submission-class"><i class="fas fa-chalkboard-teacher"></i> {{ Str::limit($queueClassroomName, 22) }}</p>
+                            @endif
                         </div>
                     </div>
                     <div class="submission-footer">
