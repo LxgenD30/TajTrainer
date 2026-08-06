@@ -400,7 +400,7 @@
                 $recentSubmissions = \App\Models\AssignmentSubmission::whereHas('assignment.classroom', function($q) {
                     $q->where('teacher_id', Auth::id());
                 })
-                ->where('status', 'submitted')
+                ->where('status', 'pending_review')
                 ->with('student', 'assignment.material', 'assignment.classroom')
                 ->latest()
                 ->take(10)
