@@ -682,7 +682,7 @@ function normalizeAr(s) {
         .replace(/[\u064B-\u065F\u0610-\u061A]/g, '')  // strip tashkeel (NOT \u0671) — also strips the maddah \u0653
         .replace(/\u0640/g, '')              // tatweel
         .replace(/[ىي]\u0670/g, 'ا')         // ىٰ / يٰ (alif maqsura/ya with superscript alef) = long "aa" → ا
-        .replace(/\u0670/g, '')              // strip remaining dagger alef
+        .replace(/\u0670/g, 'ا')             // any other small/superscript alif (ٰ) = long "aa" → ا
         .replace(/[\u0671أإآٱء]/g, 'ا')      // alef wasla + variants + bare hamza → plain alef (hamzah recited as "aa" still matches)
         .replace(/ئ/g, 'ي')                 // hamza on ya → ya (Madd Wajib Muttasil: مَدّ followed by hamzah in one word)
         .replace(/ؤ/g, 'و')                 // hamza on waw → waw

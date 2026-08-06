@@ -74,7 +74,8 @@ def normalize_arabic(text: str) -> str:
     text = _TATWEEL.sub('', text)
     # ىٰ / يٰ (alif maqsura/ya + superscript alef) is read as a long "aa", so map it to alef.
     text = re.sub(r'[\u0649\u064A]\u0670', '\u0627', text)
-    text = text.replace('\u0670', '')          # strip remaining dagger alef (long vowel handled by medial-alef strip below)
+    # Any other small/superscript alif (\u0670) is also a long "aa" → map it to a real alef.
+    text = text.replace('\u0670', '\u0627')
     for variant, canon in _ALEF_MAP.items():
         text = text.replace(variant, canon)
     # Hamza on ya / waw -> base letter (Madd Wajib Muttasil: a maddah followed by
