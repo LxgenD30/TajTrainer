@@ -616,6 +616,7 @@ class StudentController extends Controller
                 'ayah_number' => 'required|integer',
                 'expected_text' => 'required|string',
                 'reference_audio_url' => 'nullable|url',
+                'tajweed_text' => 'nullable|string',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation failed: ' . json_encode($e->errors()));
@@ -774,6 +775,12 @@ class StudentController extends Controller
                 // Add reference audio if available
                 if ($referenceAudioPath) {
                     $command .= ' --reference=' . escapeshellarg($referenceAudioPath);
+                }
+
+                // Pass tajweed-colored HTML so Python can detect rules from the markup.
+                $tajweedText = $request->input('tajweed_text', '');
+                if (!empty($tajweedText)) {
+                    $command .= ' --tajweed=' . escapeshellarg($tajweedText);
                 }
                 
                 \Log::info('Executing Python command: ' . $command);

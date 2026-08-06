@@ -52,7 +52,8 @@ class ProcessSubmissionAudio implements ShouldQueue
                         $assignment->surah,
                         $assignment->start_verse,
                         $assignment->end_verse,
-                        $assignment->reference_audio_url // Pass stored reference audio path
+                        $assignment->reference_audio_url, // Pass stored reference audio path
+                        $assignment->expected_recitation    // Pass stored expected text (fetched at creation)
                     );
                     
                     // Extract transcription from Python output
@@ -152,17 +153,22 @@ class ProcessSubmissionAudio implements ShouldQueue
         }
     }
     
-    private function analyzeTajweed($audioPath, $transcription, $surah, $startVerse, $endVerse, $referenceAudioPath = null)
+    private function analyzeTajweed($audioPath, $transcription, $surah, $startVerse, $endVerse, $referenceAudioPath = null, $storedExpectedRecitation = null)
     {
-        // Get expected Quranic text
-        $expectedText = $this->getQuranText($surah, $startVerse, $endVerse);
+        // Prefer the stored expected recitation (fetched correctly at creation)
+        // so the analyzer always receives complete, correct text without relying
+        // on surah-name resolution. Fall back to re-fetching from the API.
+        $expectedText = $this->storedToPlainText($storedExpectedRecitation);
+        if ($expectedText === '') {
+            $expectedText = $this->getQuranText($surah, $startVerse, $endVerse);
+        }
         $tajweedText = $this->getTajweedFormattedText($surah, $startVerse, $endVerse);
         
         Log::info('Expected text: ' . substr($expectedText, 0, 50) . '...');
         Log::info('Reference audio path: ' . ($referenceAudioPath ?? 'NONE'));
         
         // Call Python analyzer (it will do Whisper transcription internally)
-        $result = $this->callPythonAnalyzer($audioPath, $expectedText, $referenceAudioPath);
+        $result = $this->callPythonAnalyzer($audioPath, $expectedText, $referenceAudioPath, $tajweedText);
         
         // Add additional data
         $result['expected_text'] = $expectedText;
@@ -190,7 +196,27 @@ class ProcessSubmissionAudio implements ShouldQueue
         return $result;
     }
     
-    private function callPythonAnalyzer($audioPath, $expectedText, $referenceAudioPath)
+    /**
+     * Convert stored tajweed HTML (expected_recitation) into plain Arabic text
+     * for the analyzer, stripping tags and ayah-end marker digits.
+     */
+    private function storedToPlainText($html)
+    {
+        if (empty($html)) {
+            return '';
+        }
+
+        $plain = preg_replace('/<[^>]+>/u', ' ', $html);
+        $plain = html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Remove isolated ayah-end marker digits (e.g. ٥, ١٧٣) and the ۝ separator.
+        $plain = preg_replace('/(?<=\s)[\x{0660}-\x{0669}0-9]+(?=\s|$)/u', ' ', $plain);
+        $plain = str_replace('۝', ' ', $plain);
+
+        return trim(preg_replace('/\s+/u', ' ', $plain));
+    }
+
+    private function callPythonAnalyzer($audioPath, $expectedText, $referenceAudioPath, $tajweedHtml = '')
     {
         $fullPath = storage_path('app/public/' . $audioPath);
         $pythonScript = base_path('python/tajweed_analyzer.py');
@@ -225,6 +251,11 @@ class ProcessSubmissionAudio implements ShouldQueue
         
         if ($referencePath) {
             $command .= ' --reference=' . escapeshellarg($referencePath);
+        }
+
+        // Pass tajweed-colored HTML so Python can detect rules from the markup.
+        if (!empty($tajweedHtml)) {
+            $command .= ' --tajweed=' . escapeshellarg($tajweedHtml);
         }
         
         Log::info('Python command: ' . $command);
@@ -555,6 +586,22 @@ class ProcessSubmissionAudio implements ShouldQueue
             'Al-Ma\'idah' => 5, 'Al-An\'am' => 6, 'Al-A\'raf' => 7, 'Al-Anfal' => 8,
             'Tawbah' => 9, 'Ya-Sin' => 36, 'Yasin' => 36, 'Qaf' => 50,
             'Rahman' => 55, 'Mulk' => 67, 'Ikhlas' => 112, 'Falaq' => 113, 'Nas' => 114,
+            // QuranCDN name_simple aliases (the exact format stored on assignments)
+            'Al-Fatihah' => 1, 'Ali \'Imran' => 3, 'At-Tawbah' => 9, 'Ar-Ra\'d' => 13,
+            'Al-Isra' => 17, 'Taha' => 20, 'Al-Anbya' => 21, 'Al-Mu\'minun' => 23,
+            'An-Nur' => 24, 'Al-Furqan' => 25, 'Ash-Shu\'ara' => 26, 'Al-\'Ankabut' => 29,
+            'Ar-Rum' => 30, 'As-Sajdah' => 32, 'Al-Ahzab' => 33, 'As-Saffat' => 37,
+            'Ash-Shuraa' => 42, 'Ad-Dukhan' => 44, 'Al-Jathiyah' => 45, 'Al-Ahqaf' => 46,
+            'Al-Hujurat' => 49, 'Adh-Dhariyat' => 51, 'Ar-Rahman' => 55, 'Al-Waqi\'ah' => 56,
+            'Al-Mujadila' => 58, 'Al-Mumtahanah' => 60, 'As-Saf' => 61, 'Al-Jumu\'ah' => 62,
+            'Al-Munafiqun' => 63, 'At-Taghabun' => 64, 'At-Talaq' => 65, 'Al-Haqqah' => 69,
+            'Al-Ma\'arij' => 70, 'Nuh' => 71, 'Al-Qiyamah' => 75, 'Al-Insan' => 76,
+            'Al-Mursalat' => 77, 'An-Nazi\'at' => 79, '\'Abasa' => 80, 'Al-Infitar' => 82,
+            'Al-Inshiqaq' => 84, 'Al-Buruj' => 85, 'At-Tariq' => 86, 'Al-A\'la' => 87,
+            'Al-Ghashiyah' => 88, 'Al-Layl' => 92, 'Ad-Duhaa' => 93, 'Ash-Sharh' => 94,
+            'Al-\'Alaq' => 96, 'Al-Bayyinah' => 98, 'Al-\'Adiyat' => 100, 'Al-Qari\'ah' => 101,
+            'At-Takathur' => 102, 'Al-\'Asr' => 103, 'Al-Humazah' => 104, 'Quraysh' => 106,
+            'Al-Ma\'un' => 107, 'Al-Kafirun' => 109, 'An-Nasr' => 110, 'An-Nas' => 114,
         ];
 
         if (isset($surahs[$surahName])) {

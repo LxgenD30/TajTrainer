@@ -430,6 +430,22 @@ class TeacherController extends Controller
             'Humaza' => 104, 'Fil' => 105, 'Ma\'un' => 107,
             'Kawthar' => 108, 'Kafirun' => 109, 'Nasr' => 110, 'Masad' => 111,
             'Ikhlas' => 112, 'Falaq' => 113, 'Nas' => 114,
+            // QuranCDN name_simple aliases (the exact format stored on assignments)
+            'Al-Fatihah' => 1, 'Ali \'Imran' => 3, 'At-Tawbah' => 9, 'Ar-Ra\'d' => 13,
+            'Al-Isra' => 17, 'Taha' => 20, 'Al-Anbya' => 21, 'Al-Mu\'minun' => 23,
+            'An-Nur' => 24, 'Al-Furqan' => 25, 'Ash-Shu\'ara' => 26, 'Al-\'Ankabut' => 29,
+            'Ar-Rum' => 30, 'As-Sajdah' => 32, 'Al-Ahzab' => 33, 'As-Saffat' => 37,
+            'Ash-Shuraa' => 42, 'Ad-Dukhan' => 44, 'Al-Jathiyah' => 45, 'Al-Ahqaf' => 46,
+            'Al-Hujurat' => 49, 'Adh-Dhariyat' => 51, 'Ar-Rahman' => 55, 'Al-Waqi\'ah' => 56,
+            'Al-Mujadila' => 58, 'Al-Mumtahanah' => 60, 'As-Saf' => 61, 'Al-Jumu\'ah' => 62,
+            'Al-Munafiqun' => 63, 'At-Taghabun' => 64, 'At-Talaq' => 65, 'Al-Haqqah' => 69,
+            'Al-Ma\'arij' => 70, 'Nuh' => 71, 'Al-Qiyamah' => 75, 'Al-Insan' => 76,
+            'Al-Mursalat' => 77, 'An-Nazi\'at' => 79, '\'Abasa' => 80, 'Al-Infitar' => 82,
+            'Al-Inshiqaq' => 84, 'Al-Buruj' => 85, 'At-Tariq' => 86, 'Al-A\'la' => 87,
+            'Al-Ghashiyah' => 88, 'Al-Layl' => 92, 'Ad-Duhaa' => 93, 'Ash-Sharh' => 94,
+            'Al-\'Alaq' => 96, 'Al-Bayyinah' => 98, 'Al-\'Adiyat' => 100, 'Al-Qari\'ah' => 101,
+            'At-Takathur' => 102, 'Al-\'Asr' => 103, 'Al-Humazah' => 104, 'Quraysh' => 106,
+            'Al-Ma\'un' => 107, 'Al-Kafirun' => 109, 'An-Nasr' => 110, 'An-Nas' => 114,
         ];
 
         if (isset($surahs[$surahName])) {

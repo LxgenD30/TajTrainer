@@ -592,6 +592,7 @@
     var recordingSeconds = 0;
     var recordedBlob = null;
     var currentExpectedText = null;
+    var currentTajweedText = null;
 
     // Load random verse on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -656,6 +657,7 @@
                     currentAyah = verse.ayahNumber;
                     currentAudioUrl = verse.audio || null;
                     currentExpectedText = (verse.textPlain || '').trim();
+                    currentTajweedText = (verse.textTajweed || '').trim();
 
                     document.getElementById('ayahArabic').innerHTML = verse.textTajweed || verse.textPlain || '';
                     document.getElementById('surahInfo').textContent = verse.surahNameEnglish + (verse.surahNameArabic ? ' (' + verse.surahNameArabic + ')' : '');
@@ -828,6 +830,7 @@
         formData.append('ayah_number', currentAyah);
         formData.append('expected_text', expectedText);
         formData.append('reference_audio_url', currentAudioUrl);
+        formData.append('tajweed_text', currentTajweedText || '');
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
         
         console.log('✓ FormData prepared, sending to server...');

@@ -120,10 +120,11 @@ def setup_ffmpeg():
 setup_ffmpeg()
 
 class TajweedAnalyzer:
-    def __init__(self, audio_path, expected_text="", use_whisper=True, use_openai=True, reference_audio_path=None):
+    def __init__(self, audio_path, expected_text="", use_whisper=True, use_openai=True, reference_audio_path=None, tajweed_html=""):
         """Initialize with audio file path and expected Quranic text"""
         self.audio_path = audio_path
         self.expected_text = expected_text
+        self.tajweed_html = tajweed_html or ''
         self.use_whisper = use_whisper
         self.use_openai = use_openai
         self.reference_audio_path = reference_audio_path
@@ -257,18 +258,14 @@ class TajweedAnalyzer:
         }), file=sys.stderr)
         return self._transcribe_with_openai_api()
 
-    def _transcribe_local_whisper(self):
-        """Transcribe using the locally loaded Tarteel Whisper model."""
-        if not self.whisper_model or not self.whisper_processor:
-            return None
-
+    def _transcribe_segment(self, segment, sr):
+        """Transcribe a single audio segment with the local Whisper model."""
         try:
             import torch
 
-            # Prepare audio and move it to the same device as the model.
             input_features = self.whisper_processor(
-                self.y,
-                sampling_rate=self.sr,
+                segment,
+                sampling_rate=sr,
                 return_tensors="pt"
             ).input_features
 
@@ -294,6 +291,45 @@ class TajweedAnalyzer:
                 transcription = self.normalize_muqattaat_text(transcription)
 
             return transcription if transcription else None
+
+        except Exception as e:
+            print(json.dumps({
+                "status": "transcription_segment_failed",
+                "error": str(e)
+            }), file=sys.stderr)
+            return None
+
+    def _transcribe_local_whisper(self):
+        """Transcribe using the locally loaded Tarteel Whisper model."""
+        if not self.whisper_model or not self.whisper_processor:
+            return None
+
+        try:
+            # Chunk long audio into ~28s segments to avoid the model's
+            # token-length limit truncating multi-ayah recitations.
+            chunk_sec = 28.0
+            sr = self.sr
+            step = int(chunk_sec * sr)
+            overlap = int(0.5 * sr)  # small overlap so words aren't cut mid-way
+
+            if self.duration <= chunk_sec:
+                return self._transcribe_segment(self.y, sr)
+
+            chunks = []
+            start = 0
+            total = len(self.y)
+            while start < total:
+                seg_start = max(0, start - overlap)
+                seg_end = min(start + step, total)
+                seg = self.y[seg_start:seg_end]
+                text = self._transcribe_segment(seg, sr)
+                if text:
+                    chunks.append(text)
+                if seg_end >= total:
+                    break
+                start = seg_end
+
+            return ' '.join(chunks) if chunks else None
 
         except Exception as e:
             print(json.dumps({
@@ -568,36 +604,45 @@ class TajweedAnalyzer:
         return SequenceMatcher(None, trans_words, expected_words).ratio() * 100.0
     
     def detect_madd_in_text(self):
-        """Check if expected text contains Madd elongation letters"""
-        if not self.expected_text:
+        """Check if expected text contains Madd rules."""
+        if not self.expected_text and not self.tajweed_html:
             return False
-        # Madd letters: ا (alif), و (waw), ي (ya)
+        # Primary: tajweed markup explicitly tags Madd with madda_* classes.
+        if 'madda_' in self.tajweed_html:
+            return True
+        # Fallback: Madd letters ا (alif), و (waw), ي (ya)
         madd_letters = ['ا', 'و', 'ي', 'آ', 'ى']
         return any(letter in self.expected_text for letter in madd_letters)
     
     def detect_idgham_bila_in_text(self):
-        """Check if text has Noon Sakin/Tanween followed by ر or ل"""
-        if not self.expected_text:
+        """Check if text has Idgham Bila Ghunnah (Noon Sakin/Tanween followed by ر or ل)."""
+        if not self.expected_text and not self.tajweed_html:
             return False
-        # Look for Noon Sakin or tanween immediately before ر or ل.
+        # Primary: tajweed markup tags it idgham_wo_ghunnah / idgham_no_ghunnah.
+        if 'idgham_wo_ghunnah' in self.tajweed_html or 'idgham_no_ghunnah' in self.tajweed_html:
+            return True
+        # Fallback regex: allow intervening ا/ى after tanween (e.g. غَفُورًا رَّحِيمًا).
         patterns = [
             r'نْ\s*[رل]',
             r'نۢ\s*[رل]',
             r'ن(?:[\u064B-\u065F\u0670\u06D6-\u06ED]*)\s*[رل]',
-            r'[\u064B\u064C\u064D](?:[\u064B-\u065F\u0670\u06D6-\u06ED\s]*)[رل]',
+            r'[\u064B\u064C\u064D](?:[\u064B-\u065F\u0670\u06D6-\u06ED\u0627\u0649\s]*)[رل]',
         ]
         return any(re.search(pattern, self.expected_text) for pattern in patterns)
     
     def detect_idgham_bi_in_text(self):
-        """Check if text has Noon Sakin/Tanween followed by و م ن ي"""
-        if not self.expected_text:
+        """Check if text has Idgham Bi Ghunnah (Noon Sakin/Tanween followed by و م ن ي)."""
+        if not self.expected_text and not self.tajweed_html:
             return False
-        # Look for Noon Sakin or tanween immediately before و م ن ي.
+        # Primary: tajweed markup tags it idgham_ghunnah / idgham_bi_ghunnah.
+        if 'idgham_ghunnah' in self.tajweed_html or 'idgham_bi_ghunnah' in self.tajweed_html:
+            return True
+        # Fallback regex: allow intervening ا/ى after tanween (e.g. هُدًى مِّن).
         patterns = [
             r'نْ\s*[ومني]',
             r'نۢ\s*[ومني]',
             r'ن(?:[\u064B-\u065F\u0670\u06D6-\u06ED]*)\s*[ومني]',
-            r'[\u064B\u064C\u064D](?:[\u064B-\u065F\u0670\u06D6-\u06ED\s]*)[ومني]',
+            r'[\u064B\u064C\u064D](?:[\u064B-\u065F\u0670\u06D6-\u06ED\u0627\u0649\s]*)[ومني]',
         ]
         return any(re.search(pattern, self.expected_text) for pattern in patterns)
     
@@ -1656,12 +1701,15 @@ def main():
     audio_path = sys.argv[1]
     expected_text = ""
     reference_audio = None
+    tajweed_html = ""
     
     task = 'analyze'
     # Parse arguments
     for arg in sys.argv[2:]:
         if arg.startswith('--reference='):
             reference_audio = arg.split('=', 1)[1]
+        elif arg.startswith('--tajweed='):
+            tajweed_html = arg.split('=', 1)[1]
         elif arg.startswith('--task='):
             task = arg.split('=', 1)[1]
         elif not arg.startswith('--'):
@@ -1686,7 +1734,7 @@ def main():
         sys.exit(0)
 
     try:
-        analyzer = TajweedAnalyzer(audio_path, expected_text, use_whisper, use_openai, reference_audio)
+        analyzer = TajweedAnalyzer(audio_path, expected_text, use_whisper, use_openai, reference_audio, tajweed_html)
         results = analyzer.analyze()
         print(json.dumps(results, ensure_ascii=False, indent=2))
     except FileNotFoundError:
