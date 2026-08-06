@@ -468,21 +468,28 @@
         
         /* Modal for Login/Register */
         .modal {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
+            display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            z-index: 2000;
+            background-color: rgba(0, 0, 0, 0);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: background-color 0.35s ease, opacity 0.35s ease, visibility 0.35s ease;
         }
         
         .modal.show {
-            display: flex;
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
         }
         
         .modal-content {
@@ -495,6 +502,14 @@
             padding: 40px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             position: relative;
+            transform: translateY(30px) scale(0.95);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+        
+        .modal.show .modal-content {
+            transform: translateY(0) scale(1);
+            opacity: 1;
         }
         
         .close-modal {
