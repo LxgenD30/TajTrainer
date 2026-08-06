@@ -152,7 +152,7 @@
     }
 
     .grade-shell {
-        max-width: 1600px;
+        max-width: 1920px;
         margin: 0 auto;
         padding: 0;
     }
