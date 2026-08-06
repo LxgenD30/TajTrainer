@@ -234,6 +234,7 @@
         </div>
         
         @if(isset($topWeaknesses) && count($topWeaknesses) > 0)
+            <div style="max-height: 640px; overflow-y: auto; padding-right: 6px;">
             @foreach($topWeaknesses as $weakness)
                 @php
                     $attempts = (int) ($weakness->total_attempts ?? 0);
@@ -241,7 +242,7 @@
                     $score = $attempts > 0 ? round(100 - $failRate, 1) : 0;
                     $scoreColor = $score >= 70 ? '#2e7d32' : ($score >= 50 ? '#ef6c00' : '#c62828');
                 @endphp
-                <div style="background: #fffafa; border: 2px solid #2a2a2a; border-radius: 12px; padding: 16px 18px; margin-bottom: 15px; width: fit-content; min-width: 300px; max-width: 100%;">
+                <div style="background: #fffafa; border: 2px solid #2a2a2a; border-radius: 12px; padding: 16px 18px; margin-bottom: 15px; width: 100%; box-sizing: border-box;">
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 6px;">
                         <span class="weakness-name">{{ $weakness->rule_name }}</span>
                         <span style="font-size: 1.5rem; font-weight: 800; line-height: 1; color: {{ $scoreColor }};">{{ $score }}%</span>
@@ -255,9 +256,10 @@
                     <div style="display: flex; justify-content: space-between; gap: 20px; margin-top: 8px; font-size: 0.92rem; color: #000; font-weight: 700;">
                         <span><i class="fas fa-tasks"></i> {{ $attempts }} attempts</span>
                         <span><i class="fas fa-times-circle"></i> {{ round($failRate, 1) }}% error rate</span>
+                        </div>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         @else
             <div style="text-align: center; padding: 40px; color: #000;">
                 <i class="fas fa-smile-beam" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
@@ -265,37 +267,37 @@
             </div>
         @endif
     </div>
-</div>
 
-@if(isset($recurringErrors) && count($recurringErrors) > 0)
-<div class="modern-card" style="margin-top: 30px;">
-    <div class="section-header">
-        <div class="icon-badge orange">
-            <i class="fas fa-redo"></i>
+    @if(isset($recurringErrors) && count($recurringErrors) > 0)
+    <div class="modern-card">
+        <div class="section-header">
+            <div class="icon-badge orange">
+                <i class="fas fa-redo"></i>
+            </div>
+            <h3 class="section-title">Recurring Errors</h3>
         </div>
-        <h3 class="section-title">Recurring Errors</h3>
-    </div>
-    
-    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
-        @foreach($recurringErrors as $error)
-            <div style="background: #fffbf0; border: 2px solid #2a2a2a; border-radius: 12px; padding: 18px; width: fit-content; min-width: 300px; max-width: 100%;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                    <i class="fas fa-sync-alt" style="color: #e67e22; font-size: 1.3rem;"></i>
-                    <div style="font-size: 1.15rem; font-weight: 700; color: #000;">
-                        {{ $error->rule_name ?? 'Unknown Rule' }}
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+            @foreach($recurringErrors as $error)
+                <div style="background: #fffbf0; border: 2px solid #2a2a2a; border-radius: 12px; padding: 18px; width: 100%; box-sizing: border-box;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <i class="fas fa-sync-alt" style="color: #e67e22; font-size: 1.3rem;"></i>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: #000;">
+                            {{ $error->rule_name ?? 'Unknown Rule' }}
+                        </div>
+                    </div>
+                    <div style="font-size: 0.95rem; color: #000; margin-bottom: 12px; font-weight: 700;">
+                        Occurred <strong style="color: #e67e22;">{{ $error->occurrences ?? 0 }}</strong> times
+                    </div>
+                    <div style="font-size: 0.9rem; color: #000; padding: 10px; background: rgba(0,0,0,0.04); border: 1px solid #2a2a2a; border-radius: 8px; line-height: 1.6;">
+                        {{ $error->issue_description ?? 'Practice this rule more' }}
                     </div>
                 </div>
-                <div style="font-size: 0.95rem; color: #000; margin-bottom: 12px; font-weight: 700;">
-                    Occurred <strong style="color: #e67e22;">{{ $error->occurrences ?? 0 }}</strong> times
-                </div>
-                <div style="font-size: 0.9rem; color: #000; padding: 10px; background: rgba(0,0,0,0.04); border: 1px solid #2a2a2a; border-radius: 8px; line-height: 1.6;">
-                    {{ $error->issue_description ?? 'Practice this rule more' }}
-                </div>
-            </div>
-        @endforeach
+            @endforeach
+        </div>
     </div>
+    @endif
 </div>
-@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
